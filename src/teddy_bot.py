@@ -1,137 +1,8 @@
-# import logging
-
-# from telegram import Update, ForceReply, InlineKeyboardMarkup, InlineKeyboardButton, ParseMode
-# from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
-
-# logger = logging.getLogger(__name__)
-
-# # Store bot screaming status
-# screaming = False
-
-# # Pre-assign menu text
-# FIRST_MENU = "<b>Menu 1</b>\n\nA beautiful menu with a shiny inline button."
-# SECOND_MENU = "<b>Menu 2</b>\n\nA better menu with even more shiny inline buttons."
-
-# # Pre-assign button text
-# NEXT_BUTTON = "Next"
-# BACK_BUTTON = "Back"
-# TUTORIAL_BUTTON = "Tutorial"
-
-# # Build keyboards
-# FIRST_MENU_MARKUP = InlineKeyboardMarkup([[
-#     InlineKeyboardButton(NEXT_BUTTON, callback_data=NEXT_BUTTON)
-# ]])
-# SECOND_MENU_MARKUP = InlineKeyboardMarkup([
-#     [InlineKeyboardButton(BACK_BUTTON, callback_data=BACK_BUTTON)],
-#     [InlineKeyboardButton(TUTORIAL_BUTTON, url="https://core.telegram.org/bots/api")]
-# ])
-
-
-# def echo(update: Update, context: CallbackContext) -> None:
-#     """
-#     This function would be added to the dispatcher as a handler for messages coming from the Bot API
-#     """
-
-#     # Print to console
-#     print(f'{update.message.from_user.first_name} wrote {update.message.text}')
-
-#     if screaming and update.message.text:
-#         context.bot.send_message(
-#             update.message.chat_id,
-#             update.message.text.upper(),
-#             # To preserve the markdown, we attach entities (bold, italic...)
-#             entities=update.message.entities
-#         )
-#     else:
-#         # This is equivalent to forwarding, without the sender's name
-#         update.message.copy(update.message.chat_id)
-
-
-# def scream(update: Update, context: CallbackContext) -> None:
-#     """
-#     This function handles the /scream command
-#     """
-
-#     global screaming
-#     screaming = True
-
-
-# def whisper(update: Update, context: CallbackContext) -> None:
-#     """
-#     This function handles /whisper command
-#     """
-
-#     global screaming
-#     screaming = False
-
-
-# def menu(update: Update, context: CallbackContext) -> None:
-#     """
-#     This handler sends a menu with the inline buttons we pre-assigned above
-#     """
-
-#     context.bot.send_message(
-#         update.message.from_user.id,
-#         FIRST_MENU,
-#         parse_mode=ParseMode.HTML,
-#         reply_markup=FIRST_MENU_MARKUP
-#     )
-
-
-# def button_tap(update: Update, context: CallbackContext) -> None:
-#     """
-#     This handler processes the inline buttons on the menu
-#     """
-
-#     data = update.callback_query.data
-#     text = ''
-#     markup = None
-
-#     if data == NEXT_BUTTON:
-#         text = SECOND_MENU
-#         markup = SECOND_MENU_MARKUP
-#     elif data == BACK_BUTTON:
-#         text = FIRST_MENU
-#         markup = FIRST_MENU_MARKUP
-
-#     # Close the query to end the client-side loading animation
-#     update.callback_query.answer()
-
-#     # Update message content with corresponding menu section
-#     update.callback_query.message.edit_text(
-#         text,
-#         ParseMode.HTML,
-#         reply_markup=markup
-#     )
-
-
-# def main() -> None:
-#     updater = Updater("6911413573:AAGrff9aK3aSfaDhGaT5Iyf68zqRcPHrGN0")
-
-#     # Get the dispatcher to register handlers
-#     # Then, we register each handler and the conditions the update must meet to trigger it
-#     dispatcher = updater.dispatcher
-
-#     # Register commands
-#     dispatcher.add_handler(CommandHandler("scream", scream))
-#     dispatcher.add_handler(CommandHandler("whisper", whisper))
-#     dispatcher.add_handler(CommandHandler("menu", menu))
-
-#     # Register handler for inline buttons
-#     dispatcher.add_handler(CallbackQueryHandler(button_tap))
-
-#     # Echo any message that is not a command
-#     dispatcher.add_handler(MessageHandler(~Filters.command, echo))
-
-#     # Start the Bot
-#     updater.start_polling()
-
-#     # Run the bot until you press Ctrl-C
-#     updater.idle()
-
-
-# if __name__ == '__main__':
-#     main()
+__fname = 'teddy_bot'
+__filename = __fname + '.py'
+cStrDivider = '#================================================================#'
+cStrDivider_1 = '#----------------------------------------------------------------#'
+print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globals', cStrDivider, sep='\n')
 
 
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
@@ -140,29 +11,44 @@ from telegram.ext import CallbackQueryHandler, CallbackContext
 # from telegram import ChatAction
 import time
 import random
-
-import os
+from datetime import datetime
+import json, time, os, traceback, sys
 import webbrowser
+
 # myst37.020
 # cook = "1CIx4heldQFrBstIQ-KL7d7ix-Rif8Di0yW_vsuk-Gsfb9lGzgTWTQ20KJ5oJR_Y7bmVNNKrKS_MVEN4v-OjGPVVsQ2a-h9zZkMC90Fj74frtXRSfKPzzJ5p8hdX27bfvEgUQlVJAzC92Mo_dFLTYvr_SgpQrFp-eUbdI-cByE9F57vWbER9z287be7cdsw6TP1_BYzzC9G1jkpYMgi-vYw"
-lst_cookies =[
-    # myst37.014
+# lst_cookies =[
+#     # myst37.014
+#     "1-AhuVhuYkNn4kh6m8T72bEg4xn9S6wqt0TWqDWcbS1NUnO4SLoWWMr4VhaXuV1j1W56-2H8ihDg5SYH8cZQPox6mOyxpCYojTcAFvpNvMSKLa9WlILBMTG65xcyvB2Z4IpSNnmqCkHTFtUJSSiV7avAYVvz72M1RhIPCGeqszXfGcLpOk9z6We4jCaNNzf2SGQzKPlYt6k-aC6le2hrCVg",
+#     # myst37.015
+#     "1HVwcZVHsgR9AH6Lmu_VeRCtSsrI6b9SBu9U0Grj8KGqOVxJRrCZUfjSs1NNS448h2ttG0Egsoc3dsrFku7D5R7z9WyHDcKYqxdfrQCMsZThEjIedubs8BFS4zOwryk-vsv2zuvTbA3BOlrFjcl4tQInXEq3Xdv04EWHADeWfTfBgWWo-Oxoiylj9KvKUx7_sV5vxq72lR0HxiDQDPvCngQ",
+#     # myst37.016
+#     "1RTGjcQkCYaUfk-jI4OCe1K1lFb0N60SUcgwT46onrYd2_UITKYzLttpSETocCEcsdKSLdzdRlP9NBl1xwpWfx1egozVMigurWjjdA0CiTUCQlP4MCG7p_UcB-VEsGEq09Y0c-IPpi5Bf5lelCzg0peWwy5cGOd2J23GLViWpBD-k1UNkfhfdiT7T1GxDePCmxt744-a1dHjLVrLEA9dkDQ",
+#     # myst37.021
+#     "1BmCGFpK08XlfcXBQf_W6iF_BPh6i9cg-6JAuA17tC_tlg7nGW-VG2c4VSqoa_okPgQTs5qjNRmSgifp30jJ20YAOdFACU6JmOHc8EDfSnszQrmQqwSOOHAmub8bGfPIM7rRn86TjoPXqFtn0a96w-R6F53-ne5EZo55sb6Dxt2vOZxsug5pDrtNW5K-hqGBeZj_yhxf_uffBWt_LIF3BEg",
+#     # myst37.022
+#     "15b2vveo09pnXUXXW6wOlLXbpP88N2tKXr_r3ePQdv0lyvo49iqDXjjnaw5kim6tCOKeHKDeGTN4JzlDkoeW-WkpzXX_jWiHqxTFcQh_jzsEmtPL-ou1Q9vWShc_JT1NI4b9gTvjGdUrsez3bIEsu6GXIRvCipa4OASe_GnAc7WW2Ajv1IEVA0JRQ2w3_ByNT76zdTHDOJrgsTZzoN8s4Ag"
+# ]
+dict_cookies ={
+    "myst37.014":
     "1-AhuVhuYkNn4kh6m8T72bEg4xn9S6wqt0TWqDWcbS1NUnO4SLoWWMr4VhaXuV1j1W56-2H8ihDg5SYH8cZQPox6mOyxpCYojTcAFvpNvMSKLa9WlILBMTG65xcyvB2Z4IpSNnmqCkHTFtUJSSiV7avAYVvz72M1RhIPCGeqszXfGcLpOk9z6We4jCaNNzf2SGQzKPlYt6k-aC6le2hrCVg",
-    # myst37.015
+    "myst37.015":
     "1HVwcZVHsgR9AH6Lmu_VeRCtSsrI6b9SBu9U0Grj8KGqOVxJRrCZUfjSs1NNS448h2ttG0Egsoc3dsrFku7D5R7z9WyHDcKYqxdfrQCMsZThEjIedubs8BFS4zOwryk-vsv2zuvTbA3BOlrFjcl4tQInXEq3Xdv04EWHADeWfTfBgWWo-Oxoiylj9KvKUx7_sV5vxq72lR0HxiDQDPvCngQ",
-    # myst37.016
+    "myst37.016":
     "1RTGjcQkCYaUfk-jI4OCe1K1lFb0N60SUcgwT46onrYd2_UITKYzLttpSETocCEcsdKSLdzdRlP9NBl1xwpWfx1egozVMigurWjjdA0CiTUCQlP4MCG7p_UcB-VEsGEq09Y0c-IPpi5Bf5lelCzg0peWwy5cGOd2J23GLViWpBD-k1UNkfhfdiT7T1GxDePCmxt744-a1dHjLVrLEA9dkDQ",
-    # myst37.021
+    "myst37.021":
     "1BmCGFpK08XlfcXBQf_W6iF_BPh6i9cg-6JAuA17tC_tlg7nGW-VG2c4VSqoa_okPgQTs5qjNRmSgifp30jJ20YAOdFACU6JmOHc8EDfSnszQrmQqwSOOHAmub8bGfPIM7rRn86TjoPXqFtn0a96w-R6F53-ne5EZo55sb6Dxt2vOZxsug5pDrtNW5K-hqGBeZj_yhxf_uffBWt_LIF3BEg",
-    # myst37.022
+    "myst37.022":
     "15b2vveo09pnXUXXW6wOlLXbpP88N2tKXr_r3ePQdv0lyvo49iqDXjjnaw5kim6tCOKeHKDeGTN4JzlDkoeW-WkpzXX_jWiHqxTFcQh_jzsEmtPL-ou1Q9vWShc_JT1NI4b9gTvjGdUrsez3bIEsu6GXIRvCipa4OASe_GnAc7WW2Ajv1IEVA0JRQ2w3_ByNT76zdTHDOJrgsTZzoN8s4Ag"
-]
+}
 # os.environ["BING_COOKIES"] = cook
 from BingImageCreator import ImageGen, ImageGenAsync
 
 # Telegram Bot token obtained from BotFather
-TOKEN = '6911413573:AAGrff9aK3aSfaDhGaT5Iyf68zqRcPHrGN0'
+# TOKEN = '6911413573:AAGrff9aK3aSfaDhGaT5Iyf68zqRcPHrGN0' # TeddySharesBot (dev)
+TOKEN = '6805964502:AAHL99OquXuZUPzpgqWNDbeBY_pgGpANO0A' # BearSharesBot (prod)
 # BEAR_BOT = Bot(token=TOKEN)
+IMG_REQUEST_CNT = 0
 
 # Dictionary to keep track of users who have been greeted
 greeted_users = {}
@@ -212,6 +98,7 @@ async def echo(update: Update, context):
     funcname = 'echo'
     print(f'\nENTER - {funcname}\n')
     print(f'\nEXIT - {funcname}\n')
+
 async def bad_command(update: Update, context):
     funcname = 'gen_ai_img_1'
     print(f'\nENTER - {funcname}\n')
@@ -230,7 +117,7 @@ def validate_input(str_input):
 
 async def gen_ai_img_1(update: Update, context):
     funcname = 'gen_ai_img_1'
-    print(f'\nENTER - {funcname}\n')
+    print(cStrDivider_1, f'ENTER - {funcname}', sep='\n')
 
     user = update.message.from_user
     uid = user.id
@@ -246,9 +133,9 @@ async def gen_ai_img_1(update: Update, context):
     lst_imgs, err = gen_ai_image(str_prompt)
 
     if err > 0:
-        str_err = f"@{str_uname} (aka. {str_handle}) -> ERR: an unknown error has occurred\n  BING said NO!\n   maybe you used a bad word or something, please try again : /"
+        str_err = f"@{str_uname} (aka. {str_handle}) -> ERR: BING said NO!\n   change it up & try again : /"
         if err == 1:
-            str_err = f"@{str_uname} (aka. {str_handle}) -> ERR: input description is TOO SHORT, must be at least 50 chars (~10 words or so)"
+            str_err = f"@{str_uname} (aka. {str_handle}) -> ERR: description TOO SHORT, need at least 50 chars (~10 words or so)"
         str_err = str_err + f'\n    "{str_prompt}"'
         await context.bot.send_message(chat_id=update.message.chat_id, text=str_err)
         print(str_err)
@@ -266,11 +153,11 @@ async def gen_ai_img_1(update: Update, context):
             url = lst_imgs[r_idx]
             break
     await context.bot.send_message(chat_id=update.message.chat_id, text=f'@{str_uname} (aka. {str_handle}) -> here is your image\n  "{str_prompt}" ...\n {url}')
-    print(f'\nEXIT - {funcname}\n')
+    print('', f'EXIT - {funcname}', cStrDivider_1, sep='\n')
 
 async def gen_ai_img_x(update: Update, context):
     funcname = 'gen_ai_img_x'
-    print(f'\nENTER - {funcname}\n')
+    print(cStrDivider_1, f'ENTER - {funcname}', sep='\n')
 
     user = update.message.from_user
     uid = user.id
@@ -290,15 +177,24 @@ async def gen_ai_img_x(update: Update, context):
         await context.bot.send_message(chat_id=uid, text=url)
         # safari = webbrowser.get('safari')  # specify the browser
         # safari.open_new_tab(url)
-    print(f'\nEXIT - {funcname}\n')
 
-def get_rand_cookie(_lst_cookies):
-    idx = random.randint(0, len(_lst_cookies)-1)
-    return idx, _lst_cookies[idx]
+    print('', f'EXIT - {funcname}', cStrDivider_1, sep='\n')
+
+# def get_rand_cookie(_lst_cookies):
+#     idx = random.randint(0, len(_lst_cookies)-1)
+#     return idx, _lst_cookies[idx]
+
+def get_rand_cookie(_dict_cookies):
+    lst_keys = list(_dict_cookies.keys())
+    idx_key = random.randint(0, len(lst_keys)-1)
+    str_key = lst_keys[idx_key]
+    return idx_key, str_key, _dict_cookies[str_key]
     
 def gen_ai_image(str_prompt):
+    global IMG_REQUEST_CNT
     funcname = 'gen_ai_image'
-    print(f'\nENTER - {funcname}\n')
+    IMG_REQUEST_CNT += 1
+    print(f'\nENTER - {funcname} _ IMG_REQUEST_CNT: {IMG_REQUEST_CNT}')
     print(f'str_prompt: {str_prompt}')
 
     lst_imgs = []
@@ -316,8 +212,10 @@ def gen_ai_image(str_prompt):
     # return lst_imgs, err
 
     # loop until no exception
-    _idx, _cookie = get_rand_cookie(lst_cookies)
-    print(f'using cookie idx: {_idx}')
+    # _idx, _cookie = get_rand_cookie(lst_cookies)
+    _idx, _key, _cookie = get_rand_cookie(dict_cookies)
+    print(f'cookie idx: {_idx}')
+    print(f'cookie key: {_key}')
     while True:
         try:
             gen = ImageGen(auth_cookie=_cookie, auth_cookie_SRCHHPGUSR=_cookie, quiet=False)
@@ -326,6 +224,7 @@ def gen_ai_image(str_prompt):
             lst_imgs = gen.get_images(str_prompt)
             break  # Exit the loop if no exception is caught
         except Exception as e:
+            print_except(e, debugLvl=1)
             print("Exception caught:", e)
             err = 2
             time.sleep(2)  # Wait for 5 seconds before the next attempt
@@ -335,7 +234,8 @@ def gen_ai_image(str_prompt):
     print('DONE GETTING IMAGES...')
     print(*lst_imgs, sep='\n')
     print('SENDING IMAGES...')
-    print(f'\nEXIT - {funcname}\n')
+    
+    print('', f'EXIT - {funcname}', sep='\n')
     return lst_imgs, err
 
 def main():
@@ -366,5 +266,67 @@ def main():
     # Run the bot until you press Ctrl-C
     # Update.idle()
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()
+
+
+#------------------------------------------------------------#
+#   DEFAULT SUPPORT                                          #
+#------------------------------------------------------------#
+READ_ME = f'''
+    *DESCRIPTION*
+        choose blockchain
+        get latest tx pool
+            OR
+        search for 'from' address 
+         and loop get tx pool
+
+    *NOTE* INPUT PARAMS...
+        nil
+        
+    *EXAMPLE EXECUTION*
+        $ python3 {__filename} -<nil> <nil>
+        $ python3 {__filename}
+'''
+
+#ref: https://stackoverflow.com/a/1278740/2298002
+def print_except(e, debugLvl=0):
+    #print(type(e), e.args, e)
+    if debugLvl >= 0:
+        print('', cStrDivider, f' Exception Caught _ e: {e}', cStrDivider, sep='\n')
+    if debugLvl >= 1:
+        print('', cStrDivider, f' Exception Caught _ type(e): {type(e)}', cStrDivider, sep='\n')
+    if debugLvl >= 2:
+        print('', cStrDivider, f' Exception Caught _ e.args: {e.args}', cStrDivider, sep='\n')
+    if debugLvl >= 3:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        strTrace = traceback.format_exc()
+        print('', cStrDivider, f' type: {exc_type}', f' file: {fname}', f' line_no: {exc_tb.tb_lineno}', f' traceback: {strTrace}', cStrDivider, sep='\n')
+
+def get_time_now(dt=True):
+    if dt: return '['+datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[0:-4]+']'
+    return '['+datetime.now().strftime("%H:%M:%S.%f")[0:-4]+']'
+
+def read_cli_args():
+    print(f'\nread_cli_args...\n # of args: {len(sys.argv)}\n argv lst: {str(sys.argv)}')
+    for idx, val in enumerate(sys.argv): print(f' argv[{idx}]: {val}')
+    print('read_cli_args _ DONE\n')
+    return sys.argv, len(sys.argv)
+
+if __name__ == "__main__":
+    ## start ##
+    RUN_TIME_START = get_time_now()
+    print(f'\n\nRUN_TIME_START: {RUN_TIME_START}\n'+READ_ME)
+    lst_argv_OG, argv_cnt = read_cli_args()
+    
+    ## exe ##
+    try:
+        main()
+    except Exception as e:
+        print_except(e, debugLvl=0)
+    
+    ## end ##
+    print(f'\n\nRUN_TIME_START: {RUN_TIME_START}\nRUN_TIME_END:   {get_time_now()}\n')
+
+print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
