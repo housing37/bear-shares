@@ -33,8 +33,9 @@ dict_cookies ={
 from BingImageCreator import ImageGen, ImageGenAsync
 
 # Telegram Bot token obtained from BotFather
-# TOKEN = '6911413573:AAGrff9aK3aSfaDhGaT5Iyf68zqRcPHrGN0' # TeddySharesBot (dev)
-TOKEN = '6805964502:AAHL99OquXuZUPzpgqWNDbeBY_pgGpANO0A' # BearSharesBot (prod)
+TOKEN_dev = '6911413573:AAGrff9aK3aSfaDhGaT5Iyf68zqRcPHrGN0' # TeddySharesBot (dev)
+TOKEN_prod = '6805964502:AAHL99OquXuZUPzpgqWNDbeBY_pgGpANO0A' # BearSharesBot (prod)
+TOKEN = TOKEN_dev
 # BEAR_BOT = Bot(token=TOKEN)
 IMG_REQUEST_CNT = 0
 
@@ -169,10 +170,6 @@ async def gen_ai_img_x(update: Update, context):
 
     print('', f'EXIT - {funcname}', cStrDivider_1, sep='\n')
 
-# def get_rand_cookie(_lst_cookies):
-#     idx = random.randint(0, len(_lst_cookies)-1)
-#     return idx, _lst_cookies[idx]
-
 def get_rand_cookie(_dict_cookies):
     lst_keys = list(_dict_cookies.keys())
     idx_key = random.randint(0, len(lst_keys)-1)
@@ -192,16 +189,8 @@ def gen_ai_image(str_prompt):
     if not validate_input(str_prompt):
         err = 1
         return lst_imgs, err
-    # gen = ImageGen(auth_cookie=cook, auth_cookie_SRCHHPGUSR=cook, quiet=False)
-    # lst_imgs = gen.get_images(str_prompt)
-
-    # print('DONE GETTING IMAGES...')
-    # print(*lst_imgs, sep='\n')
-    # print('SENDING IMAGES...')
-    # return lst_imgs, err
 
     # loop until no exception
-    # _idx, _cookie = get_rand_cookie(lst_cookies)
     _idx, _key, _cookie = get_rand_cookie(dict_cookies)
     print(f'cookie idx: {_idx}')
     print(f'cookie key: {_key}')
@@ -255,10 +244,6 @@ def main():
     # Run the bot until you press Ctrl-C
     # Update.idle()
 
-# if __name__ == '__main__':
-#     main()
-
-
 #------------------------------------------------------------#
 #   DEFAULT SUPPORT                                          #
 #------------------------------------------------------------#
@@ -311,6 +296,8 @@ if __name__ == "__main__":
     
     ## exe ##
     try:
+        inp = input('Select token type to use:\n  0 = prod\n  1 = dev\n  > ')
+        TOKEN = TOKEN_prod if inp == '0' else TOKEN_dev
         main()
     except Exception as e:
         print_except(e, debugLvl=0)
