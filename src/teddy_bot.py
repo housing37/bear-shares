@@ -17,18 +17,6 @@ import webbrowser
 
 # myst37.020
 # cook = "1CIx4heldQFrBstIQ-KL7d7ix-Rif8Di0yW_vsuk-Gsfb9lGzgTWTQ20KJ5oJR_Y7bmVNNKrKS_MVEN4v-OjGPVVsQ2a-h9zZkMC90Fj74frtXRSfKPzzJ5p8hdX27bfvEgUQlVJAzC92Mo_dFLTYvr_SgpQrFp-eUbdI-cByE9F57vWbER9z287be7cdsw6TP1_BYzzC9G1jkpYMgi-vYw"
-# lst_cookies =[
-#     # myst37.014
-#     "1-AhuVhuYkNn4kh6m8T72bEg4xn9S6wqt0TWqDWcbS1NUnO4SLoWWMr4VhaXuV1j1W56-2H8ihDg5SYH8cZQPox6mOyxpCYojTcAFvpNvMSKLa9WlILBMTG65xcyvB2Z4IpSNnmqCkHTFtUJSSiV7avAYVvz72M1RhIPCGeqszXfGcLpOk9z6We4jCaNNzf2SGQzKPlYt6k-aC6le2hrCVg",
-#     # myst37.015
-#     "1HVwcZVHsgR9AH6Lmu_VeRCtSsrI6b9SBu9U0Grj8KGqOVxJRrCZUfjSs1NNS448h2ttG0Egsoc3dsrFku7D5R7z9WyHDcKYqxdfrQCMsZThEjIedubs8BFS4zOwryk-vsv2zuvTbA3BOlrFjcl4tQInXEq3Xdv04EWHADeWfTfBgWWo-Oxoiylj9KvKUx7_sV5vxq72lR0HxiDQDPvCngQ",
-#     # myst37.016
-#     "1RTGjcQkCYaUfk-jI4OCe1K1lFb0N60SUcgwT46onrYd2_UITKYzLttpSETocCEcsdKSLdzdRlP9NBl1xwpWfx1egozVMigurWjjdA0CiTUCQlP4MCG7p_UcB-VEsGEq09Y0c-IPpi5Bf5lelCzg0peWwy5cGOd2J23GLViWpBD-k1UNkfhfdiT7T1GxDePCmxt744-a1dHjLVrLEA9dkDQ",
-#     # myst37.021
-#     "1BmCGFpK08XlfcXBQf_W6iF_BPh6i9cg-6JAuA17tC_tlg7nGW-VG2c4VSqoa_okPgQTs5qjNRmSgifp30jJ20YAOdFACU6JmOHc8EDfSnszQrmQqwSOOHAmub8bGfPIM7rRn86TjoPXqFtn0a96w-R6F53-ne5EZo55sb6Dxt2vOZxsug5pDrtNW5K-hqGBeZj_yhxf_uffBWt_LIF3BEg",
-#     # myst37.022
-#     "15b2vveo09pnXUXXW6wOlLXbpP88N2tKXr_r3ePQdv0lyvo49iqDXjjnaw5kim6tCOKeHKDeGTN4JzlDkoeW-WkpzXX_jWiHqxTFcQh_jzsEmtPL-ou1Q9vWShc_JT1NI4b9gTvjGdUrsez3bIEsu6GXIRvCipa4OASe_GnAc7WW2Ajv1IEVA0JRQ2w3_ByNT76zdTHDOJrgsTZzoN8s4Ag"
-# ]
 dict_cookies ={
     "myst37.014":
     "1-AhuVhuYkNn4kh6m8T72bEg4xn9S6wqt0TWqDWcbS1NUnO4SLoWWMr4VhaXuV1j1W56-2H8ihDg5SYH8cZQPox6mOyxpCYojTcAFvpNvMSKLa9WlILBMTG65xcyvB2Z4IpSNnmqCkHTFtUJSSiV7avAYVvz72M1RhIPCGeqszXfGcLpOk9z6We4jCaNNzf2SGQzKPlYt6k-aC6le2hrCVg",
@@ -139,6 +127,7 @@ async def gen_ai_img_1(update: Update, context):
         str_err = str_err + f'\n    "{str_prompt}"'
         await context.bot.send_message(chat_id=update.message.chat_id, text=str_err)
         print(str_err)
+        print('', f'EXIT - {funcname}', cStrDivider_1, sep='\n')
         return
 
     # pick one random image from lst_imgs
@@ -225,7 +214,7 @@ def gen_ai_image(str_prompt):
             break  # Exit the loop if no exception is caught
         except Exception as e:
             print_except(e, debugLvl=1)
-            print("Exception caught:", e)
+            # print("Exception caught:", e)
             err = 2
             time.sleep(2)  # Wait for 5 seconds before the next attempt
             return lst_imgs, err
