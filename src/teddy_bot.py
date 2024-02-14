@@ -238,7 +238,7 @@ async def gen_ai_img_1(update: Update, context):
     str_uname = user.username
     inp = update.message.text
     str_prompt = inp[inp.find(' ')+1::] # slicing out /<command>
-    str_conf = f'@{str_uname} (aka. {str_handle}) -> please wait, generating image ...\n    DESCRIPTION: {str_prompt}'
+    str_conf = f'@{str_uname} (aka. {str_handle}) -> please wait, generating image ...\n    "{str_prompt}"'
     print(str_conf)
 
     await context.bot.send_message(chat_id=update.message.chat_id, text=str_conf)
@@ -246,10 +246,10 @@ async def gen_ai_img_1(update: Update, context):
     lst_imgs, err = gen_ai_image(str_prompt)
 
     if err > 0:
-        str_err = f"@{str_uname} (aka. {str_handle}) -> ERR: damn, an unknown error has occurred\n  BING said 'NO!'\n   maybe you used a bad word or something, please try again : /"
+        str_err = f"@{str_uname} (aka. {str_handle}) -> ERR: an unknown error has occurred\n  BING said NO!\n   maybe you used a bad word or something, please try again : /"
         if err == 1:
             str_err = f"@{str_uname} (aka. {str_handle}) -> ERR: input description is TOO SHORT, must be at least 50 chars (~10 words or so)"
-        str_err = str_err + f'\n    DESCRIPTION: "{str_prompt}"'
+        str_err = str_err + f'\n    "{str_prompt}"'
         await context.bot.send_message(chat_id=update.message.chat_id, text=str_err)
         print(str_err)
         return
@@ -259,10 +259,13 @@ async def gen_ai_img_1(update: Update, context):
     url = 'nil_url'
     while True:
         r_idx = random.randint(0, len(lst_imgs)-1)
-        if 'r.bing.com' not in lst_imgs[r_idx]:
+        is_img = 'r.bing.com' not in lst_imgs[r_idx]
+        no_end_dot = lst_imgs[r_idx][-1] != '.'
+        # if 'r.bing.com' not in lst_imgs[r_idx]:
+        if is_img and no_end_dot:
             url = lst_imgs[r_idx]
             break
-    await context.bot.send_message(chat_id=update.message.chat_id, text=f'@{str_uname} (aka. {str_handle}) -> here is your image\n  DESCRIPTION: "{str_prompt}" ...\n {url}')
+    await context.bot.send_message(chat_id=update.message.chat_id, text=f'@{str_uname} (aka. {str_handle}) -> here is your image\n  "{str_prompt}" ...\n {url}')
     print(f'\nEXIT - {funcname}\n')
 
 async def gen_ai_img_x(update: Update, context):
