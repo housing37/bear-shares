@@ -23,11 +23,13 @@
 
 
 import tweepy, requests, os
+import requests
 
 # Authenticate to Twitter
 USE_BEAR_SHARES = False 
 if not USE_BEAR_SHARES:
-    # @SolAudits
+    # *** WARNING *** _ SAVE THESE KEYS BEFORE DELETING!
+    # @SolAudits 
     # BEARER_TOKEN = 'AAAAAAAAAAAAAAAAAAAAAA2FsQEAAAAAMQbDq1ye%2FCVB8WhHhiK%2FLI5gHnk%3DoAlPyP7Aef1nhtQsVRtitde8zUtaOuqXzEXsWbpal34vM0OBaH'
     # CLIENT_ID = 'cEp3SWhCSFlOWnBCRm81dEc2MDE6MTpjaQ'
     # CLIENT_SECRET = 'ypu_utp8dSHIdf8eaHVXeRK9ajyZIF9qgc2cap3GaTbv1ZEQpq'
@@ -36,6 +38,7 @@ if not USE_BEAR_SHARES:
     ACCESS_TOKEN = '1754679966657056768-9PKkUuNWKvpTBuPjTh8q9r9LBmX14w'
     ACCESS_TOKEN_SECRET = 'CLw7QEu83Y7NI0lXTOMXGBRMErDgb9nxO9rSPJUY8A8bo'
 else:
+    # *** WARNING *** _ SAVE THESE KEYS BEFORE DELETING!
     # @BearSharesNFT
     # BEARER_TOKEN = 'AAAAAAAAAAAAAAAAAAAAAAWFsQEAAAAAUUWby7USFVAw4q7afJ9nogg1eqE%3DfJKRgoyT6QmKyx0I2fFfgeozryxg6goSftwyaCJuzGzNEp1HIG'
     # CLIENT_ID = 'aEdic09QQV9HQ0xqZU5qMmJCM046MTpjaQ'
@@ -94,7 +97,20 @@ media = api.media_upload(img_file)
 
 # Post Tweet with the attached image
 tweet_text = "Test from Tweepy\n w/ image!"
-client.create_tweet(text=tweet_text, media_ids=[media.media_id])
+response = client.create_tweet(text=tweet_text, media_ids=[media.media_id])
+# Extract the tweet data from the response
+tweet_data = response.data
+
+# Extract the tweet text from the tweet data
+tweet_text = tweet_data['text']
+idx_start = tweet_text.find('http')
+url = tweet_text[idx_start::]
+print(f'response: {response}')
+print(f'tweet_data: {tweet_data}')
+print(f'tweet_text: {tweet_text}')
+print(f'idx_start: {idx_start}')
+print(f'\nresponse: {response}')
+print(f'\nurl: {url}')
 # api.update_status(status=tweet_text, media_ids=[media.media_id])
 print("Tweeted with image!")
 

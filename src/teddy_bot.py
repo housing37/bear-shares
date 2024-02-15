@@ -4,8 +4,7 @@ cStrDivider = '#================================================================
 cStrDivider_1 = '#----------------------------------------------------------------#'
 print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globals', cStrDivider, sep='\n')
 
-
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from telegram.ext import CallbackQueryHandler, CallbackContext
 # from telegram import ChatAction
@@ -14,6 +13,9 @@ import random
 from datetime import datetime
 import json, time, os, traceback, sys
 import webbrowser
+# os.environ["BING_COOKIES"] = cook
+from BingImageCreator import ImageGen, ImageGenAsync
+import tweepy, requests, os
 
 # myst37.020
 # cook = "1CIx4heldQFrBstIQ-KL7d7ix-Rif8Di0yW_vsuk-Gsfb9lGzgTWTQ20KJ5oJR_Y7bmVNNKrKS_MVEN4v-OjGPVVsQ2a-h9zZkMC90Fj74frtXRSfKPzzJ5p8hdX27bfvEgUQlVJAzC92Mo_dFLTYvr_SgpQrFp-eUbdI-cByE9F57vWbER9z287be7cdsw6TP1_BYzzC9G1jkpYMgi-vYw"
@@ -29,18 +31,42 @@ dict_cookies ={
     "myst37.022":
     "15b2vveo09pnXUXXW6wOlLXbpP88N2tKXr_r3ePQdv0lyvo49iqDXjjnaw5kim6tCOKeHKDeGTN4JzlDkoeW-WkpzXX_jWiHqxTFcQh_jzsEmtPL-ou1Q9vWShc_JT1NI4b9gTvjGdUrsez3bIEsu6GXIRvCipa4OASe_GnAc7WW2Ajv1IEVA0JRQ2w3_ByNT76zdTHDOJrgsTZzoN8s4Ag"
 }
-# os.environ["BING_COOKIES"] = cook
-from BingImageCreator import ImageGen, ImageGenAsync
 
 # Telegram Bot token obtained from BotFather
+USE_PROD = False
+IMG_REQUEST_CNT = 0
 TOKEN_dev = '6911413573:AAGrff9aK3aSfaDhGaT5Iyf68zqRcPHrGN0' # TeddySharesBot (dev)
 TOKEN_prod = '6805964502:AAHL99OquXuZUPzpgqWNDbeBY_pgGpANO0A' # BearSharesBot (prod)
-TOKEN = TOKEN_dev
-# BEAR_BOT = Bot(token=TOKEN)
-IMG_REQUEST_CNT = 0
+TOKEN = TOKEN_prod if USE_PROD else TOKEN_dev
+CONSUMER_KEY = 'nil_key'
+CONSUMER_SECRET = 'nil_key'
+ACCESS_TOKEN = 'nil_key'
+ACCESS_TOKEN_SECRET = 'nil_key'
+PROMO_TWEET_TEXT = 'nil_text'
 
 # Dictionary to keep track of users who have been greeted
 greeted_users = {}
+
+def set_twitter_promo_text():
+    global PROMO_TWEET_TEXT
+    PROMO_TWEET_TEXT = 'Test auto tweet w/ image\n\nFind this souce code @ t.me/SolAudits0\nOnly on #PulseChain'
+    if USE_PROD:
+        PROMO_TWEET_TEXT = 'New $BearShares NFT image created!\n\nGenerate your own @ t.me/BearShares\nOnly on #PulseChain'
+
+def set_twitter_auth_keys():
+    global CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET
+    # @SolAudits
+    CONSUMER_KEY = 'ufotTV5H0BMXgCS9p1Hf9LOM6'
+    CONSUMER_SECRET = 'Cped9xDs4T0gpC0guq9CVETAMryB6jqTMhyHmb0f3wfLorBKKX'
+    ACCESS_TOKEN = '1754679966657056768-9PKkUuNWKvpTBuPjTh8q9r9LBmX14w'
+    ACCESS_TOKEN_SECRET = 'CLw7QEu83Y7NI0lXTOMXGBRMErDgb9nxO9rSPJUY8A8bo'
+    if USE_PROD:
+        # @BearSharesNFT
+        CONSUMER_KEY = 'HdZLxkPGZNAzWOzFlVNEqxIeP'
+        CONSUMER_SECRET = 'f2yUKDkLniQKEwouoheUbcJxFNPR2brieGQPq6t0gFGFGdV2dJ'
+        ACCESS_TOKEN = '1756813801020596224-UBAFOB3xtW6xrVykGBPKAovZ6kDiMd'
+        ACCESS_TOKEN_SECRET = 'qKNnDiSZrRFGbR4WCey2MXpG3XNLpmfTDa2jzeSMZxq1P'
+
 
 async def test(update, context):
     funcname = 'test'
@@ -62,14 +88,14 @@ async def start(update, context):
     # Send the message with the inline keyboard to the user
     await update.message.reply_text(message, reply_markup=reply_markup)
 
-async def button_click(update: Update, context: CallbackContext) -> None:
-    query = update.callback_query
-    query.answer()
-    user_id = query.from_user.id
-    message = "You have started a conversation with the bot. Now you can interact with it."
+# async def button_click(update: Update, context: CallbackContext) -> None:
+#     query = update.callback_query
+#     query.answer()
+#     user_id = query.from_user.id
+#     message = "You have started a conversation with the bot. Now you can interact with it."
 
-    # Send a message acknowledging the button click
-    await query.message.reply_text(message)
+#     # Send a message acknowledging the button click
+#     await query.message.reply_text(message)
 
 # Function to handle new users joining the group
 async def new_chat_members(update: Update, context):
@@ -104,6 +130,115 @@ async def bad_command(update: Update, context):
 def validate_input(str_input):
     return len(str_input) >= 50
 
+def validate_admin_user(str_uname):
+    lst_admins = ['@housing37', '@WhiteRabbit0x0', '@mrGabriel7']
+    return '@'+str_uname in lst_admins
+
+def get_img_from_url(img_url):
+    funcname = 'get_img_from_url'
+    print(cStrDivider_1, f'ENTER - {funcname}', sep='\n')
+    img_file = 'image.jpg'
+    success = False
+    response = requests.get(img_url)
+    if response.status_code == 200:
+        with open(img_file, 'wb') as image_file:
+            image_file.write(response.content)
+        success = True
+    else:
+        print("Failed to download image.")
+    print('', f'EXIT - {funcname} _ status: {success}', cStrDivider_1, sep='\n')
+    return img_file, success # success / fail
+
+def delete_img_file(img_file):
+    funcname = 'delete_img_file'
+    print(cStrDivider_1, f'ENTER - {funcname}', sep='\n')
+    os.remove(img_file)
+    print("Image file deleted.")
+    print('', f'EXIT - {funcname}', cStrDivider_1, sep='\n')
+    
+def tweet_promo(str_tweet, img_url):
+    funcname = 'tweet_promo'
+    print(cStrDivider_1, f'ENTER - {funcname}', sep='\n')
+
+    # Authenticate to Twitter
+    client = tweepy.Client(
+        consumer_key=CONSUMER_KEY,
+        consumer_secret=CONSUMER_SECRET,
+        access_token=ACCESS_TOKEN,
+        access_token_secret=ACCESS_TOKEN_SECRET
+    )
+    auth = tweepy.OAuth1UserHandler(
+        CONSUMER_KEY,
+        CONSUMER_SECRET,
+        ACCESS_TOKEN,
+        ACCESS_TOKEN_SECRET,
+    )
+
+    # Create API object
+    api = tweepy.API(auth, wait_on_rate_limit=True)
+
+    # download image
+    img_file, success = get_img_from_url(img_url)
+    if not success:
+        print("FAILED - Tweeted promo with image!")
+        print('', f'EXIT - {funcname}', cStrDivider_1, sep='\n')
+        return None, False
+
+    # Upload image and tweet
+    media = api.media_upload(img_file)
+    response = client.create_tweet(text=str_tweet, media_ids=[media.media_id])
+    print("Tweeted promo with image!")
+
+    # clean up
+    delete_img_file(img_file)
+
+    print('', f'EXIT - {funcname}', cStrDivider_1, sep='\n')
+    return response, True
+
+async def button_click(update: Update, context: CallbackContext) -> None:
+    funcname = 'button_click'
+    print(cStrDivider_1, f'ENTER - {funcname}', sep='\n')
+    str_uname = update.callback_query.from_user.username
+    str_handle = update.callback_query.from_user.first_name
+    print(f'from user: @{str_uname} (aka. {str_handle})')
+    if not validate_admin_user(str_uname):
+        str_resp = f'NOPE! user not allowed'
+        await context.bot.send_message(chat_id=update.callback_query.message.chat_id, text=str_resp)
+        print(str_resp)
+        print('', f'EXIT - {funcname}', cStrDivider_1, sep='\n')
+        return
+    
+    # original message data & specified 'InlineKeyboardButton' callback_data
+    og_msg_data = update.callback_query.message.text
+    callback_data = update.callback_query.data
+    img_url = og_msg_data[og_msg_data.find('http')::]
+
+    # Perform your desired actions here
+    print(f'og_msg_data: {og_msg_data}')
+    print(f'callback_data: {callback_data}') # callback_data = '@username (aka. handle)'
+    print(f'img_url: {img_url}')
+    
+    # tweet promo
+    str_tweet = PROMO_TWEET_TEXT + f'\n\nauthor: TG -> {callback_data}' # should we use 't.me/username' ?
+    response, success = tweet_promo(str_tweet, img_url) # callback_data = TG author
+    tweet_data = response.data
+    tweet_text = tweet_data['text']
+    idx_start = tweet_text.rfind('http')
+    url = tweet_text[idx_start::]
+    # print(f'response: {response}')
+    # print(f'tweet_data: {tweet_data}')
+    print(f'tweet_text:\n{tweet_text}')
+    # print(f'idx_start: {idx_start}')
+    print(f'\nurl: {url}')
+
+    str_resp = f'@{str_uname} (aka. {str_handle}) -> Promo Tweet Sent Successfully!\n  tweet: {url}\n  author: {callback_data}'
+    if not success:
+        str_resp = f'@{str_uname} (aka. {str_handle}) -> Promo Tweet FAILED to send : /'
+    print(f'\nstr_resp: {str_resp}')
+    await context.bot.send_message(chat_id=update.callback_query.message.chat_id, text=str_resp)
+
+    print('', f'EXIT - {funcname}', cStrDivider_1, sep='\n')
+    
 async def gen_ai_img_1(update: Update, context):
     funcname = 'gen_ai_img_1'
     print(cStrDivider_1, f'ENTER - {funcname}', sep='\n')
@@ -122,9 +257,9 @@ async def gen_ai_img_1(update: Update, context):
     lst_imgs, err = gen_ai_image(str_prompt)
 
     if err > 0:
-        str_err = f"@{str_uname} (aka. {str_handle}) -> ERR: BING said NO!\n   change it up & try again : /"
+        str_err = f"@{str_uname} (aka. {str_handle}) -> err: BING said NO!\n   change it up & try again : /"
         if err == 1:
-            str_err = f"@{str_uname} (aka. {str_handle}) -> ERR: description TOO SHORT, need at least 50 chars (~10 words or so)"
+            str_err = f"@{str_uname} (aka. {str_handle}) -> err: description TOO SHORT, need at least 50 chars (~10 words or so)"
         str_err = str_err + f'\n    "{str_prompt}"'
         await context.bot.send_message(chat_id=update.message.chat_id, text=str_err)
         print(str_err)
@@ -142,7 +277,18 @@ async def gen_ai_img_1(update: Update, context):
         if is_img and no_end_dot:
             url = lst_imgs[r_idx]
             break
-    await context.bot.send_message(chat_id=update.message.chat_id, text=f'@{str_uname} (aka. {str_handle}) -> here is your image\n  "{str_prompt}" ...\n {url}')
+
+    # Create an inline keyboard markup with a button
+    inline_keyboard = [
+        [InlineKeyboardButton("Tweet This Promo", callback_data=f'@{str_uname} (aka. {str_handle})')]
+    ]
+    reply_markup = InlineKeyboardMarkup(inline_keyboard)
+    await context.bot.send_message(
+        chat_id=update.message.chat_id, 
+        text=f'@{str_uname} (aka. {str_handle}) -> here is your image\n  "{str_prompt}" ...\n {url}',
+        # reply_markup = ReplyKeyboardMarkup([['Your Button Text']])
+        reply_markup = reply_markup
+        )
     print('', f'EXIT - {funcname}', cStrDivider_1, sep='\n')
 
 async def gen_ai_img_x(update: Update, context):
@@ -208,7 +354,6 @@ def gen_ai_image(str_prompt):
             time.sleep(2)  # Wait for 5 seconds before the next attempt
             return lst_imgs, err
 
-
     print('DONE GETTING IMAGES...')
     print(*lst_imgs, sep='\n')
     print('SENDING IMAGES...')
@@ -230,7 +375,9 @@ def main():
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("gen_image", gen_ai_img_1))
     dp.add_handler(CommandHandler("gen_image_x", gen_ai_img_x))
-
+    dp.add_handler(CommandHandler("tweet_promo", tweet_promo))
+    # Add the button click handler
+    dp.add_handler(CallbackQueryHandler(button_click))
     # Register message handler for new chat members
     # dp.add_handler(MessageHandler(filters.StatusUpdate._NewChatMembers, new_chat_members))
 
@@ -296,8 +443,15 @@ if __name__ == "__main__":
     
     ## exe ##
     try:
-        inp = input('Select token type to use:\n  0 = prod\n  1 = dev\n  > ')
-        TOKEN = TOKEN_prod if inp == '0' else TOKEN_dev
+        inp = input('Select token type to use:\n  0 = prod (@BearSharesBot)\n  1 = dev (@TeddySharesBot)\n  > ')
+        USE_PROD = True if inp == '0' else False
+        print(f'  input = {inp} _ USE_PROD = {USE_PROD}')
+
+        TOKEN = TOKEN_prod if USE_PROD else TOKEN_dev
+        set_twitter_auth_keys()
+        set_twitter_promo_text()
+        print(f'\nCONSUMER_KEY: {CONSUMER_KEY}')
+        print(f'PROMO_TWEET_TEXT:\n{PROMO_TWEET_TEXT}\n') 
         main()
     except Exception as e:
         print_except(e, debugLvl=0)
