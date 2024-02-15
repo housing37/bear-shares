@@ -43,6 +43,8 @@ CONSUMER_SECRET = 'nil_key'
 ACCESS_TOKEN = 'nil_key'
 ACCESS_TOKEN_SECRET = 'nil_key'
 PROMO_TWEET_TEXT = 'nil_text'
+# LST_ADMINS = ['@housing37', '@WhiteRabbit0x0', '@mrGabriel7']
+LST_ADMINS = ['@housing37']
 
 # Dictionary to keep track of users who have been greeted
 greeted_users = {}
@@ -131,8 +133,8 @@ def validate_input(str_input):
     return len(str_input) >= 50
 
 def validate_admin_user(str_uname):
-    lst_admins = ['@housing37', '@WhiteRabbit0x0', '@mrGabriel7']
-    return '@'+str_uname in lst_admins
+    global LST_ADMINS
+    return '@'+str_uname in LST_ADMINS
 
 def get_img_from_url(img_url):
     funcname = 'get_img_from_url'
