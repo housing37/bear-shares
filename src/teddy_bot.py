@@ -292,12 +292,21 @@ async def gen_ai_img_1(update: Update, context):
         [InlineKeyboardButton("Tweet This Promo", callback_data=f'@{str_uname} (aka. {str_handle})')]
     ]
     reply_markup = InlineKeyboardMarkup(inline_keyboard)
-    await context.bot.send_message(
-        chat_id=update.message.chat_id, 
-        text=f'@{str_uname} (aka. {str_handle}) -> here is your image\n  "{str_prompt}" ...\n {url}',
-        # reply_markup = ReplyKeyboardMarkup([['Your Button Text']])
-        reply_markup = reply_markup
-        )
+    try:
+        await context.bot.send_message(
+            chat_id=update.message.chat_id, 
+            text=f'@{str_uname} (aka. {str_handle}) -> here is your image\n  "{str_prompt}" ...\n {url}',
+            # reply_markup = ReplyKeyboardMarkup([['Your Button Text']])
+            reply_markup = reply_markup
+            )
+    except Exception as e:
+        # note_021724: exception added for TG: @enriquebambo (aka. 🍊 👾 𝐄η𝐑𝕚ⓀẸⓑᗩｍ𝕓ㄖ 👾🍊 {I DM First, I'm Impostor})
+        #   sending response with TG button was causing a crash (but images were indeed successfully received from BING)
+        print_except(e, debugLvl=1)
+        print('Sending to TG w/o tweet button... ')
+        await context.bot.send_message(
+            chat_id=update.message.chat_id, 
+            text=f'@{str_uname} (aka. {str_handle}) -> here is your image\n  "{str_prompt}" ...\n {url}')
     print('', f'EXIT - {funcname}', cStrDivider_1, sep='\n')
 
 async def gen_ai_img_x(update: Update, context):
