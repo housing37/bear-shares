@@ -211,14 +211,11 @@ async def button_click(update: Update, context: CallbackContext) -> None:
     str_handle = update.callback_query.from_user.first_name
     print(f'from user: @{str_uname} (aka. {str_handle})')
     if not validate_admin_user(str_uname):
-        str_resp = f'@housing37 tweet requested: '
-        message_id = context.user_data.get('message_id')
-        if message_id:
-            # Construct the link to the post
-            bot_username = context.bot.username
-            chat_id = update.effective_chat.id
-            post_link = f"t.me/{bot_username}/{chat_id}?message_id={message_id}"
-            str_resp = str_resp + post_link
+        str_resp = f'@housing37 tweet requested (from: @{str_uname}): '
+        message_id = update.callback_query.message.message_id
+        chat_id = update.effective_chat.id
+        post_link = f"t.me/BearShares/{chat_id}?message_id={message_id}"
+        str_resp = str_resp + post_link
         
         await context.bot.send_message(chat_id=update.callback_query.message.chat_id, text=str_resp)
         print(str_resp)
@@ -248,7 +245,7 @@ async def button_click(update: Update, context: CallbackContext) -> None:
     # print(f'idx_start: {idx_start}')
     print(f'\nurl: {url}')
 
-    str_resp = f'@{str_uname} (aka. {str_handle}) -> Promo Tweet Sent Successfully!\n  tweet: {url}\n  author: {callback_data}\n\nEveryone please like and RT! LFG!'
+    str_resp = f'\ntweet: {url}\nauthor: {callback_data}\nplease like & rt'
     if not success:
         str_resp = f'@{str_uname} (aka. {str_handle}) -> Promo Tweet FAILED to send : /'
     print(f'\nstr_resp: {str_resp}')
