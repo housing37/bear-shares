@@ -50,7 +50,8 @@ ACCESS_TOKEN = 'nil_key'
 ACCESS_TOKEN_SECRET = 'nil_key'
 PROMO_TWEET_TEXT = 'nil_text'
 # LST_ADMINS = ['@housing37', '@WhiteRabbit0x0', '@mrGabriel7']
-LST_ADMINS = ['@housing37']
+LST_ADMINS = ['@housing37', '@WhiteRabbit0x0']
+# LST_ADMINS = ['@housing37']
 IDX_LAST_COOKIE = -1
 
 # Dictionary to keep track of users who have been greeted
