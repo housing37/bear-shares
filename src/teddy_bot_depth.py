@@ -1,3 +1,4 @@
+# copy for TG: @DepthBySoul _ 021524
 __fname = 'teddy_bot'
 __filename = __fname + '.py'
 cStrDivider = '#================================================================#'
@@ -17,32 +18,35 @@ import webbrowser
 from BingImageCreator import ImageGen, ImageGenAsync
 import tweepy, requests, os
 
+# ref: https://github.com/acheong08/BingImageCreator/blob/main/README.md
+'''
+HOW-TO get required coockie
+login to bing.com/image/creator
+  open inspector (F12)
+  generate an image on the webpage
+  then go back to the opened inspector 
+   then go to 'network' tab
+   then use console cmd: cookieStore.get("_U")
+   then search output for 'value' and copy it (thats the cookie)
+'''
+
 dict_cookies ={
-    "myst37.014":
-    "1-AhuVhuYkNn4kh6m8T72bEg4xn9S6wqt0TWqDWcbS1NUnO4SLoWWMr4VhaXuV1j1W56-2H8ihDg5SYH8cZQPox6mOyxpCYojTcAFvpNvMSKLa9WlILBMTG65xcyvB2Z4IpSNnmqCkHTFtUJSSiV7avAYVvz72M1RhIPCGeqszXfGcLpOk9z6We4jCaNNzf2SGQzKPlYt6k-aC6le2hrCVg",
-    "myst37.015":
-    "1HVwcZVHsgR9AH6Lmu_VeRCtSsrI6b9SBu9U0Grj8KGqOVxJRrCZUfjSs1NNS448h2ttG0Egsoc3dsrFku7D5R7z9WyHDcKYqxdfrQCMsZThEjIedubs8BFS4zOwryk-vsv2zuvTbA3BOlrFjcl4tQInXEq3Xdv04EWHADeWfTfBgWWo-Oxoiylj9KvKUx7_sV5vxq72lR0HxiDQDPvCngQ",
-    "myst37.016":
-    "1RTGjcQkCYaUfk-jI4OCe1K1lFb0N60SUcgwT46onrYd2_UITKYzLttpSETocCEcsdKSLdzdRlP9NBl1xwpWfx1egozVMigurWjjdA0CiTUCQlP4MCG7p_UcB-VEsGEq09Y0c-IPpi5Bf5lelCzg0peWwy5cGOd2J23GLViWpBD-k1UNkfhfdiT7T1GxDePCmxt744-a1dHjLVrLEA9dkDQ",
-    "myst37.021":
-    "1BmCGFpK08XlfcXBQf_W6iF_BPh6i9cg-6JAuA17tC_tlg7nGW-VG2c4VSqoa_okPgQTs5qjNRmSgifp30jJ20YAOdFACU6JmOHc8EDfSnszQrmQqwSOOHAmub8bGfPIM7rRn86TjoPXqFtn0a96w-R6F53-ne5EZo55sb6Dxt2vOZxsug5pDrtNW5K-hqGBeZj_yhxf_uffBWt_LIF3BEg",
-    "myst37.022":
-    "15b2vveo09pnXUXXW6wOlLXbpP88N2tKXr_r3ePQdv0lyvo49iqDXjjnaw5kim6tCOKeHKDeGTN4JzlDkoeW-WkpzXX_jWiHqxTFcQh_jzsEmtPL-ou1Q9vWShc_JT1NI4b9gTvjGdUrsez3bIEsu6GXIRvCipa4OASe_GnAc7WW2Ajv1IEVA0JRQ2w3_ByNT76zdTHDOJrgsTZzoN8s4Ag"
+    "bing_user":
+    "bing_login_cookie",
 }
 
 # Telegram Bot token obtained from BotFather
 USE_PROD = False
 IMG_REQUEST_CNT = 0
-TOKEN_dev = '6911413573:AAGrff9aK3aSfaDhGaT5Iyf68zqRcPHrGN0' # TeddySharesBot (dev)
-TOKEN_prod = '6805964502:AAHL99OquXuZUPzpgqWNDbeBY_pgGpANO0A' # BearSharesBot (prod)
+TOKEN_dev = 'dev_bot_TG_token' # TeddySharesBot (dev)
+TOKEN_prod = 'prod_bot_TG_token' # BearSharesBot (prod)
 TOKEN = TOKEN_prod if USE_PROD else TOKEN_dev
 CONSUMER_KEY = 'nil_key'
 CONSUMER_SECRET = 'nil_key'
 ACCESS_TOKEN = 'nil_key'
 ACCESS_TOKEN_SECRET = 'nil_key'
 PROMO_TWEET_TEXT = 'nil_text'
-# LST_ADMINS = ['@housing37', '@WhiteRabbit0x0', '@mrGabriel7']
-LST_ADMINS = ['@housing37']
+LST_ADMINS = ['@housing37'] # list of TG user ids that can click button to post to twitter
 IDX_LAST_COOKIE = -1
 
 # Dictionary to keep track of users who have been greeted
@@ -57,16 +61,16 @@ def set_twitter_promo_text():
 def set_twitter_auth_keys():
     global CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET
     # @SolAudits
-    CONSUMER_KEY = 'ufotTV5H0BMXgCS9p1Hf9LOM6'
-    CONSUMER_SECRET = 'Cped9xDs4T0gpC0guq9CVETAMryB6jqTMhyHmb0f3wfLorBKKX'
-    ACCESS_TOKEN = '1754679966657056768-9PKkUuNWKvpTBuPjTh8q9r9LBmX14w'
-    ACCESS_TOKEN_SECRET = 'CLw7QEu83Y7NI0lXTOMXGBRMErDgb9nxO9rSPJUY8A8bo'
+    CONSUMER_KEY = 'from_twitter_dev_account'
+    CONSUMER_SECRET = 'from_twitter_dev_account'
+    ACCESS_TOKEN = 'from_twitter_dev_account'
+    ACCESS_TOKEN_SECRET = 'from_twitter_dev_account'
     if USE_PROD:
         # @BearSharesNFT
-        CONSUMER_KEY = 'HdZLxkPGZNAzWOzFlVNEqxIeP'
-        CONSUMER_SECRET = 'f2yUKDkLniQKEwouoheUbcJxFNPR2brieGQPq6t0gFGFGdV2dJ'
-        ACCESS_TOKEN = '1756813801020596224-UBAFOB3xtW6xrVykGBPKAovZ6kDiMd'
-        ACCESS_TOKEN_SECRET = 'qKNnDiSZrRFGbR4WCey2MXpG3XNLpmfTDa2jzeSMZxq1P'
+        CONSUMER_KEY = 'from_twitter_dev_account'
+        CONSUMER_SECRET = 'from_twitter_dev_account'
+        ACCESS_TOKEN = 'from_twitter_dev_account'
+        ACCESS_TOKEN_SECRET = 'from_twitter_dev_account'
 
 
 async def test(update, context):
