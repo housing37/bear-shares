@@ -211,7 +211,15 @@ async def button_click(update: Update, context: CallbackContext) -> None:
     str_handle = update.callback_query.from_user.first_name
     print(f'from user: @{str_uname} (aka. {str_handle})')
     if not validate_admin_user(str_uname):
-        str_resp = f'Request Tweet'
+        str_resp = f'@housing37 tweet requested: '
+        message_id = context.user_data.get('message_id')
+        if message_id:
+            # Construct the link to the post
+            bot_username = context.bot.username
+            chat_id = update.effective_chat.id
+            post_link = f"t.me/{bot_username}/{chat_id}?message_id={message_id}"
+            str_resp = str_resp + post_link
+        
         await context.bot.send_message(chat_id=update.callback_query.message.chat_id, text=str_resp)
         print(str_resp)
         print('', f'EXIT - {funcname}', cStrDivider_1, sep='\n')
@@ -289,7 +297,7 @@ async def gen_ai_img_1(update: Update, context):
 
     # Create an inline keyboard markup with a button
     inline_keyboard = [
-        [InlineKeyboardButton("Tweet This Promo", callback_data=f'@{str_uname} (aka. {str_handle})')]
+        [InlineKeyboardButton("Request Tweet", callback_data=f'@{str_uname} (aka. {str_handle})')]
     ]
     reply_markup = InlineKeyboardMarkup(inline_keyboard)
     try:
