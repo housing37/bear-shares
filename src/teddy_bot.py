@@ -19,15 +19,23 @@ import tweepy, requests, os
 
 dict_cookies ={
     "myst37.014":
-    "1-AhuVhuYkNn4kh6m8T72bEg4xn9S6wqt0TWqDWcbS1NUnO4SLoWWMr4VhaXuV1j1W56-2H8ihDg5SYH8cZQPox6mOyxpCYojTcAFvpNvMSKLa9WlILBMTG65xcyvB2Z4IpSNnmqCkHTFtUJSSiV7avAYVvz72M1RhIPCGeqszXfGcLpOk9z6We4jCaNNzf2SGQzKPlYt6k-aC6le2hrCVg",
+    "1O6qciHnTFDgJ03jeUGnyBaAqJJYSBPgHXH40-YsLu98wLrXvhaddk1Q58S2HdItxybkBnF2CRXn19cN6mfGPEv4885wJMwqjRCJ0EfJLZMNpvILQ8o22im_5q1DTRnqNv_G6mnNTV8OvXXVLaSzxfaDWly8UnLebIvpiQpe0ih9679E3pbYmojYlLROlAgh_Ov9qvJghHNuR6tZlKxCVMg",
     "myst37.015":
-    "1HVwcZVHsgR9AH6Lmu_VeRCtSsrI6b9SBu9U0Grj8KGqOVxJRrCZUfjSs1NNS448h2ttG0Egsoc3dsrFku7D5R7z9WyHDcKYqxdfrQCMsZThEjIedubs8BFS4zOwryk-vsv2zuvTbA3BOlrFjcl4tQInXEq3Xdv04EWHADeWfTfBgWWo-Oxoiylj9KvKUx7_sV5vxq72lR0HxiDQDPvCngQ",
+    "1vfrfP_8hf-1Bh_fwm9gSTw6nupNV5ZeKR_7UhcYrWOyz07C_axau9EY9hmMPeVAbE0YRlKwz4X5ugRLGvv4ORjLYscCqBPtf9s3_cALCGuAjBj5-ewRtk7Hm7VFvIC4UqgHlxfys1bfI4leH8dryZJnxVlfL1xkNlcNqKCBmeU2shcb3kAN7zgNl9PlLcwy4NZfHykPLSw807WaKn61vxw",
     "myst37.016":
-    "1RTGjcQkCYaUfk-jI4OCe1K1lFb0N60SUcgwT46onrYd2_UITKYzLttpSETocCEcsdKSLdzdRlP9NBl1xwpWfx1egozVMigurWjjdA0CiTUCQlP4MCG7p_UcB-VEsGEq09Y0c-IPpi5Bf5lelCzg0peWwy5cGOd2J23GLViWpBD-k1UNkfhfdiT7T1GxDePCmxt744-a1dHjLVrLEA9dkDQ",
+    "11JioWskagKPJr8R8yZ-t5pNQl0OeEra2OXSosp8LgNL9OZeVcnx4kBd6oWfBLk1hRfh0SrVlivJYPSFvZmt-sn2V1dlNVmzJ1omwNsnODuZNrzwvWGAcTcIOyyRn8yxP9v1zmm4Sf6g8LPAOfmklf8V1mDj2nz8wRsw1hD8FQvUm9HXszlY924DfcJeYOVgyBjkRq78av1xiH3WnSM-aBQ",
+    "myst37.017":
+    "18m5eiyraHoefftPy3APxWjljtk1ZPnL7G23R2lypkZhOag-KOStZPxIjVon279wv5pyRnQUfGwWZzilzjSsfXg_7oqefQUohz98oJe7FrWTuHvimBnSxffW0FClHF4dna8UUOe1W6SkTRUoXJKJ7eYF5MdWx43uM8PfZqGmOWEb-K6q0Gjde2pjV8iSWVQOIJg_RW_gOhu1FFB1iS3Rr2w",
+    "myst37.018":
+    "1yJTyZdFLqHqNkO46kJSCEdPI1xBisx_sWovMAsfTu6bjNBRo6mNLORzVwFeq4OJWA04iR9-JBctTT3CI2dOT9N67e9smYkIUCTjGTKO4xYhx64M2JqMgd-J9MzRLSzfJTKpxK9yyxiT7Vqrdc_nOKX3ZmSXT2CXjG02GFrdpKvfJlTsXELzUMCkb7rbc8XmYCaHODrM_trpX60aPgrO42g",
+    "myst37.019":
+    "1kN1Y9EW_S-C5Jz6idhVSrJ051fXNYHdi_dfeC0rEw305lPxxCPYeQh6lI3hVUqs2rL-ZBP11vn4xGiGJcCl2A4N8fuEqW1ZiEkIKDdqALLVb32QiAJGTny76uCGLkTFyO90uDBVEvN0JgHbkcYxEPJ5TCYHgegSmZf2coO3YejEcF69frCw2EhRG-GY6WDj0ibqO5uV9y0dbgQdgZCI-vA",
+    "myst37.020":
+    "15Qcr0DG07nUL-JRNH4NjiLrmO4YY57zKG8cbPThzMc23aObETd32Ey1m8U2CfN6Y8hVO_iobUCu5rezyNUP4vsfAh3AKggJVQCr-mBiQ03dnbOpvjpNTMmY2c1_3zXiO_UlZDbjyRheQt490rboOdAAAVWTUDPA9773t2X3qz7isjHfKk8n2m05CPOnHu0om-5cha9jpHn6hqbxk_hce5w",
     "myst37.021":
-    "1BmCGFpK08XlfcXBQf_W6iF_BPh6i9cg-6JAuA17tC_tlg7nGW-VG2c4VSqoa_okPgQTs5qjNRmSgifp30jJ20YAOdFACU6JmOHc8EDfSnszQrmQqwSOOHAmub8bGfPIM7rRn86TjoPXqFtn0a96w-R6F53-ne5EZo55sb6Dxt2vOZxsug5pDrtNW5K-hqGBeZj_yhxf_uffBWt_LIF3BEg",
+    "1jbyrRLRU4xfAUtRZngWIbO7KFy2kNi9bMCt81wmuITnMbZMe-2i42sFz530SNU_JUS7vQEDMB1CzGYplRmHowCD1XZn5edSLxRe7dozczMItteERwrYVTaZcYiI2OQkLXRrGS9b80yOjW_gOWIO_klZwlSO-JVZyKMBqNRWJcGR0u192ZA-jlW21MuLUXNWNvJFZ6Cuepz8LLqyCEtIApw",
     "myst37.022":
-    "15b2vveo09pnXUXXW6wOlLXbpP88N2tKXr_r3ePQdv0lyvo49iqDXjjnaw5kim6tCOKeHKDeGTN4JzlDkoeW-WkpzXX_jWiHqxTFcQh_jzsEmtPL-ou1Q9vWShc_JT1NI4b9gTvjGdUrsez3bIEsu6GXIRvCipa4OASe_GnAc7WW2Ajv1IEVA0JRQ2w3_ByNT76zdTHDOJrgsTZzoN8s4Ag"
+    "1SSgxK-AK9szOZgW5VucHQs3cZvNzJJ8EE3cHHP5c7r6IdrQ_qAvGTOYPWakQ6kjfumFosvTYGtsPm_TO119AKhxORgINBmbrd9hT1cF6v1qgBP_PjINJI3fyBF0aVk0WK-sE2NtF8AVJG-h7knYgu6Pv4sJ6MKiKUKVW91TIOBgxVSHuthw3n_VjplTS87tDWHdwqZxPUySODoqhwNCW0g",
 }
 
 # Telegram Bot token obtained from BotFather
@@ -232,7 +240,7 @@ async def button_click(update: Update, context: CallbackContext) -> None:
     # print(f'idx_start: {idx_start}')
     print(f'\nurl: {url}')
 
-    str_resp = f'@{str_uname} (aka. {str_handle}) -> Promo Tweet Sent Successfully!\n  tweet: {url}\n  author: {callback_data}'
+    str_resp = f'@{str_uname} (aka. {str_handle}) -> Promo Tweet Sent Successfully!\n  tweet: {url}\n  author: {callback_data}\n\nEveryone please like and RT! LFG!'
     if not success:
         str_resp = f'@{str_uname} (aka. {str_handle}) -> Promo Tweet FAILED to send : /'
     print(f'\nstr_resp: {str_resp}')
