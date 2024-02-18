@@ -234,7 +234,8 @@ async def button_click(update: Update, context: CallbackContext) -> None:
         str_resp = f'@housing37 or @WhiteRabbit0x0 tweet requested (from: @{str_uname}): '
         message_id = update.callback_query.message.message_id
         chat_id = update.effective_chat.id
-        post_link = f"t.me/BearShares/{chat_id}?message_id={message_id}"
+        # post_link = f"t.me/BearShares/{chat_id}?message_id={message_id}"
+        post_link = f"t.me/BearShares/{message_id}" # ex: https://t.me/BearShares/3284
         str_resp = str_resp + post_link
         
         await context.bot.send_message(chat_id=update.callback_query.message.chat_id, text=str_resp)
