@@ -21,7 +21,7 @@ def init_webdriver():
     ans = input('\n  Run headless? [y/n]\n  > ')
     if ans == 'y' or ans == '1': 
         options.add_argument("--headless")  # Run Chrome in headless mode
-        options.add_argument("--window-size=1920,1080")
+        # options.add_argument("--window-size=1920,1080")
     return webdriver.Chrome(options=options) # Create driver & get html_content
 
 def perform_login():
