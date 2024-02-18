@@ -18,6 +18,7 @@ from BingImageCreator import ImageGen, ImageGenAsync
 import tweepy, requests, os
 
 # NOTE: browser inspector says cookies expire in ~14 days (2 weeks)
+#   cookies below created: 02.17.24 or earlier
 dict_cookies ={
     # "bear37.008":
     # "10RN0qwZcnwu_OAn3vRbgXQApaFyUMnWVHEFphMY4LiX3t_oDjxJjiGrs1FoUAfa2WCrC0IOvcuyTIQGgeZExfei62LJC1UZX3ArFnHNXBP_PfQ6bL6DwuLVCe94CDoC1sTenbVsK5MdRlIiTlMcKmB0fbu8ILiAOH9qQ56g_qquSKHtfyXP7kXeW8rKN5thZNj7yebd_GDUwRByzoG3MtQ",
