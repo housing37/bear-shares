@@ -231,7 +231,7 @@ async def button_click(update: Update, context: CallbackContext) -> None:
     str_handle = update.callback_query.from_user.first_name
     print(f'from user: @{str_uname} (aka. {str_handle})')
     if not validate_admin_user(str_uname):
-        str_resp = f'@housing37 tweet requested (from: @{str_uname}): '
+        str_resp = f'@housing37 or @WhiteRabbit0x0 tweet requested (from: @{str_uname}): '
         message_id = update.callback_query.message.message_id
         chat_id = update.effective_chat.id
         post_link = f"t.me/BearShares/{chat_id}?message_id={message_id}"
