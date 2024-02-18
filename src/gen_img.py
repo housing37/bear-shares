@@ -10,7 +10,7 @@ from selenium.webdriver.chrome.service import Service
 from lxml import html
 from datetime import datetime
 
-# from xvfbwrapper import Xvfb # pip install xvfbwrapper
+from xvfbwrapper import Xvfb # pip install xvfbwrapper
 
 email = 'myst37.014@hotmail.com'    # ** WARNING ** DO NOT COMMIT!
 password = 'myst2012mayan13206hotmail'     # ** WARNING ** DO NOT COMMIT!
@@ -65,8 +65,8 @@ def get_time_now(dt=True):
 
 
 
-# vdisplay = Xvfb()
-# vdisplay.start()
+vdisplay = Xvfb()
+vdisplay.start()
 
 # launch stuff inside
 # virtual display here.
@@ -109,7 +109,7 @@ input("\nPress Enter to close the driver...")
 # Close the browser
 driver.quit()
 
-# vdisplay.stop()
+vdisplay.stop()
 
 
 ## LEGACY NAIVE ENDPOINT TESTING FOR bing.com/images/create ## 
