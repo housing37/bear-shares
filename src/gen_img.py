@@ -16,8 +16,8 @@ email = 'myst37.014@hotmail.com'    # ** WARNING ** DO NOT COMMIT!
 password = 'myst2012mayan13206hotmail'     # ** WARNING ** DO NOT COMMIT!
 
 def init_webdriver():
-    # options = Options()
-    options = webdriver.ChromeOptions()
+    options = Options()
+    # options = webdriver.ChromeOptions()
     ans = input('\n  Run headless? [y/n]\n  > ')
     if ans == 'y' or ans == '1': 
         options.add_argument("--headless")  # Run Chrome in headless mode
