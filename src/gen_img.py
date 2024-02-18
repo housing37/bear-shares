@@ -12,8 +12,8 @@ from datetime import datetime
 
 # from xvfbwrapper import Xvfb # pip install xvfbwrapper
 
-email = 'myst37.014@hotmail.com'    # ** WARNING ** DO NOT COMMIT!
-password = 'myst2012mayan13206hotmail'     # ** WARNING ** DO NOT COMMIT!
+email = ''    # ** WARNING ** DO NOT COMMIT!
+password = ''     # ** WARNING ** DO NOT COMMIT!
 
 def init_webdriver():
     options = Options()
@@ -23,6 +23,7 @@ def init_webdriver():
         options.add_argument("--headless")  # Run Chrome in headless mode
         # options.add_argument("--window-size=1920,1080")
     return webdriver.Chrome(options=options) # Create driver & get html_content
+    # return webdriver.Firefox(options=options)
 
 def perform_login():
     INP_EMAIL = (By.ID, "i0116")
@@ -72,7 +73,6 @@ def get_time_now(dt=True):
 # virtual display here.
 
 
-# driver = webdriver.Firefox()
 print(f'\ninitializing... {get_time_now()}')
 driver = init_webdriver()
 

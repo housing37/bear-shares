@@ -42,8 +42,8 @@
 # driver = init_webdriver()
 # # driver.get('https://login.live.com')
 
-# email = 'myst37.014@hotmail.com'    # ** WARNING ** DO NOT COMMIT!
-# password = 'myst2012mayan13206hotmail'     # ** WARNING ** DO NOT COMMIT!
+# email = ''    # ** WARNING ** DO NOT COMMIT!
+# password = '     # ** WARNING ** DO NOT COMMIT!
 
 # def perform_login():
 #     # driver.get('https://login.live.com')
@@ -195,8 +195,8 @@
 #     return webdriver.Chrome(options=options)
 
 # # Your Hotmail or Microsoft Live credentials
-# email = 'myst37.014@hotmail.com'    # ** WARNING ** DO NOT COMMIT!
-# password = 'myst2012mayan13206hotmail'     # ** WARNING ** DO NOT COMMIT!
+# email = ''    # ** WARNING ** DO NOT COMMIT!
+# password = ''     # ** WARNING ** DO NOT COMMIT!
 
 # # Path to your webdriver. For example, if using Chrome, make sure chromedriver is installed.
 # # And specify its path.
@@ -259,8 +259,8 @@
 # import requests
 
 # # Your Hotmail or Microsoft Live credentials
-# email = 'myst37.014@hotmail.com'    # ** WARNING ** DO NOT COMMIT!
-# password = 'myst2012mayan13206hotmail'     # ** WARNING ** DO NOT COMMIT!
+# email = ''    # ** WARNING ** DO NOT COMMIT!
+# password = ''     # ** WARNING ** DO NOT COMMIT!
 
 # # Define the login URL
 # login_url = 'https://login.live.com/'
