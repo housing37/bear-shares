@@ -293,9 +293,9 @@ async def gen_ai_img_1(update: Update, context):
     lst_imgs, err = gen_ai_image(str_prompt)
 
     if err > 0:
-        str_err = f"@{str_uname} (aka. {str_handle}) -> err: BING said NO!\n   change it up & try again : /"
+        str_err = f"@{str_uname} (aka. {str_handle}) -> BING said NO!\n   change it up & try again : /"
         if err == 1:
-            str_err = f"@{str_uname} (aka. {str_handle}) -> err: description TOO SHORT, need at least 50 chars (~10 words or so)"
+            str_err = f"@{str_uname} (aka. {str_handle}) -> description TOO SHORT, need at least 50 chars (~10 words or so)"
         str_err = str_err + f'\n    "{str_prompt}"'
         await context.bot.send_message(chat_id=update.message.chat_id, text=str_err)
         print(str_err)
