@@ -26,24 +26,24 @@ from testing.gen_img import BingImgGenerator
 # NOTE: browser inspector says cookies expire in ~14 days (2 weeks)
 #   cookies below created: 02.17.24 or earlier
 dict_cookies ={
-    # "bear37.012":
-    # "1NwrFzGaK8Kq3Ad61Tr6oJLvCZbdB6awMEGEYolfrfrdqEycaWu-EVpBDcoCsY-MtakFNdetR1SGfWZF3DasY4ej48dsYiC6vwAJoqpPOjJSv9mggCn_L3nTQUuvuqON0hu7qUhN-jxV9SBBz1MYgXDAhrqwmbZ4HJ66CuEQOJYBsqn3Fawg5OTv8JDLHaouQA5aR9GqvVZCAmJqGi4l1kQ7ao9Gc44RD50MLPOB9CIY",
-    # "bear37.008":
-    # "10RN0qwZcnwu_OAn3vRbgXQApaFyUMnWVHEFphMY4LiX3t_oDjxJjiGrs1FoUAfa2WCrC0IOvcuyTIQGgeZExfei62LJC1UZX3ArFnHNXBP_PfQ6bL6DwuLVCe94CDoC1sTenbVsK5MdRlIiTlMcKmB0fbu8ILiAOH9qQ56g_qquSKHtfyXP7kXeW8rKN5thZNj7yebd_GDUwRByzoG3MtQ",
-    # "bear37.007":
-    # "119HjqE1nJNvTrQeGcH6rzCHT5PkoFBtI58q77wQx9bQItFgvMbHpUmG0FARi7JGE64zHakJsksLz9KZ4PzUszNFj5XmTi3b2br6es6WZ0fniLATDQBnWzXWciFwU03nsqAmGJOO6xBsyh6TBk4J0_i8i2FExlX2MOIuOCcLcP7rNkHee2R7mRUSW5z8rtZEg2bs3-XJwLlsFfrNB3AgM8Q",
-    # "bear37.006":
-    # "1vzxHTu2YFDzWZUXCFZebL6_jLJPAaAJpv05laagtwoZw5rQw_FS0ViK8rFL4WO4rKUhGSJJvSOA6O_o6gkrBTLqkLeaRt3sXgYKUsY_RYujUY_S0PvNintKXglKjhcQ54DjW141ZTS4M9eOfX8fydOU_PTlKyao0OMamxHpykPvaUYBk_AyaoadWgG1Go74LVBRMUS5b-bEvt-T_WsAq2Q",
-    # "bear37.005":
-    # "1blMo3vKvsBUhncM8TCtBgCQtnQKOckqrxOQNFyKvPcMxK1qA941UdydLNIWEgr4TNHBvfMFTMaAY_WYh-2ANgQGs8sZDJhEuah7N6ihmMgheb3KcrZH9xO3tWVXgXEwlXgPUcm8krXXsL1TPpZ6ciVYA0lzpqUZOHI2Bi_tYC11fS_L0EBf47HWcN4wK0p7aNlavT6Q72ZmXNeCQktAXFQ",
-    # "bear37.004":
-    # "1tuUM7FlAGQk3suWakRbic5lger_ogljcVicprlGJIgOrzx2DFOzYZu7WLwExqSuiyBTuzQmwVu9zo45IWkL6XR0L-yWkjXmxU08c36VCnVJAuSFnLtZyEU6HKZRHZoRbsln0Zld5Q2yyboKULI6Z3eBa6093qCFP0NP_6ezBc3NO2GQ7AHLkP7JCCR3UQnfyGQEkGhHW0FVNAkf4MAnIRw",
-    # "bear37.003":
-    # "1eGR1oDkHYMYnMhqJviowUjZ42EtIaPam7UeawgUSWTSjgqscIl_dyiymbAYNYbOiO5YAjNN03k0IvvgpGpqUpkqsGkUy9gqiHoppksvD0ZphRE4vOugomSgT353q1eUy76dPFmZybCETVMPgsBzcJAgyU_Z4f9tsTUfgpGpoM18McVCvT2WN0ggF_7z8Uim5_LJ4qHatQbYXQVWxu_0AnA",
-    # "bear37.002":
-    # "11y9lpdJUGEmUp28oQ4rxScJAAyy5xXmNBNW1tOCtyLNldaYSv50CnyB_DT6CxGBuGVWiqEOjHgLQIiRH67NVxMlC5vY0XPFsr-gZ2L0qPwwfvHdeNZpcz3XvOFkC69Vo_ir1dNiYry-3pyzDdjgd5pJt_l_ONx916wwGnL-0mCzJaDx3c5QmnBaI_OLjPwHFxtY4nqZvFsOrb8IzXBn9pDEBpACYr2ADHxYQcFhzy54",
-    # "bear37.001":
-    # "1WeMHVixB_2yoKeH8fUIdDbH1Wqx7qRmb9VBK0hIff06hvkxbTq-pOSjolhISDSEkSB8TUEEBXlqXCyEsxVdneKY-bi2tqesP6pezTzrGyzffXO-M0sisDxDlqIuAhwsQ7WpJFKZoIGNHuX_Rl2CeCrNY6nKxTrHQLrzLSVHnnbtLJodNyznbSupBWVxCcvRp0QQV28B66q1Hj-K9R0oKkA",
+    "bear37.012":
+    "1NwrFzGaK8Kq3Ad61Tr6oJLvCZbdB6awMEGEYolfrfrdqEycaWu-EVpBDcoCsY-MtakFNdetR1SGfWZF3DasY4ej48dsYiC6vwAJoqpPOjJSv9mggCn_L3nTQUuvuqON0hu7qUhN-jxV9SBBz1MYgXDAhrqwmbZ4HJ66CuEQOJYBsqn3Fawg5OTv8JDLHaouQA5aR9GqvVZCAmJqGi4l1kQ7ao9Gc44RD50MLPOB9CIY",
+    "bear37.008":
+    "10RN0qwZcnwu_OAn3vRbgXQApaFyUMnWVHEFphMY4LiX3t_oDjxJjiGrs1FoUAfa2WCrC0IOvcuyTIQGgeZExfei62LJC1UZX3ArFnHNXBP_PfQ6bL6DwuLVCe94CDoC1sTenbVsK5MdRlIiTlMcKmB0fbu8ILiAOH9qQ56g_qquSKHtfyXP7kXeW8rKN5thZNj7yebd_GDUwRByzoG3MtQ",
+    "bear37.007":
+    "119HjqE1nJNvTrQeGcH6rzCHT5PkoFBtI58q77wQx9bQItFgvMbHpUmG0FARi7JGE64zHakJsksLz9KZ4PzUszNFj5XmTi3b2br6es6WZ0fniLATDQBnWzXWciFwU03nsqAmGJOO6xBsyh6TBk4J0_i8i2FExlX2MOIuOCcLcP7rNkHee2R7mRUSW5z8rtZEg2bs3-XJwLlsFfrNB3AgM8Q",
+    "bear37.006":
+    "1vzxHTu2YFDzWZUXCFZebL6_jLJPAaAJpv05laagtwoZw5rQw_FS0ViK8rFL4WO4rKUhGSJJvSOA6O_o6gkrBTLqkLeaRt3sXgYKUsY_RYujUY_S0PvNintKXglKjhcQ54DjW141ZTS4M9eOfX8fydOU_PTlKyao0OMamxHpykPvaUYBk_AyaoadWgG1Go74LVBRMUS5b-bEvt-T_WsAq2Q",
+    "bear37.005":
+    "1blMo3vKvsBUhncM8TCtBgCQtnQKOckqrxOQNFyKvPcMxK1qA941UdydLNIWEgr4TNHBvfMFTMaAY_WYh-2ANgQGs8sZDJhEuah7N6ihmMgheb3KcrZH9xO3tWVXgXEwlXgPUcm8krXXsL1TPpZ6ciVYA0lzpqUZOHI2Bi_tYC11fS_L0EBf47HWcN4wK0p7aNlavT6Q72ZmXNeCQktAXFQ",
+    "bear37.004":
+    "1tuUM7FlAGQk3suWakRbic5lger_ogljcVicprlGJIgOrzx2DFOzYZu7WLwExqSuiyBTuzQmwVu9zo45IWkL6XR0L-yWkjXmxU08c36VCnVJAuSFnLtZyEU6HKZRHZoRbsln0Zld5Q2yyboKULI6Z3eBa6093qCFP0NP_6ezBc3NO2GQ7AHLkP7JCCR3UQnfyGQEkGhHW0FVNAkf4MAnIRw",
+    "bear37.003":
+    "1eGR1oDkHYMYnMhqJviowUjZ42EtIaPam7UeawgUSWTSjgqscIl_dyiymbAYNYbOiO5YAjNN03k0IvvgpGpqUpkqsGkUy9gqiHoppksvD0ZphRE4vOugomSgT353q1eUy76dPFmZybCETVMPgsBzcJAgyU_Z4f9tsTUfgpGpoM18McVCvT2WN0ggF_7z8Uim5_LJ4qHatQbYXQVWxu_0AnA",
+    "bear37.002":
+    "11y9lpdJUGEmUp28oQ4rxScJAAyy5xXmNBNW1tOCtyLNldaYSv50CnyB_DT6CxGBuGVWiqEOjHgLQIiRH67NVxMlC5vY0XPFsr-gZ2L0qPwwfvHdeNZpcz3XvOFkC69Vo_ir1dNiYry-3pyzDdjgd5pJt_l_ONx916wwGnL-0mCzJaDx3c5QmnBaI_OLjPwHFxtY4nqZvFsOrb8IzXBn9pDEBpACYr2ADHxYQcFhzy54",
+    "bear37.001":
+    "1WeMHVixB_2yoKeH8fUIdDbH1Wqx7qRmb9VBK0hIff06hvkxbTq-pOSjolhISDSEkSB8TUEEBXlqXCyEsxVdneKY-bi2tqesP6pezTzrGyzffXO-M0sisDxDlqIuAhwsQ7WpJFKZoIGNHuX_Rl2CeCrNY6nKxTrHQLrzLSVHnnbtLJodNyznbSupBWVxCcvRp0QQV28B66q1Hj-K9R0oKkA",
 
     "myst37.014":
     "1O6qciHnTFDgJ03jeUGnyBaAqJJYSBPgHXH40-YsLu98wLrXvhaddk1Q58S2HdItxybkBnF2CRXn19cN6mfGPEv4885wJMwqjRCJ0EfJLZMNpvILQ8o22im_5q1DTRnqNv_G6mnNTV8OvXXVLaSzxfaDWly8UnLebIvpiQpe0ih9679E3pbYmojYlLROlAgh_Ov9qvJghHNuR6tZlKxCVMg",
@@ -306,7 +306,7 @@ async def button_click(update: Update, context: CallbackContext) -> None:
     
 async def gen_ai_img_1(update: Update, context):
     funcname = 'gen_ai_img_1'
-    print(cStrDivider_1, f'ENTER - {funcname}', sep='\n')
+    print(cStrDivider_1, f'ENTER - {funcname} _ {get_time_now()}', sep='\n')
 
     user = update.message.from_user
     uid = user.id
@@ -363,7 +363,7 @@ async def gen_ai_img_1(update: Update, context):
         await context.bot.send_message(
             chat_id=update.message.chat_id, 
             text=f'@{str_uname} (aka. {str_handle}) -> here is your image\n  "{str_prompt}" ...\n {url}')
-    print('', f'EXIT - {funcname}', cStrDivider_1, sep='\n')
+    print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
 
 async def gen_ai_img_x(update: Update, context):
     funcname = 'gen_ai_img_x'
