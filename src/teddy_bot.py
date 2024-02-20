@@ -86,6 +86,7 @@ dict_logins ={
 }
 
 # Telegram Bot token obtained from BotFather
+USE_RAND_COOKIE = False
 USE_GEN_IMG = False
 USE_PROD = False
 IMG_REQUEST_CNT = 0
@@ -415,7 +416,7 @@ def get_rand_cookie(_dict_cookies):
     return idx_key, str_key, _dict_cookies[str_key]
     
 def gen_ai_image(str_prompt):
-    global IMG_REQUEST_CNT, IMG_REQUEST_SUCCESS_CNT, USE_GEN_IMG
+    global IMG_REQUEST_CNT, IMG_REQUEST_SUCCESS_CNT, USE_GEN_IMG, USE_RAND_COOKIE
     funcname = 'gen_ai_image'
     IMG_REQUEST_CNT += 1
     print(f'\nENTER - {funcname} _ IMG_REQUEST_CNT: {IMG_REQUEST_CNT}')
@@ -433,8 +434,10 @@ def gen_ai_image(str_prompt):
     if USE_GEN_IMG:
         _idx, _key, _cookie = get_next_login(dict_logins)
     else:
-        # _idx, _key, _cookie = get_rand_cookie(dict_cookies)
-        _idx, _key, _cookie = get_next_cookie(dict_cookies)
+        if USE_RAND_COOKIE:
+            _idx, _key, _cookie = get_rand_cookie(dict_cookies)
+        else:
+            _idx, _key, _cookie = get_next_cookie(dict_cookies)
     
     print(f'cookie idx: {_idx}\ncookie key: {_key}')
     while True:
@@ -557,7 +560,14 @@ if __name__ == "__main__":
         # select to use gen_img.py or no (not = using BingImageCreator.py)
         inp = input("\nUse selenium gen_img.py? [y/n]\n  > ")
         USE_GEN_IMG = True if inp == 'y' or inp == '1' else False
-        print(f'  input = {inp} _ USE_GEN_IMG = {USE_GEN_IMG}')
+        print(f'  input = {inp} _ USE_GEN_IMG (selenium) = {USE_GEN_IMG}')
+
+        # if not using selenium (ie. indeed using cookies & not emails)
+        if not USE_GEN_IMG:
+            # select to use random cookie
+            inp = input("\nCycle through cookies randomly? [y/n]\n  > ")
+            USE_RAND_COOKIE = True if inp == 'y' or inp == '1' else False
+            print(f'  input = {inp} _ USE_RAND_COOKIE = {USE_RAND_COOKIE}')
         
 
         TOKEN = TOKEN_prod if USE_PROD else TOKEN_dev
