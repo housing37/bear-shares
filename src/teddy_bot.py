@@ -16,26 +16,34 @@ import webbrowser
 # os.environ["BING_COOKIES"] = cook
 from BingImageCreator import ImageGen, ImageGenAsync
 import tweepy, requests, os
+# from testing import gen_img.BingImgGenerator
+# from testing import BingImgGenerator
+from testing.gen_img import BingImgGenerator
+
+# Now you can use BingImgGenerator in teddy_bot.py
+
 
 # NOTE: browser inspector says cookies expire in ~14 days (2 weeks)
 #   cookies below created: 02.17.24 or earlier
 dict_cookies ={
+    # "bear37.012":
+    # "1NwrFzGaK8Kq3Ad61Tr6oJLvCZbdB6awMEGEYolfrfrdqEycaWu-EVpBDcoCsY-MtakFNdetR1SGfWZF3DasY4ej48dsYiC6vwAJoqpPOjJSv9mggCn_L3nTQUuvuqON0hu7qUhN-jxV9SBBz1MYgXDAhrqwmbZ4HJ66CuEQOJYBsqn3Fawg5OTv8JDLHaouQA5aR9GqvVZCAmJqGi4l1kQ7ao9Gc44RD50MLPOB9CIY",
     # "bear37.008":
     # "10RN0qwZcnwu_OAn3vRbgXQApaFyUMnWVHEFphMY4LiX3t_oDjxJjiGrs1FoUAfa2WCrC0IOvcuyTIQGgeZExfei62LJC1UZX3ArFnHNXBP_PfQ6bL6DwuLVCe94CDoC1sTenbVsK5MdRlIiTlMcKmB0fbu8ILiAOH9qQ56g_qquSKHtfyXP7kXeW8rKN5thZNj7yebd_GDUwRByzoG3MtQ",
-    "bear37.007":
-    "119HjqE1nJNvTrQeGcH6rzCHT5PkoFBtI58q77wQx9bQItFgvMbHpUmG0FARi7JGE64zHakJsksLz9KZ4PzUszNFj5XmTi3b2br6es6WZ0fniLATDQBnWzXWciFwU03nsqAmGJOO6xBsyh6TBk4J0_i8i2FExlX2MOIuOCcLcP7rNkHee2R7mRUSW5z8rtZEg2bs3-XJwLlsFfrNB3AgM8Q",
-    "bear37.006":
-    "1vzxHTu2YFDzWZUXCFZebL6_jLJPAaAJpv05laagtwoZw5rQw_FS0ViK8rFL4WO4rKUhGSJJvSOA6O_o6gkrBTLqkLeaRt3sXgYKUsY_RYujUY_S0PvNintKXglKjhcQ54DjW141ZTS4M9eOfX8fydOU_PTlKyao0OMamxHpykPvaUYBk_AyaoadWgG1Go74LVBRMUS5b-bEvt-T_WsAq2Q",
-    "bear37.005":
-    "1blMo3vKvsBUhncM8TCtBgCQtnQKOckqrxOQNFyKvPcMxK1qA941UdydLNIWEgr4TNHBvfMFTMaAY_WYh-2ANgQGs8sZDJhEuah7N6ihmMgheb3KcrZH9xO3tWVXgXEwlXgPUcm8krXXsL1TPpZ6ciVYA0lzpqUZOHI2Bi_tYC11fS_L0EBf47HWcN4wK0p7aNlavT6Q72ZmXNeCQktAXFQ",
-    "bear37.004":
-    "1tuUM7FlAGQk3suWakRbic5lger_ogljcVicprlGJIgOrzx2DFOzYZu7WLwExqSuiyBTuzQmwVu9zo45IWkL6XR0L-yWkjXmxU08c36VCnVJAuSFnLtZyEU6HKZRHZoRbsln0Zld5Q2yyboKULI6Z3eBa6093qCFP0NP_6ezBc3NO2GQ7AHLkP7JCCR3UQnfyGQEkGhHW0FVNAkf4MAnIRw",
-    "bear37.003":
-    "1eGR1oDkHYMYnMhqJviowUjZ42EtIaPam7UeawgUSWTSjgqscIl_dyiymbAYNYbOiO5YAjNN03k0IvvgpGpqUpkqsGkUy9gqiHoppksvD0ZphRE4vOugomSgT353q1eUy76dPFmZybCETVMPgsBzcJAgyU_Z4f9tsTUfgpGpoM18McVCvT2WN0ggF_7z8Uim5_LJ4qHatQbYXQVWxu_0AnA",
-    "bear37.002":
-    "11y9lpdJUGEmUp28oQ4rxScJAAyy5xXmNBNW1tOCtyLNldaYSv50CnyB_DT6CxGBuGVWiqEOjHgLQIiRH67NVxMlC5vY0XPFsr-gZ2L0qPwwfvHdeNZpcz3XvOFkC69Vo_ir1dNiYry-3pyzDdjgd5pJt_l_ONx916wwGnL-0mCzJaDx3c5QmnBaI_OLjPwHFxtY4nqZvFsOrb8IzXBn9pDEBpACYr2ADHxYQcFhzy54",
-    "bear37.001":
-    "1WeMHVixB_2yoKeH8fUIdDbH1Wqx7qRmb9VBK0hIff06hvkxbTq-pOSjolhISDSEkSB8TUEEBXlqXCyEsxVdneKY-bi2tqesP6pezTzrGyzffXO-M0sisDxDlqIuAhwsQ7WpJFKZoIGNHuX_Rl2CeCrNY6nKxTrHQLrzLSVHnnbtLJodNyznbSupBWVxCcvRp0QQV28B66q1Hj-K9R0oKkA",
+    # "bear37.007":
+    # "119HjqE1nJNvTrQeGcH6rzCHT5PkoFBtI58q77wQx9bQItFgvMbHpUmG0FARi7JGE64zHakJsksLz9KZ4PzUszNFj5XmTi3b2br6es6WZ0fniLATDQBnWzXWciFwU03nsqAmGJOO6xBsyh6TBk4J0_i8i2FExlX2MOIuOCcLcP7rNkHee2R7mRUSW5z8rtZEg2bs3-XJwLlsFfrNB3AgM8Q",
+    # "bear37.006":
+    # "1vzxHTu2YFDzWZUXCFZebL6_jLJPAaAJpv05laagtwoZw5rQw_FS0ViK8rFL4WO4rKUhGSJJvSOA6O_o6gkrBTLqkLeaRt3sXgYKUsY_RYujUY_S0PvNintKXglKjhcQ54DjW141ZTS4M9eOfX8fydOU_PTlKyao0OMamxHpykPvaUYBk_AyaoadWgG1Go74LVBRMUS5b-bEvt-T_WsAq2Q",
+    # "bear37.005":
+    # "1blMo3vKvsBUhncM8TCtBgCQtnQKOckqrxOQNFyKvPcMxK1qA941UdydLNIWEgr4TNHBvfMFTMaAY_WYh-2ANgQGs8sZDJhEuah7N6ihmMgheb3KcrZH9xO3tWVXgXEwlXgPUcm8krXXsL1TPpZ6ciVYA0lzpqUZOHI2Bi_tYC11fS_L0EBf47HWcN4wK0p7aNlavT6Q72ZmXNeCQktAXFQ",
+    # "bear37.004":
+    # "1tuUM7FlAGQk3suWakRbic5lger_ogljcVicprlGJIgOrzx2DFOzYZu7WLwExqSuiyBTuzQmwVu9zo45IWkL6XR0L-yWkjXmxU08c36VCnVJAuSFnLtZyEU6HKZRHZoRbsln0Zld5Q2yyboKULI6Z3eBa6093qCFP0NP_6ezBc3NO2GQ7AHLkP7JCCR3UQnfyGQEkGhHW0FVNAkf4MAnIRw",
+    # "bear37.003":
+    # "1eGR1oDkHYMYnMhqJviowUjZ42EtIaPam7UeawgUSWTSjgqscIl_dyiymbAYNYbOiO5YAjNN03k0IvvgpGpqUpkqsGkUy9gqiHoppksvD0ZphRE4vOugomSgT353q1eUy76dPFmZybCETVMPgsBzcJAgyU_Z4f9tsTUfgpGpoM18McVCvT2WN0ggF_7z8Uim5_LJ4qHatQbYXQVWxu_0AnA",
+    # "bear37.002":
+    # "11y9lpdJUGEmUp28oQ4rxScJAAyy5xXmNBNW1tOCtyLNldaYSv50CnyB_DT6CxGBuGVWiqEOjHgLQIiRH67NVxMlC5vY0XPFsr-gZ2L0qPwwfvHdeNZpcz3XvOFkC69Vo_ir1dNiYry-3pyzDdjgd5pJt_l_ONx916wwGnL-0mCzJaDx3c5QmnBaI_OLjPwHFxtY4nqZvFsOrb8IzXBn9pDEBpACYr2ADHxYQcFhzy54",
+    # "bear37.001":
+    # "1WeMHVixB_2yoKeH8fUIdDbH1Wqx7qRmb9VBK0hIff06hvkxbTq-pOSjolhISDSEkSB8TUEEBXlqXCyEsxVdneKY-bi2tqesP6pezTzrGyzffXO-M0sisDxDlqIuAhwsQ7WpJFKZoIGNHuX_Rl2CeCrNY6nKxTrHQLrzLSVHnnbtLJodNyznbSupBWVxCcvRp0QQV28B66q1Hj-K9R0oKkA",
 
     "myst37.014":
     "1O6qciHnTFDgJ03jeUGnyBaAqJJYSBPgHXH40-YsLu98wLrXvhaddk1Q58S2HdItxybkBnF2CRXn19cN6mfGPEv4885wJMwqjRCJ0EfJLZMNpvILQ8o22im_5q1DTRnqNv_G6mnNTV8OvXXVLaSzxfaDWly8UnLebIvpiQpe0ih9679E3pbYmojYlLROlAgh_Ov9qvJghHNuR6tZlKxCVMg",
@@ -56,8 +64,29 @@ dict_cookies ={
     "myst37.022":
     "1SSgxK-AK9szOZgW5VucHQs3cZvNzJJ8EE3cHHP5c7r6IdrQ_qAvGTOYPWakQ6kjfumFosvTYGtsPm_TO119AKhxORgINBmbrd9hT1cF6v1qgBP_PjINJI3fyBF0aVk0WK-sE2NtF8AVJG-h7knYgu6Pv4sJ6MKiKUKVW91TIOBgxVSHuthw3n_VjplTS87tDWHdwqZxPUySODoqhwNCW0g",
 }
+dict_logins ={
+    "bear37.001@hotmail.com":
+    "bear102938",
+    # "bear37.002@hotmail.com":
+    # "bear102938",
+    # "bear37.003@hotmail.com":
+    # "bear102938",
+    # "bear37.004@hotmail.com":
+    # "bear102938",
+    # "bear37.005@hotmail.com":
+    # "bear102938",
+    # "bear37.006@hotmail.com":
+    # "bear102938",
+    # "bear37.007@hotmail.com":
+    # "bear102938",
+    # "bear37.008@hotmail.com":
+    # "bear102938",
+    # "bear37.009@hotmail.com":
+    # "bear102938",
+}
 
 # Telegram Bot token obtained from BotFather
+USE_GEN_IMG = False
 USE_PROD = False
 IMG_REQUEST_CNT = 0
 IMG_REQUEST_SUCCESS_CNT = 0
@@ -361,6 +390,15 @@ async def gen_ai_img_x(update: Update, context):
 
     print('', f'EXIT - {funcname}', cStrDivider_1, sep='\n')
 
+def get_next_login(_dict_logins):
+    global IDX_LAST_COOKIE
+    lst_emails = list(_dict_logins.keys())
+    login_cnt = len(lst_emails)
+    idx_email = 0 if IDX_LAST_COOKIE == login_cnt-1 else IDX_LAST_COOKIE + 1
+    str_pw = lst_emails[idx_email]
+    IDX_LAST_COOKIE = idx_email
+    return idx_email, str_pw, _dict_logins[str_pw]
+
 def get_next_cookie(_dict_cookies):
     global IDX_LAST_COOKIE
     lst_keys = list(_dict_cookies.keys())
@@ -377,7 +415,7 @@ def get_rand_cookie(_dict_cookies):
     return idx_key, str_key, _dict_cookies[str_key]
     
 def gen_ai_image(str_prompt):
-    global IMG_REQUEST_CNT, IMG_REQUEST_SUCCESS_CNT
+    global IMG_REQUEST_CNT, IMG_REQUEST_SUCCESS_CNT, USE_GEN_IMG
     funcname = 'gen_ai_image'
     IMG_REQUEST_CNT += 1
     print(f'\nENTER - {funcname} _ IMG_REQUEST_CNT: {IMG_REQUEST_CNT}')
@@ -391,15 +429,24 @@ def gen_ai_image(str_prompt):
         return lst_imgs, err
 
     # loop until no exception
-    # _idx, _key, _cookie = get_rand_cookie(dict_cookies)
-    _idx, _key, _cookie = get_next_cookie(dict_cookies)
+    
+    if USE_GEN_IMG:
+        _idx, _key, _cookie = get_next_login(dict_logins)
+    else:
+        # _idx, _key, _cookie = get_rand_cookie(dict_cookies)
+        _idx, _key, _cookie = get_next_cookie(dict_cookies)
+    
     print(f'cookie idx: {_idx}\ncookie key: {_key}')
     while True:
         try:
-            gen = ImageGen(auth_cookie=_cookie, auth_cookie_SRCHHPGUSR=_cookie, quiet=False)
-            # gen = ImageGenAsync(auth_cookie=cook, quiet=False)
-            
-            lst_imgs = gen.get_images(str_prompt)
+            if USE_GEN_IMG:
+                big = BingImgGenerator(_key, _cookie)
+                lst_imgs = big.execute_gen_image(str_prompt, False) # True = use cli prompts
+            else:
+                gen = ImageGen(auth_cookie=_cookie, auth_cookie_SRCHHPGUSR=_cookie, quiet=False)
+                # gen = ImageGenAsync(auth_cookie=cook, quiet=False)
+                lst_imgs = gen.get_images(str_prompt)
+
             IMG_REQUEST_SUCCESS_CNT += 1
             break  # Exit the loop if no exception is caught
         except Exception as e:
@@ -502,9 +549,16 @@ if __name__ == "__main__":
     
     ## exe ##
     try:
+        # select to use prod bot or dev bot
         inp = input('Select token type to use:\n  0 = prod (@BearSharesBot)\n  1 = dev (@TeddySharesBot)\n  > ')
         USE_PROD = True if inp == '0' else False
         print(f'  input = {inp} _ USE_PROD = {USE_PROD}')
+
+        # select to use gen_img.py or no (not = using BingImageCreator.py)
+        inp = input("\nUse selenium gen_img.py? [y/n]\n  > ")
+        USE_GEN_IMG = True if inp == 'y' or inp == '1' else False
+        print(f'  input = {inp} _ USE_GEN_IMG = {USE_GEN_IMG}')
+        
 
         TOKEN = TOKEN_prod if USE_PROD else TOKEN_dev
         set_twitter_auth_keys()

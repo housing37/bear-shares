@@ -12,105 +12,120 @@ from datetime import datetime
 
 # from xvfbwrapper import Xvfb # pip install xvfbwrapper
 
-email = ''    # ** WARNING ** DO NOT COMMIT!
-password = ''     # ** WARNING ** DO NOT COMMIT!
 
-def init_webdriver():
-    options = Options()
-    # options = webdriver.ChromeOptions()
-    ans = input('\n  Run headless? [y/n]\n  > ')
-    if ans == 'y' or ans == '1': 
-        options.add_argument("--headless")  # Run Chrome in headless mode
-        # options.add_argument("--window-size=1920,1080")
-    return webdriver.Chrome(options=options) # Create driver & get html_content
-    # return webdriver.Firefox(options=options)
-
-def perform_login():
-    INP_EMAIL = (By.ID, "i0116")
-    BTN_NEXT = (By.ID, "idSIButton9")
-    INP_PW = (By.ID, "i0118")
-    BTN_SIGNIN = (By.ID, "idSIButton9")
-    BTN_ACCEPT= (By.ID, "acceptButton") # stay signed in
-    # BTN_DECLINE = (By.ID, "declineButton") # stay signed in (decline)
-    # BTN_CONTINUE = (By.ID, "id__0") # Misc
-    WebDriverWait(driver, 10).until(EC.element_to_be_clickable(INP_EMAIL)).send_keys(email) # wait for and enter email
-    WebDriverWait(driver, 10).until(EC.element_to_be_clickable(BTN_NEXT)).click() # click next
-    WebDriverWait(driver, 10).until(EC.element_to_be_clickable(INP_PW)).send_keys(password) # wait for and enter pw
-    WebDriverWait(driver, 10).until(EC.element_to_be_clickable(BTN_SIGNIN)).click() # click signin 
-    WebDriverWait(driver, 10).until(EC.element_to_be_clickable(BTN_ACCEPT)).click() # click accept (stay logged in) ... should we?
-
-def read_reward_pts():
-    ans = input("\n  Read reward points? [y/n]\n  > ") 
-    if ans == 'y' or ans == '1':
-        # track and read reward points in top right
-        pts = hc.xpath("//div[@id='id_h']//a[@id='id_rh']//span[@id='id_rc']")[0].text_content()
-        print(f'current reward points: {pts}')
-        return pts
-    return ''
-
-def input_descr(descr, use_cli):
-    if use_cli: descr = input('\n  Input description...\n  > ') # cli input description
-    INP_IMG_DESCR = (By.ID, "sb_form_q")
-    WebDriverWait(driver, 10).until(EC.element_to_be_clickable(INP_IMG_DESCR)).send_keys(descr) # wait for input & enter description 
-    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "create_btn_i"))).click() # click join/create
-    return descr
-
-def get_create_page(_driver: webdriver):
-    url = 'https://bing.com/images/create'
-    print(f'navigating to {url}')
-    _driver.get(url) # go to create page
 
 def get_time_now(dt=True):
     if dt: return '['+datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[0:-4]+']'
     return '['+datetime.now().strftime("%H:%M:%S.%f")[0:-4]+']'
 
+class BingImgGenerator():
+
+    def __init__(self, _email, _pw):
+        self.email = _email
+        self.password = _pw
+        self.driver = None
+
+    def init_webdriver(self, use_cli):
+        options = Options()
+        # options = webdriver.ChromeOptions()
+        if use_cli:
+            ans = input('\n  Run headless? [y/n]\n  > ')
+            if ans == 'y' or ans == '1':
+                options.add_argument("--headless")  # Run Chrome in headless mode
+                # options.add_argument("--window-size=1920,1080")
+        return webdriver.Chrome(options=options) # Create driver & get html_content
+        # return webdriver.Firefox(options=options)
+
+    def perform_login(self, _driver):
+        INP_EMAIL = (By.ID, "i0116")
+        BTN_NEXT = (By.ID, "idSIButton9")
+        INP_PW = (By.ID, "i0118")
+        BTN_SIGNIN = (By.ID, "idSIButton9")
+        BTN_ACCEPT= (By.ID, "acceptButton") # stay signed in
+        # BTN_DECLINE = (By.ID, "declineButton") # stay signed in (decline)
+        # BTN_CONTINUE = (By.ID, "id__0") # Misc
+        WebDriverWait(_driver, 10).until(EC.element_to_be_clickable(INP_EMAIL)).send_keys(self.email) # wait for and enter email
+        WebDriverWait(_driver, 10).until(EC.element_to_be_clickable(BTN_NEXT)).click() # click next
+        WebDriverWait(_driver, 10).until(EC.element_to_be_clickable(INP_PW)).send_keys(self.password) # wait for and enter pw
+        WebDriverWait(_driver, 10).until(EC.element_to_be_clickable(BTN_SIGNIN)).click() # click signin 
+        WebDriverWait(_driver, 10).until(EC.element_to_be_clickable(BTN_ACCEPT)).click() # click accept (stay logged in) ... should we?
+
+    # def read_reward_pts(self, _hc):
+    #     ans = input("\n  Read reward points? [y/n]\n  > ") 
+    #     if ans == 'y' or ans == '1':
+    #         # track and read reward points in top right
+    #         pts = _hc.xpath("//div[@id='id_h']//a[@id='id_rh']//span[@id='id_rc']")[0].text_content()
+    #         print(f'current reward points: {pts}')
+    #         return pts
+    #     return ''
+
+    def input_descr(self, descr, use_cli, _driver):
+        if use_cli: descr = input('\n  Input description...\n  > ') # cli input description
+        INP_IMG_DESCR = (By.ID, "sb_form_q")
+        WebDriverWait(_driver, 10).until(EC.element_to_be_clickable(INP_IMG_DESCR)).send_keys(descr) # wait for input & enter description 
+        WebDriverWait(_driver, 10).until(EC.element_to_be_clickable((By.ID, "create_btn_i"))).click() # click join/create
+        return descr
+
+    def get_create_page(self, _driver: webdriver):
+        url = 'https://bing.com/images/create'
+        print(f'navigating to {url}')
+        _driver.get(url) # go to create page
+
+    def execute_gen_image(self, str_promt, use_cli):
+
+        # vdisplay = Xvfb()
+        # vdisplay.start()
+
+        # launch stuff inside
+        # virtual display here.
 
 
-# vdisplay = Xvfb()
-# vdisplay.start()
+        print(f'\ninitializing... {get_time_now()}')
+        self.driver = self.init_webdriver(use_cli)
 
-# launch stuff inside
-# virtual display here.
+        print(f'\nnav to create page... {get_time_now()}')
+        self.get_create_page(self.driver) # nav to bing.com/images/create
+        descr = self.input_descr(str_promt, use_cli, self.driver) # True = use_cli
+
+        print(f'\nperform login... {get_time_now()}')
+        self.perform_login(self.driver) # nav to 'login.live.com' (then back to bing.com/images/create)
+
+        # wait for images to load (for btn 'Creating ...' turns to 'Create')
+        print(f'\nGenerating image for descr ... {get_time_now()}\n "{descr}"')
+        xpath_ = "//div[@id='giscope']//form[@id='sb_form']//a[@id='create_btn_c']//span[@id='create_btn']"
+        WebDriverWait(self.driver, 60).until(EC.text_to_be_present_in_element((By.XPATH, xpath_), 'Create')) 
+        # import time
+        # time.sleep(40)
+
+        # scrape page source for img urls
+        hc = html.fromstring(self.driver.page_source)
+        img_urls = hc.xpath("//div[@class='imgpt']//a[@class='iusc']//div[@class='img_cont hoff']//img[@class='mimg']/@src")
+        img_urls = [url.split('?')[0] for url in img_urls]
+        print(f'\nprinting img urls ... {get_time_now()}', *img_urls, sep='\n ')
+
+        # scrape page source for reward points count
+        pts = hc.xpath("//div[@id='id_h']//a[@id='id_rh']//span[@id='id_rc']")[0].text_content()
+        print(f'\ncurrent reward points ... {get_time_now()}\n {pts}')
+
+        return img_urls
+        # test img url received
+        sel_img_url = img_urls[0]
+        input(f'\nPress Enter to navigate to src url: {sel_img_url}')
+        driver.get(sel_img_url)
+
+        input("\nPress Enter to close the driver...")
+        # Close the browser
+        driver.quit()
+
+        # vdisplay.stop()
 
 
-print(f'\ninitializing... {get_time_now()}')
-driver = init_webdriver()
-
-print(f'\nnav to create page... {get_time_now()}')
-get_create_page(driver) # nav to bing.com/images/create
-descr = input_descr('', True) # True = use_cli
-
-print(f'\nperform login... {get_time_now()}')
-perform_login() # nav to 'login.live.com' (then back to bing.com/images/create)
-
-# wait for images to load (for btn 'Creating ...' turns to 'Create')
-print(f'\nGenerating image for descr ... {get_time_now()}\n "{descr}"')
-xpath_ = "//div[@id='giscope']//form[@id='sb_form']//a[@id='create_btn_c']//span[@id='create_btn']"
-WebDriverWait(driver, 60).until(EC.text_to_be_present_in_element((By.XPATH, xpath_), 'Create')) 
-# import time
-# time.sleep(40)
-
-# scrape page source for img urls
-hc = html.fromstring(driver.page_source)
-img_urls = hc.xpath("//div[@class='imgpt']//a[@class='iusc']//div[@class='img_cont hoff']//img[@class='mimg']/@src")
-img_urls = [url.split('?')[0] for url in img_urls]
-print(f'\nprinting img urls ... {get_time_now()}', *img_urls, sep='\n ')
-
-# scrape page source for reward points count
-pts = hc.xpath("//div[@id='id_h']//a[@id='id_rh']//span[@id='id_rc']")[0].text_content()
-print(f'\ncurrent reward points ... {get_time_now()}\n {pts}')
-
-# test img url received
-sel_img_url = img_urls[0]
-input(f'\nPress Enter to navigate to src url: {sel_img_url}')
-driver.get(sel_img_url)
-
-input("\nPress Enter to close the driver...")
-# Close the browser
-driver.quit()
-
-# vdisplay.stop()
-
+if __name__ == "__main__":
+    email_ = 'bear37.001@hotmail.com'    # ** WARNING ** DO NOT COMMIT!
+    password_ = 'bear102938'     # ** WARNING ** DO NOT COMMIT!
+    big = BingImgGenerator(email_, password_)
+    str_prompt = 'a dog and cat watching tv'
+    imgs = big.execute_gen_image(str_prompt, True) # True = use cli prompt
 
 ## LEGACY NAIVE ENDPOINT TESTING FOR bing.com/images/create ## 
 # # capilot: temp37373737@gmail.com
