@@ -9,6 +9,8 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from lxml import html
 from datetime import datetime
+import sys
+import threading, time
 
 # from xvfbwrapper import Xvfb # pip install xvfbwrapper
 
@@ -17,6 +19,57 @@ from datetime import datetime
 def get_time_now(dt=True):
     if dt: return '['+datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[0:-4]+']'
     return '['+datetime.now().strftime("%H:%M:%S.%f")[0:-4]+']'
+
+# Define a function to print dots while waiting for the response
+response_received = False
+def print_dots():
+    global response_received
+    while not response_received:
+        sys.stdout.write('.')
+        sys.stdout.flush()
+        time.sleep(1)  # Adjust sleep duration as needed
+
+def test_gen_image_openAI():
+    global response_received
+    print(f'ENTER - test_gen_image_openAI _ {get_time_now()}')
+    from openai import OpenAI
+    # client = OpenAI()
+    print('init openAI cliet w/ key...')
+    client = OpenAI(api_key="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")
+
+    inp_descr = input('\n  Enter description\n  > ')
+    print(f'  inp_descr: {inp_descr}')
+
+    ans = input('\n  Enter quality...\n  0 = standard\n  1 = HD\n  > ')
+    inp_quality = 'hd' if ans == '1' else 'standard'
+    print(f'  inp_quality: {inp_quality}')
+
+    response_received = False
+    print(f'\nsending images.generate request... _ {get_time_now()}')
+    
+    # Start the thread for printing dots
+    dot_thread = threading.Thread(target=print_dots)
+    dot_thread.start()
+    response = client.images.generate(
+        model="dall-e-3",
+        prompt=inp_descr,
+        size="1024x1024",
+        quality=inp_quality,
+        n=1,
+    )
+
+    # Once the response is received, stop the thread
+    response_received = True
+    dot_thread.join()
+
+    print(f'\nresponse recieved, printing data... _ {get_time_now()}')
+    # print(response.data)
+    revised_prompt = response.data[0].revised_prompt
+    image_url = response.data[0].url
+    print(f'\n\nrevised_prompt...\n {revised_prompt}')
+    print(f'\nimage_url...\n {image_url}')
+
+    print(f'\nEXIT - test_gen_image_openAI _ {get_time_now()}')
 
 class BingImgGenerator():
 
@@ -121,11 +174,13 @@ class BingImgGenerator():
 
 
 if __name__ == "__main__":
-    email_ = 'bear37.001@hotmail.com'    # ** WARNING ** DO NOT COMMIT!
-    password_ = 'bear102938'     # ** WARNING ** DO NOT COMMIT!
-    big = BingImgGenerator(email_, password_)
-    str_prompt = 'a dog and cat watching tv'
-    imgs = big.execute_gen_image(str_prompt, True) # True = use cli prompt
+    test_gen_image_openAI()
+
+    # email_ = 'bear37.001@hotmail.com'    # ** WARNING ** DO NOT COMMIT!
+    # password_ = 'bear102938'     # ** WARNING ** DO NOT COMMIT!
+    # big = BingImgGenerator(email_, password_)
+    # str_prompt = 'a dog and cat watching tv'
+    # imgs = big.execute_gen_image(str_prompt, True) # True = use cli prompt
 
 ## LEGACY NAIVE ENDPOINT TESTING FOR bing.com/images/create ## 
 # # capilot: temp37373737@gmail.com
@@ -279,22 +334,6 @@ if __name__ == "__main__":
 #     response = requests.post(url, json=payload, headers=headers)
 
 #     print(response.text)
-
-# def test_gen_image_2():
-#     from openai import OpenAI
-#     # client = OpenAI()
-#     client = OpenAI(api_key="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")
-
-#     response = client.images.generate(
-#         model="dall-e-3",
-#         prompt="a white siamese cat",
-#         size="1024x1024",
-#         quality="standard",
-#         n=1,
-#     )
-
-#     image_url = response.data[0].url
-#     print(image_url)
 
 # def test_gen_image():
 #     # create a temporary output directory for testing purposes
