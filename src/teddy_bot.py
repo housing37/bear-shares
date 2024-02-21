@@ -18,8 +18,8 @@ from BingImageCreator import ImageGen, ImageGenAsync
 import tweepy, requests, os
 # from testing import gen_img.BingImgGenerator
 # from testing import BingImgGenerator
-from testing.gen_img import BingImgGenerator
-
+from _test.gen_img import BingImgGenerator
+from _env import env
 # Now you can use BingImgGenerator in teddy_bot.py
 
 
@@ -91,9 +91,7 @@ USE_GEN_IMG = False
 USE_PROD = False
 IMG_REQUEST_CNT = 0
 IMG_REQUEST_SUCCESS_CNT = 0
-TOKEN_dev = '6911413573:AAGrff9aK3aSfaDhGaT5Iyf68zqRcPHrGN0' # TeddySharesBot (dev)
-TOKEN_prod = '6805964502:AAHL99OquXuZUPzpgqWNDbeBY_pgGpANO0A' # BearSharesBot (prod)
-TOKEN = TOKEN_prod if USE_PROD else TOKEN_dev
+TOKEN = 'nil_token'
 CONSUMER_KEY = 'nil_key'
 CONSUMER_SECRET = 'nil_key'
 ACCESS_TOKEN = 'nil_key'
@@ -107,26 +105,39 @@ IDX_LAST_COOKIE = -1
 # Dictionary to keep track of users who have been greeted
 greeted_users = {}
 
+OPENAI_KEY = 'nil_key'
+USE_HD_GEN = False
+RESP_RECEIVED = False
+#------------------------------------------------------------#
+#   FUNCTIONS                                                #
+#------------------------------------------------------------#
+def set_tg_token():
+    global TOKEN
+    TOKEN = env.TOKEN_prod if USE_PROD else env.TOKEN_dev
+
+def init_openAI_client():
+    global OPENAI_KEY
+    OPENAI_KEY = env.OPENAI_KEY
+
+def set_twitter_auth_keys():
+    global CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET
+    # @SolAudits
+    CONSUMER_KEY = env.CONSUMER_KEY_0
+    CONSUMER_SECRET = env.CONSUMER_SECRET_0
+    ACCESS_TOKEN = env.ACCESS_TOKEN_0
+    ACCESS_TOKEN_SECRET = env.ACCESS_TOKEN_SECRET_0
+    if USE_PROD:
+        # @BearSharesNFT
+        CONSUMER_KEY = env.CONSUMER_KEY_1
+        CONSUMER_SECRET = env.CONSUMER_SECRET_1
+        ACCESS_TOKEN = env.ACCESS_TOKEN_1
+        ACCESS_TOKEN_SECRET = env.ACCESS_TOKEN_SECRET_1
+
 def set_twitter_promo_text():
     global PROMO_TWEET_TEXT
     PROMO_TWEET_TEXT = 'Test auto tweet w/ image\n\nFind this souce code @ t.me/SolAudits0\nOnly on #PulseChain'
     if USE_PROD:
         PROMO_TWEET_TEXT = 'New $BearShares NFT image created!\n\nGenerate your own @ t.me/BearShares\nOnly on #PulseChain'
-
-def set_twitter_auth_keys():
-    global CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET
-    # @SolAudits
-    CONSUMER_KEY = 'ufotTV5H0BMXgCS9p1Hf9LOM6'
-    CONSUMER_SECRET = 'Cped9xDs4T0gpC0guq9CVETAMryB6jqTMhyHmb0f3wfLorBKKX'
-    ACCESS_TOKEN = '1754679966657056768-9PKkUuNWKvpTBuPjTh8q9r9LBmX14w'
-    ACCESS_TOKEN_SECRET = 'CLw7QEu83Y7NI0lXTOMXGBRMErDgb9nxO9rSPJUY8A8bo'
-    if USE_PROD:
-        # @BearSharesNFT
-        CONSUMER_KEY = 'HdZLxkPGZNAzWOzFlVNEqxIeP'
-        CONSUMER_SECRET = 'f2yUKDkLniQKEwouoheUbcJxFNPR2brieGQPq6t0gFGFGdV2dJ'
-        ACCESS_TOKEN = '1756813801020596224-UBAFOB3xtW6xrVykGBPKAovZ6kDiMd'
-        ACCESS_TOKEN_SECRET = 'qKNnDiSZrRFGbR4WCey2MXpG3XNLpmfTDa2jzeSMZxq1P'
-
 
 async def test(update, context):
     funcname = 'test'
@@ -534,6 +545,15 @@ def print_except(e, debugLvl=0):
         strTrace = traceback.format_exc()
         print('', cStrDivider, f' type: {exc_type}', f' file: {fname}', f' line_no: {exc_tb.tb_lineno}', f' traceback: {strTrace}', cStrDivider, sep='\n')
 
+def wait_sleep(wait_sec : int, b_print=True, bp_one_line=True): # sleep 'wait_sec'
+    print(f'waiting... {wait_sec} sec')
+    for s in range(wait_sec, 0, -1):
+        if b_print and bp_one_line: print(wait_sec-s+1, end=' ', flush=True)
+        if b_print and not bp_one_line: print('wait ', s, sep='', end='\n')
+        time.sleep(1)
+    if bp_one_line and b_print: print() # line break if needed
+    print(f'waiting... {wait_sec} sec _ DONE')
+
 def get_time_now(dt=True):
     if dt: return '['+datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[0:-4]+']'
     return '['+datetime.now().strftime("%H:%M:%S.%f")[0:-4]+']'
@@ -570,10 +590,14 @@ if __name__ == "__main__":
             print(f'  input = {inp} _ USE_RAND_COOKIE = {USE_RAND_COOKIE}')
         
 
-        TOKEN = TOKEN_prod if USE_PROD else TOKEN_dev
+        # TOKEN = TOKEN_prod if USE_PROD else TOKEN_dev
+        set_tg_token()
+        init_openAI_client()
         set_twitter_auth_keys()
         set_twitter_promo_text()
-        print(f'\nCONSUMER_KEY: {CONSUMER_KEY}')
+        print(f'\nTelegram TOKEN: {TOKEN}')
+        print(f'OpenAI OPENAI_KEY: {OPENAI_KEY}')
+        print(f'CONSUMER_KEY: {CONSUMER_KEY}')
         print(f'PROMO_TWEET_TEXT:\n{PROMO_TWEET_TEXT}\n') 
         main()
     except Exception as e:
