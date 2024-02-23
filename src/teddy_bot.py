@@ -268,7 +268,7 @@ def tweet_promo(str_tweet, img_url):
 
 async def button_click(update: Update, context: CallbackContext) -> None:
     funcname = 'button_click'
-    print(cStrDivider_1, f'ENTER - {funcname}', sep='\n')
+    print(cStrDivider_1, f'ENTER - {funcname} _ {get_time_now()}', sep='\n')
     str_uname = update.callback_query.from_user.username
     str_handle = update.callback_query.from_user.first_name
     print(f'from user: @{str_uname} (aka. {str_handle})')
@@ -295,8 +295,8 @@ async def button_click(update: Update, context: CallbackContext) -> None:
     print(f'callback_data: {callback_data}') # callback_data = '@username (aka. handle)'
     print(f'img_url: {img_url}')
     
-    # tweet promo
-    str_tweet = PROMO_TWEET_TEXT + f'\n\nauthor: TG -> {callback_data}' # should we use 't.me/username' ?
+    # tweet promo (note: callback_data[1:] = remove '@' from user name )
+    str_tweet = PROMO_TWEET_TEXT + f'\n\nauthor: t.me/{callback_data[1:]}' # should we use 't.me/username' ?
     response, success = tweet_promo(str_tweet, img_url) # callback_data = TG author
     tweet_data = response.data
     tweet_text = tweet_data['text']
@@ -314,7 +314,7 @@ async def button_click(update: Update, context: CallbackContext) -> None:
     print(f'\nstr_resp: {str_resp}')
     await context.bot.send_message(chat_id=update.callback_query.message.chat_id, text=str_resp)
 
-    print('', f'EXIT - {funcname}', cStrDivider_1, sep='\n')
+    print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
     
 async def gen_ai_img_1(update: Update, context):
     funcname = 'gen_ai_img_1'
@@ -344,8 +344,9 @@ async def gen_ai_img_1(update: Update, context):
         str_err = str_err + f'\n    "{str_prompt}"'
         await context.bot.send_message(chat_id=update.message.chat_id, text=str_err)
         print(str_err)
-        print('', f'EXIT - {funcname}', cStrDivider_1, sep='\n')
+        print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
         return
+
     print('SENDING IMAGE to TG ...')
     # pick one random image from lst_imgs
     r_idx = -1
@@ -455,27 +456,27 @@ def gen_ai_image(str_prompt):
             _idx, _key, _cookie = get_next_cookie(dict_cookies)
     
     print(f'cookie idx: {_idx}\ncookie key: {_key}')
-    while True:
-        try:
-            if USE_GEN_IMG:
-                big = BingImgGenerator(_key, _cookie)
-                lst_imgs = big.execute_gen_image(str_prompt, False) # True = use cli prompts
-            else:
-                gen = ImageGen(auth_cookie=_cookie, auth_cookie_SRCHHPGUSR=_cookie, quiet=False)
-                # gen = ImageGenAsync(auth_cookie=cook, quiet=False)
-                lst_imgs = gen.get_images(str_prompt)
 
-            IMG_REQUEST_SUCCESS_CNT += 1
-            break  # Exit the loop if no exception is caught
-        except Exception as e:
-            print_except(e, debugLvl=1)
-            print(f'cookie idx: {_idx}\ncookie key: {_key}')
-            print(f'img request cnt: {IMG_REQUEST_CNT}')
-            print(f'img request success ratio: {IMG_REQUEST_SUCCESS_CNT}/{IMG_REQUEST_CNT}')
-            # print("Exception caught:", e)
-            err = 2
-            time.sleep(2)  # Wait for 5 seconds before the next attempt
-            return lst_imgs, err
+    try:
+        if USE_GEN_IMG:
+            big = BingImgGenerator(_key, _cookie)
+            lst_imgs = big.execute_gen_image(str_prompt, False) # True = use cli prompts
+        else:
+            gen = ImageGen(auth_cookie=_cookie, auth_cookie_SRCHHPGUSR=_cookie, quiet=False)
+            # gen = ImageGenAsync(auth_cookie=cook, quiet=False)
+            lst_imgs = gen.get_images(str_prompt)
+
+        IMG_REQUEST_SUCCESS_CNT += 1
+
+    except Exception as e:
+        print_except(e, debugLvl=1)
+        print(f'cookie idx: {_idx}\ncookie key: {_key}')
+        print(f'img request cnt: {IMG_REQUEST_CNT}')
+        print(f'img request success ratio: {IMG_REQUEST_SUCCESS_CNT}/{IMG_REQUEST_CNT}')
+        # print("Exception caught:", e)
+        err = 2
+        time.sleep(2)  # Wait for 5 seconds before the next attempt
+        return lst_imgs, err
 
     print('DONE GETTING IMAGES from BING...')
     print(*lst_imgs, sep='\n')
