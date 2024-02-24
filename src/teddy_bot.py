@@ -108,6 +108,12 @@ greeted_users = {}
 OPENAI_KEY = 'nil_key'
 USE_HD_GEN = False
 RESP_RECEIVED = False
+
+WHITELIST_TG_CHAT_IDS = [
+    '-1002041092613', # $BearShares
+    '-1002049491115', # $BearShares - testing
+    '-4139183080', # TeddyShares - testing
+    ]
 #------------------------------------------------------------#
 #   FUNCTIONS                                                #
 #------------------------------------------------------------#
@@ -320,6 +326,8 @@ async def gen_ai_img_1(update: Update, context):
     funcname = 'gen_ai_img_1'
     print(cStrDivider_1, f'ENTER - {funcname} _ {get_time_now()}', sep='\n')
     group_name = update.message.chat.title if update.message.chat.type == 'supergroup' else None
+    _chat_id = update.message.chat_id
+    print("chat_id:", _chat_id)
     if group_name:
         print("Group name:", group_name)
     else:
@@ -329,6 +337,17 @@ async def gen_ai_img_1(update: Update, context):
     str_handle = user.first_name
     str_uname = user.username
     inp = update.message.text
+    
+
+    # check if TG group is allowed to use the bot
+    if str(_chat_id) not in WHITELIST_TG_CHAT_IDS:
+        print("*** WARNING ***: non-whitelist TG group trying to use the bot; sending deny message...")
+        str_conf = f"@{str_uname} (aka. {str_handle}) -> FUCK OFF! ... don't steal : /"
+        print(str_conf)
+        await context.bot.send_message(chat_id=update.message.chat_id, text=str_conf)    
+        print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
+        return
+
     str_prompt = inp[inp.find(' ')+1::] # slicing out /<command>
     str_conf = f'@{str_uname} (aka. {str_handle}) -> please wait, generating image ...\n    "{str_prompt}"'
     print(str_conf)
