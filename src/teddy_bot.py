@@ -114,6 +114,10 @@ WHITELIST_TG_CHAT_IDS = [
     '-1002049491115', # $BearShares - testing
     '-4139183080', # TeddyShares - testing
     ]
+BLACKLIST_TEXT = [
+    'smart vault', 'smart-vault', 'smart_vault', # @JstKidn
+    ]
+
 #------------------------------------------------------------#
 #   FUNCTIONS                                                #
 #------------------------------------------------------------#
@@ -321,7 +325,24 @@ async def button_click(update: Update, context: CallbackContext) -> None:
     await context.bot.send_message(chat_id=update.callback_query.message.chat_id, text=str_resp)
 
     print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
-    
+
+def filter_prompt(_prompt):
+    funcname = 'filter_prompt'
+    print(f'ENTER - {funcname}')
+    prompt_edit = _prompt.lower()
+    found_blacklist = False
+    for i in BLACKLIST_TEXT:
+        print(i)
+        # if BLACKLIST_TEXT[i] in prompt_edit:
+        if i in prompt_edit:
+            print(f'found BLACKLIST_TEXT: {i}')
+            prompt_edit = prompt_edit.replace(i, 'bear shares')
+            found_blacklist = True
+
+    if found_blacklist:
+        return prompt_edit
+    return _prompt
+
 async def gen_ai_img_1(update: Update, context):
     funcname = 'gen_ai_img_1'
     print(cStrDivider_1, f'ENTER - {funcname} _ {get_time_now()}', sep='\n')
@@ -349,6 +370,10 @@ async def gen_ai_img_1(update: Update, context):
         return
 
     str_prompt = inp[inp.find(' ')+1::] # slicing out /<command>
+
+    # filter / update prompt to deal with spammers (using 'BLACKLIST_TEXT')
+    str_prompt = filter_prompt(str_prompt)
+
     str_conf = f'@{str_uname} (aka. {str_handle}) -> please wait, generating image ...\n    "{str_prompt}"'
     print(str_conf)
 
