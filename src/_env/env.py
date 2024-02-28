@@ -68,6 +68,7 @@ OPENAI_KEY = os.environ['OPENAI_KEY']
 # telegram
 TOKEN_dev = os.environ['TG_TOKEN_DEV'] # PTPTestBot @ptp_test_bot (dev)
 TOKEN_prod = os.environ['TG_TOKEN_PROD'] # (prod)
+TOKEN_neo = os.environ['TG_TOKEN_NEO'] # (neo) @neo_bs_bot
 
 
 #============================================================================#
