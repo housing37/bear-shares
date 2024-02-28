@@ -4,13 +4,20 @@ import openai
 import os
 from _env import env
 
+WHITELIST_TG_CHAT_IDS = [
+    '-1002041092613', # $BearShares
+    '-1002049491115', # $BearShares - testing
+    '-4139183080', # TeddyShares - testing
+    ]
+
 TOKEN = env.TOKEN_neo # neo_bs_bot (neo)
 OPENAI_API_KEY = env.OPENAI_KEY
-GROUP_ID = '-1002049491115', # $BearShares - testing
+# GROUP_ID = '-1002049491115', # $BearShares - testing
 
 print(TOKEN)
 print(OPENAI_API_KEY)
-print(GROUP_ID)
+print(WHITELIST_TG_CHAT_IDS)
+# print(GROUP_ID)
 # Initialize OpenAI client
 from openai import OpenAI
 client = OpenAI(api_key=OPENAI_API_KEY)
@@ -30,8 +37,23 @@ async def start(update: Update, context: CallbackContext) -> None:
 # Function to process text prompts and generate responses for /DazedElder
 async def generate_response(update: Update, context: CallbackContext) -> None:
     print('ENTER - generate_response()')
-    user_prompt = update.message.text.partition(' ')[2]  # Extract the user's prompt after the command.
+    group_name = update.message.chat.title if update.message.chat.type == 'supergroup' else None
+    _chat_id = update.message.chat_id
+    print("chat_id:", _chat_id)
+    if group_name:
+        print("Group name:", group_name)
+    else:
+        print("*NOTE* This message was not sent from a group.")
 
+    user_prompt = update.message.text.partition(' ')[2]  # Extract the user's prompt after the command.
+    print(f'user_prompt: {user_prompt}')
+
+    # check if TG group is allowed to use the bot
+    if str(_chat_id) not in WHITELIST_TG_CHAT_IDS:
+        print("*** WARNING ***: non-whitelist TG group trying to use the bot; returning ...")
+        print('EXIT - generate_response()')
+        return
+    
     if user_prompt:        
         # Attempt to call the OpenAI API with the adjusted method.
         try:
@@ -62,10 +84,9 @@ async def generate_response(update: Update, context: CallbackContext) -> None:
     print('EXIT - generate_response()')
 
 # Function to filter messages from the specified Telegram group
-def group_filter(update: Update) -> bool:
-    print(f'ENTER - group_filter _ GROUP_ID: {GROUP_ID}')
-    return True
-    # return str(update.message.chat_id) == GROUP_ID
+# def group_filter(update: Update) -> bool:
+#     print(f'ENTER - group_filter _ GROUP_ID: {GROUP_ID}')
+#     return str(update.message.chat_id) == GROUP_ID
 
 def main():
     print('ENTER - main()')
