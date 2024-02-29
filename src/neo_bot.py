@@ -94,6 +94,7 @@ def main():
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("talk", generate_response))
+    app.add_handler(CommandHandler("neo", generate_response))
     # app.add_handler(MessageHandler(filters.ChatType.GROUP & filters.Update.message, generate_response))
 
     # Start the bot
