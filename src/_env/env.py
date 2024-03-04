@@ -1,8 +1,8 @@
-__filename = 'env.py'
 __fname = 'env'
+__filename = __fname + '.py'
 cStrDivider = '#================================================================#'
-print('', cStrDivider, f'START _ {__filename}', cStrDivider, sep='\n')
-print(f'GO {__filename} -> starting IMPORTs and globals decleration')
+cStrDivider_1 = '#----------------------------------------------------------------#'
+print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globals', cStrDivider, sep='\n')
 #============================================================================#
 ## log paths (should use same 'log' folder as access & error logs from nginx config)
 #GLOBAL_PATH_DEV_LOGS = "/var/log/gasptires/dev.log"
@@ -66,7 +66,7 @@ ACCESS_TOKEN_SECRET_1 = os.environ['ACCESS_TOKEN_SECRET_1']
 OPENAI_KEY = os.environ['OPENAI_KEY']
 
 # telegram
-TOKEN_dev = os.environ['TG_TOKEN_DEV'] # PTPTestBot @ptp_test_bot (dev)
+TOKEN_dev = os.environ['TG_TOKEN_DEV'] # (dev)
 TOKEN_prod = os.environ['TG_TOKEN_PROD'] # (prod)
 TOKEN_neo = os.environ['TG_TOKEN_NEO'] # (neo) @neo_bs_bot
 
