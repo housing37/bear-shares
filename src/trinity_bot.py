@@ -19,6 +19,8 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters
 #------------------------------------------------------------#
 #   GLOBALS                                                  #
 #------------------------------------------------------------#
+# constants
+LST_TG_CMDS = req_handler.DICT_CMD_EXE.keys()
 WHITELIST_CHAT_IDS = [
     '-1002041092613', # $BearShares
     '-1002049491115', # $BearShares - testing
@@ -28,8 +30,8 @@ BLACKLIST_TEXT = [
     'smart vault', 'smart-vault', 'smart_vault', # @JstKidn
     ]
 
+# input select
 USE_PROD_TG = False
-LST_TG_CMDS = []
 
 #------------------------------------------------------------#
 #   FUNCTIONS                                                #
@@ -281,9 +283,7 @@ if __name__ == "__main__":
         USE_PROD_TG = True if inp == '0' else False
         print(f'  input = {inp} _ USE_PROD_TG = {USE_PROD_TG}')
 
-        LST_TG_CMDS = req_handler.DICT_CMD_EXE.keys()
-        set_tg_token()
-        
+        set_tg_token()        
         main()
     except Exception as e:
         print_except(e, debugLvl=0)
