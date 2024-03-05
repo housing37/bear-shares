@@ -22,40 +22,49 @@ kKeyVals = "key_vals"
 
 # '/register_as_shiller'
 kSHILLER_REG = "add_new_user"
-LST_KEYS_REG_SHILLER = ['user_id', 'wallet_address', 'twitter_prof_url']
+LST_KEYS_REG_SHILLER = ['user_id', 'wallet_address', 'tweet_url']
 LST_KEYS_REG_SHILLER_RESP = env.LST_KEYS_REG_SHILLER_RESP
+DB_PROC_ADD_NEW_USER = 'ADD_NEW_USER'
+    # validate 'tweet_url' contains texts '@BearSharesNFT' & 'trinity'
     # insert into 'users' (...) values (...)
 
 # '/submit_shill_link'
 kSUBMIT_SHILL = "add_new_shill"
 LST_KEYS_SUBMIT_SHILL = ['user_id', 'post_url']
 LST_KEYS_SUBMIT_SHILL_RESP = env.LST_KEYS_REG_SHILLER_RESP
+DB_PROC_ADD_SHILL = 'ADD_USER_SHILL'
+    # validate 'post_url' is not in 'shills' table yet
     # insert into 'shills' (...) values (...) for user_id
 
 # '/show_my_rates'
 kSHOW_RATES = "get_user_rates"
 LST_KEYS_SHOW_RATES = ['user_id']
 LST_KEYS_SHOW_RATES_RESP = env.LST_KEYS_REG_SHILLER_RESP
+DB_PROC_GET_USR_RATES = 'GET_USER_RATES'
     # select * from 'user_shill_rates' for user_id (order by id desc limit 1)
 
 # '/show_my_earnings'
 kSHOW_EARNINGS = "get_user_earns"
 LST_KEYS_SHOW_EARNINGS = ['user_id']
 LST_KEYS_SHOW_EARNINGS_RESP = env.LST_KEYS_REG_SHILLER_RESP
-DB_PROC_GET_USR_EARNINGS = 'GET_USR_EARNINGS'
+DB_PROC_GET_USR_EARNINGS = 'GET_USER_EARNINGS'
     # select * from 'user_earns' where 'user_earns.fk_user_id=user_id'
 
 # '/withdraw_my_earnings'
 kWITHDRAW_EARNINGS = "withdraw_user_earns"
 LST_KEYS_WITHDRAW_EARNINGS = ['user_id']
 LST_KEYS_WITHDRAW_EARNINGS_RESP = env.LST_KEYS_REG_SHILLER_RESP
+DB_PROC_WITHDRAW_EARNS = 'WITHDRAW_USER_EARNINGS'
+    # select 'user_earns.usd_owed' for user_id (req: usd_owed >= <some-min-amnt>)
+    # select 'users.wallet_address' for user_id
+    # use solidity 'transfer' to send 'usd_owed' amount to 'wallet_address'
     # update 'user_earns.withdraw_request' where 'user_earns.usd_owed > 0' for user_id
 
-# '/admin_show_usr_shills'
+# '/admin_show_user_shills'
 kADMIN_SHOW_USR_SHILLS = "get_usr_shills"
 LST_KEYS_USR_SHILLS = ['admin_id','user_id','pending','removed']
 LST_KEYS_USR_SHILLS_RESP = env.LST_KEYS_REG_SHILLER_RESP
-DB_PROC_GET_USR_SHILLS_ALL = 'GET_USR_SHILLS_ALL'
+DB_PROC_GET_USR_SHILLS_ALL = 'GET_USER_SHILLS_ALL'
     # select * from 'shills' where 'shills.is_approved=True|False' and 'shills.is_removed=True|False' for user_id
 
 # '/admin_list_all_pend_shills'
@@ -70,6 +79,7 @@ kADMIN_APPROVE_SHILL = "approve_pend_shill"
 LST_KEYS_APPROVE_SHILL = ['admin_id','shill_id','shill_url','is_approved']
 LST_KEYS_APPROVE_SHILL_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_APPROVE_SHILL_STATUS = "SET_SHILL_APPROVE_STATUS" 
+    # admin views shill_url on the web
     # set 'shills.is_approved=True|False' where 'shills.is_removed=False' for 'user_id + shill_id|url' combo
     # update 'user_earns.usd_total|owed' accordingly (+-) for user_id
 
@@ -77,14 +87,14 @@ DB_PROC_APPROVE_SHILL_STATUS = "SET_SHILL_APPROVE_STATUS"
 kADMIN_VIEW_SHILL = "get_usr_shill"
 LST_KEYS_VIEW_SHILL = ['admin_id','user_id','shill_id','shill_url']
 LST_KEYS_VIEW_SHILL_RESP = env.LST_KEYS_REG_SHILLER_RESP
-DB_PROC_GET_USR_SHILL = 'GET_USR_SHILL'
+DB_PROC_GET_USR_SHILL = 'GET_USER_SHILL'
     # select * from 'shills' where 'shills.id|shill_url=shill_id|url' for user_id
 
 # '/admin_pay_shill_rewards' _ NOTE: requires solidty 'transfer' call _ ** HOUSE ONLY **
 kADMIN_PAY_SHILL_EARNS = "pay_usr_owed_shill_earns"
 LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_id']
 LST_KEYS_PAY_SHILL_EARNS_RESP = env.LST_KEYS_REG_SHILLER_RESP
-DB_PROC_UPDATE_USR_PAID_EARNS = 'UPDATED_USR_SHILL_PAID_EARNS'
+DB_PROC_UPDATE_USR_PAID_EARNS = 'UPDATED_USER_SHILL_PAID_EARNS'
     # check 'user_earns.withdraw_request=True' for 'user_id'
     # validate 'user_earns.usd_owed' == 
     #   total of (select 'shills.pay_usd' where 'shills.is_paid=False' & 'shills.is_approved=True & 'shills.is_removed=False') for user_id
@@ -96,7 +106,7 @@ DB_PROC_UPDATE_USR_PAID_EARNS = 'UPDATED_USR_SHILL_PAID_EARNS'
 kADMIN_SET_SHILL_REM = "set_shill_removed"
 LST_KEYS_SET_SHILL_REM = ['admin_id','user_id','shill_id','shill_url']
 LST_KEYS_SET_SHILL_REM_RESP = env.LST_KEYS_REG_SHILLER_RESP
-DB_PROC_SET_SHILL_REM = 'SET_USR_SHILL_REMOVED'
+DB_PROC_SET_SHILL_REM = 'SET_USER_SHILL_REMOVED'
     # updated 'shills.is_removed' for 'shills.user_id + shills.shill_id|url' combo
 
 # '/admin_scan_web_for_removed_shills' _ NOTE: requires twitter post web scrape
@@ -105,13 +115,13 @@ LST_KEYS_CHECK_USR_REM_SHILLS = ['admin_id','user_id']
 LST_KEYS_CHECK_USR_REM_SHILLS_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_CHECK_USR_REM_SHILL = DB_PROC_GET_USR_SHILLS_ALL 
     # select post_url from 'shills' where 'shills.is_removed=False' for user_id
-    # then web scrape those post_urls to see if they are still work
+    # then web scrape those post_urls to see if they are still working / viewable
 
 # '/admin_set_shiller_rates'
 kADMIN_SET_USR_SHILL_PAY_RATES = "set_usr_shill_pay_rates"
 LST_KEYS_SET_USR_SHILL_PAY_RATES = ['admin_id','user_id']
 LST_KEYS_SET_USR_SHILL_PAY_RATES_RESP = env.LST_KEYS_REG_SHILLER_RESP
-DB_PROC_SET_USR_RATES = 'SET_USR_PAY_RATES'
+DB_PROC_SET_USR_RATES = 'SET_USER_PAY_RATES'
     # update 'user_shill_rates' for user_id
 
 #-----------------------------------------------------#
@@ -121,11 +131,11 @@ DICT_CMD_EXE = {
     "show_my_rates":[kSHOW_RATES,LST_KEYS_SHOW_RATES,LST_KEYS_SHOW_RATES_RESP],
     "show_my_earnings":[kSHOW_EARNINGS,LST_KEYS_SHOW_EARNINGS,LST_KEYS_SHOW_EARNINGS_RESP],
     "withdraw_my_earnings":[kWITHDRAW_EARNINGS,LST_KEYS_WITHDRAW_EARNINGS,LST_KEYS_WITHDRAW_EARNINGS_RESP],
-    "admin_show_usr_shills":[kADMIN_SHOW_USR_SHILLS,LST_KEYS_USR_SHILLS,LST_KEYS_USR_SHILLS_RESP],
+    "admin_show_user_shills":[kADMIN_SHOW_USR_SHILLS,LST_KEYS_USR_SHILLS,LST_KEYS_USR_SHILLS_RESP],
     "admin_list_all_pend_shills":[kADMIN_LIST_ALL_PEND_SHILLS,LST_KEYS_ALL_PEND_SHILLS,LST_KEYS_ALL_PEND_SHILLS_RESP],
     "admin_approve_pend_shill":[kADMIN_APPROVE_SHILL,LST_KEYS_APPROVE_SHILL,LST_KEYS_APPROVE_SHILL_RESP],
     "admin_view_shill_status":[kADMIN_VIEW_SHILL,LST_KEYS_VIEW_SHILL,LST_KEYS_VIEW_SHILL_RESP],
-    "admin_pay_shill_reward":[kADMIN_PAY_SHILL_EARNS,LST_KEYS_PAY_SHILL_EARNS,LST_KEYS_PAY_SHILL_EARNS_RESP],
+    "admin_pay_shill_rewards":[kADMIN_PAY_SHILL_EARNS,LST_KEYS_PAY_SHILL_EARNS,LST_KEYS_PAY_SHILL_EARNS_RESP],
     "admin_log_removed_shill":[kADMIN_SET_SHILL_REM,LST_KEYS_SET_SHILL_REM,LST_KEYS_SET_SHILL_REM_RESP,DB_PROC_SET_SHILL_REM],
     "admin_scan_web_for_removed_shills":[kADMIN_CHECK_USR_REM_SHILLS,LST_KEYS_CHECK_USR_REM_SHILLS,LST_KEYS_CHECK_USR_REM_SHILLS_RESP,DB_PROC_CHECK_USR_REM_SHILL],
     'admin_set_shiller_rates':[kADMIN_SET_USR_SHILL_PAY_RATES,LST_KEYS_SET_USR_SHILL_PAY_RATES,LST_KEYS_SET_USR_SHILL_PAY_RATES_RESP,DB_PROC_SET_USR_RATES],

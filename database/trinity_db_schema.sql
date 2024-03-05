@@ -29,6 +29,7 @@ CREATE TABLE `users` (
   `red_user_handle` varchar(1024) default '',
   `red_conf_link` varchar(1024) default '',
   `fk_last_shill_id` int(11) default -1, -- for rate-limit
+  `is_admin` BOOLEAN DEFAULT FALSE,
 
   UNIQUE KEY `ID` (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -55,7 +56,7 @@ CREATE TABLE `shill_types` (
   `dt_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `dt_deleted` timestamp NULL DEFAULT NULL,
   `post_loc` varchar(40) DEFAULT 'nil_loc', -- (Twitter, tiktok, Reddit)
-  `descr` varchar(40), -- (tag, text, meme, video)
+  `descr` varchar(40), -- (simple hastag, simple text, full text, meme, video)
 
   UNIQUE KEY `ID` (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
