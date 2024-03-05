@@ -12,6 +12,7 @@ from flask import request
 from db_controller import *
 from req_helpers import *
 import json
+import tweepy
 
 #=====================================================#
 #         request handler static keys                 #
@@ -20,13 +21,25 @@ kPin = 'admin_pin'
 kUserId = "user_id"
 kKeyVals = "key_vals"
 
+# twitter access globals
+CONSUMER_KEY = 'nil_tw_key'
+CONSUMER_SECRET = 'nil_tw_key'
+ACCESS_TOKEN = 'nil_tw_key'
+ACCESS_TOKEN_SECRET = 'nil_tw_key'
+
 # '/register_as_shiller'
 kSHILLER_REG = "add_new_user"
-LST_KEYS_REG_SHILLER = ['user_id', 'wallet_address', 'tweet_url']
+LST_KEYS_REG_SHILLER = ['user_id', 'wallet_address', 'trinity_tw_url']
 LST_KEYS_REG_SHILLER_RESP = env.LST_KEYS_REG_SHILLER_RESP
-DB_PROC_ADD_NEW_USER = 'ADD_NEW_USER'
-    # validate 'tweet_url' contains texts '@BearSharesNFT' & 'trinity'
+DB_PROC_ADD_NEW_USER = 'ADD_NEW_TG_USER'
+    # validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
     # insert into 'users' (...) values (...)
+
+# '/confirm_twitter'
+kTWITTER_CONF = "validate_twitter"
+LST_KEYS_TW_CONF = ['user_id', 'trinity_tw_url']
+LST_KEYS_TW_CONF_RESP = env.LST_KEYS_REG_SHILLER_RESP
+DB_PROC_RENEW_TW_CONFRIM = 'UPDATE_TWITTER_CONF'
 
 # '/submit_shill_link'
 kSUBMIT_SHILL = "add_new_shill"
@@ -49,7 +62,7 @@ DB_PROC_GET_USR_RATES = 'GET_USER_RATES'
 kSHOW_EARNINGS = "get_user_earns"
 LST_KEYS_SHOW_EARNINGS = ['user_id']
 LST_KEYS_SHOW_EARNINGS_RESP = env.LST_KEYS_REG_SHILLER_RESP
-DB_PROC_GET_USR_EARNINGS = 'GET_USER_EARNINGS'
+DB_PROC_GET_USR_EARNS = 'GET_USER_EARNINGS'
     # select * from 'user_earns' where 'user_earns.fk_user_id=user_id'
 
 # '/withdraw_my_earnings'
@@ -128,16 +141,17 @@ DB_PROC_SET_USR_RATES = 'SET_USER_PAY_RATES'
 
 #-----------------------------------------------------#
 DICT_CMD_EXE = {
-    "register_as_shiller":[kSHILLER_REG,LST_KEYS_REG_SHILLER,LST_KEYS_REG_SHILLER_RESP],
-    "submit_shill_link":[kSUBMIT_SHILL,LST_KEYS_SUBMIT_SHILL,LST_KEYS_SUBMIT_SHILL_RESP],
-    "show_my_rates":[kSHOW_RATES,LST_KEYS_SHOW_RATES,LST_KEYS_SHOW_RATES_RESP],
-    "show_my_earnings":[kSHOW_EARNINGS,LST_KEYS_SHOW_EARNINGS,LST_KEYS_SHOW_EARNINGS_RESP],
-    "withdraw_my_earnings":[kWITHDRAW_EARNINGS,LST_KEYS_WITHDRAW_EARNINGS,LST_KEYS_WITHDRAW_EARNINGS_RESP],
-    "admin_show_user_shills":[kADMIN_SHOW_USR_SHILLS,LST_KEYS_USR_SHILLS,LST_KEYS_USR_SHILLS_RESP],
-    "admin_list_all_pend_shills":[kADMIN_LIST_ALL_PEND_SHILLS,LST_KEYS_ALL_PEND_SHILLS,LST_KEYS_ALL_PEND_SHILLS_RESP],
-    "admin_approve_pend_shill":[kADMIN_APPROVE_SHILL,LST_KEYS_APPROVE_SHILL,LST_KEYS_APPROVE_SHILL_RESP],
-    "admin_view_shill_status":[kADMIN_VIEW_SHILL,LST_KEYS_VIEW_SHILL,LST_KEYS_VIEW_SHILL_RESP],
-    "admin_pay_shill_rewards":[kADMIN_PAY_SHILL_EARNS,LST_KEYS_PAY_SHILL_EARNS,LST_KEYS_PAY_SHILL_EARNS_RESP],
+    "register_as_shiller":[kSHILLER_REG,LST_KEYS_REG_SHILLER,LST_KEYS_REG_SHILLER_RESP,DB_PROC_ADD_NEW_USER],
+    "confirm_twitter":[kTWITTER_CONF,LST_KEYS_TW_CONF,LST_KEYS_TW_CONF_RESP,DB_PROC_RENEW_TW_CONFRIM],
+    "submit_shill_link":[kSUBMIT_SHILL,LST_KEYS_SUBMIT_SHILL,LST_KEYS_SUBMIT_SHILL_RESP,DB_PROC_ADD_SHILL],
+    "show_my_rates":[kSHOW_RATES,LST_KEYS_SHOW_RATES,LST_KEYS_SHOW_RATES_RESP,DB_PROC_GET_USR_RATES],
+    "show_my_earnings":[kSHOW_EARNINGS,LST_KEYS_SHOW_EARNINGS,LST_KEYS_SHOW_EARNINGS_RESP,DB_PROC_GET_USR_EARNS],
+    "withdraw_my_earnings":[kWITHDRAW_EARNINGS,LST_KEYS_WITHDRAW_EARNINGS,LST_KEYS_WITHDRAW_EARNINGS_RESP,DB_PROC_WITHDRAW_EARNS],
+    "admin_show_user_shills":[kADMIN_SHOW_USR_SHILLS,LST_KEYS_USR_SHILLS,LST_KEYS_USR_SHILLS_RESP,DB_PROC_GET_USR_SHILLS_ALL],
+    "admin_list_all_pend_shills":[kADMIN_LIST_ALL_PEND_SHILLS,LST_KEYS_ALL_PEND_SHILLS,LST_KEYS_ALL_PEND_SHILLS_RESP,DB_PROC_GET_PEND_SHILLS],
+    "admin_approve_pend_shill":[kADMIN_APPROVE_SHILL,LST_KEYS_APPROVE_SHILL,LST_KEYS_APPROVE_SHILL_RESP,DB_PROC_APPROVE_SHILL_STATUS],
+    "admin_view_shill_status":[kADMIN_VIEW_SHILL,LST_KEYS_VIEW_SHILL,LST_KEYS_VIEW_SHILL_RESP,DB_PROC_GET_USR_SHILL],
+    "admin_pay_shill_rewards":[kADMIN_PAY_SHILL_EARNS,LST_KEYS_PAY_SHILL_EARNS,LST_KEYS_PAY_SHILL_EARNS_RESP,DB_PROC_UPDATE_USR_PAID_EARNS],
     "admin_log_removed_shill":[kADMIN_SET_SHILL_REM,LST_KEYS_SET_SHILL_REM,LST_KEYS_SET_SHILL_REM_RESP,DB_PROC_SET_SHILL_REM],
     "admin_scan_web_for_removed_shills":[kADMIN_CHECK_USR_REM_SHILLS,LST_KEYS_CHECK_USR_REM_SHILLS,LST_KEYS_CHECK_USR_REM_SHILLS_RESP,DB_PROC_CHECK_USR_REM_SHILL],
     'admin_set_shiller_rates':[kADMIN_SET_USR_SHILL_PAY_RATES,LST_KEYS_SET_USR_SHILL_PAY_RATES,LST_KEYS_SET_USR_SHILL_PAY_RATES_RESP,DB_PROC_SET_USR_RATES],
@@ -146,9 +160,11 @@ DICT_CMD_EXE = {
 #=====================================================#
 #         request handler accessors/mutators          #
 #=====================================================#
-def exe_tg_cmd(_lst_inp):
+def exe_tg_cmd(_lst_inp, _use_prod_accts):
     funcname = f'{__filename} exe_tg_cmd({_lst_inp})'
     print(funcname+' - ENTER')
+
+    set_twitter_auth_keys(_use_prod_accts)
 
     # generate keyVals to pass as 'request' w/ 'tg_cmd=True' to 'handle_request'
     tg_cmd = _lst_inp[0]
@@ -231,6 +247,11 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
 
     if tg_cmd != None:
         if tg_cmd in DICT_CMD_EXE.keys():
+            if tg_cmd == 'register_as_shiller' or tg_cmd == 'confirm_twitter' and not valid_trinity_tweet(keyVals['trinity_tw_url']):
+                dbProcResult=-1
+                bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=True)
+                return bErr, jsonResp, dbProcResult
+                            
             # if 'user_id' in keyVals: del keyVals['user_id']
             stored_proc = DICT_CMD_EXE[tg_cmd][3] # [tg_cmd][3] = 'stored-proc-name'
             dbProcResult = exe_stored_proc(-1, stored_proc, keyVals)
@@ -305,7 +326,68 @@ def valid_keys(keyVals, lst_valid_keys):
             print(funcname, f'FAILED static/constant keyVals check key: {key}; returning False')
             return False
     return True
+
+#=====================================================#
+#         twitter support                             #
+#=====================================================#
+def valid_trinity_tweet(_tw_url):
+    full_text = get_tweet_text(_tw_url)
+    full_text = '' if not full_text else full_text                
+    lst_text = full_text.lower().split()
+    if '@bearsharesnft' not in lst_text or 'trinity' not in lst_text:
+        dbProcResult=-1
+        bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=True)
+        return bErr, jsonResp, dbProcResult
+
+def get_tweet_text(_tw_url):
+    global CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET
+    funcname = f'get_tweet_text({_tw_url})'
+    print(cStrDivider_1, f'ENTER - {funcname}', sep='\n')
+
+    # Authenticate to Twitter
+    # client = tweepy.Client(
+    #     consumer_key=CONSUMER_KEY,
+    #     consumer_secret=CONSUMER_SECRET,
+    #     access_token=ACCESS_TOKEN,
+    #     access_token_secret=ACCESS_TOKEN_SECRET
+    # )
+    auth = tweepy.OAuth1UserHandler(
+        CONSUMER_KEY,
+        CONSUMER_SECRET,
+        ACCESS_TOKEN,
+        ACCESS_TOKEN_SECRET,
+    )
+
+    # Create API object
+    api = tweepy.API(auth, wait_on_rate_limit=True)
+    # Extract tweet ID from the URL
+    tweet_id = tweet_url.split('/')[-1]
     
+    try:
+        # Fetch the tweet
+        tweet = api.get_status(tweet_id, tweet_mode='extended')
+        
+        # Extract and return the tweet text
+        return tweet.full_text
+    except tweepy.TweepError as e:
+        print(f"tweepy.TweepError: {e}")
+        return None
+
+def set_twitter_auth_keys(_use_prod_accts):
+    global CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET
+    if _use_prod_accts:
+        # @BearSharesNFT
+        CONSUMER_KEY = env.CONSUMER_KEY_1
+        CONSUMER_SECRET = env.CONSUMER_SECRET_1
+        ACCESS_TOKEN = env.ACCESS_TOKEN_1
+        ACCESS_TOKEN_SECRET = env.ACCESS_TOKEN_SECRET_1
+    else:
+        # @SolAudits
+        CONSUMER_KEY = env.CONSUMER_KEY_0
+        CONSUMER_SECRET = env.CONSUMER_SECRET_0
+        ACCESS_TOKEN = env.ACCESS_TOKEN_0
+        ACCESS_TOKEN_SECRET = env.ACCESS_TOKEN_SECRET_0
+
 #====================================================#
 #====================================================#
 

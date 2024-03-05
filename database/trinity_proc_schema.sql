@@ -1,10 +1,85 @@
 DELIMITER $$
+-- #================================================================# --
+--		SUPPORT FUNCTIONS
+-- #================================================================# --
+DELIMITER $$
+drop FUNCTION if exists valid_tg_user; -- setup
+CREATE FUNCTION `valid_tg_user`(
+		p_tg_user_id VARCHAR(40)) RETURNS BOOLEAN
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	SELECT COUNT(*) FROM users WHERE tg_user_id = p_tg_user_id INTO @v_cnt;
+	IF @v_cnt > 0 THEN
+		RETURN TRUE; 
+	ELSE
+		RETURN FALSE;
+	END IF;
+END 
+$$ DELIMITER ;
+
+DELIMITER $$
+drop FUNCTION if exists valid_tg_user_tw_conf; -- setup
+CREATE FUNCTION `valid_tg_user_tw_conf`(
+		p_tg_user_id VARCHAR(40)) 
+		RETURNS BOOLEAN
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	set @v_exp_days = 7;
+	SELECT COUNT(*) FROM users
+		WHERE tg_user_id = p_tg_user_id
+			AND DATEDIFF(NOW(), dt_last_tw_conf) > @v_exp_days into @v_exp_cnt;
+	IF @v_exp_cnt > 0 THEN
+		RETURN FALSE; 
+	ELSE
+		RETURN TRUE;
+	END IF;
+END 
+$$ DELIMITER ;
+
+-- #================================================================# --
+--		STORED PROCEDURES
+-- #================================================================# --
+DELIMITER $$
+-- UPDATE_TWITTER_CONF Procedure
+DROP PROCEDURE IF EXISTS UPDATE_TWITTER_CONF;
+CREATE PROCEDURE `UPDATE_TWITTER_CONF`(
+    IN p_tg_user_id VARCHAR(40), -- -1000342
+    IN p_tw_conf_url VARCHAR(1024))
+BEGIN
+	IF valid_tg_user(p_tg_user_id) THEN
+		UPDATE TABLE users
+			SET dt_updated = NOW(),
+				tw_conf_url = p_tw_conf_url
+			WHERE tg_user_id = p_tg_user_id;
+		SELECT dt_updated, tg_user_id, tg_user_at, tg_user_handle, is_admin
+				'success' as `status`,
+				'added new tg_user_id' as info,
+				p_tg_user_id as tg_user_id_inp
+			FROM users
+			WHERE tg_user_id = p_tg_user_id;
+	ELSE
+		SELECT 'failed' as `status`, 
+				'tg_user_id_inp does not exist in users table' as info, 
+				p_tg_user_id as tg_user_id_inp,
+				p_tw_conf_url as tw_conf_url_inp
+			FROM users 
+			where tg_user_id = p_tg_user_id;
+	END IF;
+END
+$$ DELIMITER ;
+
+DELIMITER $$
 -- ADD_NEW_USER Procedure
-DROP PROCEDURE IF EXISTS ADD_NEW_USER;
-CREATE PROCEDURE `ADD_NEW_USER`(
-    IN p_user_id VARCHAR(40),
+DROP PROCEDURE IF EXISTS ADD_NEW_TG_USER;
+CREATE PROCEDURE `ADD_NEW_TG_USER`(
+    IN p_tg_user_id VARCHAR(40), -- -1000342
+	IN p_tg_user_at VARCHAR(1024), -- @whatever
+	IN p_tg_user_handle VARCHAR(1024), -- my handle
     IN p_wallet_address VARCHAR(1024),
-    IN p_tweet_url VARCHAR(1024))
+    IN p_tw_conf_url VARCHAR(1024),
+	IN p_is_admin)
 BEGIN
     -- Procedure Body
     -- You can add your SQL logic here
@@ -12,6 +87,42 @@ BEGIN
 -- DB_PROC_ADD_NEW_USER = 'ADD_NEW_USER'
 --     # validate 'tweet_url' contains texts '@BearSharesNFT' & 'trinity'
 --     # insert into 'users' (...) values (...)
+	IF NOT valid_tg_user(p_tg_user_id) THEN
+		-- add to users table
+		INSERT INTO users (
+				tg_user_id,
+				tg_user_at,
+				tg_user_handle,
+				wallet_address,
+				tw_conf_url,
+				dt_last_tw_conf,
+				is_admin
+			) VALUES (
+				p_tg_user_id,
+				p_tg_user_at,
+				p_tg_user_handle,
+				p_wallet_address,
+				p_tw_conf_url,
+				NOW(),
+				p_is_admin
+			);
+		-- RETURN	
+		SELECT LAST_INSERT_ID() into @new_usr_id;
+		SELECT dt_updated, tg_user_id, tg_user_at, tg_user_handle, is_admin
+					'success' as `status`,
+					'added new tg_user_id' as info,
+					@new_usr_id as new_users_id,
+					p_tg_user_id as tg_user_id_inp
+			FROM users
+			WHERE id = @new_usr_id;
+	ELSE
+		SELECT tg_user_id, tg_user_at, tg_user_handle, is_admin
+				'failed' as `status`, 
+				'tg_user_id_inp already exists in users table' as info, 
+				p_tg_user_id as tg_user_id_inp,
+			FROM users 
+			where tg_user_id = p_tg_user_id;
+	END IF;
 END 
 $$ DELIMITER ;
 
@@ -212,6 +323,7 @@ BEGIN
 --     # update 'user_shill_rates' for user_id
 END 
 $$ DELIMITER ;
+
 
 
 

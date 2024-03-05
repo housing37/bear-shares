@@ -7,14 +7,14 @@ print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globa
 #------------------------------------------------------------#
 #   IMPORTS                                                  #
 #------------------------------------------------------------#
-from _env import env
-import time
-from datetime import datetime
-import time, os, traceback, sys
 # import random, json
-import req_handler
+from _env import env
+import time, os, traceback, sys
+from datetime import datetime
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
+
+import req_handler
 
 #------------------------------------------------------------#
 #   GLOBALS                                                  #
@@ -32,6 +32,7 @@ BLACKLIST_TEXT = [
 
 # input select
 USE_PROD_TG = False
+TOKEN = 'nil_tg_token'
 
 #------------------------------------------------------------#
 #   FUNCTIONS                                                #
@@ -67,7 +68,7 @@ def filter_prompt(_prompt):
     if found_blacklist:
         return prompt_edit
     return _prompt
-
+    
 async def cmd_handler(update: Update, context):
     funcname = 'cmd_handler'
     print(cStrDivider_1, f'ENTER - {funcname} _ {get_time_now()}', sep='\n')
@@ -93,7 +94,7 @@ async def cmd_handler(update: Update, context):
     # d = {}
     # d = [d[i] = i for i in inp_split]
     print('req_handler.exe_tg_cmd ...')
-    jsonResp = req_handler.exe_tg_cmd(inp_split)
+    jsonResp = req_handler.exe_tg_cmd(inp_split, USE_PROD_TG)
     print('printing jsonResp ...')
     print(jsonResp)
     print('exiting ...')
@@ -283,7 +284,7 @@ if __name__ == "__main__":
         USE_PROD_TG = True if inp == '0' else False
         print(f'  input = {inp} _ USE_PROD_TG = {USE_PROD_TG}')
 
-        set_tg_token()        
+        set_tg_token()     
         main()
     except Exception as e:
         print_except(e, debugLvl=0)

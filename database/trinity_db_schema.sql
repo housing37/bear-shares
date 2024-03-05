@@ -16,18 +16,13 @@ CREATE TABLE `users` (
   `dt_created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `dt_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `dt_deleted` timestamp NULL DEFAULT NULL,
-  `tg_user_id` varchar(1024) NOT NULL,
-  `tg_user_handle` varchar(1024) default '',
-  `tg_conf_link` varchar(1024) default '',
-  `tw_user_id` varchar(1024) default '',
+  `tg_user_id` varchar(40) NOT NULL, -- ex: -10493048
+  `tg_user_at` varchar(1024) default '', -- ex: @whatever
+  `tg_user_handle` varchar(1024) default '', -- ex: bob joe
+  `tw_user_at` varchar(1024) default '',
   `tw_user_handle` varchar(1024) default '',
-  `tw_conf_link` varchar(1024) default '',
-  `tik_user_id` varchar(1024) default '',
-  `tik_user_handle` varchar(1024) default '',
-  `tik_conf_link` varchar(1024) default '',
-  `red_user_id` varchar(1024) default '',
-  `red_user_handle` varchar(1024) default '',
-  `red_conf_link` varchar(1024) default '',
+  `tw_conf_url` varchar(1024) default '',
+  `dt_last_tw_conf` timestamp NULL DEFAULT NULL,
   `fk_last_shill_id` int(11) default -1, -- for rate-limit
   `is_admin` BOOLEAN DEFAULT FALSE, -- admin required for some stored procs
 
