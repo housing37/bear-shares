@@ -35,6 +35,8 @@ LST_KEYS_SUBMIT_SHILL_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_ADD_SHILL = 'ADD_USER_SHILL'
     # validate 'post_url' is not in 'shills' table yet
     # insert into 'shills' (...) values (...) for user_id
+    # check number of pending shills (is_apporved=False), return rate-limit info
+    #	perhaps set a max USD per day that people can earn?
 
 # '/show_my_rates'
 kSHOW_RATES = "get_user_rates"

@@ -39,6 +39,8 @@ posts/
 
 ## hide legacy helpers
 _legacy/
+_inv/
+_expenses/
 
 ## ignore folders ##
 #_*/

@@ -29,7 +29,7 @@ CREATE TABLE `users` (
   `red_user_handle` varchar(1024) default '',
   `red_conf_link` varchar(1024) default '',
   `fk_last_shill_id` int(11) default -1, -- for rate-limit
-  `is_admin` BOOLEAN DEFAULT FALSE,
+  `is_admin` BOOLEAN DEFAULT FALSE, -- admin required for some stored procs
 
   UNIQUE KEY `ID` (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
