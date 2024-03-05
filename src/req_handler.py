@@ -15,7 +15,7 @@ import json
 import tweepy
 
 #=====================================================#
-#         request handler static keys                 #
+#         global static keys                          #
 #=====================================================#
 kPin = 'admin_pin'
 kUserId = "user_id"
@@ -27,6 +27,9 @@ CONSUMER_SECRET = 'nil_tw_key'
 ACCESS_TOKEN = 'nil_tw_key'
 ACCESS_TOKEN_SECRET = 'nil_tw_key'
 
+#=====================================================#
+#         TG cmd / request handler static keys        #
+#=====================================================#
 # '/register_as_shiller'
 kSHILLER_REG = "add_new_user"
 LST_KEYS_REG_SHILLER = ['user_id', 'wallet_address', 'trinity_tw_url']
@@ -161,15 +164,17 @@ DICT_CMD_EXE = {
 #         request handler accessors/mutators          #
 #=====================================================#
 def exe_tg_cmd(_lst_inp, _use_prod_accts):
-    funcname = f'{__filename} exe_tg_cmd({_lst_inp})'
+    funcname = f'{__filename} exe_tg_cmd(_use_prod_accts={_use_prod_accts})'
     print(funcname+' - ENTER')
 
+    # set twitter support keys for this request
     set_twitter_auth_keys(_use_prod_accts)
 
-    # generate keyVals to pass as 'request' w/ 'tg_cmd=True' to 'handle_request'
+    # generate keyVals to pass as 'request' w/ 'tg_cmd!=None', to 'handle_request'
     tg_cmd = _lst_inp[0]
     keyVals = {}
     for i,v in enumerate(_lst_inp): 
+        print(f' _lst_inp[{i}]={v}')
         if i == 0: continue # skip _lst_inp[0] == tg_cmd
         keyVals[DICT_CMD_EXE[tg_cmd][1][i]] = v # [tg_cmd][1] = LST_KEYS_...
 

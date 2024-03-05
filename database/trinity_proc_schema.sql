@@ -41,37 +41,8 @@ $$ DELIMITER ;
 -- #================================================================# --
 --		STORED PROCEDURES
 -- #================================================================# --
-DELIMITER $$
--- UPDATE_TWITTER_CONF Procedure
-DROP PROCEDURE IF EXISTS UPDATE_TWITTER_CONF;
-CREATE PROCEDURE `UPDATE_TWITTER_CONF`(
-    IN p_tg_user_id VARCHAR(40), -- -1000342
-    IN p_tw_conf_url VARCHAR(1024))
-BEGIN
-	IF valid_tg_user(p_tg_user_id) THEN
-		UPDATE TABLE users
-			SET dt_updated = NOW(),
-				tw_conf_url = p_tw_conf_url
-			WHERE tg_user_id = p_tg_user_id;
-		SELECT dt_updated, tg_user_id, tg_user_at, tg_user_handle, is_admin
-				'success' as `status`,
-				'added new tg_user_id' as info,
-				p_tg_user_id as tg_user_id_inp
-			FROM users
-			WHERE tg_user_id = p_tg_user_id;
-	ELSE
-		SELECT 'failed' as `status`, 
-				'tg_user_id_inp does not exist in users table' as info, 
-				p_tg_user_id as tg_user_id_inp,
-				p_tw_conf_url as tw_conf_url_inp
-			FROM users 
-			where tg_user_id = p_tg_user_id;
-	END IF;
-END
-$$ DELIMITER ;
-
-DELIMITER $$
 -- ADD_NEW_USER Procedure
+DELIMITER $$
 DROP PROCEDURE IF EXISTS ADD_NEW_TG_USER;
 CREATE PROCEDURE `ADD_NEW_TG_USER`(
     IN p_tg_user_id VARCHAR(40), -- -1000342
@@ -87,7 +58,14 @@ BEGIN
 -- DB_PROC_ADD_NEW_USER = 'ADD_NEW_USER'
 --     # validate 'tweet_url' contains texts '@BearSharesNFT' & 'trinity'
 --     # insert into 'users' (...) values (...)
-	IF NOT valid_tg_user(p_tg_user_id) THEN
+	IF valid_tg_user(p_tg_user_id) THEN
+		SELECT tg_user_id, tg_user_at, tg_user_handle, is_admin
+				'failed' as `status`, 
+				'tg_user_id_inp already exists in users table' as info, 
+				p_tg_user_id as tg_user_id_inp,
+			FROM users 
+			where tg_user_id = p_tg_user_id;
+	ELSE
 		-- add to users table
 		INSERT INTO users (
 				tg_user_id,
@@ -115,15 +93,37 @@ BEGIN
 					p_tg_user_id as tg_user_id_inp
 			FROM users
 			WHERE id = @new_usr_id;
-	ELSE
-		SELECT tg_user_id, tg_user_at, tg_user_handle, is_admin
-				'failed' as `status`, 
-				'tg_user_id_inp already exists in users table' as info, 
-				p_tg_user_id as tg_user_id_inp,
-			FROM users 
-			where tg_user_id = p_tg_user_id;
 	END IF;
 END 
+$$ DELIMITER ;
+
+-- UPDATE_TWITTER_CONF Procedure
+DELIMITER $$
+DROP PROCEDURE IF EXISTS UPDATE_TWITTER_CONF;
+CREATE PROCEDURE `UPDATE_TWITTER_CONF`(
+    IN p_tg_user_id VARCHAR(40), -- -1000342
+    IN p_tw_conf_url VARCHAR(1024))
+BEGIN
+	IF NOT valid_tg_user(p_tg_user_id) THEN
+		SELECT 'failed' as `status`, 
+				'tg_user_id_inp does not exist in users table' as info, 
+				p_tg_user_id as tg_user_id_inp,
+				p_tw_conf_url as tw_conf_url_inp
+			FROM users 
+			where tg_user_id = p_tg_user_id;
+	ELSE
+		UPDATE TABLE users
+			SET dt_updated = NOW(),
+				tw_conf_url = p_tw_conf_url
+			WHERE tg_user_id = p_tg_user_id;
+		SELECT dt_updated, tg_user_id, tg_user_at, tg_user_handle, is_admin
+				'success' as `status`,
+				'added new tg_user_id' as info,
+				p_tg_user_id as tg_user_id_inp
+			FROM users
+			WHERE tg_user_id = p_tg_user_id;
+	END IF;
+END
 $$ DELIMITER ;
 
 DELIMITER $$
