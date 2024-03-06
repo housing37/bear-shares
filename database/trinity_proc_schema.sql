@@ -110,67 +110,21 @@ BEGIN
 END 
 $$ DELIMITER ;
 
-$$ DELIMITER
-drop FUNCTION if exists add_shill_plat; -- setup
-CREATE FUNCTION `add_shill_plat`(
-		p_platform VARCHAR(40))
-		RETURNS BOOLEAN
+DELIMITER $$
+drop FUNCTION if exists add_default_user_earns; -- setup
+CREATE FUNCTION `add_default_user_earns`(
+		p_user_id VARCHAR(1024)) 
+		RETURNS INT(11)
     READS SQL DATA
     DETERMINISTIC
 BEGIN
-	INSERT INTO valid_shill_plats (
-		platform
-	) VALUES (
-		p_platform
-	);
-	SELECT LAST_INSERT_ID() into @new_id;
-	RETURN @new_id as new_shill_plat_id;
-END 
-$$ DELIMITER ;
-
-$$ DELIMITER
-drop FUNCTION if exists add_shill_type; -- setup
-CREATE FUNCTION `add_shill_type`(
-		p_descr VARCHAR(40))
-		RETURNS BOOLEAN
-    READS SQL DATA
-    DETERMINISTIC
-BEGIN
-	INSERT INTO valid_shill_types (
-		descr
-	) VALUES (
-		p_descr
-	);
-	SELECT LAST_INSERT_ID() into @new_id;
-	RETURN @new_id as new_shill_type_id;
-END 
-$$ DELIMITER ;
-
-$$ DELIMITER
-drop FUNCTION if exists add_user_shill_rate; -- setup
-CREATE FUNCTION `add_user_shill_rate`(
-		p_user_id INT(11),
-		p_shill_plat_id INT(11),
-		p_shill_type_id INT(11),
-		p_pay_usd FLOAT)
-		RETURNS BOOLEAN
-    READS SQL DATA
-    DETERMINISTIC
-BEGIN
-	INSERT INTO user_shill_rates (
-		fk_user_id,
-		fk_shill_plat_id,
-		fk_shill_type_id,
-		pay_usd
-	) VALUES (
-		p_user_id,
-		p_shill_plat_id,
-		p_shill_type_id,
-		p_pay_usd
-	);
-	SELECT LAST_INSERT_ID() into @new_rate_id;
-	RETURN @new_rate_id;
-
+	INSERT INTO user_earns (
+			fk_user_id
+		) VALUES (
+			p_user_id
+		);
+	SELECT LAST_INSERT_ID() into @new_earns_id;
+	RETURN @new_earns_id;
 END 
 $$ DELIMITER ;
 
@@ -193,6 +147,70 @@ BEGIN
 	RETURN @v_pay_usd;
 END 
 $$ DELIMITER ;
+
+-- $$ DELIMITER
+-- drop FUNCTION if exists add_shill_plat; -- setup
+-- CREATE FUNCTION `add_shill_plat`(
+-- 		p_platform VARCHAR(40))
+-- 		RETURNS BOOLEAN
+--     READS SQL DATA
+--     DETERMINISTIC
+-- BEGIN
+-- 	INSERT INTO valid_shill_plats (
+-- 		platform
+-- 	) VALUES (
+-- 		p_platform
+-- 	);
+-- 	SELECT LAST_INSERT_ID() into @new_id;
+-- 	RETURN @new_id as new_shill_plat_id;
+-- END 
+-- $$ DELIMITER ;
+
+-- $$ DELIMITER
+-- drop FUNCTION if exists add_shill_type; -- setup
+-- CREATE FUNCTION `add_shill_type`(
+-- 		p_descr VARCHAR(40))
+-- 		RETURNS BOOLEAN
+--     READS SQL DATA
+--     DETERMINISTIC
+-- BEGIN
+-- 	INSERT INTO valid_shill_types (
+-- 		descr
+-- 	) VALUES (
+-- 		p_descr
+-- 	);
+-- 	SELECT LAST_INSERT_ID() into @new_id;
+-- 	RETURN @new_id as new_shill_type_id;
+-- END 
+-- $$ DELIMITER ;
+
+-- $$ DELIMITER
+-- drop FUNCTION if exists add_user_shill_rate; -- setup
+-- CREATE FUNCTION `add_user_shill_rate`(
+-- 		p_user_id INT(11),
+-- 		p_shill_plat_id INT(11),
+-- 		p_shill_type_id INT(11),
+-- 		p_pay_usd FLOAT)
+-- 		RETURNS BOOLEAN
+--     READS SQL DATA
+--     DETERMINISTIC
+-- BEGIN
+-- 	INSERT INTO user_shill_rates (
+-- 		fk_user_id,
+-- 		fk_shill_plat_id,
+-- 		fk_shill_type_id,
+-- 		pay_usd
+-- 	) VALUES (
+-- 		p_user_id,
+-- 		p_shill_plat_id,
+-- 		p_shill_type_id,
+-- 		p_pay_usd
+-- 	);
+-- 	SELECT LAST_INSERT_ID() into @new_rate_id;
+-- 	RETURN @new_rate_id;
+
+-- END 
+-- $$ DELIMITER ;
 
 -- #================================================================# --
 --		STORED PROCEDURES
@@ -254,6 +272,9 @@ BEGIN
 
 		-- get new user id
 		SELECT LAST_INSERT_ID() into @new_usr_id;
+
+		-- set default earnings for new user
+		SELECT add_default_user_earns(@new_usr_id);
 
 		-- set default rates for new user
 		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'htag', 0.005); -- tw, hashtag, .5c
@@ -518,20 +539,102 @@ $$ DELIMITER ;
 
 -- # '/admin_approve_pend_shill'
 DELIMITER $$
-DROP PROCEDURE IF EXISTS SET_SHILL_APPROVE_STATUS;
-CREATE PROCEDURE `SET_SHILL_APPROVE_STATUS`(
-    IN p_admin_id VARCHAR(40),
+DROP PROCEDURE IF EXISTS UPDATE_USER_SHILL_APPR_EARNS;
+CREATE PROCEDURE `UPDATE_USER_SHILL_APPR_EARNS`(
+    IN p_tg_admin_id VARCHAR(40),
+	IN p_tg_user_id VARCHAR(40),
     IN p_shill_id VARCHAR(40),
-    IN p_shill_url VARCHAR(1024),
-    IN p_is_approved BOOLEAN)
+	IN p_shill_plat VARCHAR(40), -- const: unknown, twitter, tiktok, reddit
+	IN p_shill_type VARCHAR(40), -- const: unknown, htag, short_txt, long_txt, img_meme, short_vid, long_vid
+	IN p_pay_usd VARCHAR(40), -- dyn: 0.005, 0.01, 0.05, 0.25 0.50, 1.00, etc.
+    IN p_approved BOOLEAN)
 BEGIN
     -- Procedure Body
     -- You can add your SQL logic here
--- LST_KEYS_APPROVE_SHILL = ['admin_id','shill_id','shill_url','is_approved']
--- DB_PROC_APPROVE_SHILL_STATUS = "SET_SHILL_APPROVE_STATUS" 
---     # admin views shill_url on the web
---     # set 'shills.is_approved=True|False' where 'shills.is_removed=False' for 'user_id + shill_id|url' combo
---     # update 'user_earns.usd_total|owed' accordingly (+-) for user_id
+	-- LST_KEYS_APPROVE_SHILL = ['admin_id','user_id', 'shill_id','shill_plat','shill_type','pay_usd','approved']
+	-- DB_PROC_APPROVE_SHILL_STATUS = "UPDATE_USER_SHILL_APPR_EARNS" 
+	--     # admin views / inspects shill_url on the web (determines: plat, type, pay, approve)
+
+	-- validate admin
+	IF NOT valid_tg_user_admin(p_tg_admin_id) THEN
+		SELECT 'failed' as `status`, 
+				'invalid admin' as info, 
+				p_tg_admin_id as tg_admin_id;
+
+	ELSE
+		-- get shill counts & user earngs counts for 'p_tg_user_id' (w/ additional vars needed)
+		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+		SELECT COUNT(*) FROM shills WHERE id = p_shill_id AND fk_user_id = @v_user_id INTO @v_cnt_ids;
+		SELECT COUNT(*) FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_cnt_earns;
+		SELECT is_removed FROM shills WHERE id = p_shill_id INTO @v_shill_removed;
+		SELECT post_url FROM shills WHERE id = p_shill_id INTO @v_post_url;
+
+		-- check shill_id exists
+		IF @v_cnt_ids = 0 THEN
+			SELECT 'failed' as `status`, 
+					'shill id not found' as info, 
+					p_tg_user_id as tg_user_id_inp,
+					p_shill_id as shill_id_inp,
+					p_approved as approved_inp;
+
+		-- validate shill post_url is still active  (is_removed not set to True)
+		ELSE IF @v_shill_removed = TRUE THEN
+			SELECT post_url,
+					'failed' as `status`, 
+					'dead shill post url' as info, 
+					p_tg_user_id as tg_user_id_inp,
+					p_shill_id as shill_id_inp,
+					p_approved as approved_inp
+				FROM shills 
+				WHERE id = p_shill_id;
+		ELSE
+			-- update shill plat, type, and pay with admin data (prev. reviewed & selected)
+			-- 	NOTE: is_removed gauranteed 'FALSE' for p_shill_id, due to prev. check w/ @v_shill_removed
+			UPDATE shills 
+				SET dt_updated = NOW(),
+					shill_plat = p_shill_plat,
+					shill_type = p_shill_type,
+					pay_usd = p_pay_usd,
+					is_approved = p_approved 
+				WHERE id = p_shill_id
+					AND fk_user_id = @v_user_id
+					AND is_removed = FALSE; 
+
+			-- if user_id has no user_earns entry yet, then create it (safety check)
+			--	NOTE: this should have already been created in 'ADD_NEW_TG_USER' (cmd: /register_as_shillter) 
+			IF @v_cnt_earns = 0 THEN
+				SELECT add_default_user_earns(@v_user_id) INTO @v_earns_id;
+			END IF;
+
+			-- calc & update user_earns for this user_id
+			SELECT user_total FROM user_earns WHERE fk_user_id = @v_user_id INTO @u_total;
+			SELECT user_owed FROM user_earns WHERE fk_user_id = @v_user_id INTO @u_owed;
+			SET @v_tot = @u_total + p_pay_usd;
+			SET @v_owe = @u_owed + p_pay_usd;
+			UPDATE user_earns
+				SET dt_updated = NOW(),
+					user_total = @v_tot,
+					user_owed = @v_owe,
+					is_apporved = TRUE
+				WHERE fk_user_id = @v_user_id;
+
+			-- return
+			SELECT *, 
+					'success' as `status`,
+					'updated user earns' as info,
+					@v_user_id as user_id,
+					@v_post_url as shill_url,
+					p_tg_user_id as tg_user_id_inp,
+					p_shill_id as shill_id_inp,
+					p_shill_plat_inp as shill_id_plat_inp,
+					p_shill_type_inp as shill_id_type_inp,
+					p_pay_usd as pay_usd_inp,
+					p_approved as approved_inp
+				FROM user_earns
+				WHERE fk_user_id = @v_user_id;
+				ORDER BY id desc;
+		END IF;
+	END IF;
 END 
 $$ DELIMITER ;
 
@@ -625,6 +728,7 @@ BEGIN
 --     # update 'user_earns.usd_owed|paid' where 'user_earns.fk_user_id=user_id'
 --     # update 'shills.is_paid=True' for user_id
 --     # then perform solidity 'transfer' call on 'users.wallet_address' for user_id
+--     # update 'user_earns.usd_total|owed|paid' accordingly (+-) for user_id
 END 
 $$ DELIMITER ;
 

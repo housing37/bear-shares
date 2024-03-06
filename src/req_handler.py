@@ -94,9 +94,9 @@ DB_PROC_GET_PEND_SHILLS = 'GET_PEND_SHILLS_ALL' # get where 'is_approved' = Fals
 
 # '/admin_approve_pend_shill'
 kADMIN_APPROVE_SHILL = "approve_pend_shill"
-LST_KEYS_APPROVE_SHILL = ['admin_id','shill_id','shill_url','is_approved']
+LST_KEYS_APPROVE_SHILL = ['admin_id','user_id', 'shill_id','shill_plat','shill_type','pay_usd','approved']
 LST_KEYS_APPROVE_SHILL_RESP = env.LST_KEYS_REG_SHILLER_RESP
-DB_PROC_APPROVE_SHILL_STATUS = "SET_SHILL_APPROVE_STATUS" 
+DB_PROC_APPROVE_SHILL_STATUS = "UPDATE_USER_SHILL_APPR_EARNS" 
     # admin views shill_url on the web
     # set 'shills.is_approved=True|False' where 'shills.is_removed=False' for 'user_id + shill_id|url' combo
     # set 'shills.pay_usd
