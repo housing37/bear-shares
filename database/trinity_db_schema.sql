@@ -7,6 +7,21 @@
 #===============================================#
 -- call DeleteAll_IF_EXISTS('client_shops', 'password37', @result);
 
+-- -- 0=unknown, 1=twitter, 2=tiktok, 3=reddit
+-- select add_shill_plat('unknown');
+-- select add_shill_plat('twitter');
+-- select add_shill_plat('tiktok');
+-- select add_shill_plat('reddit');
+
+-- -- 0=unknown, 1=hastag, 2=short_text, 3=long_ext, 4=meme, 5=short_video, 6=long_video
+-- select add_shill_type('unknown');
+-- select add_shill_type('hashtag');
+-- select add_shill_type('short_text');
+-- select add_shill_type('long_text');
+-- select add_shill_type('image_meme');
+-- select add_shill_type('short_video');
+-- select add_shill_type('long_video');
+
 #===============================================#
 # create tables
 #===============================================#
@@ -44,14 +59,24 @@ CREATE TABLE `user_earns` (
   UNIQUE KEY `ID` (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-drop table if exists shill_types;
-CREATE TABLE `shill_types` (
+drop table if exists shills;
+CREATE TABLE `shills` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `dt_created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `dt_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `dt_deleted` timestamp NULL DEFAULT NULL,
-  `post_loc` varchar(40) DEFAULT 'nil_loc', -- (Twitter, tiktok, Reddit)
-  `descr` varchar(40), -- (simple hastag, simple text, full text, meme, video)
+  `fk_user_id` int(11) NOT NULL,
+  `post_url` varchar(1024) NOT NULL,
+  -- `fk_shill_plat_id` int(11) NOT NULL,
+  -- `fk_shill_type_id` int(11) DEFAULT -1, -- set by admin
+  -- `fk_shill_rate_id` int(11) NOT NULL, -- latest fk_user_id rate: platform, type, & pay_usd
+  `pay_usd` FLOAT DEFAULT -1.0, -- set by admin after review
+  `shill_plat` VARCHAR(40) DEFAULT 'unknown', -- set by admin after post_url review
+  `shill_type` VARCHAR(40) DEFAULT 'unknown', -- set by admin after post_url review
+  `is_approved` BOOLEAN DEFAULT FALSE,
+  `is_paid` BOOLEAN DEFAULT FALSE,
+  `is_removed` BOOLEAN DEFAULT FALSE,
+  `dt_shill_removed` timestamp NULL DEFAULT NULL,
 
   UNIQUE KEY `ID` (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -63,31 +88,51 @@ CREATE TABLE `user_shill_rates` (
   `dt_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `dt_deleted` timestamp NULL DEFAULT NULL,
   `fk_user_id` int(11) NOT NULL,
-  `fk_shill_type_id` int(11) NOT NULL,
-  `pay_usd` float default 0.0 -- (0.01, 0.05, 0.50, 1.0)
+  `platform` VARCHAR(40) NOT NULL, -- const: unknown, twitter, tiktok, reddit
+  `type_descr` VARCHAR(40) NOT NULL, -- const: unknown, htag, short_txt, long_txt, img_meme, short_vid, long_vid
+  `pay_usd` float default 0.0 -- dyn: 0.005, 0.01, 0.05, 0.25 0.50, 1.00, etc.
 
   UNIQUE KEY `ID` (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
+-- #====================================================# --
+--    'user_shill_rates' ALTERNATE INTEGRATION            --
+-- #====================================================# --
+-- drop table if exists user_shill_rates;
+-- CREATE TABLE `user_shill_rates` (
+--   `id` int(11) NOT NULL AUTO_INCREMENT,
+--   `dt_created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--   `dt_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--   `dt_deleted` timestamp NULL DEFAULT NULL,
+--   `fk_user_id` int(11) NOT NULL,
+--   `fk_shill_plat_id` int(11) NOT NULL, -- 0=unknown, 1=twitter, 2=tiktok, 3=reddit
+--   `fk_shill_type_id` int(11) NOT NULL, -- 0=unknown, 1=hastag, 2=short_txt, 3=long_txt, 4=img_meme, 5=short_vid, 6=long_vid
+--   `pay_usd` float default 0.0 -- (0.01, 0.05, 0.50, 1.0)
 
-drop table if exists shills;
-CREATE TABLE `shills` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `dt_created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `dt_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `dt_deleted` timestamp NULL DEFAULT NULL,
-  `fk_shill_type_id` int(11) NOT NULL,
-  `fk_shill_rate_id` int(11) NOT NULL,
-  `pay_usd` float default 0.0 -- (0.01, 0.05, 0.50, 1.0)
-  `post_url` varchar(1024) default '',
-  `is_approved` BOOLEAN DEFAULT FALSE,
-  `is_paid` BOOLEAN DEFAULT FALSE,
-  `is_removed` BOOLEAN DEFAULT FALSE,
-  `dt_shill_removed` timestamp NULL DEFAULT NULL,
+--   UNIQUE KEY `ID` (`id`) USING BTREE
+-- ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-  UNIQUE KEY `ID` (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+-- drop table if exists valid_shill_plats; -- platforms
+-- CREATE TABLE `valid_shill_plats` (
+--   `id` int(11) NOT NULL AUTO_INCREMENT, -- 0=unknown, 1=twitter, 2=tiktok, 3=reddit
+--   `dt_created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--   `dt_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--   `dt_deleted` timestamp NULL DEFAULT NULL,
+--   `platform` varchar(40) DEFAULT 'nil_loc', -- 0=unknown, 1=twitter, 2=tiktok, 3=reddit
 
+--   UNIQUE KEY `ID` (`id`) USING BTREE
+-- ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- drop table if exists valid_shill_types;
+-- CREATE TABLE `valid_shill_types` (
+--   `id` int(11) NOT NULL AUTO_INCREMENT, -- 0, 1, 2, 3, 4, 5, 6=long_video
+--   `dt_created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--   `dt_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--   `dt_deleted` timestamp NULL DEFAULT NULL,
+--   `descr` varchar(40), -- 0=unknown, 1=hastag, 2=short_text, 3=long_ext, 4=meme, 5=short_video, 6=long_video
+
+--   UNIQUE KEY `ID` (`id`) USING BTREE
+-- ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 
 #===============================================#

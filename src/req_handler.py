@@ -48,7 +48,7 @@ DB_PROC_RENEW_TW_CONFRIM = 'UPDATE_TWITTER_CONF'
 kSUBMIT_SHILL = "add_new_shill"
 LST_KEYS_SUBMIT_SHILL = ['user_id', 'post_url']
 LST_KEYS_SUBMIT_SHILL_RESP = env.LST_KEYS_REG_SHILLER_RESP
-DB_PROC_ADD_SHILL = 'ADD_USER_SHILL'
+DB_PROC_ADD_SHILL = 'ADD_USER_SHILL_TW'
     # validate 'post_url' is not in 'shills' table yet
     # insert into 'shills' (...) values (...) for user_id
     # check number of pending shills (is_apporved=False), return rate-limit info
@@ -56,9 +56,9 @@ DB_PROC_ADD_SHILL = 'ADD_USER_SHILL'
 
 # '/show_my_rates'
 kSHOW_RATES = "get_user_rates"
-LST_KEYS_SHOW_RATES = ['user_id']
+LST_KEYS_SHOW_RATES = ['user_id', 'platform'] # const: unknown, twitter, tiktok, reddit
 LST_KEYS_SHOW_RATES_RESP = env.LST_KEYS_REG_SHILLER_RESP
-DB_PROC_GET_USR_RATES = 'GET_USER_RATES'
+DB_PROC_GET_USR_RATES = 'GET_USER_PAY_RATES'
     # select * from 'user_shill_rates' for user_id (order by id desc limit 1)
 
 # '/show_my_earnings'
@@ -99,6 +99,7 @@ LST_KEYS_APPROVE_SHILL_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_APPROVE_SHILL_STATUS = "SET_SHILL_APPROVE_STATUS" 
     # admin views shill_url on the web
     # set 'shills.is_approved=True|False' where 'shills.is_removed=False' for 'user_id + shill_id|url' combo
+    # set 'shills.pay_usd
     # update 'user_earns.usd_total|owed' accordingly (+-) for user_id
 
 # '/admin_view_shill_status'

@@ -19,8 +19,26 @@ END
 $$ DELIMITER ;
 
 DELIMITER $$
-drop FUNCTION if exists valid_tg_user_tw_conf; -- setup
-CREATE FUNCTION `valid_tg_user_tw_conf`(
+drop FUNCTION if exists tw_conf_exists; -- setup
+CREATE FUNCTION `tw_conf_exists`(
+		p_tw_conf_url VARCHAR(1024)) 
+		RETURNS BOOLEAN
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	set @v_exp_days = 7;
+	SELECT COUNT(*) FROM users WHERE tw_conf_url = p_tw_conf_url INTO @v_cnt_fnd;
+	IF @v_cnt_fnd > 0 THEN
+		RETURN TRUE; 
+	ELSE
+		RETURN FALSE;
+	END IF;
+END 
+$$ DELIMITER ;
+
+DELIMITER $$
+drop FUNCTION if exists exp_tw_conf; -- setup
+CREATE FUNCTION `exp_tw_conf`(
 		p_tg_user_id VARCHAR(40)) 
 		RETURNS BOOLEAN
     READS SQL DATA
@@ -29,21 +47,143 @@ BEGIN
 	set @v_exp_days = 7;
 	SELECT COUNT(*) FROM users
 		WHERE tg_user_id = p_tg_user_id
-			AND DATEDIFF(NOW(), dt_last_tw_conf) > @v_exp_days into @v_exp_cnt;
-	IF @v_exp_cnt > 0 THEN
-		RETURN FALSE; 
+			AND DATEDIFF(NOW(), dt_last_tw_conf) > @v_exp_days into @v_exp_fnd;
+	IF @v_exp_fnd > 0 THEN
+		RETURN TRUE; 
+	ELSE
+		RETURN FALSE;
+	END IF;
+END 
+$$ DELIMITER ;
+
+DELIMITER $$
+drop FUNCTION if exists valid_tg_user_tw_conf; -- setup
+CREATE FUNCTION `valid_tg_user_tw_conf`(
+		p_tg_user_id VARCHAR(40)) 
+		RETURNS VARCHAR(1024)
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	IF NOT valid_tg_user(p_tg_user_id) THEN
+		RETURN 'user not found';
+	END IF;
+	IF exp_tw_conf(p_tg_user_id) THEN
+		RETURN 'user conf expired';
+	END IF;
+
+	RETURN 'valid user';
+END 
+$$ DELIMITER ;
+
+DELIMITER $$
+drop FUNCTION if exists valid_new_shill; -- setup
+CREATE FUNCTION `valid_new_shill`(
+		p_post_url VARCHAR(1024)) 
+		RETURNS BOOLEAN
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	SELECT COUNT(*) FROM shills
+		WHERE post_url = p_post_url
+		INTO @v_cnt;
+	IF @v_cnt > 0 THEN
+		RETURN FALSE; -- not new
 	ELSE
 		RETURN TRUE;
 	END IF;
 END 
 $$ DELIMITER ;
 
+$$ DELIMITER
+drop FUNCTION if exists add_shill_plat; -- setup
+CREATE FUNCTION `add_shill_plat`(
+		p_platform VARCHAR(40))
+		RETURNS BOOLEAN
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	INSERT INTO valid_shill_plats (
+		platform
+	) VALUES (
+		p_platform
+	);
+	SELECT LAST_INSERT_ID() into @new_id;
+	RETURN @new_id as new_shill_plat_id;
+END 
+$$ DELIMITER ;
+
+$$ DELIMITER
+drop FUNCTION if exists add_shill_type; -- setup
+CREATE FUNCTION `add_shill_type`(
+		p_descr VARCHAR(40))
+		RETURNS BOOLEAN
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	INSERT INTO valid_shill_types (
+		descr
+	) VALUES (
+		p_descr
+	);
+	SELECT LAST_INSERT_ID() into @new_id;
+	RETURN @new_id as new_shill_type_id;
+END 
+$$ DELIMITER ;
+
+$$ DELIMITER
+drop FUNCTION if exists add_user_shill_rate; -- setup
+CREATE FUNCTION `add_user_shill_rate`(
+		p_user_id INT(11),
+		p_shill_plat_id INT(11),
+		p_shill_type_id INT(11),
+		p_pay_usd FLOAT)
+		RETURNS BOOLEAN
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	INSERT INTO user_shill_rates (
+		fk_user_id,
+		fk_shill_plat_id,
+		fk_shill_type_id,
+		pay_usd
+	) VALUES (
+		p_user_id,
+		p_shill_plat_id,
+		p_shill_type_id,
+		p_pay_usd
+	);
+	SELECT LAST_INSERT_ID() into @new_rate_id;
+	RETURN @new_rate_id;
+
+END 
+$$ DELIMITER ;
+
+$$ DELIMITER
+drop FUNCTION if exists get_usr_pay_rate; -- setup
+CREATE FUNCTION `get_usr_pay_rate`(
+		p_user_id INT(11),
+		p_plat VARCHAR(40),
+		p_type VARCHAR(40))
+		RETURNS FLOAT
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	SELECT pay_usd FROM user_shill_rates 
+		WHERE fk_user_id = p_user_id
+			AND platform = p_plat
+			AND type_descr = p_type
+		ORDER BY id DESC LIMIT 1 
+		INTO @v_pay_usd;
+	RETURN @v_pay_usd;
+END 
+$$ DELIMITER ;
+
 -- #================================================================# --
 --		STORED PROCEDURES
 -- #================================================================# --
--- ADD_NEW_USER Procedure
+-- # '/register_as_shiller'
 DELIMITER $$
-DROP PROCEDURE IF EXISTS ADD_NEW_TG_USER;
+DROP PROCEDURE IF EXISTS 	;
 CREATE PROCEDURE `ADD_NEW_TG_USER`(
     IN p_tg_user_id VARCHAR(40), -- -1000342
 	IN p_tg_user_at VARCHAR(1024), -- @whatever
@@ -58,11 +198,23 @@ BEGIN
 -- DB_PROC_ADD_NEW_USER = 'ADD_NEW_USER'
 --     # validate 'tweet_url' contains texts '@BearSharesNFT' & 'trinity'
 --     # insert into 'users' (...) values (...)
+
+	-- vaidate user does NOT exists (only)
 	IF valid_tg_user(p_tg_user_id) THEN
-		SELECT tg_user_id, tg_user_at, tg_user_handle, is_admin
+		SELECT id, tg_user_id, tg_user_at, tg_user_handle, is_admin
 				'failed' as `status`, 
-				'tg_user_id_inp already exists in users table' as info, 
+				'user already exists' as info, 
 				p_tg_user_id as tg_user_id_inp,
+			FROM users 
+			where tg_user_id = p_tg_user_id;
+
+	-- vaidate p_tw_conf_url has not been used yet
+	ELSE IF tw_conf_exists(p_tw_conf_url) THEN
+		SELECT id, tg_user_id, tg_user_at, tg_user_handle, is_admin, tw_conf_url, dt_last_tw_conf,
+				'failed' as `status`, 
+				'tw conf url already exists' as info, 
+				p_tg_user_id as tg_user_id_inp,
+				p_tw_conf_url as tw_conf_url_inp
 			FROM users 
 			where tg_user_id = p_tg_user_id;
 	ELSE
@@ -84,41 +236,61 @@ BEGIN
 				NOW(),
 				p_is_admin
 			);
-		-- RETURN	
+
+		-- get new user id
 		SELECT LAST_INSERT_ID() into @new_usr_id;
-		SELECT dt_updated, tg_user_id, tg_user_at, tg_user_handle, is_admin
+
+		-- set default rates for new user
+		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'htag', 0.005); -- tw, hashtag, .5c
+		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'short_txt', 0.01); -- tw, short_txt, 1c
+		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'long_txt', 0.05); -- tw, long_txt, 5c
+		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'img_meme', 0.25); -- tw, meme/img, 25c
+		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'short_vid', 0.50); -- tw, short_vid, 50c
+		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'long_vid', 1.00); -- tw, long_vid, 100c
+		-- SELECT add_user_shill_rate(@new_usr_id, 0, 0, 0.005); -- tw, hashtag, .5c
+		-- SELECT add_user_shill_rate(@new_usr_id, 0, 1, 0.01); -- tw, short_txt, 1c
+		-- SELECT add_user_shill_rate(@new_usr_id, 0, 2, 0.05); -- tw, long_txt, 5c
+		-- SELECT add_user_shill_rate(@new_usr_id, 0, 3, 0.25); -- tw, meme/img, 25c
+		-- SELECT add_user_shill_rate(@new_usr_id, 0, 4, 0.50); -- tw, short_vid, 50c
+		-- SELECT add_user_shill_rate(@new_usr_id, 0, 5, 1.00); -- tw, long_vid, 100c
+
+		-- return
+		SELECT u.dt_updated, u.tg_user_id, tg_user_at, tg_user_handle, u.is_admin,
+				r.platform, r.type, r.pay_usd,
 					'success' as `status`,
-					'added new tg_user_id' as info,
+					'added new user' as info,
 					@new_usr_id as new_users_id,
 					p_tg_user_id as tg_user_id_inp
-			FROM users
-			WHERE id = @new_usr_id;
+			FROM users u
+			INNER JOIN user_shill_rates r
+				ON u.id = r.fk_user_id
+			WHERE u.id = @new_usr_id;
 	END IF;
 END 
 $$ DELIMITER ;
 
--- UPDATE_TWITTER_CONF Procedure
+-- # '/confirm_twitter'
 DELIMITER $$
 DROP PROCEDURE IF EXISTS UPDATE_TWITTER_CONF;
 CREATE PROCEDURE `UPDATE_TWITTER_CONF`(
     IN p_tg_user_id VARCHAR(40), -- -1000342
     IN p_tw_conf_url VARCHAR(1024))
 BEGIN
+	-- vaidate user exists (only)
 	IF NOT valid_tg_user(p_tg_user_id) THEN
 		SELECT 'failed' as `status`, 
-				'tg_user_id_inp does not exist in users table' as info, 
+				'user not found' as info, 
 				p_tg_user_id as tg_user_id_inp,
-				p_tw_conf_url as tw_conf_url_inp
-			FROM users 
-			where tg_user_id = p_tg_user_id;
+				p_tw_conf_url as tw_conf_url_inp;
 	ELSE
 		UPDATE TABLE users
 			SET dt_updated = NOW(),
+				dt_last_tw_conf = NOW(),
 				tw_conf_url = p_tw_conf_url
 			WHERE tg_user_id = p_tg_user_id;
-		SELECT dt_updated, tg_user_id, tg_user_at, tg_user_handle, is_admin
+		SELECT id, dt_created, dt_updated, tg_user_id, tg_user_at, tg_user_handle, is_admin, tw_conf_url,
 				'success' as `status`,
-				'added new tg_user_id' as info,
+				'set new exp' as info,
 				p_tg_user_id as tg_user_id_inp
 			FROM users
 			WHERE tg_user_id = p_tg_user_id;
@@ -126,40 +298,103 @@ BEGIN
 END
 $$ DELIMITER ;
 
+-- # '/submit_shill_link'
 DELIMITER $$
--- ADD_USER_SHILL Procedure
-DROP PROCEDURE IF EXISTS ADD_USER_SHILL;
-CREATE PROCEDURE `ADD_USER_SHILL`(
-    IN p_user_id VARCHAR(40),
+DROP PROCEDURE IF EXISTS ADD_USER_SHILL_TW;
+CREATE PROCEDURE `ADD_USER_SHILL_TW`(
+    IN p_tg_user_id VARCHAR(40),
     IN p_post_url VARCHAR(1024))
 BEGIN
     -- Procedure Body
     -- You can add your SQL logic here
--- LST_KEYS_SUBMIT_SHILL = ['user_id', 'post_url']
--- DB_PROC_ADD_SHILL = 'ADD_USER_SHILL'
---     # validate 'post_url' is not in 'shills' table yet
---     # insert into 'shills' (...) values (...) for user_id
--- 	   # check number of pending shills (is_apporved=False), return rate-limit info
---	   #	perhaps set a max USD per day that people can earn?
+	-- LST_KEYS_SUBMIT_SHILL = ['user_id', 'post_url']
+	-- DB_PROC_ADD_SHILL = 'ADD_USER_SHILL'
+	-- 	   # check number of pending shills (is_apporved=False), return rate-limit info
+	--	   #	perhaps set a max USD per day that people can earn?
+
+	-- vaidate user exists & tw conf not expired
+	set @v_valid = valid_tg_user_tw_conf(p_tg_user_id);
+	IF NOT @v_valid = 'valid user' THEN
+		SELECT 'failed' as `status`, 
+				@v_valid as info, 
+				p_tg_user_id as tg_user_id_inp;
+
+	-- validate 'post_url' is not in 'shills' table yet
+	ELSE IF NOT valid_new_shill(p_post_url) THEN
+		SELECT 'failed' as `status`, 
+				'shill already exists' as info, 
+				p_tg_user_id as tg_user_id_inp,
+				p_post_url as post_url;
+	ELSE
+		-- insert into 'shills' (...) values (...) for user_id
+		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+		INSERT INTO shills
+			SET (
+				fk_user_id,
+				post_url,
+				shill_plat
+			) VALUES (
+				@v_user_id,
+				p_post_url,
+				'twitter'
+			);
+		-- get new shill id
+		SELECT LAST_INSERT_ID() into @new_shill_id;
+		
+		-- return
+		SELECT s.id as s_id, s.dt_created as s_dt_created, s.post_url, s.shill_plat, s.shill_type, s.is_apporved,
+				u.id as u_id, u.tw_conf_url as u_tw_conf_url, u.tg_user_id, u.tg_user_at, u.tg_user_handle,
+				'success' as `status`,
+				'added new shill' as info,
+				p_tg_user_id as tg_user_id_inp
+			FROM shills s
+			INNER JOIN users u
+				ON s.fk_user_id = u.id
+			WHERE s.id = @new_shill_id;
+	END IF;
 END 
 $$ DELIMITER ;
 
+-- # '/show_my_rates'
 DELIMITER $$
--- GET_USER_RATES Procedure
-DROP PROCEDURE IF EXISTS GET_USER_RATES;
-CREATE PROCEDURE `GET_USER_RATES`(
-    IN p_user_id VARCHAR(40))
+DROP PROCEDURE IF EXISTS GET_USER_PAY_RATES;
+CREATE PROCEDURE `GET_USER_PAY_RATES`(
+    IN p_tg_user_id VARCHAR(40)
+	IN p_platform VARCHAR(40)) -- const: unknown, twitter, tiktok, reddit
 BEGIN
-    -- Procedure Body
-    -- You can add your SQL logic here
--- LST_KEYS_SHOW_RATES = ['user_id']
--- DB_PROC_GET_USR_RATES = 'GET_USER_RATES'
---     # select * from 'user_shill_rates' for user_id (order by id desc limit 1)
+	-- vaidate user exists & tw conf not expired
+	set @v_valid = valid_tg_user(p_tg_user_id);
+	IF NOT @v_valid = 'valid user' THEN
+		SELECT 'failed' as `status`, 
+				@v_valid as info, 
+				p_tg_user_id as tg_user_id_inp,
+				p_platform as platform_inp
+	ELSE
+		-- get latest 'p_platform' rates for tg_user_id (note: 'ORDER BY id DESC LIMIT 1')
+		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+		SELECT get_usr_pay_rate(@v_user_id, p_platform, 'htag') INTO @v_pay_usd_htag;		
+		SELECT get_usr_pay_rate(@v_user_id, p_platform, 'short_txt') INTO @v_pay_usd_stxt;
+		SELECT get_usr_pay_rate(@v_user_id, p_platform, 'long_txt') INTO @v_pay_usd_ltxt;
+		SELECT get_usr_pay_rate(@v_user_id, p_platform, 'img_meme') INTO @v_pay_usd_img;
+		SELECT get_usr_pay_rate(@v_user_id, p_platform, 'short_vid') INTO @v_pay_usd_svid;
+		SELECT get_usr_pay_rate(@v_user_id, p_platform, 'long_vid') INTO @v_pay_usd_lvid;
+		SELECT @v_pay_usd_htag as pay_usd_hashtag,
+				@v_pay_usd_stxt as pay_usd_short_text,
+				@v_pay_usd_ltxt as pay_usd_long_text,
+				@v_pay_usd_img as pay_usd_img_meme,
+				@v_pay_usd_svid as pay_usd_short_vid,
+				@v_pay_usd_lvid as pay_usd_long_vid,
+				'success' as `status`,
+				'get user rates' as info,
+				@v_user_id as user_id,
+				p_tg_user_id as tg_user_id_inp,
+				p_platform as platform_inp
+	END IF;
 END 
 $$ DELIMITER ;
 
+-- # '/show_my_earnings'
 DELIMITER $$
--- GET_USER_EARNINGS Procedure
 DROP PROCEDURE IF EXISTS GET_USER_EARNINGS;
 CREATE PROCEDURE `GET_USER_EARNINGS`(
     IN p_user_id VARCHAR(40))
@@ -172,8 +407,8 @@ BEGIN
 END 
 $$ DELIMITER ;
 
+-- # '/withdraw_my_earnings'
 DELIMITER $$
--- WITHDRAW_USER_EARNINGS Procedure
 DROP PROCEDURE IF EXISTS WITHDRAW_USER_EARNINGS;
 CREATE PROCEDURE `WITHDRAW_USER_EARNINGS`(
     IN p_user_id VARCHAR(40))
@@ -189,8 +424,8 @@ BEGIN
 END 
 $$ DELIMITER ;
 
+-- # '/admin_show_user_shills' | # '/admin_scan_web_for_removed_shills'
 DELIMITER $$
--- GET_USER_SHILLS_ALL Procedure
 DROP PROCEDURE IF EXISTS GET_USER_SHILLS_ALL;
 CREATE PROCEDURE `GET_USER_SHILLS_ALL`(
     IN p_admin_id VARCHAR(40),
@@ -206,8 +441,8 @@ BEGIN
 END 
 $$ DELIMITER ;
 
+-- # '/admin_list_all_pend_shills'
 DELIMITER $$
--- GET_PEND_SHILLS Procedure
 DROP PROCEDURE IF EXISTS GET_PEND_SHILLS;
 CREATE PROCEDURE `GET_PEND_SHILLS`(
     IN p_admin_id VARCHAR(40))
@@ -220,8 +455,8 @@ BEGIN
 END 
 $$ DELIMITER ;
 
+-- # '/admin_approve_pend_shill'
 DELIMITER $$
--- SET_SHILL_APPROVE_STATUS Procedure
 DROP PROCEDURE IF EXISTS SET_SHILL_APPROVE_STATUS;
 CREATE PROCEDURE `SET_SHILL_APPROVE_STATUS`(
     IN p_admin_id VARCHAR(40),
@@ -239,8 +474,8 @@ BEGIN
 END 
 $$ DELIMITER ;
 
+-- # '/admin_view_shill_status'
 DELIMITER $$
--- GET_USER_SHILL Procedure
 DROP PROCEDURE IF EXISTS GET_USER_SHILL;
 CREATE PROCEDURE `GET_USER_SHILL`(
     IN p_admin_id VARCHAR(40),
@@ -256,8 +491,8 @@ BEGIN
 END 
 $$ DELIMITER ;
 
+-- # '/admin_pay_shill_rewards'
 DELIMITER $$
--- UPDATED_USER_SHILL_PAID_EARNS Procedure
 DROP PROCEDURE IF EXISTS UPDATED_USER_SHILL_PAID_EARNS;
 CREATE PROCEDURE `UPDATED_USER_SHILL_PAID_EARNS`(
     IN p_admin_id VARCHAR(40),
@@ -268,6 +503,7 @@ BEGIN
 -- LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_id']
 -- DB_PROC_UPDATE_USR_PAID_EARNS = 'UPDATED_USER_SHILL_PAID_EARNS'
 --     # check 'user_earns.withdraw_request=True' for 'user_id'
+--	   # check 'shills.pay_usd != 0' for 
 --     # validate 'user_earns.usd_owed' == 
 --     #   total of (select 'shills.pay_usd' where 'shills.is_paid=False' & 'shills.is_approved=True & 'shills.is_removed=False') for user_id
 --     # update 'user_earns.usd_owed|paid' where 'user_earns.fk_user_id=user_id'
@@ -276,8 +512,8 @@ BEGIN
 END 
 $$ DELIMITER ;
 
+-- # '/admin_log_removed_shill'
 DELIMITER $$
--- SET_USER_SHILL_REMOVED Procedure
 DROP PROCEDURE IF EXISTS SET_USER_SHILL_REMOVED;
 CREATE PROCEDURE `SET_USER_SHILL_REMOVED`(
     IN p_admin_id VARCHAR(40),
@@ -293,8 +529,8 @@ BEGIN
 END 
 $$ DELIMITER ;
 
+-- # '/admin_scan_web_for_removed_shills'
 DELIMITER $$
--- CHECK_USR_REM_SHILL Procedure
 DROP PROCEDURE IF EXISTS CHECK_USR_REM_SHILL;
 CREATE PROCEDURE `CHECK_USR_REM_SHILL`(
     IN p_admin_id VARCHAR(40),
@@ -309,8 +545,8 @@ BEGIN
 END 
 $$ DELIMITER ;
 
+-- # '/admin_set_shiller_rates'
 DELIMITER $$
--- SET_USER_PAY_RATES Procedure
 DROP PROCEDURE IF EXISTS SET_USER_PAY_RATES;
 CREATE PROCEDURE `SET_USER_PAY_RATES`(
     IN p_admin_id VARCHAR(40),
