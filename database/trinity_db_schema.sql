@@ -39,7 +39,9 @@ CREATE TABLE `users` (
   `tw_conf_url` varchar(1024) default '',
   `dt_last_tw_conf` timestamp NULL DEFAULT NULL,
   `fk_last_shill_id` int(11) default -1, -- for rate-limit
+  `wallet_address` varchar(255) default '0x0',
   `is_admin` BOOLEAN DEFAULT FALSE, -- admin required for some stored procs
+  `is_admin_pay` BOOLEAN DEFAULT FALSE, -- admin_pay required for some stored procs
 
   UNIQUE KEY `ID` (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -77,6 +79,7 @@ CREATE TABLE `shills` (
   `is_paid` BOOLEAN DEFAULT FALSE,
   `is_removed` BOOLEAN DEFAULT FALSE,
   `dt_shill_removed` timestamp NULL DEFAULT NULL,
+  `pay_tx_hash` VARCHAR(255) DEFAULT '0x0', -- set by admin_pay during withdrawel request payout
 
   UNIQUE KEY `ID` (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;

@@ -222,15 +222,14 @@ CREATE PROCEDURE `ADD_NEW_TG_USER`(
     IN p_tg_user_id VARCHAR(40), -- -1000342
 	IN p_tg_user_at VARCHAR(1024), -- @whatever
 	IN p_tg_user_handle VARCHAR(1024), -- my handle
-    IN p_wallet_address VARCHAR(1024),
-    IN p_tw_conf_url VARCHAR(1024),
-	IN p_is_admin)
+    IN p_wallet_address VARCHAR(255),
+    IN p_tw_conf_url VARCHAR(1024))
 BEGIN
     -- Procedure Body
     -- You can add your SQL logic here
 	-- LST_KEYS_REG_SHILLER = ['user_id', 'wallet_address', 'tweet_url']
 	-- DB_PROC_ADD_NEW_USER = 'ADD_NEW_USER'
-	--     # validate 'tweet_url' contains texts '@BearSharesNFT' & 'trinity'
+	--     # validate 'p_tw_conf_url' contains texts '@BearSharesNFT' & 'trinity'
 
 	-- vaidate user does NOT exists (only)
 	IF valid_tg_user(p_tg_user_id) THEN
@@ -258,16 +257,14 @@ BEGIN
 				tg_user_handle,
 				wallet_address,
 				tw_conf_url,
-				dt_last_tw_conf,
-				is_admin
+				dt_last_tw_conf
 			) VALUES (
 				p_tg_user_id,
 				p_tg_user_at,
 				p_tg_user_handle,
 				p_wallet_address,
 				p_tw_conf_url,
-				NOW(),
-				p_is_admin
+				NOW()
 			);
 
 		-- get new user id
@@ -309,7 +306,7 @@ $$ DELIMITER ;
 DELIMITER $$
 DROP PROCEDURE IF EXISTS UPDATE_TWITTER_CONF;
 CREATE PROCEDURE `UPDATE_TWITTER_CONF`(
-    IN p_tg_user_id VARCHAR(40), -- -1000342
+    IN p_tg_user_id VARCHAR(40), -- ex: '-1000342'
     IN p_tw_conf_url VARCHAR(1024))
 BEGIN
 	-- vaidate user exists (only)
@@ -442,13 +439,15 @@ BEGIN
 	ELSE
 		-- return all 'p_tg_user_id' data from 'user_earns' table
 		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
-		SELECT *, 
+		SELECT ue.*, u.tg_user_id, u.tg_user_at, u.tg_user_handle, u.tw_conf_url, u.dt_last_tw_conf, u.wallet_address,
 				'success' as `status`,
 				'get user earnings' as info,
 				@v_user_id as user_id,
 				p_tg_user_id as tg_user_id_inp
-			FROM user_earns
-			WHERE fk_user_id = @v_user_id;
+			FROM user_earns ue
+			INNER JOIN users u
+				ON ue.fk_user_id = u.id
+			WHERE ue.fk_user_id = @v_user_id;
 	END IF;
 END 
 $$ DELIMITER ;
@@ -714,21 +713,33 @@ $$ DELIMITER ;
 DELIMITER $$
 DROP PROCEDURE IF EXISTS UPDATE_USER_SHILL_PAID_EARNS;
 CREATE PROCEDURE `UPDATE_USER_SHILL_PAID_EARNS`(
-    IN p_admin_id VARCHAR(40),
-    IN p_user_id VARCHAR(40))
+    IN p_tg_admin_id VARCHAR(40),
+	IN p_tg_user_id VARCHAR(40),
+    IN p_shill_id VARCHAR(40),
+	IN p_pay_tx_hash VARCHAR(255))
 BEGIN
     -- Procedure Body
     -- You can add your SQL logic here
--- LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_id']
--- DB_PROC_UPDATE_USR_PAID_EARNS = 'UPDATED_USER_SHILL_PAID_EARNS'
---     # check 'user_earns.withdraw_request=True' for 'user_id'
---	   # check 'shills.pay_usd != 0' for 
---     # validate 'user_earns.usd_owed' == 
---     #   total of (select 'shills.pay_usd' where 'shills.is_paid=False' & 'shills.is_approved=True & 'shills.is_removed=False') for user_id
---     # update 'user_earns.usd_owed|paid' where 'user_earns.fk_user_id=user_id'
---     # update 'shills.is_paid=True' for user_id
---     # then perform solidity 'transfer' call on 'users.wallet_address' for user_id
---     # update 'user_earns.usd_total|owed|paid' accordingly (+-) for user_id
+	-- LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_id']
+	-- DB_PROC_UPDATE_USR_PAID_EARNS = 'UPDATED_USER_SHILL_PAID_EARNS'
+	--     # perform python/solidity 'transfer' call on 'users.wallet_address' for user_id (get pay_tx_hash)
+	--     # check 'user_earns.withdraw_request=True' for 'user_id'
+	--	   # check 'shills.pay_usd != 0' for shill_id
+	--     # validate 'user_earns.usd_owed' == 
+	--     #   total of (select 'shills.pay_usd' where 'shills.is_paid=False' & 'shills.is_approved=True' & 'shills.is_removed=False') for user_id
+	--     # update 'user_earns.usd_owed|paid' where 'user_earns.fk_user_id=user_id'
+	--     # update 'shills.is_paid=True' & 'shills.pay_tx_hash' where all 'shills.is_approved=True' & 'shills.is_removed=False' for user_id
+	--     # update 'user_earns.usd_total|owed|paid' accordingly (+-) for user_id
+
+	-- validate admin
+	IF NOT valid_tg_user_admin(p_tg_admin_id) THEN
+		SELECT 'failed' as `status`, 
+				'invalid admin' as info, 
+				p_tg_admin_id as tg_admin_id;
+
+	ELSE
+
+	END IF;
 END 
 $$ DELIMITER ;
 
