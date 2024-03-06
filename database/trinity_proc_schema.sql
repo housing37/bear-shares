@@ -111,6 +111,32 @@ END
 $$ DELIMITER ;
 
 DELIMITER $$
+drop FUNCTION if exists valid_shill_for_user; -- setup
+CREATE FUNCTION `valid_shill_for_user`(
+		p_tg_user_id VARCHAR(40),
+		p_shill_id INT(11)) 
+		RETURNS BOOLEAN
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	SELECT valid_tg_user(p_tg_user_id) INTO @v_valid_user;
+	IF @v_valid_user = FALSE THEN
+		RETURN FALSE;
+	ELSE 
+		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+		SELECT COUNT(*) FROM shills
+			WHERE id = p_shill_id
+				AND fk_user_id = @v_user_id
+			INTO @v_cnt;
+		IF @v_cnt > 0 THEN
+			RETURN TRUE; -- yes exists
+		ELSE
+			RETURN FALSE; -- does not exist
+		END IF;
+END 
+$$ DELIMITER ;
+
+DELIMITER $$
 drop FUNCTION if exists add_default_user_earns; -- setup
 CREATE FUNCTION `add_default_user_earns`(
 		p_user_id VARCHAR(1024)) 
@@ -464,8 +490,9 @@ BEGIN
 -- DB_PROC_WITHDRAW_EARNS = 'WITHDRAW_USER_EARNINGS'
 --     # select 'user_earns.usd_owed' for user_id (req: usd_owed >= <some-min-amnt>)
 --     # select 'users.wallet_address' for user_id
---     # use solidity 'transfer' to send 'usd_owed' amount to 'wallet_address'
---     # update 'user_earns.withdraw_request' where 'user_earns.usd_owed > 0' for user_id
+--     # update 'user_earns.withdraw_requested=True' where 'user_earns.fk_user_id=user_id'
+--	   # python TG notify admin_pay to process
+--	   # python TG notify p_tg_user_id that request has been submit (w/ user_earns.usd_owed)
 END 
 $$ DELIMITER ;
 
@@ -722,14 +749,17 @@ BEGIN
     -- You can add your SQL logic here
 	-- LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_id']
 	-- DB_PROC_UPDATE_USR_PAID_EARNS = 'UPDATED_USER_SHILL_PAID_EARNS'
-	--     # perform python/solidity 'transfer' call on 'users.wallet_address' for user_id (get pay_tx_hash)
 	--     # check 'user_earns.withdraw_request=True' for 'user_id'
-	--	   # check 'shills.pay_usd != 0' for shill_id
-	--     # validate 'user_earns.usd_owed' == 
-	--     #   total of (select 'shills.pay_usd' where 'shills.is_paid=False' & 'shills.is_approved=True' & 'shills.is_removed=False') for user_id
-	--     # update 'user_earns.usd_owed|paid' where 'user_earns.fk_user_id=user_id'
+	--	   # check/get 'shills.pay_usd != 0' for all user_id / shill_id combos
+	--	   #	where 'shills.is_paid=False' & 'shills.is_approved=True' & 'shills.is_removed=False'
+	--     # check/get 'user_earns.usd_owed' == total of all 'shills.pay_usd' (found above)
+	--     # perform python/solidity 'transfer(user_earns.usd_owed)' call to 'wallet_address' for user_id (get pay_tx_hash)
+	--	   #	wallet_address can be retreived from 'GET_USER_EARNINGS(tg_user_id)'
+	--     # update 'user_earns.usd_owed|paid' accordingly (+-), for user_id
 	--     # update 'shills.is_paid=True' & 'shills.pay_tx_hash' where all 'shills.is_approved=True' & 'shills.is_removed=False' for user_id
-	--     # update 'user_earns.usd_total|owed|paid' accordingly (+-) for user_id
+	--	LEFT OFF HERE ... this algorithm ^ should work accordingly with request for 'WITHDRAW_USER_EARNINGS' (TG cmd: /withdraw_my_earnings)
+	-- 		NOTE: proc ‘WITHDRAW_USER_EARNINGS’ & tg cmd: '/withdraw_my_earnings'
+ 	--			should probably be renamed to include the word ‘request’
 
 	-- validate admin
 	IF NOT valid_tg_user_admin(p_tg_admin_id) THEN
@@ -737,7 +767,13 @@ BEGIN
 				'invalid admin' as info, 
 				p_tg_admin_id as tg_admin_id;
 
-	ELSE
+	-- vaidate user / shill combo (invokes: valid_tg_user(...))
+	ELSE IF NOT valid_shill_for_user(p_tg_user_id, p_shill_id) THEN
+		SELECT 'failed' as `status`, 
+				'user / shill combo not found' as info, 
+				p_tg_user_id as tg_user_id_inp,
+				p_shill_id as shill_id_inp;
+	ELSE IF NOT SELECT withdraw_request
 
 	END IF;
 END 
