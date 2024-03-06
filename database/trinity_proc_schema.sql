@@ -3,6 +3,22 @@ DELIMITER $$
 --		SUPPORT FUNCTIONS
 -- #================================================================# --
 DELIMITER $$
+drop FUNCTION if exists valid_tg_user_admin; -- setup
+CREATE FUNCTION `valid_tg_user_admin`(
+		p_tg_user_id VARCHAR(40)) RETURNS BOOLEAN
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	SELECT COUNT(*) FROM users WHERE tg_user_id = p_tg_user_id AND is_admin = TRUE INTO @v_cnt;
+	IF @v_cnt > 0 THEN
+		RETURN TRUE; 
+	ELSE
+		RETURN FALSE;
+	END IF;
+END 
+$$ DELIMITER ;
+
+DELIMITER $$
 drop FUNCTION if exists valid_tg_user; -- setup
 CREATE FUNCTION `valid_tg_user`(
 		p_tg_user_id VARCHAR(40)) RETURNS BOOLEAN
@@ -183,7 +199,7 @@ $$ DELIMITER ;
 -- #================================================================# --
 -- # '/register_as_shiller'
 DELIMITER $$
-DROP PROCEDURE IF EXISTS 	;
+DROP PROCEDURE IF EXISTS ADD_NEW_TG_USER;
 CREATE PROCEDURE `ADD_NEW_TG_USER`(
     IN p_tg_user_id VARCHAR(40), -- -1000342
 	IN p_tg_user_at VARCHAR(1024), -- @whatever
@@ -194,10 +210,9 @@ CREATE PROCEDURE `ADD_NEW_TG_USER`(
 BEGIN
     -- Procedure Body
     -- You can add your SQL logic here
--- LST_KEYS_REG_SHILLER = ['user_id', 'wallet_address', 'tweet_url']
--- DB_PROC_ADD_NEW_USER = 'ADD_NEW_USER'
---     # validate 'tweet_url' contains texts '@BearSharesNFT' & 'trinity'
---     # insert into 'users' (...) values (...)
+	-- LST_KEYS_REG_SHILLER = ['user_id', 'wallet_address', 'tweet_url']
+	-- DB_PROC_ADD_NEW_USER = 'ADD_NEW_USER'
+	--     # validate 'tweet_url' contains texts '@BearSharesNFT' & 'trinity'
 
 	-- vaidate user does NOT exists (only)
 	IF valid_tg_user(p_tg_user_id) THEN
@@ -362,11 +377,10 @@ CREATE PROCEDURE `GET_USER_PAY_RATES`(
     IN p_tg_user_id VARCHAR(40)
 	IN p_platform VARCHAR(40)) -- const: unknown, twitter, tiktok, reddit
 BEGIN
-	-- vaidate user exists & tw conf not expired
-	set @v_valid = valid_tg_user(p_tg_user_id);
-	IF NOT @v_valid = 'valid user' THEN
+	-- vaidate user exists
+	IF NOT valid_tg_user(p_tg_user_id) THEN
 		SELECT 'failed' as `status`, 
-				@v_valid as info, 
+				'user not found' as info, 
 				p_tg_user_id as tg_user_id_inp,
 				p_platform as platform_inp
 	ELSE
@@ -397,13 +411,24 @@ $$ DELIMITER ;
 DELIMITER $$
 DROP PROCEDURE IF EXISTS GET_USER_EARNINGS;
 CREATE PROCEDURE `GET_USER_EARNINGS`(
-    IN p_user_id VARCHAR(40))
+    IN p_tg_user_id VARCHAR(40))
 BEGIN
-    -- Procedure Body
-    -- You can add your SQL logic here
--- LST_KEYS_SHOW_EARNINGS = ['user_id']
--- DB_PROC_GET_USR_EARNINGS = 'GET_USER_EARNINGS'
---     # select * from 'user_earns' where 'user_earns.fk_user_id=user_id'
+	-- vaidate user exists
+	IF NOT valid_tg_user(p_tg_user_id) THEN
+		SELECT 'failed' as `status`, 
+				'user not found' as info, 
+				p_tg_user_id as tg_user_id_inp;
+	ELSE
+		-- return all 'p_tg_user_id' data from 'user_earns' table
+		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+		SELECT *, 
+				'success' as `status`,
+				'get user earnings' as info,
+				@v_user_id as user_id,
+				p_tg_user_id as tg_user_id_inp
+			FROM user_earns
+			WHERE fk_user_id = @v_user_id;
+	END IF;
 END 
 $$ DELIMITER ;
 
@@ -428,30 +453,66 @@ $$ DELIMITER ;
 DELIMITER $$
 DROP PROCEDURE IF EXISTS GET_USER_SHILLS_ALL;
 CREATE PROCEDURE `GET_USER_SHILLS_ALL`(
-    IN p_admin_id VARCHAR(40),
-    IN p_user_id VARCHAR(40),
-    IN p_pending BOOLEAN,
+    IN p_tg_admin_id VARCHAR(40),
+    IN p_tg_user_id VARCHAR(40),
+    IN p_approved BOOLEAN,
     IN p_removed BOOLEAN)
 BEGIN
-    -- Procedure Body
-    -- You can add your SQL logic here
--- LST_KEYS_USR_SHILLS = ['admin_id','user_id','pending','removed']
--- DB_PROC_GET_USR_SHILLS_ALL = 'GET_USER_SHILLS_ALL'
---     # select * from 'shills' where 'shills.is_approved=True|False' and 'shills.is_removed=True|False' for user_id
+	-- validate admin
+	IF NOT valid_tg_user_admin(p_tg_admin_id) THEN
+		SELECT 'failed' as `status`, 
+				'invalid admin' as info, 
+				p_tg_admin_id as tg_admin_id;
+
+	-- vaidate user exists
+	ELSE IF NOT valid_tg_user(p_tg_user_id) THEN
+		SELECT 'failed' as `status`, 
+				'user not found' as info, 
+				p_tg_user_id as tg_user_id_inp;
+	ELSE
+		-- return all 'p_tg_user_id' data from 'user_earns' table
+		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+		SELECT *, 
+				'success' as `status`,
+				'get user shills all' as info,
+				@v_user_id as user_id,
+				p_tg_user_id as tg_user_id_inp,
+				p_approved as is_approved_inp,
+				p_removed as is_removed_inp
+			FROM shills
+			WHERE fk_user_id = @v_user_id
+				AND is_apporved = p_approved,
+				AND is_removed = p_removed
+			ORDER BY id desc;
+	END IF;
 END 
 $$ DELIMITER ;
 
 -- # '/admin_list_all_pend_shills'
 DELIMITER $$
-DROP PROCEDURE IF EXISTS GET_PEND_SHILLS;
-CREATE PROCEDURE `GET_PEND_SHILLS`(
-    IN p_admin_id VARCHAR(40))
+DROP PROCEDURE IF EXISTS GET_PEND_SHILLS_ALL;
+CREATE PROCEDURE `GET_PEND_SHILLS_ALL`(
+    IN p_tg_admin_id VARCHAR(40)
+	IN p_removed BOOLEAN)
 BEGIN
-    -- Procedure Body
-    -- You can add your SQL logic here
--- LST_KEYS_ALL_PEND_SHILLS = ['admin_id']
--- DB_PROC_GET_PEND_SHILLS = 'GET_PEND_SHILLS' # get where 'is_approved' = False
---     # select * from 'shills' where 'shills.is_approved=False' for all users
+	-- validate admin
+	IF NOT valid_tg_user_admin(p_tg_admin_id) THEN
+		SELECT 'failed' as `status`, 
+				'invalid admin' as info, 
+				p_tg_admin_id as tg_admin_id;
+	ELSE
+		-- return all 'is_approved=FALSE' from shills table
+		SELECT *, 
+				'success' as `status`,
+				'get all pending shills' as info,
+				@v_user_id as user_id,
+				p_tg_user_id as tg_user_id_inp,
+				p_removed as is_removed_inp
+			FROM shills
+			WHERE is_apporved = FALSE, -- FALSE = 'pending'
+				AND is_removed = p_removed
+			ORDER BY id desc;
+	END IF;
 END 
 $$ DELIMITER ;
 
@@ -478,23 +539,78 @@ $$ DELIMITER ;
 DELIMITER $$
 DROP PROCEDURE IF EXISTS GET_USER_SHILL;
 CREATE PROCEDURE `GET_USER_SHILL`(
-    IN p_admin_id VARCHAR(40),
-    IN p_user_id VARCHAR(40),
-    IN p_shill_id VARCHAR(40),
+    IN p_tg_admin_id VARCHAR(40),
+    IN p_tg_user_id VARCHAR(40),
+    IN p_shill_id INT(11),
     IN p_shill_url VARCHAR(1024))
 BEGIN
-    -- Procedure Body
-    -- You can add your SQL logic here
--- LST_KEYS_VIEW_SHILL = ['admin_id','user_id','shill_id','shill_url']
--- DB_PROC_GET_USR_SHILL = 'GET_USER_SHILL'
---     # select * from 'shills' where 'shills.id|shill_url=shill_id|url' for user_id
+	-- validate admin
+	IF NOT valid_tg_user_admin(p_tg_admin_id) THEN
+		SELECT 'failed' as `status`, 
+				'invalid admin' as info, 
+				p_tg_admin_id as tg_admin_id;
+
+	-- vaidate user exists
+	ELSE IF NOT valid_tg_user(p_tg_user_id) THEN
+		SELECT 'failed' as `status`, 
+				'user not found' as info, 
+				p_tg_user_id as tg_user_id_inp;
+	ELSE
+		-- check shill counts by id & url for 'p_tg_user_id'
+		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+		SELECT COUNT(*) FROM shills WHERE id = p_shill_id AND fk_user_id = @v_user_id INTO @v_cnt_ids;
+		SELECT COUNT(*) FROM shills WHERE id = p_shill_url AND fk_user_id = @v_user_id INTO @v_cnt_urls;
+
+		-- get shill by url
+		IF p_shill_id = -1 THEN
+			IF @v_cnt_urls = 0 THEN
+				SELECT 'failed' as `status`, 
+						'shill url not found' as info, 
+						p_tg_user_id as tg_user_id_inp,
+						p_shill_id as shill_id_inp,
+						p_shill_url as shill_url_inp;
+			ELSE
+				SELECT *, 
+						'success' as `status`,
+						'get user shill url' as info,
+						@v_user_id as user_id,
+						p_tg_user_id as tg_user_id_inp,
+						p_shill_id as shill_id_inp,
+						p_shill_url as post_url_inp
+					FROM shills
+					WHERE post_url = p_shill_url,
+					ORDER BY id desc;
+			END IF;
+
+		-- get shill by id
+		ELSE
+			IF @v_cnt_ids = 0 THEN
+				SELECT 'failed' as `status`, 
+						'shill id not found' as info, 
+						p_tg_user_id as tg_user_id_inp,
+						p_shill_id as shill_id_inp,
+						p_shill_url as shill_url_inp;
+			ELSE
+				SELECT *, 
+						'success' as `status`,
+						'get user shill id' as info,
+						@v_user_id as user_id,
+						p_tg_user_id as tg_user_id_inp,
+						p_shill_id as shill_id_inp,
+						p_shill_url as post_url_inp
+					FROM shills
+					WHERE id = p_shill_id,
+					ORDER BY id desc;
+			END IF;
+		END IF;
+	END IF;
 END 
 $$ DELIMITER ;
 
 -- # '/admin_pay_shill_rewards'
 DELIMITER $$
-DROP PROCEDURE IF EXISTS UPDATED_USER_SHILL_PAID_EARNS;
-CREATE PROCEDURE `UPDATED_USER_SHILL_PAID_EARNS`(
+DROP PROCEDURE IF EXISTS UPDATE_USER_SHILL_PAID_EARNS;
+CREATE PROCEDURE `UPDATE_USER_SHILL_PAID_EARNS`(
     IN p_admin_id VARCHAR(40),
     IN p_user_id VARCHAR(40))
 BEGIN

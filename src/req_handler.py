@@ -80,16 +80,16 @@ DB_PROC_WITHDRAW_EARNS = 'WITHDRAW_USER_EARNINGS'
 
 # '/admin_show_user_shills'
 kADMIN_SHOW_USR_SHILLS = "get_usr_shills"
-LST_KEYS_USR_SHILLS = ['admin_id','user_id','pending','removed']
+LST_KEYS_USR_SHILLS = ['admin_id','user_id','approved','removed']
 LST_KEYS_USR_SHILLS_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_GET_USR_SHILLS_ALL = 'GET_USER_SHILLS_ALL'
     # select * from 'shills' where 'shills.is_approved=True|False' and 'shills.is_removed=True|False' for user_id
 
 # '/admin_list_all_pend_shills'
 kADMIN_LIST_ALL_PEND_SHILLS = "get_all_pend_shills"
-LST_KEYS_ALL_PEND_SHILLS = ['admin_id']
+LST_KEYS_ALL_PEND_SHILLS = ['admin_id','removed']
 LST_KEYS_ALL_PEND_SHILLS_RESP = env.LST_KEYS_REG_SHILLER_RESP
-DB_PROC_GET_PEND_SHILLS = 'GET_PEND_SHILLS' # get where 'is_approved' = False
+DB_PROC_GET_PEND_SHILLS = 'GET_PEND_SHILLS_ALL' # get where 'is_approved' = False
     # select * from 'shills' where 'shills.is_approved=False' for all users
 
 # '/admin_approve_pend_shill'
@@ -113,7 +113,7 @@ DB_PROC_GET_USR_SHILL = 'GET_USER_SHILL'
 kADMIN_PAY_SHILL_EARNS = "pay_usr_owed_shill_earns"
 LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_id']
 LST_KEYS_PAY_SHILL_EARNS_RESP = env.LST_KEYS_REG_SHILLER_RESP
-DB_PROC_UPDATE_USR_PAID_EARNS = 'UPDATED_USER_SHILL_PAID_EARNS'
+DB_PROC_UPDATE_USR_PAID_EARNS = 'UPDATE_USER_SHILL_PAID_EARNS'
     # check 'user_earns.withdraw_request=True' for 'user_id'
     # validate 'user_earns.usd_owed' == 
     #   total of (select 'shills.pay_usd' where 'shills.is_paid=False' & 'shills.is_approved=True & 'shills.is_removed=False') for user_id
