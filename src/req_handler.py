@@ -114,6 +114,7 @@ kADMIN_PAY_SHILL_EARNS = "pay_usr_owed_shill_earns"
 LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_id']
 LST_KEYS_PAY_SHILL_EARNS_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_SET_USR_PAY_PEND = 'SET_USER_PAY_TX_PENDING'
+LST_KEYS_PAY_SHILL_EARNS_CONF = ['admin_id','user_id','tx_hash']
 DB_PROC_SET_USR_PAY_CONF = 'SET_USER_PAY_TX_CONFIRMED'
     # check 'user_earns.withdraw_request=True' for 'user_id'
     # validate 'user_earns.usd_owed' == 

@@ -902,30 +902,16 @@ END
 $$ DELIMITER ;
 
 -- # '/admin_pay_shill_rewards'
+-- LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_id']
+-- DB_PROC_SET_USR_PAY_PEND = 'SET_USER_PAY_TX_PENDING'
+--     # perform python/solidity 'transfer(user_earns.usd_owed)' call to 'wallet_address' for user_id (get pay_tx_hash)
+--	   #	wallet_address can be retreived from 'GET_USER_EARNINGS(tg_user_id)'
 DELIMITER $$
 DROP PROCEDURE IF EXISTS SET_USER_PAY_TX_PENDING;
 CREATE PROCEDURE `SET_USER_PAY_TX_PENDING`(
     IN p_tg_admin_id VARCHAR(40),
-	IN p_tg_user_id VARCHAR(40),
-	IN p_pay_tx_hash VARCHAR(255))
+	IN p_tg_user_id VARCHAR(40))
 BEGIN
-    -- Procedure Body
-    -- You can add your SQL logic here
-	-- LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_id']
-	-- DB_PROC_SET_USR_PAY_PEND = 'SET_USER_PAY_TX_PENDING'
-	--     # check 'user_earns.withdraw_request=True' for 'user_id'
-	--	   # check/get 'shills.pay_usd != 0' for all user_id / shill_id combos
-	--	   #	where 'shills.is_paid=False' & 'shills.is_approved=True' & 'shills.is_removed=False'
-	--     # check/get 'user_earns.usd_owed' == total of all 'shills.pay_usd' (found above)
-	--	   # set pay_tx_pending to TRUE for all shills involved
-	-- PYTHON
-	--     # perform python/solidity 'transfer(user_earns.usd_owed)' call to 'wallet_address' for user_id (get pay_tx_hash)
-	--	   #	wallet_address can be retreived from 'GET_USER_EARNINGS(tg_user_id)'
-	-- DB_PROC_SET_USR_PAY_CONF = 'SET_USER_PAY_TX_CONFIRMED'
-	--     # update 'user_earns.usd_owed|paid' accordingly (+-), for user_id
-	--     # update 'shills.is_paid=True' & 'shills.pay_tx_hash' where all 'shills.is_approved=True' & 'shills.is_removed=False' for user_id
-	--	LEFT OFF HERE ... this algorithm ^ should work accordingly with request for 'SET_USER_WITHDRAW_REQUESTED' (TG cmd: /request_cashout)
-
 	-- validate admin
 	IF NOT valid_tg_user_admin(p_tg_admin_id) THEN
 		SELECT 'failed' as `status`, 
@@ -973,14 +959,27 @@ BEGIN
 					p_tg_user_id as tg_user_id_inp
 				FROM user_earns
 				WHERE fk_user_id = @v_user_id;
-			-- LEFT OFF HERE ... return success
-			--	ie. ok to execute python/solidty 'transfer'
-			-- then execute proc: SET_USER_PAY_TX_CONFIRMED
-			-- 	update 'user_earns.usd_owed|paid' accordingly (+-), for user_id
-			-- 	update 'shills.is_paid=True' & 'shills.pay_tx_hash' where all 'shills.is_approved=True' & 'shills.is_removed=False' for user_id
-
 		END IF;
 	END IF:
+END 
+$$ DELIMITER ;
+
+-- # '/admin_pay_shill_rewards'
+DELIMITER $$
+DROP PROCEDURE IF EXISTS SET_USER_PAY_TX_PENDING;
+CREATE PROCEDURE `SET_USER_PAY_TX_PENDING`(
+    IN p_tg_admin_id VARCHAR(40),
+	IN p_tg_user_id VARCHAR(40),
+	IN p_pay_tx_hash VARCHAR(255))
+BEGIN
+	-- LST_KEYS_PAY_SHILL_EARNS_CONF = ['admin_id','user_id','tx_hash']
+	-- DB_PROC_SET_USR_PAY_CONF = 'SET_USER_PAY_TX_CONFIRMED'
+	--     # update 'user_earns.usd_owed|paid' accordingly (+-), for user_id
+	--     # update 'shills.is_paid=True' & 'shills.pay_tx_hash' where all 'shills.is_approved=True' & 'shills.is_removed=False' for user_id
+
+	-- LEFT OFF HERE ... return from execute python/solidty 'transfer' w/ p_pay_tx_hash
+	-- 	update 'user_earns.usd_owed|paid' accordingly (+-), for user_id
+	-- 	update 'shills.is_paid=True' & 'shills.pay_tx_hash' where all 'shills.is_approved=True' & 'shills.is_removed=False' for user_id
 END 
 $$ DELIMITER ;
 
