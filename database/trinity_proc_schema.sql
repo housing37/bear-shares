@@ -925,6 +925,9 @@ BEGIN
 			-- then update 'user_earns.usd_owed|paid' accordingly (+-), for user_id
 			-- then update 'shills.is_paid=True' & 'shills.pay_tx_hash' where all 'shills.is_approved=True' & 'shills.is_removed=False' for user_id
 			-- 	i think ^
+			-- may need additional stored proc
+			--	but need to consider sync between waiting for tx approval 
+		 	--	 and admin approving new shills for that user
 		END IF;
 	END IF:
 END 
