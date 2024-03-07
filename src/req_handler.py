@@ -136,11 +136,11 @@ DB_PROC_CHECK_USR_REM_SHILL = DB_PROC_GET_USR_SHILLS_ALL
     # select post_url from 'shills' where 'shills.is_removed=False' for user_id
     # then web scrape those post_urls to see if they are still working / viewable
 
-# '/admin_set_shiller_rates'
-kADMIN_SET_USR_SHILL_PAY_RATES = "set_usr_shill_pay_rates"
-LST_KEYS_SET_USR_SHILL_PAY_RATES = ['admin_id','user_id']
-LST_KEYS_SET_USR_SHILL_PAY_RATES_RESP = env.LST_KEYS_REG_SHILLER_RESP
-DB_PROC_SET_USR_RATES = 'SET_USER_PAY_RATES'
+# '/admin_set_shiller_rate'
+kADMIN_SET_USR_SHILL_PAY_RATE = "set_user_shill_pay_rate"
+LST_KEYS_SET_USR_SHILL_PAY_RATE = ['admin_id','user_id','shill_play','shill_type','pay_usd']
+LST_KEYS_SET_USR_SHILL_PAY_RATE_RESP = env.LST_KEYS_REG_SHILLER_RESP
+DB_PROC_SET_USR_RATES = 'SET_USER_PAY_RATE'
     # update 'user_shill_rates' for user_id
 
 #-----------------------------------------------------#
@@ -158,7 +158,7 @@ DICT_CMD_EXE = {
     "admin_pay_shill_rewards":[kADMIN_PAY_SHILL_EARNS,LST_KEYS_PAY_SHILL_EARNS,LST_KEYS_PAY_SHILL_EARNS_RESP,DB_PROC_UPDATE_USR_PAID_EARNS],
     "admin_log_removed_shill":[kADMIN_SET_SHILL_REM,LST_KEYS_SET_SHILL_REM,LST_KEYS_SET_SHILL_REM_RESP,DB_PROC_SET_SHILL_REM],
     "admin_scan_web_for_removed_shills":[kADMIN_CHECK_USR_REM_SHILLS,LST_KEYS_CHECK_USR_REM_SHILLS,LST_KEYS_CHECK_USR_REM_SHILLS_RESP,DB_PROC_CHECK_USR_REM_SHILL],
-    'admin_set_shiller_rates':[kADMIN_SET_USR_SHILL_PAY_RATES,LST_KEYS_SET_USR_SHILL_PAY_RATES,LST_KEYS_SET_USR_SHILL_PAY_RATES_RESP,DB_PROC_SET_USR_RATES],
+    'admin_set_shiller_rates':[kADMIN_SET_USR_SHILL_PAY_RATE,LST_KEYS_SET_USR_SHILL_PAY_RATE,LST_KEYS_SET_USR_SHILL_PAY_RATE_RESP,DB_PROC_SET_USR_RATES],
 }
 
 #=====================================================#

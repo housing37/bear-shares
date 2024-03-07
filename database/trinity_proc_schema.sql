@@ -174,6 +174,33 @@ BEGIN
 END 
 $$ DELIMITER ;
 
+$$ DELIMITER
+drop FUNCTION if exists add_user_shill_rate; -- setup
+CREATE FUNCTION `add_user_shill_rate`(
+		p_user_id INT(11),
+		p_shill_plat VARCHAR(40),
+		p_shill_type VARCHAR(40),
+		p_pay_usd FLOAT)
+		RETURNS INT(11)
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	INSERT INTO user_shill_rates (
+		fk_user_id,
+		fk_shill_plat_id,
+		fk_shill_type_id,
+		pay_usd
+	) VALUES (
+		p_user_id,
+		p_shill_plat,
+		p_shill_type,
+		p_pay_usd
+	);
+	SELECT LAST_INSERT_ID() into @new_rate_id;
+	RETURN @new_rate_id;
+END 
+$$ DELIMITER ;
+
 -- $$ DELIMITER
 -- drop FUNCTION if exists add_shill_plat; -- setup
 -- CREATE FUNCTION `add_shill_plat`(
@@ -830,18 +857,45 @@ BEGIN
 END 
 $$ DELIMITER ;
 
--- # '/admin_set_shiller_rates'
+-- # '/admin_set_shiller_rate'
+-- LST_KEYS_SET_USR_SHILL_PAY_RATES = ['admin_id','user_id','shill_play','shill_type','pay_usd']
+-- DB_PROC_SET_USR_RATES = 'SET_USER_PAY_RATE'
 DELIMITER $$
-DROP PROCEDURE IF EXISTS SET_USER_PAY_RATES;
-CREATE PROCEDURE `SET_USER_PAY_RATES`(
-    IN p_admin_id VARCHAR(40),
-    IN p_user_id VARCHAR(40))
+DROP PROCEDURE IF EXISTS SET_USER_PAY_RATE;
+CREATE PROCEDURE `SET_USER_PAY_RATE`(
+    IN p_tg_admin_id VARCHAR(40),
+    IN p_tg_user_id VARCHAR(40),
+	IN p_shill_plat VARCHAR(40),
+	IN p_shill_type VARCHAR(40),
+	IN p_pay_usd FLOAT(40))
 BEGIN
-    -- Procedure Body
-    -- You can add your SQL logic here
--- LST_KEYS_SET_USR_SHILL_PAY_RATES = ['admin_id','user_id']
--- DB_PROC_SET_USR_RATES = 'SET_USER_PAY_RATES'
---     # update 'user_shill_rates' for user_id
+	-- validate admin
+	IF NOT valid_tg_user_admin(p_tg_admin_id) THEN
+		SELECT 'failed' as `status`, 
+				'invalid admin' as info, 
+				p_tg_admin_id as tg_admin_id;
+
+	-- vaidate user exists
+	ELSE IF NOT valid_tg_user(p_tg_user_id) THEN
+		SELECT 'failed' as `status`, 
+				'user not found' as info, 
+				p_tg_user_id as tg_user_id_inp;
+
+	ELSE
+		-- add new entry to user_shill_rates table
+		SELECT add_user_shill_rate(p_tg_user_id, p_shill_plat, p_shill_type, p_pay_usd) INTO @v_new_rate_id;
+
+		-- return
+		SELECT *,
+				'success' as `status`,
+				'added user shill rate' as info,
+				p_tg_user_id as tg_user_id_inp,
+				p_shill_plat as shill_plat_inp,
+				p_shill_type as shill_type_inp,
+				p_pay_usd as pay_usd_inp
+			FROM user_shill_rates
+			WHERE id = @v_new_rate_id;
+	END IF;
 END 
 $$ DELIMITER ;
 
