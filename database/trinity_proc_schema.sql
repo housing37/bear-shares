@@ -242,6 +242,9 @@ $$ DELIMITER ;
 --		STORED PROCEDURES
 -- #================================================================# --
 -- # '/register_as_shiller'
+-- LST_KEYS_REG_SHILLER = ['user_id', 'wallet_address', 'trinity_tw_url']
+-- DB_PROC_ADD_NEW_USER = 'ADD_NEW_TG_USER'
+--     # validate 'p_tw_conf_url' contains texts '@BearSharesNFT' & 'trinity'
 DELIMITER $$
 DROP PROCEDURE IF EXISTS ADD_NEW_TG_USER;
 CREATE PROCEDURE `ADD_NEW_TG_USER`(
@@ -251,12 +254,6 @@ CREATE PROCEDURE `ADD_NEW_TG_USER`(
     IN p_wallet_address VARCHAR(255),
     IN p_tw_conf_url VARCHAR(1024))
 BEGIN
-    -- Procedure Body
-    -- You can add your SQL logic here
-	-- LST_KEYS_REG_SHILLER = ['user_id', 'wallet_address', 'tweet_url']
-	-- DB_PROC_ADD_NEW_USER = 'ADD_NEW_USER'
-	--     # validate 'p_tw_conf_url' contains texts '@BearSharesNFT' & 'trinity'
-
 	-- vaidate user does NOT exists (only)
 	IF valid_tg_user(p_tg_user_id) THEN
 		SELECT id, tg_user_id, tg_user_at, tg_user_handle, is_admin
@@ -329,6 +326,8 @@ END
 $$ DELIMITER ;
 
 -- # '/confirm_twitter'
+-- LST_KEYS_TW_CONF = ['user_id', 'trinity_tw_url']
+-- DB_PROC_RENEW_TW_CONFRIM = 'UPDATE_TWITTER_CONF'
 DELIMITER $$
 DROP PROCEDURE IF EXISTS UPDATE_TWITTER_CONF;
 CREATE PROCEDURE `UPDATE_TWITTER_CONF`(
@@ -358,19 +357,16 @@ END
 $$ DELIMITER ;
 
 -- # '/submit_shill_link'
+-- LST_KEYS_SUBMIT_SHILL = ['user_id', 'post_url']
+-- DB_PROC_ADD_SHILL = 'ADD_USER_SHILL'
+-- 	   # check number of pending shills (is_apporved=False), return rate-limit info
+--	   #	perhaps set a max USD per day that people can earn?
 DELIMITER $$
 DROP PROCEDURE IF EXISTS ADD_USER_SHILL_TW;
 CREATE PROCEDURE `ADD_USER_SHILL_TW`(
     IN p_tg_user_id VARCHAR(40),
     IN p_post_url VARCHAR(1024))
 BEGIN
-    -- Procedure Body
-    -- You can add your SQL logic here
-	-- LST_KEYS_SUBMIT_SHILL = ['user_id', 'post_url']
-	-- DB_PROC_ADD_SHILL = 'ADD_USER_SHILL'
-	-- 	   # check number of pending shills (is_apporved=False), return rate-limit info
-	--	   #	perhaps set a max USD per day that people can earn?
-
 	-- vaidate user exists & tw conf not expired
 	set @v_valid = valid_tg_user_tw_conf(p_tg_user_id);
 	IF NOT @v_valid = 'valid user' THEN
@@ -415,6 +411,8 @@ END
 $$ DELIMITER ;
 
 -- # '/show_my_rates'
+-- LST_KEYS_SHOW_RATES = ['user_id', 'platform'] # const: unknown, twitter, tiktok, reddit
+-- DB_PROC_GET_USR_RATES = 'GET_USER_PAY_RATES'
 DELIMITER $$
 DROP PROCEDURE IF EXISTS GET_USER_PAY_RATES;
 CREATE PROCEDURE `GET_USER_PAY_RATES`(
@@ -452,6 +450,8 @@ END
 $$ DELIMITER ;
 
 -- # '/show_my_earnings'
+-- LST_KEYS_SHOW_EARNINGS = ['user_id']
+-- DB_PROC_GET_USR_EARNS = 'GET_USER_EARNINGS'
 DELIMITER $$
 DROP PROCEDURE IF EXISTS GET_USER_EARNINGS;
 CREATE PROCEDURE `GET_USER_EARNINGS`(
@@ -497,6 +497,8 @@ END
 $$ DELIMITER ;
 
 -- # '/admin_show_user_shills' | # '/admin_scan_web_for_removed_shills'
+-- LST_KEYS_USR_SHILLS = ['admin_id','user_id','approved','removed']
+-- DB_PROC_GET_USR_SHILLS_ALL = 'GET_USER_SHILLS_ALL'
 DELIMITER $$
 DROP PROCEDURE IF EXISTS GET_USER_SHILLS_ALL;
 CREATE PROCEDURE `GET_USER_SHILLS_ALL`(
@@ -536,6 +538,8 @@ END
 $$ DELIMITER ;
 
 -- # '/admin_list_all_pend_shills'
+-- LST_KEYS_ALL_PEND_SHILLS = ['admin_id','removed']
+-- DB_PROC_GET_PEND_SHILLS = 'GET_PEND_SHILLS_ALL' # get where 'is_approved' = False
 DELIMITER $$
 DROP PROCEDURE IF EXISTS GET_PEND_SHILLS_ALL;
 CREATE PROCEDURE `GET_PEND_SHILLS_ALL`(
@@ -564,6 +568,9 @@ END
 $$ DELIMITER ;
 
 -- # '/admin_approve_pend_shill'
+-- LST_KEYS_APPROVE_SHILL = ['admin_id','user_id', 'shill_id','shill_plat','shill_type','pay_usd','approved']
+-- DB_PROC_APPROVE_SHILL_STATUS = "UPDATE_USER_SHILL_APPR_EARNS" 
+--     # admin views / inspects shill_url on the web (determines: plat, type, pay, approve)
 DELIMITER $$
 DROP PROCEDURE IF EXISTS UPDATE_USER_SHILL_APPR_EARNS;
 CREATE PROCEDURE `UPDATE_USER_SHILL_APPR_EARNS`(
@@ -575,12 +582,6 @@ CREATE PROCEDURE `UPDATE_USER_SHILL_APPR_EARNS`(
 	IN p_pay_usd VARCHAR(40), -- dyn: 0.005, 0.01, 0.05, 0.25 0.50, 1.00, etc.
     IN p_approved BOOLEAN)
 BEGIN
-    -- Procedure Body
-    -- You can add your SQL logic here
-	-- LST_KEYS_APPROVE_SHILL = ['admin_id','user_id', 'shill_id','shill_plat','shill_type','pay_usd','approved']
-	-- DB_PROC_APPROVE_SHILL_STATUS = "UPDATE_USER_SHILL_APPR_EARNS" 
-	--     # admin views / inspects shill_url on the web (determines: plat, type, pay, approve)
-
 	-- validate admin
 	IF NOT valid_tg_user_admin(p_tg_admin_id) THEN
 		SELECT 'failed' as `status`, 
@@ -665,6 +666,8 @@ END
 $$ DELIMITER ;
 
 -- # '/admin_view_shill_status'
+-- LST_KEYS_VIEW_SHILL = ['admin_id','user_id','shill_id','shill_url']
+-- DB_PROC_GET_USR_SHILL = 'GET_USER_SHILL'
 DELIMITER $$
 DROP PROCEDURE IF EXISTS GET_USER_SHILL;
 CREATE PROCEDURE `GET_USER_SHILL`(
