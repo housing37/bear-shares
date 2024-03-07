@@ -31,9 +31,9 @@ CREATE TABLE `users` (
   `dt_created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `dt_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `dt_deleted` timestamp NULL DEFAULT NULL,
-  `tg_user_id` varchar(40) NOT NULL, -- ex: -10493048
-  `tg_user_at` varchar(1024) default '', -- ex: @whatever
-  `tg_user_handle` varchar(1024) default '', -- ex: bob joe
+  `tg_user_id` varchar(40) NOT NULL, -- ex: '581475171'
+  `tg_user_at` varchar(1024) default 'nil_at', -- ex: '@whatever'
+  `tg_user_handle` varchar(1024) default 'nil_handle', -- ex: 'bob joe'
   `tw_user_at` varchar(1024) default '',
   `tw_user_handle` varchar(1024) default '',
   `tw_conf_url` varchar(1024) default '',
@@ -101,6 +101,21 @@ CREATE TABLE `user_shill_rates` (
   `platform` VARCHAR(40) NOT NULL, -- const: unknown, twitter, tiktok, reddit
   `type_descr` VARCHAR(40) NOT NULL, -- const: unknown, htag, short_txt, long_txt, img_meme, short_vid, long_vid
   `pay_usd` float default 0.0 -- dyn: 0.005, 0.01, 0.05, 0.25 0.50, 1.00, etc.
+
+  UNIQUE KEY `ID` (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+drop table if exists user_blacklist_scammers;
+CREATE TABLE `user_blacklist_scammers` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `dt_created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `dt_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `dt_deleted` timestamp NULL DEFAULT NULL,
+  `fk_user_id_added` int(11) NOT NULL,
+  `tg_user_id` varchar(40) NOT NULL, -- ex: '581475171'
+  `tg_user_at` varchar(1024) default 'nil_at', -- ex: '@whatever'
+  `tg_user_handle` varchar(1024) default 'nil_handle', -- ex: 'bob joe'
+  `tg_chat_id_found` varchar(40) NOT NULL, -- ex: '-10493048'
 
   UNIQUE KEY `ID` (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
