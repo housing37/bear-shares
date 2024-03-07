@@ -10,6 +10,13 @@ WHITELIST_TG_CHAT_IDS = [
     '-4139183080', # TeddyShares - testing
     ]
 
+BLACKLIST_SCAM_UNAMES = [
+    '@EmileUly',
+    # '@housing37',
+]
+BLACKLIST_SCAM_UIDS = [
+    # '581475171', # @housing37
+]
 TOKEN = env.TOKEN_neo # neo_bs_bot (neo)
 OPENAI_API_KEY = env.OPENAI_KEY
 # GROUP_ID = '-1002049491115', # $BearShares - testing
@@ -17,6 +24,9 @@ OPENAI_API_KEY = env.OPENAI_KEY
 print(TOKEN)
 print(OPENAI_API_KEY)
 print(WHITELIST_TG_CHAT_IDS)
+print(BLACKLIST_SCAM_UNAMES)
+print(BLACKLIST_SCAM_UIDS)
+
 # print(GROUP_ID)
 # Initialize OpenAI client
 from openai import OpenAI
@@ -88,6 +98,19 @@ async def generate_response(update: Update, context: CallbackContext) -> None:
 #     print(f'ENTER - group_filter _ GROUP_ID: {GROUP_ID}')
 #     return str(update.message.chat_id) == GROUP_ID
 
+async def check_scammer(update: Update, context):
+    user = update.message.from_user
+    uid = str(user.id)
+    usr_at_name = user.username
+    usr_handle = user.first_name
+    inp = update.message.text
+    lst_user_data = [uid, usr_at_name, usr_handle]
+    print(f'check scammer: {lst_user_data}')
+    if uid in BLACKLIST_SCAM_UIDS:
+    # if f'@{usr_at_name}' in BLACKLIST_SCAM_UNAMES:
+        print(f'FOUND scammer: {lst_user_data}')
+        await update.message.reply_text(f"@{usr_at_name} is a known scammer, ignore him 🙄️️️️️️")
+
 def main():
     print('ENTER - main()')
     # Initialize and run the Telegram bot
@@ -97,6 +120,10 @@ def main():
     app.add_handler(CommandHandler("neo", generate_response))
     # app.add_handler(MessageHandler(filters.ChatType.GROUP & filters.Update.message, generate_response))
 
+    # Add message handler for ALL messages
+    #   ref: https://docs.python-telegram-bot.org/en/stable/telegram.ext.filters.html#filters-module
+    app.add_handler(MessageHandler(filters.ALL, check_scammer))    
+    
     # Start the bot
     app.run_polling()
     print('EXIT - main()')
