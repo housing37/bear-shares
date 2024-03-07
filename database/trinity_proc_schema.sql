@@ -201,6 +201,71 @@ BEGIN
 END 
 $$ DELIMITER ;
 
+$$ DELIMITER
+drop FUNCTION if exists usr_withdraw_requested; -- setup
+CREATE FUNCTION `usr_withdraw_requested`(
+		p_tg_user_id VARCHAR(40))
+		RETURNS BOOLEAN
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	-- validate user exists in 'users' table
+	IF NOT valid_tg_user(p_tg_user_id) THEN
+		RETURN FALSE;
+	ELSE
+		-- get id from users table
+		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+
+		-- check if user_earns entry exists for this user id (if not, create it)
+		SELECT COUNT(*) FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_cnt;
+		IF @v_cnt = 0 THEN
+			SELECT add_default_user_earns(@v_user_id);
+		END IF;
+
+		-- return boolean for 'withdraw_requested'
+		SELECT withdraw_requested FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_requested;
+		RETURN @v_requested;
+	END IF;
+END 
+$$ DELIMITER ;
+
+$$ DELIMITER
+drop FUNCTION if exists get_usr_pay_usd_appr_sum; -- setup
+CREATE FUNCTION `get_usr_pay_usd_appr_sum`(
+		p_tg_user_id VARCHAR(40),
+		p_is_paid BOOLEAN)
+		RETURNS FLOAT
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	-- return -1 if p_tg_user_id doesn't exist in 'users' table
+	IF NOT valid_tg_user(p_tg_user_id) THEN
+		RETURN -1.0; 
+	ELSE
+		-- get id for p_tg_user_id in users table
+		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+
+		-- get sum of all pay_usd in shills table
+		--	where p_is_paid, approved, & not removed
+		SELECT SUM(pay_usd)
+			FROM shills 
+			WHERE fk_user_id = @v_user_id
+				AND is_paid = p_is_paid
+				AND is_apporved = TRUE
+				AND is_removed = FALSE
+			INTO @v_tot_amnt;
+
+		-- return -37 is no entries for p_tg_user_id in shills table
+		IF @v_tot_amnt IS NULL THEN
+			SET @v_tot_amnt = -37.0; 
+		END IF;
+
+		-- return
+		RETURN @v_tot_amnt;
+	END IF;
+END 
+$$ DELIMITER ;
+
 -- $$ DELIMITER
 -- drop FUNCTION if exists add_shill_plat; -- setup
 -- CREATE FUNCTION `add_shill_plat`(
@@ -809,7 +874,6 @@ DROP PROCEDURE IF EXISTS UPDATE_USER_SHILL_PAID_EARNS;
 CREATE PROCEDURE `UPDATE_USER_SHILL_PAID_EARNS`(
     IN p_tg_admin_id VARCHAR(40),
 	IN p_tg_user_id VARCHAR(40),
-    IN p_shill_id VARCHAR(40),
 	IN p_pay_tx_hash VARCHAR(255))
 BEGIN
     -- Procedure Body
@@ -832,15 +896,37 @@ BEGIN
 				'invalid admin' as info, 
 				p_tg_admin_id as tg_admin_id;
 
-	-- vaidate user / shill combo (invokes: valid_tg_user(...))
-	ELSE IF NOT valid_shill_for_user(p_tg_user_id, p_shill_id) THEN
+	-- vaidate user exists
+	ELSE IF NOT valid_tg_user(p_tg_user_id) THEN
 		SELECT 'failed' as `status`, 
-				'user / shill combo not found' as info, 
-				p_tg_user_id as tg_user_id_inp,
-				p_shill_id as shill_id_inp;
-	ELSE IF NOT SELECT withdraw_request
+				'user not found' as info, 
+				p_tg_user_id as tg_user_id_inp;
 
-	END IF;
+	-- check withdraw indeed requested by 'p_tg_user_id'
+	-- 	note: executes 'add_default_user_earns' (if needed)
+	ELSE IF NOT usr_withdraw_requested(p_tg_user_id) THEN -- checks 'valid_tg_user'
+		SELECT 'failed' as `status`, 
+				'withdraw not requested by user' as info, 
+				p_tg_user_id as tg_user_id;
+
+	ELSE
+		SET @v_is_paid = FALSE;
+		SELECT get_usr_pay_usd_appr_sum(p_tg_user_id, @v_is_paid) INTO @v_tot_pay_usd;
+		SELECT usd_owed FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_tot_owed;
+		IF @v_tot_pay_usd != @v_tot_owed THEN
+			SELECT 'failed' as `status`, 
+					'total pay_usd != total usd_owed' as info, 
+					@v_tot_pay_usd as tot_pend_pay_usd,
+					@v_tot_owed as tot_pend_usd_owed,
+					p_tg_user_id as tg_user_id_inp;
+		ELSE
+			-- LEFT OFF HERE ... return success
+			--	ie. ok to execute python/solidty 'transfer'
+			-- then update 'user_earns.usd_owed|paid' accordingly (+-), for user_id
+			-- then update 'shills.is_paid=True' & 'shills.pay_tx_hash' where all 'shills.is_approved=True' & 'shills.is_removed=False' for user_id
+			-- 	i think ^
+		END IF;
+	END IF:
 END 
 $$ DELIMITER ;
 
