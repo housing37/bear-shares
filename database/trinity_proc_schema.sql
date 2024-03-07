@@ -970,16 +970,53 @@ DROP PROCEDURE IF EXISTS SET_USER_PAY_TX_PENDING;
 CREATE PROCEDURE `SET_USER_PAY_TX_PENDING`(
     IN p_tg_admin_id VARCHAR(40),
 	IN p_tg_user_id VARCHAR(40),
+	IN p_usd_paid FLOAT,
 	IN p_pay_tx_hash VARCHAR(255))
 BEGIN
 	-- LST_KEYS_PAY_SHILL_EARNS_CONF = ['admin_id','user_id','tx_hash']
 	-- DB_PROC_SET_USR_PAY_CONF = 'SET_USER_PAY_TX_CONFIRMED'
 	--     # update 'user_earns.usd_owed|paid' accordingly (+-), for user_id
 	--     # update 'shills.is_paid=True' & 'shills.pay_tx_hash' where all 'shills.is_approved=True' & 'shills.is_removed=False' for user_id
+	-- validate admin
+	IF NOT valid_tg_user_admin(p_tg_admin_id) THEN
+		SELECT 'failed' as `status`, 
+				'invalid admin' as info, 
+				p_tg_admin_id as tg_admin_id;
 
-	-- LEFT OFF HERE ... return from execute python/solidty 'transfer' w/ p_pay_tx_hash
-	-- 	update 'user_earns.usd_owed|paid' accordingly (+-), for user_id
-	-- 	update 'shills.is_paid=True' & 'shills.pay_tx_hash' where all 'shills.is_approved=True' & 'shills.is_removed=False' for user_id
+	-- vaidate user exists
+	ELSE IF NOT valid_tg_user(p_tg_user_id) THEN
+		SELECT 'failed' as `status`, 
+				'user not found' as info, 
+				p_tg_user_id as tg_user_id_inp;
+	
+	ELSE
+		-- set support variables
+		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+		SELECT usd_owed FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_curr_usd_owed;
+		SELECT usd_paid FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_curr_usd_paid;
+
+		-- validate that on-chain pay usd matches user curr usd owed
+		IF p_usd_paid != @v_curr_usd_owed THEN
+			SELECT 'failed' as `status`, 
+					'on-chain usd_paid != user usd_owed' as info,
+					@v_user_id as user_id,
+					@v_curr_usd_owed as curr_usd_owed,
+					@v_curr_usd_paid as curr_usd_paid,
+					p_tg_user_id as tg_user_id_inp,
+					p_usd_paid as usd_paid_inp,
+					p_pay_tx_hash as pay_tx_hash_inp;
+		ELSE
+			-- update user_earns entry (change usd_owed|paid accordingly)
+			SET @v_new_usd_paid = @v_curr_usd_paid + @v_curr_usd_owed
+			UPDATE user_earns
+				SET usd_owed = 0.0,
+					usd_paid = @v_new_usd_paid
+				WHERE fk_user_id = @v_user_id;
+			
+			-- LEFT OFF HERE ... update is_paid & pay_tx_hash for all shills with pending tx for @v_user_id
+			--     # update 'shills.is_paid=True' & 'shills.pay_tx_hash' where all 'shills.is_approved=True' & 'shills.is_removed=False' for user_id
+		END IF; 
+	END IF;
 END 
 $$ DELIMITER ;
 
