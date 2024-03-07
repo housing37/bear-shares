@@ -101,13 +101,14 @@ async def generate_response(update: Update, context: CallbackContext) -> None:
 async def check_scammer(update: Update, context):
     user = update.message.from_user
     uid = str(user.id)
-    usr_at_name = user.username
+    usr_at_name = f'@{user.username}'
     usr_handle = user.first_name
     inp = update.message.text
     lst_user_data = [uid, usr_at_name, usr_handle]
     print(f'check scammer: {lst_user_data}')
-    # if uid in BLACKLIST_SCAM_UIDS:
-    if f'@{usr_at_name}' in BLACKLIST_SCAM_UNAMES:
+
+    # checks blacklist of @user and tg_uid
+    if usr_at_name in BLACKLIST_SCAM_UNAMES or uid in BLACKLIST_SCAM_UIDS:
         print(f'FOUND scammer: {lst_user_data}')
         await update.message.reply_text(f"@{usr_at_name} is a known scammer, ignore him 🙄️️️️️️")
 
