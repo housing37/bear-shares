@@ -949,9 +949,10 @@ $$ DELIMITER ;
 
 -- # '/admin_pay_shill_rewards'
 -- LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_id']
--- DB_PROC_SET_USR_PAY_PEND = 'SET_USER_PAY_TX_SUBMIT'
---     # perform python/solidity 'transfer(user_earns.usd_owed)' call to 'wallet_address' for user_id (get pay_tx_hash)
---	   #	wallet_address can be retreived from 'GET_USER_EARNINGS(tg_user_id)'
+-- DB_PROC_SET_USR_PAY_SUBMIT = 'SET_USER_PAY_TX_SUBMIT'
+-- 		# perform python/solidity 'transfer(user_earns.usd_owed)' call to 'wallet_address' for user_id
+-- 		#	wallet_address can be retreived from 'GET_USER_EARNINGS(tg_user_id)'
+-- 		#   receive tx data for DB_PROC_SET_USR_PAY_CONF
 DELIMITER $$
 DROP PROCEDURE IF EXISTS SET_USER_PAY_TX_SUBMIT;
 CREATE PROCEDURE `SET_USER_PAY_TX_SUBMIT`(
@@ -1169,7 +1170,6 @@ BEGIN
 	END IF;
 END 
 $$ DELIMITER ;
-
 
 
 

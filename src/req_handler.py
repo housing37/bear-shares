@@ -36,7 +36,6 @@ LST_KEYS_REG_SHILLER = ['user_id', 'wallet_address', 'trinity_tw_url']
 LST_KEYS_REG_SHILLER_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_ADD_NEW_USER = 'ADD_NEW_TG_USER'
     # validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
-    # insert into 'users' (...) values (...)
 
 # '/confirm_twitter'
 kTWITTER_CONF = "validate_twitter"
@@ -49,8 +48,6 @@ kSUBMIT_SHILL = "add_new_shill"
 LST_KEYS_SUBMIT_SHILL = ['user_id', 'post_url']
 LST_KEYS_SUBMIT_SHILL_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_ADD_SHILL = 'ADD_USER_SHILL_TW'
-    # validate 'post_url' is not in 'shills' table yet
-    # insert into 'shills' (...) values (...) for user_id
     # check number of pending shills (is_apporved=False), return rate-limit info
     #	perhaps set a max USD per day that people can earn?
 
@@ -59,91 +56,75 @@ kSHOW_RATES = "get_user_rates"
 LST_KEYS_SHOW_RATES = ['user_id', 'platform'] # const: unknown, twitter, tiktok, reddit
 LST_KEYS_SHOW_RATES_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_GET_USR_RATES = 'GET_USER_PAY_RATES'
-    # select * from 'user_shill_rates' for user_id (order by id desc limit 1)
 
 # '/show_my_earnings'
 kSHOW_EARNINGS = "get_user_earns"
 LST_KEYS_SHOW_EARNINGS = ['user_id']
 LST_KEYS_SHOW_EARNINGS_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_GET_USR_EARNS = 'GET_USER_EARNINGS'
-    # select * from 'user_earns' where 'user_earns.fk_user_id=user_id'
 
 # '/request_cashout'
 kREQUEST_CASHOUT = "request_user_earns_cashout"
 LST_KEYS_REQUEST_CASHOUT = ['user_id']
 LST_KEYS_REQUEST_CASHOUT_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_REQUEST_CASHOUT = 'SET_USER_WITHDRAW_REQUESTED'
-    # select 'user_earns.usd_owed' for user_id (req: usd_owed >= <some-min-amnt>)
-    # select 'users.wallet_address' for user_id
-    # use solidity 'transfer' to send 'usd_owed' amount to 'wallet_address'
-    # update 'user_earns.withdraw_request' where 'user_earns.usd_owed > 0' for user_id
+    # python TG notify admin_pay to process
+	# python TG notify p_tg_user_id that request has been submit (w/ user_earns.usd_owed)
 
 # '/admin_show_user_shills'
 kADMIN_SHOW_USR_SHILLS = "get_usr_shills"
 LST_KEYS_USR_SHILLS = ['admin_id','user_id','approved','removed']
 LST_KEYS_USR_SHILLS_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_GET_USR_SHILLS_ALL = 'GET_USER_SHILLS_ALL'
-    # select * from 'shills' where 'shills.is_approved=True|False' and 'shills.is_removed=True|False' for user_id
 
 # '/admin_list_all_pend_shills'
 kADMIN_LIST_ALL_PEND_SHILLS = "get_all_pend_shills"
 LST_KEYS_ALL_PEND_SHILLS = ['admin_id','removed']
 LST_KEYS_ALL_PEND_SHILLS_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_GET_PEND_SHILLS = 'GET_PEND_SHILLS_ALL' # get where 'is_approved' = False
-    # select * from 'shills' where 'shills.is_approved=False' for all users
 
 # '/admin_approve_pend_shill'
 kADMIN_APPROVE_SHILL = "approve_pend_shill"
 LST_KEYS_APPROVE_SHILL = ['admin_id','user_id', 'shill_id','shill_plat','shill_type','pay_usd','approved']
 LST_KEYS_APPROVE_SHILL_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_APPROVE_SHILL_STATUS = "UPDATE_USER_SHILL_APPR_EARNS" 
-    # admin views shill_url on the web
-    # set 'shills.is_approved=True|False' where 'shills.is_removed=False' for 'user_id + shill_id|url' combo
-    # set 'shills.pay_usd
-    # update 'user_earns.usd_total|owed' accordingly (+-) for user_id
+    # admin views / inspects shill_url on the web (determines: plat, type, pay, approve)
 
 # '/admin_view_shill_status'
 kADMIN_VIEW_SHILL = "get_usr_shill"
 LST_KEYS_VIEW_SHILL = ['admin_id','user_id','shill_id','shill_url']
 LST_KEYS_VIEW_SHILL_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_GET_USR_SHILL = 'GET_USER_SHILL'
-    # select * from 'shills' where 'shills.id|shill_url=shill_id|url' for user_id
 
 # '/admin_pay_shill_rewards' _ NOTE: requires solidty 'transfer' call _ ** HOUSE ONLY **
 kADMIN_PAY_SHILL_EARNS = "pay_usr_owed_shill_earns"
 LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_id']
 LST_KEYS_PAY_SHILL_EARNS_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_SET_USR_PAY_SUBMIT = 'SET_USER_PAY_TX_SUBMIT'
+    # perform python/solidity 'transfer(user_earns.usd_owed)' call to 'wallet_address' for user_id
+    #	wallet_address can be retreived from 'GET_USER_EARNINGS(tg_user_id)'
+    #   receive tx data for DB_PROC_SET_USR_PAY_CONF
 LST_KEYS_PAY_SHILL_EARNS_CONF = ['admin_id','user_id','chain_usd_paid','tx_hash','tx_status','tok_addr','tok_symb','tok_amnt']
 DB_PROC_SET_USR_PAY_CONF = 'SET_USER_PAY_TX_STATUS'
-    # check 'user_earns.withdraw_request=True' for 'user_id'
-    # validate 'user_earns.usd_owed' == 
-    #   total of (select 'shills.pay_usd' where 'shills.is_paid=False' & 'shills.is_approved=True & 'shills.is_removed=False') for user_id
-    # update 'user_earns.usd_owed|paid' where 'user_earns.fk_user_id=user_id'
-    # update 'shills.is_paid=True' for user_id
-    # then perform solidity 'transfer' call on 'users.wallet_address' for user_id
 
 # '/admin_log_removed_shill'
 kADMIN_SET_SHILL_REM = "set_shill_removed"
 LST_KEYS_SET_SHILL_REM = ['admin_id','tg_user_id','shill_id','removed']
 LST_KEYS_SET_SHILL_REM_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_SET_SHILL_REM = 'SET_USER_SHILL_REMOVED'
-    # updated 'shills.is_removed' for 'shills.user_id + shills.shill_id|url' combo
 
 # '/admin_scan_web_for_removed_shills' _ NOTE: requires twitter post web scrape
 kADMIN_CHECK_USR_REM_SHILLS = "check_usr_removed_shills"
 LST_KEYS_CHECK_USR_REM_SHILLS = ['admin_id','user_id','approved','removed']
 LST_KEYS_CHECK_USR_REM_SHILLS_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_CHECK_USR_REM_SHILL = DB_PROC_GET_USR_SHILLS_ALL 
-    # select post_url from 'shills' where 'shills.is_removed=False' for user_id
     # then web scrape those post_urls to see if they are still working / viewable
 
 # '/admin_set_shiller_rate'
 kADMIN_SET_USR_SHILL_PAY_RATE = "set_user_shill_pay_rate"
-LST_KEYS_SET_USR_SHILL_PAY_RATE = ['admin_id','user_id','shill_play','shill_type','pay_usd']
+LST_KEYS_SET_USR_SHILL_PAY_RATE = ['admin_id','user_id','shill_plat','shill_type','pay_usd']
 LST_KEYS_SET_USR_SHILL_PAY_RATE_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_SET_USR_RATES = 'SET_USER_PAY_RATE'
-    # update 'user_shill_rates' for user_id
 
 #-----------------------------------------------------#
 DICT_CMD_EXE = {
