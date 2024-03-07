@@ -76,6 +76,7 @@ CREATE TABLE `shills` (
   `shill_plat` VARCHAR(40) DEFAULT 'unknown', -- set by admin after post_url review
   `shill_type` VARCHAR(40) DEFAULT 'unknown', -- set by admin after post_url review
   `is_approved` BOOLEAN DEFAULT FALSE,
+  `dt_updated_approve` timestamp NULL DEFAULT NULL,
   `is_paid` BOOLEAN DEFAULT FALSE,
   `is_removed` BOOLEAN DEFAULT FALSE,
   `dt_shill_removed` timestamp NULL DEFAULT NULL,

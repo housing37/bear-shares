@@ -345,7 +345,6 @@ BEGIN
 END 
 $$ DELIMITER ;
 
-
 $$ DELIMITER
 drop FUNCTION if exists add_blacklist_usr; -- setup
 CREATE FUNCTION `add_blacklist_usr`(
@@ -378,6 +377,29 @@ BEGIN
 	RETURN @new_bl_id;
 END 
 $$ DELIMITER ;
+
+$$ DELIMITER
+drop FUNCTION if exists usr_shill_limit_reached; -- setup
+CREATE FUNCTION `usr_shill_limit_reached`(
+    	p_tg_user_id VARCHAR(40))
+		RETURNS INT(11)
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	-- NOTE_030724: current integration checks 3 posts per day max
+	--	potential update: check for max pay_usd total per day 
+	SET @max_shills_per_day = 3;
+	SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+	SELECT COUNT(*) FROM shills 
+		WHERE fk_user_id = @v_user_id
+			AND is_approved = TRUE
+			AND dt_updated_approve >= DATE_SUB(NOW(), INTERVAL 1 DAY) -- within the last day or 24 hours
+			-- note: includes is_removed=TRUE|FALSE (limit earns to those removing shills)
+		INTO @v_approve_cnt;
+	RETURN @v_approve_cnt >= @max_shills_per_day;
+END 
+$$ DELIMITER ;
+
 
 -- $$ DELIMITER
 -- drop FUNCTION if exists add_shill_plat; -- setup
@@ -564,8 +586,6 @@ $$ DELIMITER ;
 -- # '/submit_shill_link'
 -- LST_KEYS_SUBMIT_SHILL = ['user_id', 'post_url']
 -- DB_PROC_ADD_SHILL = 'ADD_USER_SHILL'
--- 	   # check number of pending shills (is_approved=False), return rate-limit info
---	   #	perhaps set a max USD per day that people can earn?
 DELIMITER $$
 DROP PROCEDURE IF EXISTS ADD_USER_SHILL_TW;
 CREATE PROCEDURE `ADD_USER_SHILL_TW`(
@@ -831,6 +851,12 @@ BEGIN
 				'invalid admin' as info, 
 				p_tg_admin_id as tg_admin_id;
 
+	-- vaidate user exists
+	ELSE IF NOT valid_tg_user(p_tg_user_id) THEN
+		SELECT 'failed' as `status`, 
+				'user not found' as info, 
+				p_tg_user_id as tg_user_id_inp;
+
 	ELSE
 		-- get shill counts & user earngs counts for 'p_tg_user_id' (w/ additional vars needed)
 		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
@@ -859,7 +885,13 @@ BEGIN
 				WHERE id = p_shill_id;
 
 		-- validate max shills per day for @v_user_id as NOT been met
-		ELSE IF usr_shill_limit_reached(p_tg_user_id) THEN
+		-- 	note: includes is_removed=TRUE|FALSE (limit earns to those removing shills)
+		ELSE IF p_approved = TRUE AND usr_shill_limit_reached(p_tg_user_id) THEN
+			SELECT 'failed' as `status`, 
+					'daily shill approve limit reached' as info, 
+					p_tg_user_id as tg_user_id_inp,
+					p_shill_id as shill_id_inp,
+					p_approved as approved_inp;
 
 		ELSE
 			-- update shill plat, type, and pay with admin data (prev. reviewed & selected)
@@ -869,7 +901,8 @@ BEGIN
 					shill_plat = p_shill_plat,
 					shill_type = p_shill_type,
 					pay_usd = p_pay_usd,
-					is_approved = p_approved 
+					is_approved = p_approved,
+					dt_updated_approve = NOW()
 				WHERE id = p_shill_id
 					AND fk_user_id = @v_user_id
 					AND is_removed = FALSE; 
@@ -889,7 +922,6 @@ BEGIN
 				SET dt_updated = NOW(),
 					usd_total = @v_tot,
 					usd_owed = @v_owe,
-					is_approved = TRUE
 				WHERE fk_user_id = @v_user_id;
 
 			-- return

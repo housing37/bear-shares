@@ -38,22 +38,20 @@ kSHILLER_REG = "add_new_user"
 LST_KEYS_REG_SHILLER = ['user_id', 'wallet_address', 'trinity_tw_url']
 LST_KEYS_REG_SHILLER_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_ADD_NEW_USER = 'ADD_NEW_TG_USER'
-    # validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
+    # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
 
 # '/confirm_twitter'
 kTWITTER_CONF = "validate_twitter"
 LST_KEYS_TW_CONF = ['user_id', 'trinity_tw_url']
 LST_KEYS_TW_CONF_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_RENEW_TW_CONFRIM = 'UPDATE_TWITTER_CONF'
-    # validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
+    # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
 
 # '/submit_shill_link'
 kSUBMIT_SHILL = "add_new_shill"
 LST_KEYS_SUBMIT_SHILL = ['user_id', 'post_url']
 LST_KEYS_SUBMIT_SHILL_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_ADD_SHILL = 'ADD_USER_SHILL_TW'
-    # check number of pending shills (is_apporved=False), return rate-limit info
-    #	perhaps set a max USD per day that people can earn?
 
 # '/show_my_rates'
 kSHOW_RATES = "get_user_rates"
@@ -72,8 +70,8 @@ kREQUEST_CASHOUT = "request_user_earns_cashout"
 LST_KEYS_REQUEST_CASHOUT = ['user_id']
 LST_KEYS_REQUEST_CASHOUT_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_REQUEST_CASHOUT = 'SET_USER_WITHDRAW_REQUESTED'
-    # python TG notify admin_pay to process
-	# python TG notify p_tg_user_id that request has been submit (w/ user_earns.usd_owed)
+    # POST-DB: python TG notify admin_pay to process
+	# POST-DB: python TG notify p_tg_user_id that request has been submit (w/ user_earns.usd_owed)
 
 # '/admin_show_user_shills'
 kADMIN_SHOW_USR_SHILLS = "get_usr_shills"
@@ -92,8 +90,8 @@ kADMIN_APPROVE_SHILL = "approve_pend_shill"
 LST_KEYS_APPROVE_SHILL = ['admin_id','user_id', 'shill_id','shill_plat','shill_type','pay_usd','approved']
 LST_KEYS_APPROVE_SHILL_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_APPROVE_SHILL_STATUS = "UPDATE_USER_SHILL_APPR_EARNS" 
-    # admin views / inspects shill_url on the web (determines: plat, type, pay, approve)
-    # python TG message to shiller confirming approval & earnings updated (w/ shill url, shill type, pay_usd)
+    # PRE-DB: admin views / inspects shill_url on the web (determines: plat, type, pay, approve)
+    # POST-DB: python TG message to shiller confirming approval & earnings updated (w/ shill url, shill type, pay_usd)
 
 # '/admin_view_shill_status'
 kADMIN_VIEW_SHILL = "get_usr_shill"
@@ -106,11 +104,11 @@ kADMIN_PAY_SHILL_EARNS = "pay_usr_owed_shill_earns"
 LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_id']
 LST_KEYS_PAY_SHILL_EARNS_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_SET_USR_PAY_SUBMIT = 'SET_USER_PAY_TX_SUBMIT'
-    # perform python/solidity 'transfer(user_earns.usd_owed)' call to 'wallet_address' for user_id
-    #	wallet_address can be retreived from 'GET_USER_EARNINGS(tg_user_id)'
-    #   receive tx data for DB_PROC_SET_USR_PAY_CONF
+    # POST-DB: perform python/solidity 'transfer(user_earns.usd_owed, wallet_address)' to get tx data for DB_PROC_SET_USR_PAY_CONF
+    #	        get 'wallet_address' from 'GET_USER_EARNINGS(tg_user_id)'
 LST_KEYS_PAY_SHILL_EARNS_CONF = ['admin_id','user_id','chain_usd_paid','tx_hash','tx_status','tok_addr','tok_symb','tok_amnt']
 DB_PROC_SET_USR_PAY_CONF = 'SET_USER_PAY_TX_STATUS'
+    # PRE-DB: perform python/solidity 'transfer' to get tx data for DB_PROC_SET_USR_PAY_CONF
 
 # '/admin_log_removed_shill'
 kADMIN_SET_SHILL_REM = "set_shill_removed"
