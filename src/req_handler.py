@@ -121,7 +121,7 @@ kADMIN_CHECK_USR_REM_SHILLS = "check_usr_removed_shills"
 LST_KEYS_CHECK_USR_REM_SHILLS = ['admin_id','user_id','approved','removed']
 LST_KEYS_CHECK_USR_REM_SHILLS_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_CHECK_USR_REM_SHILL = DB_PROC_GET_USR_SHILLS_ALL 
-    # then web scrape those post_urls to see if they are still working / viewable
+    # POST-DB: web scrape those post_urls to see if they are still working / viewable
 
 # '/admin_set_shiller_rate'
 kADMIN_SET_USR_SHILL_PAY_RATE = "set_user_shill_pay_rate"
