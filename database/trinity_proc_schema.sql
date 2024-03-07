@@ -780,19 +780,45 @@ END
 $$ DELIMITER ;
 
 -- # '/admin_log_removed_shill'
+-- python execution...
+-- LST_KEYS_SET_SHILL_REM = ['admin_id','tg_user_id','shill_id','removed']
+-- DB_PROC_SET_SHILL_REM = 'SET_USER_SHILL_REMOVED'
 DELIMITER $$
 DROP PROCEDURE IF EXISTS SET_USER_SHILL_REMOVED;
 CREATE PROCEDURE `SET_USER_SHILL_REMOVED`(
-    IN p_admin_id VARCHAR(40),
-    IN p_user_id VARCHAR(40),
+    IN p_tg_admin_id VARCHAR(40),
+    IN p_tg_user_id VARCHAR(40),
     IN p_shill_id VARCHAR(40),
-    IN p_shill_url VARCHAR(1024))
+	IN p_removed BOOLEAN)
 BEGIN
-    -- Procedure Body
-    -- You can add your SQL logic here
--- LST_KEYS_SET_SHILL_REM = ['admin_id','user_id','shill_id','shill_url']
--- DB_PROC_SET_SHILL_REM = 'SET_USER_SHILL_REMOVED'
---     # updated 'shills.is_removed' for 'shills.user_id + shills.shill_id|url' combo
+	-- validate admin
+	IF NOT valid_tg_user_admin(p_tg_admin_id) THEN
+		SELECT 'failed' as `status`, 
+				'invalid admin' as info, 
+				p_tg_admin_id as tg_admin_id;
+
+	-- vaidate user / shill combo (invokes: valid_tg_user(...))
+	ELSE IF NOT valid_shill_for_user(p_tg_user_id, p_shill_id) THEN
+		SELECT 'failed' as `status`, 
+				'user / shill combo not found' as info, 
+				p_tg_user_id as tg_user_id_inp,
+				p_shill_id as shill_id_inp;
+	ELSE
+		-- set shill id as removed
+		UPDATE shills
+			SET is_removed = p_removed
+			WHERE id = p_shill_id;
+
+		-- return
+		SELECT post_url, fk_user_id, is_removed,
+				'success' as `status`,
+				'removed shill id' as info,
+				p_tg_user_id as tg_user_id_inp,
+				p_shill_id as shill_id_inp,
+				p_removed as removed_inp
+			FROM shills
+			WHERE id = p_shill_id;
+	END IF;
 END 
 $$ DELIMITER ;
 

@@ -123,7 +123,7 @@ DB_PROC_UPDATE_USR_PAID_EARNS = 'UPDATE_USER_SHILL_PAID_EARNS'
 
 # '/admin_log_removed_shill'
 kADMIN_SET_SHILL_REM = "set_shill_removed"
-LST_KEYS_SET_SHILL_REM = ['admin_id','user_id','shill_id','shill_url']
+LST_KEYS_SET_SHILL_REM = ['admin_id','tg_user_id','shill_id','removed']
 LST_KEYS_SET_SHILL_REM_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_SET_SHILL_REM = 'SET_USER_SHILL_REMOVED'
     # updated 'shills.is_removed' for 'shills.user_id + shills.shill_id|url' combo
