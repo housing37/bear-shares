@@ -246,13 +246,14 @@ BEGIN
 		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
 
 		-- get sum of all pay_usd in shills table
-		--	where p_is_paid, approved, & not removed
+		--	where approved, not removed, not pending, p_is_paid
 		SELECT SUM(pay_usd)
 			FROM shills 
 			WHERE fk_user_id = @v_user_id
-				AND is_paid = p_is_paid
-				AND is_apporved = TRUE
+				AND is_approved = TRUE
 				AND is_removed = FALSE
+				AND pay_tx_pend = FALSE
+				AND is_paid = p_is_paid
 			INTO @v_tot_amnt;
 
 		-- return -37 is no entries for p_tg_user_id in shills table
@@ -262,6 +263,38 @@ BEGIN
 
 		-- return
 		RETURN @v_tot_amnt;
+	END IF;
+END 
+$$ DELIMITER ;
+
+$$ DELIMITER
+drop FUNCTION if exists set_usr_pay_usd_tx_pend; -- setup
+CREATE FUNCTION `set_usr_pay_usd_tx_pend`(
+		p_tg_user_id VARCHAR(40))
+		RETURNS BOOLEAN
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	-- return -1 if p_tg_user_id doesn't exist in 'users' table
+	IF NOT valid_tg_user(p_tg_user_id) THEN
+		RETURN FALSE; 
+	ELSE
+		-- get id for p_tg_user_id in users table
+		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+
+		-- set tx pending to TRUE for all shills approved shills and not tx pending yet
+		--	where approved, not removed, not paid
+		UPDATE shills
+			SET pay_tx_pend = TRUE
+			WHERE id 
+				IN (SELECT id
+						FROM shills 
+						WHERE fk_user_id = @v_user_id
+							AND is_approved = TRUE
+							AND is_removed = FALSE
+							AND is_paid = FALSE
+						INTO @v_tot_amnt);
+		RETURN TRUE;
 	END IF;
 END 
 $$ DELIMITER ;
@@ -451,7 +484,7 @@ $$ DELIMITER ;
 -- # '/submit_shill_link'
 -- LST_KEYS_SUBMIT_SHILL = ['user_id', 'post_url']
 -- DB_PROC_ADD_SHILL = 'ADD_USER_SHILL'
--- 	   # check number of pending shills (is_apporved=False), return rate-limit info
+-- 	   # check number of pending shills (is_approved=False), return rate-limit info
 --	   #	perhaps set a max USD per day that people can earn?
 DELIMITER $$
 DROP PROCEDURE IF EXISTS ADD_USER_SHILL_TW;
@@ -489,7 +522,7 @@ BEGIN
 		SELECT LAST_INSERT_ID() into @new_shill_id;
 		
 		-- return
-		SELECT s.id as s_id, s.dt_created as s_dt_created, s.post_url, s.shill_plat, s.shill_type, s.is_apporved,
+		SELECT s.id as s_id, s.dt_created as s_dt_created, s.post_url, s.shill_plat, s.shill_type, s.is_approved,
 				u.id as u_id, u.tw_conf_url as u_tw_conf_url, u.tg_user_id, u.tg_user_at, u.tg_user_handle,
 				'success' as `status`,
 				'added new shill' as info,
@@ -659,7 +692,7 @@ BEGIN
 				p_removed as is_removed_inp
 			FROM shills
 			WHERE fk_user_id = @v_user_id
-				AND is_apporved = p_approved,
+				AND is_approved = p_approved,
 				AND is_removed = p_removed
 			ORDER BY id desc;
 	END IF;
@@ -689,7 +722,7 @@ BEGIN
 				p_tg_user_id as tg_user_id_inp,
 				p_removed as is_removed_inp
 			FROM shills
-			WHERE is_apporved = FALSE, -- FALSE = 'pending'
+			WHERE is_approved = FALSE, -- FALSE = 'pending'
 				AND is_removed = p_removed
 			ORDER BY id desc;
 	END IF;
@@ -771,7 +804,7 @@ BEGIN
 				SET dt_updated = NOW(),
 					user_total = @v_tot,
 					user_owed = @v_owe,
-					is_apporved = TRUE
+					is_approved = TRUE
 				WHERE fk_user_id = @v_user_id;
 
 			-- return
@@ -870,8 +903,8 @@ $$ DELIMITER ;
 
 -- # '/admin_pay_shill_rewards'
 DELIMITER $$
-DROP PROCEDURE IF EXISTS UPDATE_USER_SHILL_PAID_EARNS;
-CREATE PROCEDURE `UPDATE_USER_SHILL_PAID_EARNS`(
+DROP PROCEDURE IF EXISTS SET_USER_PAY_TX_PENDING;
+CREATE PROCEDURE `SET_USER_PAY_TX_PENDING`(
     IN p_tg_admin_id VARCHAR(40),
 	IN p_tg_user_id VARCHAR(40),
 	IN p_pay_tx_hash VARCHAR(255))
@@ -879,13 +912,16 @@ BEGIN
     -- Procedure Body
     -- You can add your SQL logic here
 	-- LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_id']
-	-- DB_PROC_UPDATE_USR_PAID_EARNS = 'UPDATED_USER_SHILL_PAID_EARNS'
+	-- DB_PROC_SET_USR_PAY_PEND = 'SET_USER_PAY_TX_PENDING'
 	--     # check 'user_earns.withdraw_request=True' for 'user_id'
 	--	   # check/get 'shills.pay_usd != 0' for all user_id / shill_id combos
 	--	   #	where 'shills.is_paid=False' & 'shills.is_approved=True' & 'shills.is_removed=False'
 	--     # check/get 'user_earns.usd_owed' == total of all 'shills.pay_usd' (found above)
+	--	   # set pay_tx_pending to TRUE for all shills involved
+	-- PYTHON
 	--     # perform python/solidity 'transfer(user_earns.usd_owed)' call to 'wallet_address' for user_id (get pay_tx_hash)
 	--	   #	wallet_address can be retreived from 'GET_USER_EARNINGS(tg_user_id)'
+	-- DB_PROC_SET_USR_PAY_CONF = 'SET_USER_PAY_TX_CONFIRMED'
 	--     # update 'user_earns.usd_owed|paid' accordingly (+-), for user_id
 	--     # update 'shills.is_paid=True' & 'shills.pay_tx_hash' where all 'shills.is_approved=True' & 'shills.is_removed=False' for user_id
 	--	LEFT OFF HERE ... this algorithm ^ should work accordingly with request for 'SET_USER_WITHDRAW_REQUESTED' (TG cmd: /request_cashout)
@@ -910,9 +946,14 @@ BEGIN
 				p_tg_user_id as tg_user_id;
 
 	ELSE
+		-- calc total pay sum of all approved shills w/ txs non-pending
+		--	get total usd_owed for p_tg_user_id
 		SET @v_is_paid = FALSE;
+		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
 		SELECT get_usr_pay_usd_appr_sum(p_tg_user_id, @v_is_paid) INTO @v_tot_pay_usd;
 		SELECT usd_owed FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_tot_owed;
+
+		-- validate total pay sum from 'shills' == total usd_owed from 'user_earns'
 		IF @v_tot_pay_usd != @v_tot_owed THEN
 			SELECT 'failed' as `status`, 
 					'total pay_usd != total usd_owed' as info, 
@@ -920,14 +961,24 @@ BEGIN
 					@v_tot_owed as tot_pend_usd_owed,
 					p_tg_user_id as tg_user_id_inp;
 		ELSE
+			-- set 'pay_tx_pend=TRUE' for all approved shills that are not tx pending yet
+			SELECT set_usr_pay_usd_tx_pend(p_tg_user_id) INTO @v_success;
+			SELECT *, 
+					'success' as `status`,
+					'set user earns tx pending' as info,
+					@v_user_id as user_id,
+					@v_success as tx_pending,
+					@v_tot_pay_usd as tot_pay_usd,
+					@v_tot_owed as tot_owed,
+					p_tg_user_id as tg_user_id_inp
+				FROM user_earns
+				WHERE fk_user_id = @v_user_id;
 			-- LEFT OFF HERE ... return success
 			--	ie. ok to execute python/solidty 'transfer'
-			-- then update 'user_earns.usd_owed|paid' accordingly (+-), for user_id
-			-- then update 'shills.is_paid=True' & 'shills.pay_tx_hash' where all 'shills.is_approved=True' & 'shills.is_removed=False' for user_id
-			-- 	i think ^
-			-- may need additional stored proc
-			--	but need to consider sync between waiting for tx approval 
-		 	--	 and admin approving new shills for that user
+			-- then execute proc: SET_USER_PAY_TX_CONFIRMED
+			-- 	update 'user_earns.usd_owed|paid' accordingly (+-), for user_id
+			-- 	update 'shills.is_paid=True' & 'shills.pay_tx_hash' where all 'shills.is_approved=True' & 'shills.is_removed=False' for user_id
+
 		END IF;
 	END IF:
 END 

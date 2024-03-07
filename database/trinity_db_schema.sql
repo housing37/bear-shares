@@ -79,6 +79,7 @@ CREATE TABLE `shills` (
   `is_paid` BOOLEAN DEFAULT FALSE,
   `is_removed` BOOLEAN DEFAULT FALSE,
   `dt_shill_removed` timestamp NULL DEFAULT NULL,
+  `pay_tx_pend` BOOLEAN DEFAULT FALSE,
   `pay_tx_hash` VARCHAR(255) DEFAULT '0x0', -- set by admin_pay during withdrawel request payout
 
   UNIQUE KEY `ID` (`id`) USING BTREE
