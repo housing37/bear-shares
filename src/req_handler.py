@@ -30,6 +30,9 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 #=====================================================#
 #         TG cmd / request handler static keys        #
 #=====================================================#
+#-----------------------------------------------------#
+#   TRINITY
+#-----------------------------------------------------#
 # '/register_as_shiller'
 kSHILLER_REG = "add_new_user"
 LST_KEYS_REG_SHILLER = ['user_id', 'wallet_address', 'trinity_tw_url']
@@ -42,6 +45,7 @@ kTWITTER_CONF = "validate_twitter"
 LST_KEYS_TW_CONF = ['user_id', 'trinity_tw_url']
 LST_KEYS_TW_CONF_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_RENEW_TW_CONFRIM = 'UPDATE_TWITTER_CONF'
+    # validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
 
 # '/submit_shill_link'
 kSUBMIT_SHILL = "add_new_shill"
@@ -89,6 +93,7 @@ LST_KEYS_APPROVE_SHILL = ['admin_id','user_id', 'shill_id','shill_plat','shill_t
 LST_KEYS_APPROVE_SHILL_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_APPROVE_SHILL_STATUS = "UPDATE_USER_SHILL_APPR_EARNS" 
     # admin views / inspects shill_url on the web (determines: plat, type, pay, approve)
+    # python TG message to shiller confirming approval & earnings updated (w/ shill url, shill type, pay_usd)
 
 # '/admin_view_shill_status'
 kADMIN_VIEW_SHILL = "get_usr_shill"
@@ -125,6 +130,17 @@ kADMIN_SET_USR_SHILL_PAY_RATE = "set_user_shill_pay_rate"
 LST_KEYS_SET_USR_SHILL_PAY_RATE = ['admin_id','user_id','shill_plat','shill_type','pay_usd']
 LST_KEYS_SET_USR_SHILL_PAY_RATE_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_SET_USR_RATES = 'SET_USER_PAY_RATE'
+
+#-----------------------------------------------------#
+#   NEO
+#-----------------------------------------------------#
+# '/blacklist_user'
+kADD_BLACKLIST_SCAMMER = "add_user_to_blacklist_scammers"
+LST_KEYS_ADD_BLACKLIST_SCAMMER = ['admin_or_user_id','bl_user_id','bl_user_at','bl_user_handle','tg_chan_id']
+LST_KEYS_ADD_BLACKLIST_SCAMMER_RESP = env.LST_KEYS_REG_SHILLER_RESP
+DB_PROC_ADD_BLACKLIST_SCAMMER = 'ADD_REQUEST_USER_BLACKLIST'
+
+# LEFT OFF HERE ... need endpoint for neo to check if a user is blacklisted (instead of using array in neo_bot.py)
 
 #-----------------------------------------------------#
 DICT_CMD_EXE = {

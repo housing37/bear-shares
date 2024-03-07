@@ -116,6 +116,7 @@ CREATE TABLE `user_blacklist_scammers` (
   `tg_user_at` varchar(1024) default 'nil_at', -- ex: '@whatever'
   `tg_user_handle` varchar(1024) default 'nil_handle', -- ex: 'bob joe'
   `tg_chat_id_found` varchar(40) NOT NULL, -- ex: '-10493048'
+  `is_enabled` BOOLEAN DEFAULT FALSE,
 
   UNIQUE KEY `ID` (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;

@@ -345,6 +345,40 @@ BEGIN
 END 
 $$ DELIMITER ;
 
+
+$$ DELIMITER
+drop FUNCTION if exists add_blacklist_usr; -- setup
+CREATE FUNCTION `add_blacklist_usr`(
+		p_user_id INT(11),
+    	p_tg_bl_user_id VARCHAR(40),
+		p_tg_bl_user_at VARCHAR(40),
+		p_tg_bl_user_handle VARCHAR(40),
+		p_tg_chan_id VARCHAR(40),
+		p_enabled BOOLEAN)
+		RETURNS INT(11)
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	INSERT INTO user_blacklist_scammers (
+			fk_user_id_added,
+			tg_user_id,
+			tg_user_at,
+			tg_user_handle,
+			tg_chat_id_found,,
+			is_enabled
+		) VALUES (
+			p_user_id,
+			p_tg_bl_user_id,
+			p_tg_bl_user_at,
+			p_tg_bl_user_handle,
+			p_tg_chan_id,
+			p_enabled
+		);
+	SELECT LAST_INSERT_ID() into @new_bl_id;
+	RETURN @new_bl_id;
+END 
+$$ DELIMITER ;
+
 -- $$ DELIMITER
 -- drop FUNCTION if exists add_shill_plat; -- setup
 -- CREATE FUNCTION `add_shill_plat`(
@@ -779,6 +813,7 @@ $$ DELIMITER ;
 -- LST_KEYS_APPROVE_SHILL = ['admin_id','user_id', 'shill_id','shill_plat','shill_type','pay_usd','approved']
 -- DB_PROC_APPROVE_SHILL_STATUS = "UPDATE_USER_SHILL_APPR_EARNS" 
 --     # admin views / inspects shill_url on the web (determines: plat, type, pay, approve)
+--     # python TG message to shiller confirming approval & earnings updated (w/ shill url, shill type, pay_usd)
 DELIMITER $$
 DROP PROCEDURE IF EXISTS UPDATE_USER_SHILL_APPR_EARNS;
 CREATE PROCEDURE `UPDATE_USER_SHILL_APPR_EARNS`(
@@ -822,6 +857,10 @@ BEGIN
 					p_approved as approved_inp
 				FROM shills 
 				WHERE id = p_shill_id;
+
+		-- validate max shills per day for @v_user_id as NOT been met
+		ELSE IF usr_shill_limit_reached(p_tg_user_id) THEN
+
 		ELSE
 			-- update shill plat, type, and pay with admin data (prev. reviewed & selected)
 			-- 	NOTE: is_removed gauranteed 'FALSE' for p_shill_id, due to prev. check w/ @v_shill_removed
@@ -1155,7 +1194,8 @@ BEGIN
 
 	ELSE
 		-- add new entry to user_shill_rates table
-		SELECT add_user_shill_rate(p_tg_user_id, p_shill_plat, p_shill_type, p_pay_usd) INTO @v_new_rate_id;
+		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+		SELECT add_user_shill_rate(@v_user_id, p_shill_plat, p_shill_type, p_pay_usd) INTO @v_new_rate_id;
 
 		-- return
 		SELECT *,
@@ -1171,7 +1211,54 @@ BEGIN
 END 
 $$ DELIMITER ;
 
+-- # '/admin_set_shiller_rate'
+-- LST_KEYS_ADD_BLACKLIST_SCAMMER = ['admin_or_user_id','bl_user_id','bl_user_at','bl_user_handle','tg_chan_id']
+-- DB_PROC_ADD_BLACKLIST_SCAMMER = 'ADD_REQUEST_USER_BLACKLIST'
+DELIMITER $$
+DROP PROCEDURE IF EXISTS ADD_REQUEST_USER_BLACKLIST;
+CREATE PROCEDURE `ADD_REQUEST_USER_BLACKLIST`(
+    IN p_tg_admin_or_user_id VARCHAR(40),
+    IN p_tg_bl_user_id VARCHAR(40),
+	IN p_tg_bl_user_at VARCHAR(40),
+	IN p_tg_bl_user_handle VARCHAR(40),
+	IN p_tg_chan_id VARCHAR(40))
+BEGIN
+	DECLARE v_new_bl_id INT(11);
+	DECLARE v_enabled BOOLEAN;
+	-- validate user
+	IF NOT valid_tg_user(p_tg_admin_or_user_id) THEN
+		SELECT 'failed' as `status`, 
+				'request user not found' as info, 
+				p_tg_admin_or_user_id as tg_admin_or_user_id;
 
+	-- if admin: add blacklist with is_enabled=TRUE
+	ELSE IF valid_tg_user_admin(p_tg_admin_or_user_id) THEN
+		SELECT TRUE INTO v_enabled;
+		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+		SELECT add_blacklist_usr(@v_user_id, p_tg_bl_user_id, p_tg_bl_user_at, p_tg_bl_user_handle, p_tg_chan_id, v_enabled) INTO v_new_bl_id;
+
+	-- if reg user: add blacklist with is_enabled=FALSE
+	ELSE
+		SELECT FALSE INTO v_enabled;
+		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+		SELECT add_blacklist_usr(@v_user_id, p_tg_bl_user_id, p_tg_bl_user_at, p_tg_bl_user_handle, p_tg_chan_id, v_enabled) INTO v_new_bl_id;
+	END IF;
+
+	-- return
+	SELECT *,
+			'success' as `status`,
+			'blacklisted user' as info,
+			v_new_bl_id as new_bl_id,
+			p_tg_admin_or_user_id as tg_admin_or_user_id_inp,
+			p_tg_bl_user_id as tg_bl_user_id_inp,
+			p_tg_bl_user_at as tg_bl_user_at_inp,
+			p_tg_bl_user_handle as tg_bl_user_handle_inp,
+			p_tg_chan_id as tg_chan_id_inp,
+			p_pay_usd as pay_usd_inp_inp
+		FROM user_blacklist_scammers
+		WHERE id = @v_new_bl_id;
+END 
+$$ DELIMITER ;
 
 -- #================================================================# --
 --		LEGACY
