@@ -106,8 +106,8 @@ async def check_scammer(update: Update, context):
     inp = update.message.text
     lst_user_data = [uid, usr_at_name, usr_handle]
     print(f'check scammer: {lst_user_data}')
-    if uid in BLACKLIST_SCAM_UIDS:
-    # if f'@{usr_at_name}' in BLACKLIST_SCAM_UNAMES:
+    # if uid in BLACKLIST_SCAM_UIDS:
+    if f'@{usr_at_name}' in BLACKLIST_SCAM_UNAMES:
         print(f'FOUND scammer: {lst_user_data}')
         await update.message.reply_text(f"@{usr_at_name} is a known scammer, ignore him 🙄️️️️️️")
 
