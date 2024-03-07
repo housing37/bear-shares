@@ -497,8 +497,13 @@ END
 $$ DELIMITER ;
 
 -- # '/admin_show_user_shills' | # '/admin_scan_web_for_removed_shills'
+-- # '/admin_show_user_shills'
 -- LST_KEYS_USR_SHILLS = ['admin_id','user_id','approved','removed']
 -- DB_PROC_GET_USR_SHILLS_ALL = 'GET_USER_SHILLS_ALL'
+-- # '/admin_scan_web_for_removed_shills'
+-- LST_KEYS_CHECK_USR_REM_SHILLS = ['admin_id','user_id','approved','removed']
+-- DB_PROC_CHECK_USR_REM_SHILL = 'GET_USER_SHILLS_ALL'
+-- 		# then web scrape those post_urls to see if they are still working / viewable
 DELIMITER $$
 DROP PROCEDURE IF EXISTS GET_USER_SHILLS_ALL;
 CREATE PROCEDURE `GET_USER_SHILLS_ALL`(
@@ -822,22 +827,6 @@ BEGIN
 			FROM shills
 			WHERE id = p_shill_id;
 	END IF;
-END 
-$$ DELIMITER ;
-
--- # '/admin_scan_web_for_removed_shills'
-DELIMITER $$
-DROP PROCEDURE IF EXISTS CHECK_USR_REM_SHILL;
-CREATE PROCEDURE `CHECK_USR_REM_SHILL`(
-    IN p_admin_id VARCHAR(40),
-    IN p_user_id VARCHAR(40))
-BEGIN
-    -- Procedure Body
-    -- You can add your SQL logic here
--- LST_KEYS_CHECK_USR_REM_SHILLS = ['admin_id','user_id']
--- DB_PROC_CHECK_USR_REM_SHILL = DB_PROC_GET_USR_SHILLS_ALL 
---     # select post_url from 'shills' where 'shills.is_removed=False' for user_id
---     # then web scrape those post_urls to see if they are still working / viewable
 END 
 $$ DELIMITER ;
 

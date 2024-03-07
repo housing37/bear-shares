@@ -130,7 +130,7 @@ DB_PROC_SET_SHILL_REM = 'SET_USER_SHILL_REMOVED'
 
 # '/admin_scan_web_for_removed_shills' _ NOTE: requires twitter post web scrape
 kADMIN_CHECK_USR_REM_SHILLS = "check_usr_removed_shills"
-LST_KEYS_CHECK_USR_REM_SHILLS = ['admin_id','user_id']
+LST_KEYS_CHECK_USR_REM_SHILLS = ['admin_id','user_id','approved','removed']
 LST_KEYS_CHECK_USR_REM_SHILLS_RESP = env.LST_KEYS_REG_SHILLER_RESP
 DB_PROC_CHECK_USR_REM_SHILL = DB_PROC_GET_USR_SHILLS_ALL 
     # select post_url from 'shills' where 'shills.is_removed=False' for user_id
