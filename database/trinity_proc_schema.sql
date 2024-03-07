@@ -252,7 +252,7 @@ BEGIN
 			WHERE fk_user_id = @v_user_id
 				AND is_approved = TRUE
 				AND is_removed = FALSE
-				AND pay_tx_pend = FALSE
+				AND pay_tx_submit = FALSE
 				AND is_paid = p_is_paid
 			INTO @v_tot_amnt;
 
@@ -268,8 +268,8 @@ END
 $$ DELIMITER ;
 
 $$ DELIMITER
-drop FUNCTION if exists set_usr_pay_usd_tx_pend; -- setup
-CREATE FUNCTION `set_usr_pay_usd_tx_pend`(
+drop FUNCTION if exists set_usr_pay_usd_tx_submit; -- setup
+CREATE FUNCTION `set_usr_pay_usd_tx_submit`(
 		p_tg_user_id VARCHAR(40))
 		RETURNS BOOLEAN
     READS SQL DATA
@@ -282,10 +282,11 @@ BEGIN
 		-- get id for p_tg_user_id in users table
 		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
 
-		-- set tx pending to TRUE for all shills approved shills and not tx pending yet
-		--	where approved, not removed, not paid
+		-- set tx submit to TRUE for all approved shills and not tx sumbit yet
+		--	for user_id where approved, not removed, not paid
 		UPDATE shills
-			SET pay_tx_pend = TRUE
+			SET pay_tx_submit = TRUE,
+				dt_tx_submit = NOW()
 			WHERE id 
 				IN (SELECT id
 						FROM shills 
@@ -295,6 +296,51 @@ BEGIN
 							AND is_paid = FALSE
 						INTO @v_tot_amnt);
 		RETURN TRUE;
+	END IF;
+END 
+$$ DELIMITER ;
+
+$$ DELIMITER
+drop FUNCTION if exists set_usr_pay_usd_tx_status; -- setup
+CREATE FUNCTION `set_usr_pay_usd_tx_status`(
+		p_tg_user_id VARCHAR(40),
+		p_pay_tx_hash VARCHAR(255),
+		p_pay_tx_status VARCHAR(40), -- const: baseFee, pending, queued
+		p_pay_tok_addr VARCHAR(255),
+		p_pay_tok_symb VARCHAR(40),
+		p_pay_tok_amnt FLOAT)
+		RETURNS VARCHAR(40)
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	-- return -1 if p_tg_user_id doesn't exist in 'users' table
+	IF NOT valid_tg_user(p_tg_user_id) THEN
+		RETURN '-37'; 
+	ELSE
+		-- get id for p_tg_user_id in users table
+		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+
+		-- set various tx data & paid to TRUE for all approved shills and tx submitted
+		--	for user_id where approved, not removed, not paid
+		UPDATE shills
+			SET pay_tx_status = p_pay_tx_status,
+				dt_tx_status = NOW(),
+				pay_tx_hash = p_pay_tx_hash,
+				pay_tx_status = p_pay_tx_status,
+				pay_tok_addr = p_pay_tok_addr,
+				pay_tok_symb = p_pay_tok_symb,
+				pay_tok_amnt = p_pay_tok_amnt,
+				is_paid = TRUE
+			WHERE id 
+				IN (SELECT id
+						FROM shills 
+						WHERE fk_user_id = @v_user_id
+							AND pay_tx_submit = TRUE
+							AND is_approved = TRUE
+							AND is_removed = FALSE
+							AND is_paid = FALSE
+						INTO @v_tot_amnt);
+		RETURN p_pay_tx_status;
 	END IF;
 END 
 $$ DELIMITER ;
@@ -796,14 +842,14 @@ BEGIN
 			END IF;
 
 			-- calc & update user_earns for this user_id
-			SELECT user_total FROM user_earns WHERE fk_user_id = @v_user_id INTO @u_total;
-			SELECT user_owed FROM user_earns WHERE fk_user_id = @v_user_id INTO @u_owed;
+			SELECT usd_total FROM user_earns WHERE fk_user_id = @v_user_id INTO @u_total;
+			SELECT usd_owed FROM user_earns WHERE fk_user_id = @v_user_id INTO @u_owed;
 			SET @v_tot = @u_total + p_pay_usd;
 			SET @v_owe = @u_owed + p_pay_usd;
 			UPDATE user_earns
 				SET dt_updated = NOW(),
-					user_total = @v_tot,
-					user_owed = @v_owe,
+					usd_total = @v_tot,
+					usd_owed = @v_owe,
 					is_approved = TRUE
 				WHERE fk_user_id = @v_user_id;
 
@@ -903,12 +949,12 @@ $$ DELIMITER ;
 
 -- # '/admin_pay_shill_rewards'
 -- LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_id']
--- DB_PROC_SET_USR_PAY_PEND = 'SET_USER_PAY_TX_PENDING'
+-- DB_PROC_SET_USR_PAY_PEND = 'SET_USER_PAY_TX_SUBMIT'
 --     # perform python/solidity 'transfer(user_earns.usd_owed)' call to 'wallet_address' for user_id (get pay_tx_hash)
 --	   #	wallet_address can be retreived from 'GET_USER_EARNINGS(tg_user_id)'
 DELIMITER $$
-DROP PROCEDURE IF EXISTS SET_USER_PAY_TX_PENDING;
-CREATE PROCEDURE `SET_USER_PAY_TX_PENDING`(
+DROP PROCEDURE IF EXISTS SET_USER_PAY_TX_SUBMIT;
+CREATE PROCEDURE `SET_USER_PAY_TX_SUBMIT`(
     IN p_tg_admin_id VARCHAR(40),
 	IN p_tg_user_id VARCHAR(40))
 BEGIN
@@ -947,11 +993,11 @@ BEGIN
 					@v_tot_owed as tot_pend_usd_owed,
 					p_tg_user_id as tg_user_id_inp;
 		ELSE
-			-- set 'pay_tx_pend=TRUE' for all approved shills that are not tx pending yet
-			SELECT set_usr_pay_usd_tx_pend(p_tg_user_id) INTO @v_success;
+			-- set 'pay_tx_submit=TRUE' for all approved shills that are not tx pending yet
+			SELECT set_usr_pay_usd_tx_submit(p_tg_user_id) INTO @v_success;
 			SELECT *, 
 					'success' as `status`,
-					'set user earns tx pending' as info,
+					'user pay tx submitted' as info,
 					@v_user_id as user_id,
 					@v_success as tx_pending,
 					@v_tot_pay_usd as tot_pay_usd,
@@ -965,18 +1011,20 @@ END
 $$ DELIMITER ;
 
 -- # '/admin_pay_shill_rewards'
+-- LST_KEYS_PAY_SHILL_EARNS_CONF = ['admin_id','user_id','chain_usd_paid','tx_hash','tx_status','tok_addr','tok_symb','tok_amnt']
+-- DB_PROC_SET_USR_PAY_CONF = 'SET_USER_PAY_TX_STATUS'
 DELIMITER $$
-DROP PROCEDURE IF EXISTS SET_USER_PAY_TX_PENDING;
-CREATE PROCEDURE `SET_USER_PAY_TX_PENDING`(
+DROP PROCEDURE IF EXISTS SET_USER_PAY_TX_STATUS;
+CREATE PROCEDURE `SET_USER_PAY_TX_STATUS`(
     IN p_tg_admin_id VARCHAR(40),
 	IN p_tg_user_id VARCHAR(40),
-	IN p_usd_paid FLOAT,
-	IN p_pay_tx_hash VARCHAR(255))
+	IN p_chain_usd_paid FLOAT,
+	IN p_pay_tx_hash VARCHAR(255),
+	IN p_pay_tx_status VARCHAR(40), -- const: baseFee, pending, queued
+	IN p_pay_tok_addr VARCHAR(255),
+	IN p_pay_tok_symb VARCHAR(40),
+	IN p_pay_tok_amnt FLOAT)
 BEGIN
-	-- LST_KEYS_PAY_SHILL_EARNS_CONF = ['admin_id','user_id','tx_hash']
-	-- DB_PROC_SET_USR_PAY_CONF = 'SET_USER_PAY_TX_CONFIRMED'
-	--     # update 'user_earns.usd_owed|paid' accordingly (+-), for user_id
-	--     # update 'shills.is_paid=True' & 'shills.pay_tx_hash' where all 'shills.is_approved=True' & 'shills.is_removed=False' for user_id
 	-- validate admin
 	IF NOT valid_tg_user_admin(p_tg_admin_id) THEN
 		SELECT 'failed' as `status`, 
@@ -996,25 +1044,42 @@ BEGIN
 		SELECT usd_paid FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_curr_usd_paid;
 
 		-- validate that on-chain pay usd matches user curr usd owed
-		IF p_usd_paid != @v_curr_usd_owed THEN
+		IF p_chain_usd_paid != @v_curr_usd_owed THEN
 			SELECT 'failed' as `status`, 
 					'on-chain usd_paid != user usd_owed' as info,
 					@v_user_id as user_id,
 					@v_curr_usd_owed as curr_usd_owed,
 					@v_curr_usd_paid as curr_usd_paid,
 					p_tg_user_id as tg_user_id_inp,
-					p_usd_paid as usd_paid_inp,
+					p_chain_usd_paid as chain_usd_paid_inp,
 					p_pay_tx_hash as pay_tx_hash_inp;
 		ELSE
-			-- update user_earns entry (change usd_owed|paid accordingly)
+			-- update user_earns entry (change usd_owed|paid accordingly; reset withdraw_requested)
 			SET @v_new_usd_paid = @v_curr_usd_paid + @v_curr_usd_owed
 			UPDATE user_earns
 				SET usd_owed = 0.0,
-					usd_paid = @v_new_usd_paid
+					usd_paid = @v_new_usd_paid,
+					withdraw_requested = FALSE
 				WHERE fk_user_id = @v_user_id;
 			
-			-- LEFT OFF HERE ... update is_paid & pay_tx_hash for all shills with pending tx for @v_user_id
-			--     # update 'shills.is_paid=True' & 'shills.pay_tx_hash' where all 'shills.is_approved=True' & 'shills.is_removed=False' for user_id
+			-- update tx data (w/ is_paid) for all shills that were submitted by p_tg_user_id
+			SELECT set_usr_pay_usd_tx_status(p_tg_user_id, p_pay_tx_hash, p_pay_tx_status, p_pay_tok_addr, p_pay_tok_symb, p_pay_tok_amnt) INTO @v_status;
+
+			-- return
+			SELECT *, 
+					'success' as `status`,
+					'user pay tx status updated' as info,
+					@v_user_id as user_id,
+					@v_status as tx_status_set,
+					p_chain_usd_paid as chain_usd_paid_inp,
+					p_pay_tx_hash as pay_tx_hash_inp,
+					p_pay_tx_status as pay_tx_status_inp,
+					p_pay_tok_addr as pay_tok_addr_inp,
+					p_pay_tok_symb as pay_tok_symb_inp,
+					p_pay_tok_amnt as pay_tok_amnt_inp,
+					p_tg_user_id as tg_user_id_inp
+				FROM user_earns
+				WHERE fk_user_id = @v_user_id;
 		END IF; 
 	END IF;
 END 

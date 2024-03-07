@@ -53,9 +53,9 @@ CREATE TABLE `user_earns` (
   `dt_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `dt_deleted` timestamp NULL DEFAULT NULL,
   `fk_user_id` int(11) NOT NULL,
-  `user_total` float NOT NULL DEFAULT 0.0,
-  `user_owed` float NOT NULL DEFAULT 0.0,
-  `user_paid` float NOT NULL DEFAULT 0.0,
+  `usd_total` float NOT NULL DEFAULT 0.0,
+  `usd_owed` float NOT NULL DEFAULT 0.0,
+  `usd_paid` float NOT NULL DEFAULT 0.0,
   `withdraw_requested` BOOLEAN DEFAULT FALSE,
 
   UNIQUE KEY `ID` (`id`) USING BTREE
@@ -79,8 +79,14 @@ CREATE TABLE `shills` (
   `is_paid` BOOLEAN DEFAULT FALSE,
   `is_removed` BOOLEAN DEFAULT FALSE,
   `dt_shill_removed` timestamp NULL DEFAULT NULL,
-  `pay_tx_pend` BOOLEAN DEFAULT FALSE,
-  `pay_tx_hash` VARCHAR(255) DEFAULT '0x0', -- set by admin_pay during withdrawel request payout
+  `dt_tx_submit` timestamp NULL DEFAULT NULL,
+  `dt_tx_status` timestamp NULL DEFAULT NULL,
+  `pay_tx_submit` BOOLEAN DEFAULT FALSE,
+  `pay_tx_status` VARCHAR(40) DEFAULT 'nil', -- const: baseFee, pending, queued
+  `pay_tx_hash` VARCHAR(255) DEFAULT '0x0', 
+  `pay_tok_addr` VARCHAR(255) DEFAULT '0x0',
+  `pay_tok_symb` VARCHAR(40) DEFAULT 'nil_tok_symb',
+  `pay_tok_amnt` FLOAT DEFAULT -1.0,
 
   UNIQUE KEY `ID` (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
