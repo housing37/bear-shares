@@ -140,7 +140,7 @@ $$ DELIMITER ;
 DELIMITER $$
 drop FUNCTION if exists add_default_user_earns; -- setup
 CREATE FUNCTION `add_default_user_earns`(
-		p_user_id VARCHAR(1024)) 
+		p_user_id INT(11)) 
 		RETURNS INT(11)
     READS SQL DATA
     DETERMINISTIC
@@ -475,30 +475,30 @@ $$ DELIMITER ;
 DELIMITER $$
 DROP PROCEDURE IF EXISTS ADD_NEW_TG_USER;
 CREATE PROCEDURE `ADD_NEW_TG_USER`(
-    IN p_tg_user_id VARCHAR(40), -- -1000342
-	IN p_tg_user_at VARCHAR(1024), -- @whatever
-	IN p_tg_user_handle VARCHAR(1024), -- my handle
+    IN p_tg_user_id VARCHAR(40), -- '581475171'
+	IN p_tg_user_at VARCHAR(1024), -- '@whatever'
+	IN p_tg_user_handle VARCHAR(1024), -- 'my handle'
     IN p_wallet_address VARCHAR(255),
     IN p_tw_conf_url VARCHAR(1024))
 BEGIN
 	-- vaidate user does NOT exists (only)
 	IF valid_tg_user(p_tg_user_id) THEN
-		SELECT id, tg_user_id, tg_user_at, tg_user_handle, is_admin
+		SELECT id, tg_user_id, tg_user_at, tg_user_handle, is_admin,
 				'failed' as `status`, 
 				'user already exists' as info, 
-				p_tg_user_id as tg_user_id_inp,
+				p_tg_user_id as tg_user_id_inp
 			FROM users 
-			where tg_user_id = p_tg_user_id;
+			WHERE tg_user_id = p_tg_user_id;
 
 	-- vaidate p_tw_conf_url has not been used yet
-	ELSE IF tw_conf_exists(p_tw_conf_url) THEN
+	ELSEIF tw_conf_exists(p_tw_conf_url) THEN
 		SELECT id, tg_user_id, tg_user_at, tg_user_handle, is_admin, tw_conf_url, dt_last_tw_conf,
 				'failed' as `status`, 
 				'tw conf url already exists' as info, 
 				p_tg_user_id as tg_user_id_inp,
 				p_tw_conf_url as tw_conf_url_inp
 			FROM users 
-			where tg_user_id = p_tg_user_id;
+			WHERE tg_user_id = p_tg_user_id;
 	ELSE
 		-- add to users table
 		INSERT INTO users (
@@ -521,7 +521,7 @@ BEGIN
 		SELECT LAST_INSERT_ID() into @new_usr_id;
 
 		-- set default earnings for new user
-		SELECT add_default_user_earns(@new_usr_id);
+		SELECT add_default_user_earns(@new_usr_id) INTO @new_earns_id;
 
 		-- set default rates for new user
 		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'htag', 0.005); -- tw, hashtag, .5c
@@ -538,13 +538,13 @@ BEGIN
 		-- SELECT add_user_shill_rate(@new_usr_id, 0, 5, 1.00); -- tw, long_vid, 100c
 
 		-- return
-		SELECT u.dt_updated, u.tg_user_id, tg_user_at, tg_user_handle, u.is_admin,
-				r.platform, r.type, r.pay_usd,
-					'success' as `status`,
-					'added new user' as info,
-					@new_usr_id as new_users_id,
-					p_tg_user_id as tg_user_id_inp
-			FROM users u
+		SELECT u.dt_updated, u.tg_user_id, u.tg_user_at, u.tg_user_handle, u.is_admin,
+				r.platform, r.type_descr, r.pay_usd,
+				'success' as `status`,
+				'added new user' as info,
+				@new_usr_id as new_users_id,
+				p_tg_user_id as tg_user_id_inp
+			FROM users u			
 			INNER JOIN user_shill_rates r
 				ON u.id = r.fk_user_id
 			WHERE u.id = @new_usr_id;
@@ -568,7 +568,7 @@ BEGIN
 				p_tg_user_id as tg_user_id_inp,
 				p_tw_conf_url as tw_conf_url_inp;
 	ELSE
-		UPDATE TABLE users
+		UPDATE users
 			SET dt_updated = NOW(),
 				dt_last_tw_conf = NOW(),
 				tw_conf_url = p_tw_conf_url
@@ -600,7 +600,7 @@ BEGIN
 				p_tg_user_id as tg_user_id_inp;
 
 	-- validate 'post_url' is not in 'shills' table yet
-	ELSE IF NOT valid_new_shill(p_post_url) THEN
+	ELSEIF NOT valid_new_shill(p_post_url) THEN
 		SELECT 'failed' as `status`, 
 				'shill already exists' as info, 
 				p_tg_user_id as tg_user_id_inp,
@@ -608,8 +608,7 @@ BEGIN
 	ELSE
 		-- insert into 'shills' (...) values (...) for user_id
 		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
-		INSERT INTO shills
-			SET (
+		INSERT INTO shills (
 				fk_user_id,
 				post_url,
 				shill_plat
@@ -641,7 +640,7 @@ $$ DELIMITER ;
 DELIMITER $$
 DROP PROCEDURE IF EXISTS GET_USER_PAY_RATES;
 CREATE PROCEDURE `GET_USER_PAY_RATES`(
-    IN p_tg_user_id VARCHAR(40)
+    IN p_tg_user_id VARCHAR(40),
 	IN p_platform VARCHAR(40)) -- const: unknown, twitter, tiktok, reddit
 BEGIN
 	-- vaidate user exists
@@ -649,7 +648,7 @@ BEGIN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
 				p_tg_user_id as tg_user_id_inp,
-				p_platform as platform_inp
+				p_platform as platform_inp;
 	ELSE
 		-- get latest 'p_platform' rates for tg_user_id (note: 'ORDER BY id DESC LIMIT 1')
 		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
@@ -659,17 +658,17 @@ BEGIN
 		SELECT get_usr_pay_rate(@v_user_id, p_platform, 'img_meme') INTO @v_pay_usd_img;
 		SELECT get_usr_pay_rate(@v_user_id, p_platform, 'short_vid') INTO @v_pay_usd_svid;
 		SELECT get_usr_pay_rate(@v_user_id, p_platform, 'long_vid') INTO @v_pay_usd_lvid;
-		SELECT @v_pay_usd_htag as pay_usd_hashtag,
+		SELECT 'success' as `status`,
+				'get user rates' as info,
+				@v_user_id as user_id,
+				@v_pay_usd_htag as pay_usd_hashtag,
 				@v_pay_usd_stxt as pay_usd_short_text,
 				@v_pay_usd_ltxt as pay_usd_long_text,
 				@v_pay_usd_img as pay_usd_img_meme,
 				@v_pay_usd_svid as pay_usd_short_vid,
 				@v_pay_usd_lvid as pay_usd_long_vid,
-				'success' as `status`,
-				'get user rates' as info,
-				@v_user_id as user_id,
 				p_tg_user_id as tg_user_id_inp,
-				p_platform as platform_inp
+				p_platform as platform_inp;
 	END IF;
 END 
 $$ DELIMITER ;
@@ -706,8 +705,8 @@ $$ DELIMITER ;
 -- # '/request_cashout'
 -- LST_KEYS_REQUEST_CASHOUT = ['user_id']
 -- DB_PROC_REQUEST_CASHOUT = 'SET_USER_WITHDRAW_REQUESTED'
---	   # python TG notify admin_pay to process
---	   # python TG notify p_tg_user_id that request has been submit (w/ user_earns.usd_owed)
+-- # python TG notify admin_pay to process
+-- # python TG notify p_tg_user_id that request has been submit (w/ user_earns.usd_owed)
 DELIMITER $$
 DROP PROCEDURE IF EXISTS SET_USER_WITHDRAW_REQUESTED;
 CREATE PROCEDURE `SET_USER_WITHDRAW_REQUESTED`(
@@ -760,7 +759,7 @@ $$ DELIMITER ;
 -- # '/admin_scan_web_for_removed_shills'
 -- LST_KEYS_CHECK_USR_REM_SHILLS = ['admin_id','user_id','approved','removed']
 -- DB_PROC_CHECK_USR_REM_SHILL = 'GET_USER_SHILLS_ALL'
--- 		# then web scrape those post_urls to see if they are still working / viewable
+-- # then web scrape those post_urls to see if they are still working / viewable
 DELIMITER $$
 DROP PROCEDURE IF EXISTS GET_USER_SHILLS_ALL;
 CREATE PROCEDURE `GET_USER_SHILLS_ALL`(
@@ -776,7 +775,7 @@ BEGIN
 				p_tg_admin_id as tg_admin_id;
 
 	-- vaidate user exists
-	ELSE IF NOT valid_tg_user(p_tg_user_id) THEN
+	ELSEIF NOT valid_tg_user(p_tg_user_id) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
 				p_tg_user_id as tg_user_id_inp;
@@ -792,7 +791,7 @@ BEGIN
 				p_removed as is_removed_inp
 			FROM shills
 			WHERE fk_user_id = @v_user_id
-				AND is_approved = p_approved,
+				AND is_approved = p_approved
 				AND is_removed = p_removed
 			ORDER BY id desc;
 	END IF;
@@ -805,7 +804,7 @@ $$ DELIMITER ;
 DELIMITER $$
 DROP PROCEDURE IF EXISTS GET_PEND_SHILLS_ALL;
 CREATE PROCEDURE `GET_PEND_SHILLS_ALL`(
-    IN p_tg_admin_id VARCHAR(40)
+    IN p_tg_admin_id VARCHAR(40),
 	IN p_removed BOOLEAN)
 BEGIN
 	-- validate admin
@@ -822,7 +821,7 @@ BEGIN
 				p_tg_user_id as tg_user_id_inp,
 				p_removed as is_removed_inp
 			FROM shills
-			WHERE is_approved = FALSE, -- FALSE = 'pending'
+			WHERE is_approved = FALSE -- FALSE = 'pending'
 				AND is_removed = p_removed
 			ORDER BY id desc;
 	END IF;
@@ -832,8 +831,8 @@ $$ DELIMITER ;
 -- # '/admin_approve_pend_shill'
 -- LST_KEYS_APPROVE_SHILL = ['admin_id','user_id', 'shill_id','shill_plat','shill_type','pay_usd','approved']
 -- DB_PROC_APPROVE_SHILL_STATUS = "UPDATE_USER_SHILL_APPR_EARNS" 
---     # admin views / inspects shill_url on the web (determines: plat, type, pay, approve)
---     # python TG message to shiller confirming approval & earnings updated (w/ shill url, shill type, pay_usd)
+-- # admin views / inspects shill_url on the web (determines: plat, type, pay, approve)
+-- # python TG message to shiller confirming approval & earnings updated (w/ shill url, shill type, pay_usd)
 DELIMITER $$
 DROP PROCEDURE IF EXISTS UPDATE_USER_SHILL_APPR_EARNS;
 CREATE PROCEDURE `UPDATE_USER_SHILL_APPR_EARNS`(
@@ -852,7 +851,7 @@ BEGIN
 				p_tg_admin_id as tg_admin_id;
 
 	-- vaidate user exists
-	ELSE IF NOT valid_tg_user(p_tg_user_id) THEN
+	ELSEIF NOT valid_tg_user(p_tg_user_id) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
 				p_tg_user_id as tg_user_id_inp;
@@ -874,7 +873,7 @@ BEGIN
 					p_approved as approved_inp;
 
 		-- validate shill post_url is still active  (is_removed not set to True)
-		ELSE IF @v_shill_removed = TRUE THEN
+		ELSEIF @v_shill_removed = TRUE THEN
 			SELECT post_url,
 					'failed' as `status`, 
 					'dead shill post url' as info, 
@@ -886,7 +885,7 @@ BEGIN
 
 		-- validate max shills per day for @v_user_id as NOT been met
 		-- 	note: includes is_removed=TRUE|FALSE (limit earns to those removing shills)
-		ELSE IF p_approved = TRUE AND usr_shill_limit_reached(p_tg_user_id) THEN
+		ELSEIF p_approved = TRUE AND usr_shill_limit_reached(p_tg_user_id) THEN
 			SELECT 'failed' as `status`, 
 					'daily shill approve limit reached' as info, 
 					p_tg_user_id as tg_user_id_inp,
@@ -921,7 +920,7 @@ BEGIN
 			UPDATE user_earns
 				SET dt_updated = NOW(),
 					usd_total = @v_tot,
-					usd_owed = @v_owe,
+					usd_owed = @v_owe
 				WHERE fk_user_id = @v_user_id;
 
 			-- return
@@ -937,7 +936,7 @@ BEGIN
 					p_pay_usd as pay_usd_inp,
 					p_approved as approved_inp
 				FROM user_earns
-				WHERE fk_user_id = @v_user_id;
+				WHERE fk_user_id = @v_user_id
 				ORDER BY id desc;
 		END IF;
 	END IF;
@@ -962,7 +961,7 @@ BEGIN
 				p_tg_admin_id as tg_admin_id;
 
 	-- vaidate user exists
-	ELSE IF NOT valid_tg_user(p_tg_user_id) THEN
+	ELSEIF NOT valid_tg_user(p_tg_user_id) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
 				p_tg_user_id as tg_user_id_inp;
@@ -989,7 +988,7 @@ BEGIN
 						p_shill_id as shill_id_inp,
 						p_shill_url as post_url_inp
 					FROM shills
-					WHERE post_url = p_shill_url,
+					WHERE post_url = p_shill_url
 					ORDER BY id desc;
 			END IF;
 
@@ -1010,7 +1009,7 @@ BEGIN
 						p_shill_id as shill_id_inp,
 						p_shill_url as post_url_inp
 					FROM shills
-					WHERE id = p_shill_id,
+					WHERE id = p_shill_id
 					ORDER BY id desc;
 			END IF;
 		END IF;
@@ -1021,9 +1020,9 @@ $$ DELIMITER ;
 -- # '/admin_pay_shill_rewards'
 -- LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_id']
 -- DB_PROC_SET_USR_PAY_SUBMIT = 'SET_USER_PAY_TX_SUBMIT' # -> get_usr_pay_usd_appr_sum, set_usr_pay_usd_tx_submit
--- 		# perform python/solidity 'transfer(user_earns.usd_owed)' call to 'wallet_address' for user_id
--- 		#	wallet_address can be retreived from 'GET_USER_EARNINGS(tg_user_id)'
--- 		#   receive tx data for DB_PROC_SET_USR_PAY_CONF
+-- # perform python/solidity 'transfer(user_earns.usd_owed)' call to 'wallet_address' for user_id
+-- #	wallet_address can be retreived from 'GET_USER_EARNINGS(tg_user_id)'
+-- #   receive tx data for DB_PROC_SET_USR_PAY_CONF
 DELIMITER $$
 DROP PROCEDURE IF EXISTS SET_USER_PAY_TX_SUBMIT;
 CREATE PROCEDURE `SET_USER_PAY_TX_SUBMIT`(
@@ -1037,14 +1036,14 @@ BEGIN
 				p_tg_admin_id as tg_admin_id;
 
 	-- vaidate user exists
-	ELSE IF NOT valid_tg_user(p_tg_user_id) THEN
+	ELSEIF NOT valid_tg_user(p_tg_user_id) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
 				p_tg_user_id as tg_user_id_inp;
 
 	-- check withdraw indeed requested by 'p_tg_user_id'
 	-- 	note: executes 'add_default_user_earns' (if needed)
-	ELSE IF NOT usr_withdraw_requested(p_tg_user_id) THEN -- checks 'valid_tg_user'
+	ELSEIF NOT usr_withdraw_requested(p_tg_user_id) THEN -- checks 'valid_tg_user'
 		SELECT 'failed' as `status`, 
 				'withdraw not requested by user' as info, 
 				p_tg_user_id as tg_user_id;
@@ -1078,7 +1077,7 @@ BEGIN
 				FROM user_earns
 				WHERE fk_user_id = @v_user_id;
 		END IF;
-	END IF:
+	END IF;
 END 
 $$ DELIMITER ;
 
@@ -1104,7 +1103,7 @@ BEGIN
 				p_tg_admin_id as tg_admin_id;
 
 	-- vaidate user exists
-	ELSE IF NOT valid_tg_user(p_tg_user_id) THEN
+	ELSEIF NOT valid_tg_user(p_tg_user_id) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
 				p_tg_user_id as tg_user_id_inp;
@@ -1127,7 +1126,7 @@ BEGIN
 					p_pay_tx_hash as pay_tx_hash_inp;
 		ELSE
 			-- update user_earns entry (change usd_owed|paid accordingly; reset withdraw_requested)
-			SET @v_new_usd_paid = @v_curr_usd_paid + @v_curr_usd_owed
+			SET @v_new_usd_paid = @v_curr_usd_paid + @v_curr_usd_owed;
 			UPDATE user_earns
 				SET usd_owed = 0.0,
 					usd_paid = @v_new_usd_paid,
@@ -1152,7 +1151,7 @@ BEGIN
 					p_tg_user_id as tg_user_id_inp
 				FROM user_earns
 				WHERE fk_user_id = @v_user_id;
-		END IF; 
+		END IF; 	
 	END IF;
 END 
 $$ DELIMITER ;
@@ -1176,7 +1175,7 @@ BEGIN
 				p_tg_admin_id as tg_admin_id;
 
 	-- vaidate user / shill combo (invokes: valid_tg_user(...))
-	ELSE IF NOT valid_shill_for_user(p_tg_user_id, p_shill_id) THEN
+	ELSEIF NOT valid_shill_for_user(p_tg_user_id, p_shill_id) THEN
 		SELECT 'failed' as `status`, 
 				'user / shill combo not found' as info, 
 				p_tg_user_id as tg_user_id_inp,
@@ -1219,7 +1218,7 @@ BEGIN
 				p_tg_admin_id as tg_admin_id;
 
 	-- vaidate user exists
-	ELSE IF NOT valid_tg_user(p_tg_user_id) THEN
+	ELSEIF NOT valid_tg_user(p_tg_user_id) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
 				p_tg_user_id as tg_user_id_inp;
@@ -1264,7 +1263,7 @@ BEGIN
 				p_tg_admin_or_user_id as tg_admin_or_user_id;
 
 	-- if admin: add blacklist with is_enabled=TRUE
-	ELSE IF valid_tg_user_admin(p_tg_admin_or_user_id) THEN
+	ELSEIF valid_tg_user_admin(p_tg_admin_or_user_id) THEN
 		SELECT TRUE INTO v_enabled;
 		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
 		SELECT add_blacklist_usr(@v_user_id, p_tg_bl_user_id, p_tg_bl_user_at, p_tg_bl_user_handle, p_tg_chan_id, v_enabled) INTO v_new_bl_id;
