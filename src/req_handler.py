@@ -35,40 +35,40 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 #-----------------------------------------------------#
 # '/register_as_shiller'
 kSHILLER_REG = "add_new_user"
-LST_KEYS_REG_SHILLER = ['user_id', 'wallet_address', 'trinity_tw_url']
-LST_KEYS_REG_SHILLER_RESP = env.LST_KEYS_REG_SHILLER_RESP
+LST_KEYS_REG_USER = ['user_id', 'wallet_address', 'trinity_tw_url']
+LST_KEYS_REG_USER_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_ADD_NEW_USER = 'ADD_NEW_TG_USER'
     # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
 
 # '/confirm_twitter'
 kTWITTER_CONF = "validate_twitter"
 LST_KEYS_TW_CONF = ['user_id', 'trinity_tw_url']
-LST_KEYS_TW_CONF_RESP = env.LST_KEYS_REG_SHILLER_RESP
+LST_KEYS_TW_CONF_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_RENEW_TW_CONFRIM = 'UPDATE_TWITTER_CONF'
     # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
 
 # '/submit_shill_link'
 kSUBMIT_SHILL = "add_new_shill"
 LST_KEYS_SUBMIT_SHILL = ['user_id', 'post_url']
-LST_KEYS_SUBMIT_SHILL_RESP = env.LST_KEYS_REG_SHILLER_RESP
+LST_KEYS_SUBMIT_SHILL_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_ADD_SHILL = 'ADD_USER_SHILL_TW'
 
 # '/show_my_rates'
 kSHOW_RATES = "get_user_rates"
 LST_KEYS_SHOW_RATES = ['user_id', 'platform'] # const: unknown, twitter, tiktok, reddit
-LST_KEYS_SHOW_RATES_RESP = env.LST_KEYS_REG_SHILLER_RESP
+LST_KEYS_SHOW_RATES_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_GET_USR_RATES = 'GET_USER_PAY_RATES'
 
 # '/show_my_earnings'
 kSHOW_EARNINGS = "get_user_earns"
 LST_KEYS_SHOW_EARNINGS = ['user_id']
-LST_KEYS_SHOW_EARNINGS_RESP = env.LST_KEYS_REG_SHILLER_RESP
+LST_KEYS_SHOW_EARNINGS_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_GET_USR_EARNS = 'GET_USER_EARNINGS'
 
 # '/request_cashout'
 kREQUEST_CASHOUT = "request_user_earns_cashout"
 LST_KEYS_REQUEST_CASHOUT = ['user_id']
-LST_KEYS_REQUEST_CASHOUT_RESP = env.LST_KEYS_REG_SHILLER_RESP
+LST_KEYS_REQUEST_CASHOUT_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_REQUEST_CASHOUT = 'SET_USER_WITHDRAW_REQUESTED'
     # POST-DB: python TG notify admin_pay to process
 	# POST-DB: python TG notify p_tg_user_id that request has been submit (w/ user_earns.usd_owed)
@@ -76,19 +76,19 @@ DB_PROC_REQUEST_CASHOUT = 'SET_USER_WITHDRAW_REQUESTED'
 # '/admin_show_user_shills'
 kADMIN_SHOW_USR_SHILLS = "get_usr_shills"
 LST_KEYS_USR_SHILLS = ['admin_id','user_id','approved','removed']
-LST_KEYS_USR_SHILLS_RESP = env.LST_KEYS_REG_SHILLER_RESP
+LST_KEYS_USR_SHILLS_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_GET_USR_SHILLS_ALL = 'GET_USER_SHILLS_ALL'
 
 # '/admin_list_all_pend_shills'
 kADMIN_LIST_ALL_PEND_SHILLS = "get_all_pend_shills"
 LST_KEYS_ALL_PEND_SHILLS = ['admin_id','removed']
-LST_KEYS_ALL_PEND_SHILLS_RESP = env.LST_KEYS_REG_SHILLER_RESP
+LST_KEYS_ALL_PEND_SHILLS_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_GET_PEND_SHILLS = 'GET_PEND_SHILLS_ALL' # get where 'is_approved' = False
 
 # '/admin_approve_pend_shill'
 kADMIN_APPROVE_SHILL = "approve_pend_shill"
 LST_KEYS_APPROVE_SHILL = ['admin_id','user_id', 'shill_id','shill_plat','shill_type','pay_usd','approved']
-LST_KEYS_APPROVE_SHILL_RESP = env.LST_KEYS_REG_SHILLER_RESP
+LST_KEYS_APPROVE_SHILL_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_APPROVE_SHILL_STATUS = "UPDATE_USER_SHILL_APPR_EARNS" 
     # PRE-DB: admin views / inspects shill_url on the web (determines: plat, type, pay, approve)
     # POST-DB: python TG message to shiller confirming approval & earnings updated (w/ shill url, shill type, pay_usd)
@@ -96,13 +96,13 @@ DB_PROC_APPROVE_SHILL_STATUS = "UPDATE_USER_SHILL_APPR_EARNS"
 # '/admin_view_shill_status'
 kADMIN_VIEW_SHILL = "get_usr_shill"
 LST_KEYS_VIEW_SHILL = ['admin_id','user_id','shill_id','shill_url']
-LST_KEYS_VIEW_SHILL_RESP = env.LST_KEYS_REG_SHILLER_RESP
+LST_KEYS_VIEW_SHILL_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_GET_USR_SHILL = 'GET_USER_SHILL'
 
 # '/admin_pay_shill_rewards' _ NOTE: requires solidty 'transfer' call _ ** HOUSE ONLY **
 kADMIN_PAY_SHILL_EARNS = "pay_usr_owed_shill_earns"
 LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_id']
-LST_KEYS_PAY_SHILL_EARNS_RESP = env.LST_KEYS_REG_SHILLER_RESP
+LST_KEYS_PAY_SHILL_EARNS_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_SET_USR_PAY_SUBMIT = 'SET_USER_PAY_TX_SUBMIT'
     # POST-DB: perform python/solidity 'transfer(user_earns.usd_owed, wallet_address)' to get tx data for DB_PROC_SET_USR_PAY_CONF
     #	        get 'wallet_address' from 'GET_USER_EARNINGS(tg_user_id)'
@@ -113,20 +113,20 @@ DB_PROC_SET_USR_PAY_CONF = 'SET_USER_PAY_TX_STATUS'
 # '/admin_log_removed_shill'
 kADMIN_SET_SHILL_REM = "set_shill_removed"
 LST_KEYS_SET_SHILL_REM = ['admin_id','tg_user_id','shill_id','removed']
-LST_KEYS_SET_SHILL_REM_RESP = env.LST_KEYS_REG_SHILLER_RESP
+LST_KEYS_SET_SHILL_REM_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_SET_SHILL_REM = 'SET_USER_SHILL_REMOVED'
 
-# '/admin_scan_web_for_removed_shills' _ NOTE: requires twitter post web scrape
+# '/admin_scan_web_for_dead_shills' _ NOTE: requires twitter post web scrape
 kADMIN_CHECK_USR_REM_SHILLS = "check_usr_removed_shills"
 LST_KEYS_CHECK_USR_REM_SHILLS = ['admin_id','user_id','approved','removed']
-LST_KEYS_CHECK_USR_REM_SHILLS_RESP = env.LST_KEYS_REG_SHILLER_RESP
+LST_KEYS_CHECK_USR_REM_SHILLS_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_CHECK_USR_REM_SHILL = DB_PROC_GET_USR_SHILLS_ALL 
     # POST-DB: web scrape those post_urls to see if they are still working / viewable
 
 # '/admin_set_shiller_rate'
 kADMIN_SET_USR_SHILL_PAY_RATE = "set_user_shill_pay_rate"
 LST_KEYS_SET_USR_SHILL_PAY_RATE = ['admin_id','user_id','shill_plat','shill_type','pay_usd']
-LST_KEYS_SET_USR_SHILL_PAY_RATE_RESP = env.LST_KEYS_REG_SHILLER_RESP
+LST_KEYS_SET_USR_SHILL_PAY_RATE_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_SET_USR_RATES = 'SET_USER_PAY_RATE'
 
 #-----------------------------------------------------#
@@ -135,14 +135,14 @@ DB_PROC_SET_USR_RATES = 'SET_USER_PAY_RATE'
 # '/blacklist_user'
 kADD_BLACKLIST_SCAMMER = "add_user_to_blacklist_scammers"
 LST_KEYS_ADD_BLACKLIST_SCAMMER = ['admin_or_user_id','bl_user_id','bl_user_at','bl_user_handle','tg_chan_id']
-LST_KEYS_ADD_BLACKLIST_SCAMMER_RESP = env.LST_KEYS_REG_SHILLER_RESP
+LST_KEYS_ADD_BLACKLIST_SCAMMER_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_ADD_BLACKLIST_SCAMMER = 'ADD_REQUEST_USER_BLACKLIST'
 
 # LEFT OFF HERE ... need endpoint for neo to check if a user is blacklisted (instead of using array in neo_bot.py)
 
 #-----------------------------------------------------#
 DICT_CMD_EXE = {
-    "register_as_shiller":[kSHILLER_REG,LST_KEYS_REG_SHILLER,LST_KEYS_REG_SHILLER_RESP,DB_PROC_ADD_NEW_USER],
+    "register_as_shiller":[kSHILLER_REG,LST_KEYS_REG_USER,LST_KEYS_REG_USER_RESP,DB_PROC_ADD_NEW_USER],
     "confirm_twitter":[kTWITTER_CONF,LST_KEYS_TW_CONF,LST_KEYS_TW_CONF_RESP,DB_PROC_RENEW_TW_CONFRIM],
     "submit_shill_link":[kSUBMIT_SHILL,LST_KEYS_SUBMIT_SHILL,LST_KEYS_SUBMIT_SHILL_RESP,DB_PROC_ADD_SHILL],
     "show_my_rates":[kSHOW_RATES,LST_KEYS_SHOW_RATES,LST_KEYS_SHOW_RATES_RESP,DB_PROC_GET_USR_RATES],
@@ -154,7 +154,7 @@ DICT_CMD_EXE = {
     "admin_view_shill_status":[kADMIN_VIEW_SHILL,LST_KEYS_VIEW_SHILL,LST_KEYS_VIEW_SHILL_RESP,DB_PROC_GET_USR_SHILL],
     "admin_pay_shill_rewards":[kADMIN_PAY_SHILL_EARNS,LST_KEYS_PAY_SHILL_EARNS,LST_KEYS_PAY_SHILL_EARNS_RESP,DB_PROC_SET_USR_PAY_SUBMIT],
     "admin_log_removed_shill":[kADMIN_SET_SHILL_REM,LST_KEYS_SET_SHILL_REM,LST_KEYS_SET_SHILL_REM_RESP,DB_PROC_SET_SHILL_REM],
-    "admin_scan_web_for_removed_shills":[kADMIN_CHECK_USR_REM_SHILLS,LST_KEYS_CHECK_USR_REM_SHILLS,LST_KEYS_CHECK_USR_REM_SHILLS_RESP,DB_PROC_CHECK_USR_REM_SHILL],
+    "admin_scan_web_for_dead_shills":[kADMIN_CHECK_USR_REM_SHILLS,LST_KEYS_CHECK_USR_REM_SHILLS,LST_KEYS_CHECK_USR_REM_SHILLS_RESP,DB_PROC_CHECK_USR_REM_SHILL],
     'admin_set_shiller_rates':[kADMIN_SET_USR_SHILL_PAY_RATE,LST_KEYS_SET_USR_SHILL_PAY_RATE,LST_KEYS_SET_USR_SHILL_PAY_RATE_RESP,DB_PROC_SET_USR_RATES],
 }
 
@@ -169,7 +169,8 @@ def exe_tg_cmd(_lst_inp, _use_prod_accts):
     set_twitter_auth_keys(_use_prod_accts)
 
     # generate keyVals to pass as 'request' w/ 'tg_cmd!=None', to 'handle_request'
-    tg_cmd = _lst_inp[0]
+    tg_cmd = _lst_inp[0][1::] # parse out the '/'
+    print('tg_cmd: '+tg_cmd)
     keyVals = {}
     for i,v in enumerate(_lst_inp): 
         print(f' _lst_inp[{i}]={v}')
@@ -200,7 +201,9 @@ def handle_request(request, req_handler_key, tg_cmd=None):
     arrStrReturnKeys, strRespSuccessMSG = generate_resp_params(req_handler_key, keyVals, tg_cmd)
     
     # (4) prepare return json model
-    jsonResp = prepJsonResponseDbProc(arrStrReturnKeys, dbProcResult, strRespSuccessMSG, tprint=False)
+    # jsonResp = prepJsonResponseDbProc(arrStrReturnKeys, dbProcResult, strRespSuccessMSG, tprint=False)
+    if tg_cmd: jsonResp = prepJsonResponseDbProc_ALL(arrStrReturnKeys, dbProcResult, strRespSuccessMSG, tprint=False)
+    else: jsonResp = prepJsonResponseDbProc(arrStrReturnKeys, dbProcResult, strRespSuccessMSG, tprint=False)
     
     # (5) return client response
     return jsonResp # JSONResponse(...) -> Response(json.dumps(dict), mimetype="application/json" )
@@ -220,11 +223,11 @@ def parse_request(request, req_handler_key, tg_cmd=None): # (1)
         # validate required params & set local vars
         keyVals = reqParamsImmutDict.copy()["key_vals"] if reqParamsImmutDict is not None else None
 
-    keyVals = json.loads(keyVals)
-    #print(funcname, 'keyVals - DONE', tprint=True)
+        keyVals = json.loads(keyVals)
+        #print(funcname, 'keyVals - DONE', tprint=True)
 
     # validate request params (PIN, keys, etc.)
-    validParams0 = validate_params(keyVals, req_handler_key)
+    validParams0 = validate_params(keyVals, req_handler_key, tg_cmd)
     #print(funcname, 'validParams0 - DONE', tprint=True)
 
     #bErr, jsonResp = prepJsonResponseValidParams(keyVals, validParams0, valid_PIN, tprint=True)

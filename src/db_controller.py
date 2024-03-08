@@ -27,8 +27,8 @@ dbName = env.dbName #read_env()
 dbUser = env.dbUser #read_env()
 dbPw = env.dbPw     #read_env()
 
-dbHost_gms = env.dbHost_gms #read_env()
-dbUser_gms = env.dbUser_gms #read_env()
+# dbHost = env.dbHost #read_env()
+# dbUser = env.dbUser #read_env()
 
 db = None
 cur = None
@@ -63,14 +63,14 @@ def open_database_connection_remote(use_ssh=False, ssh_dict={}):
             )
             db = pymysql.connect(host=dbHost,
                                 port=forward.getpeername()[1],
-                                user=dbUser_gms,
+                                user=dbUser,
                                 password=dbPw,
                                 db=dbName,
                                 charset='utf8mb4',
                                 cursorclass=pymysql.cursors.DictCursor)            
         else:
-            db = pymysql.connect(host=dbHost_gms,
-                                user=dbUser_gms,
+            db = pymysql.connect(host=dbHost,
+                                user=dbUser,
                                 password=dbPw,
                                 db=dbName,
                                 charset='utf8mb4',
@@ -158,8 +158,8 @@ def exeMySqlDump(tableNames='nil_tables', fileName='nil_file.sql', use_remote=Fa
     result = None
     try:
         ## Run mysqldump command to export table structure and content ##
-        # dump_command = f"mysqldump -u {dbUser_gms} -p{dbPw} -h {dbHost_gms} --databases {dbName} --tables {tableNames}" # .env password
-        dump_command = f"mysqldump -u {dbUser_gms} -p -h {dbHost_gms} --databases {dbName} --tables {tableNames}" # CLI enter password
+        # dump_command = f"mysqldump -u {dbUser} -p{dbPw} -h {dbHost} --databases {dbName} --tables {tableNames}" # .env password
+        dump_command = f"mysqldump -u {dbUser} -p -h {dbHost} --databases {dbName} --tables {tableNames}" # CLI enter password
         dump_process = subprocess.Popen(dump_command, stdout=subprocess.PIPE, shell=True)
         dump_output, dump_error = dump_process.communicate()
 

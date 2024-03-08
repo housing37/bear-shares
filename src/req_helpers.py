@@ -26,7 +26,7 @@ def prepJsonResponseValidParams(keyVals, validParams0=True, validParams1=True, v
     if not validParams0 or not validParams1 or not validParams2 or not validParams3:
         err_resp_args = {'ERROR':vErrArgs, 'MSG':kErrArgs, 'PAYLOAD':{'error':vErrArgs,'keyVals':keyVals}}
         if tprint:
-            print(funcname, f'return error: {vErrArgs}', f'payloaddict: {err_resp_args}\n', simpleprint=False)
+            print(funcname, f'return error: {vErrArgs}', f'payloaddict: {err_resp_args}\n')
         else:
             print(funcname, f'return error: {vErrArgs}', 'payloaddict: <print disabled>\n')
         bErr = True
@@ -43,7 +43,7 @@ def prepJsonResponseDbProcErr(dbProcResult, tprint=False):
     if dbProcResult == -1: # validate db errors #
         err_resp_db = {'ERROR':vErrDb, 'MSG':kErrDb, 'PAYLOAD':{'error':vErrDb, 'dbProcResult':dbProcResult}}
         if tprint:
-            print(funcname, f'return error: {vErrDb}', f'payloaddict: {err_resp_db}\n', simpleprint=False)
+            print(funcname, f'return error: {vErrDb}', f'payloaddict: {err_resp_db}\n')
         else:
             print(funcname, f'return error: {vErrDb}', 'payloaddict: <print disabled>\n')
         bErr = True
@@ -70,19 +70,38 @@ def prepJsonResponseDbProc(arrStrReturnKeys, dbProcResult, strRespSuccessMSG, tp
 
     return JSONResponse ({'ERROR':vErrNone,'MSG':strRespSuccessMSG,'PAYLOAD':payloaddict})
 
+def prepJsonResponseDbProc_ALL(arrStrReturnKeys, dbProcResult, strRespSuccessMSG, tprint=False):
+    funcname = f'{__filename} prepJsonResponseDbProc'
+    print(funcname + ' - ENTER')
+    #l = []
+    #l.append({arrStrReturnKeys:dbProcResult}) # append this json return list entry #
+    l = []
+    for row in dbProcResult:
+        jsonRow = getJsonDictFromDBQueryRowWithKeys(row, arrStrReturnKeys, True) # True = _ALL
+        l.append (jsonRow) # append this json return list entry #
+
+    payloaddict = {'error':vErrNone,'result_arr':l,'auth_token':"TODO ; )"}
+
+    if tprint:
+        print(funcname, f'return error: {vErrNone}', '\npayloaddict: %s\n' % payloaddict)
+    else:
+        print(funcname, f'return error: {vErrNone}', 'payloaddict: <print disabled>\n')
+
+    return JSONResponse ({'ERROR':vErrNone,'MSG':strRespSuccessMSG,'PAYLOAD':payloaddict})
+
 ## parse database query row into json dict ##
 # @descr: parses a database query row, into a json
 # @expects: db query row dictionary and keys to parse
 # @requires: row, keys
 # @returns: dictionary with db query string return as a json
-def getJsonDictFromDBQueryRowWithKeys(row, keys):
+def getJsonDictFromDBQueryRowWithKeys(row, keys, _ALL=False):
     funcname = f'<{__filename}> getJsonDictFromDBQueryRowWithKeys'
     #logenter(funcname, simpleprint=False, tprint=False)
 
     jsonDict = {}
     for key in keys:
         #loginfo(funcname, '\n\n key: %s\n\n' % key, '')
-        if key not in row:
+        if key not in row and not _ALL:
             #loginfo(funcname, '\n\n key: %s NOT IN row: %s\n\n' % (key, row), '')
             continue
 

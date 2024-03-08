@@ -46,6 +46,9 @@ dbName = os.environ['DB_DATABASE']
 dbUser = os.environ['DB_USERNAME']
 dbPw = os.environ['DB_PASSWORD']
 
+# req_handler support
+LST_KEYS_PLACEHOLDER = []
+
 # s3 support (use for remote server)
 ACCESS_KEY = os.environ['ACCESS_KEY']
 SECRET_KEY = os.environ['SECRET_KEY']
@@ -69,6 +72,12 @@ OPENAI_KEY = os.environ['OPENAI_KEY']
 TOKEN_dev = os.environ['TG_TOKEN_DEV'] # (dev)
 TOKEN_prod = os.environ['TG_TOKEN_PROD'] # (prod)
 TOKEN_neo = os.environ['TG_TOKEN_NEO'] # (neo) @neo_bs_bot
+TOKEN_trin = os.environ['TG_TOKEN_TRIN'] # (trinity) @bs_trinity_bot
+# LST_TG_TOKENS = [{'@TeddySharesBot':TOKEN_dev},
+#                  {'@BearSharesBot':TOKEN_prod},
+#                  {'@neo_bs_bot':TOKEN_neo},
+#                  {'@bs_trinity_bot':TOKEN_trin},
+#                  ]
 
 
 #============================================================================#

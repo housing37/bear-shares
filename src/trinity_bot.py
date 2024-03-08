@@ -39,7 +39,8 @@ TOKEN = 'nil_tg_token'
 #------------------------------------------------------------#
 def set_tg_token():
     global TOKEN
-    TOKEN = env.TOKEN_prod if USE_PROD_TG else env.TOKEN_dev
+    # TOKEN = env.TOKEN_prod if USE_PROD_TG else env.TOKEN_dev
+    TOKEN = env.TOKEN_prod if USE_PROD_TG else env.TOKEN_trin
 
 def is_valid_chat_id(_chat_id, _group_name, _uname, _handle):
     print("chat_id:", _chat_id)
@@ -77,13 +78,16 @@ async def cmd_handler(update: Update, context):
 
     user = update.message.from_user
     uid = user.id
-    str_handle = user.first_name + ' ' + user.last_name
+    # str_handle = user.first_name + ' ' + user.last_name
+    str_handle = user.first_name
     str_uname = user.username
     inp_split = update.message.text.split()
 
     # check if TG group is whitelisted to use (prints group info and deny)
-    valid_cmd = inp_split[0] in LST_TG_CMDS
+    valid_cmd = inp_split[0][1::] in LST_TG_CMDS # parses out the '/'
+    print(inp_split[0])
     valid_chat, str_deny = is_valid_chat_id(str(_chat_id), group_name, str_uname, str_handle)
+    print(valid_cmd, valid_chat, str_deny, sep='\n')
     if not valid_chat or not valid_cmd:
         await context.bot.send_message(chat_id=update.message.chat_id, text=str_deny+' '+inp_split[0])    
         print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
@@ -97,10 +101,11 @@ async def cmd_handler(update: Update, context):
     jsonResp = req_handler.exe_tg_cmd(inp_split, USE_PROD_TG)
     print('printing jsonResp ...')
     print(jsonResp)
+
+    # return jsonResp # JSONResponse(...) -> Response(json.dumps(dict), mimetype="application/json" )
+    print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
     print('exiting ...')
     exit(0)
-    return jsonResp # JSONResponse(...) -> Response(json.dumps(dict), mimetype="application/json" )
-
     # inp 
     # str_cmd = inp[:inp.find(' '):] # slicing out /<command>
     # str_prompt = inp[inp.find(' ')+1::] # slicing out /<command>
@@ -162,6 +167,15 @@ async def cmd_handler(update: Update, context):
             text=f'@{str_uname} (aka. {str_handle}) -> here is your image\n  "{str_prompt}" ...\n {url}')
     print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
 
+async def log_activity(update: Update, context):
+    user = update.message.from_user
+    uid = str(user.id)
+    usr_at_name = f'@{user.username}'
+    usr_handle = user.first_name
+    inp = update.message.text
+    lst_user_data = [uid, usr_at_name, usr_handle]
+    print(f'{get_time_now()} _ activity : {lst_user_data}')
+
 async def test(update, context):
     funcname = 'test'
     print(f'\nENTER - {funcname}\n')
@@ -184,7 +198,14 @@ def main():
     # register all commands -> from req_handler.DICT_CMD_EXE.keys()
     for str_cmd in LST_TG_CMDS:
         dp.add_handler(CommandHandler(str_cmd, cmd_handler))
+        lst_params = req_handler.DICT_CMD_EXE[str_cmd][1]
+        print(f'added cmd: {str_cmd}: {lst_params}')
+        # print(f'{str_cmd} - ')
 
+    # Add message handler for ALL messages
+    #   ref: https://docs.python-telegram-bot.org/en/stable/telegram.ext.filters.html#filters-module
+    dp.add_handler(MessageHandler(filters.ALL, log_activity))
+    print('added handler ALL: log_activity')
 
     # dp.add_handler(CommandHandler("register_as_shiller", cmd_handler)) # user_id, wallet addr, twitter prof link
     # dp.add_handler(CommandHandler("submit_shill_link", cmd_handler)) # user_id, tweet link
@@ -216,11 +237,13 @@ def main():
     # dp.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo)) # ~ = negate (ie. AND NOT)
     # dp.add_handler(MessageHandler(filters.Command, bad_command))
     # Start the Bot
+    print('\nbot running ...\n')
     dp.run_polling()
     # Update.start_polling()
 
     # Run the bot until you press Ctrl-C
     # Update.idle()
+    
 
 #------------------------------------------------------------#
 #   DEFAULT SUPPORT                                          #
@@ -280,11 +303,15 @@ if __name__ == "__main__":
     ## exe ##
     try:
         # select to use prod bot or dev bot
-        inp = input('Select token type to use:\n  0 = prod (@BearSharesBot)\n  1 = dev (@TeddySharesBot)\n  > ')
+        inp = input('Select token type to use:\n  0 = prod (@BearSharesBot)\n  1 = dev \n  > ')
         USE_PROD_TG = True if inp == '0' else False
         print(f'  input = {inp} _ USE_PROD_TG = {USE_PROD_TG}')
 
-        set_tg_token()     
+        set_tg_token()  
+        print(f'\nTelegram TOKEN: {TOKEN}')
+        # print(f'OpenAI OPENAI_KEY: {OPENAI_KEY}')
+        # print(f'CONSUMER_KEY: {CONSUMER_KEY}')
+        # print(f'PROMO_TWEET_TEXT:\n{PROMO_TWEET_TEXT}\n')    
         main()
     except Exception as e:
         print_except(e, debugLvl=0)
