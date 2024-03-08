@@ -12,11 +12,21 @@ WHITELIST_TG_CHAT_IDS = [
 
 BLACKLIST_SCAM_UNAMES = [
     '@EmileUly',
+    '@AlexSandros6', # 7017221881, @AlexSandros6, Alex sandros
     # '@housing37',
 ]
 BLACKLIST_SCAM_UIDS = [
     # '581475171', # @housing37
+    '7017221881', # 7017221881, @AlexSandros6, Alex sandros
 ]
+BLACKLIST_SCAM_HANDLES = [
+    'Alex sandros', # 7017221881, @AlexSandros6, Alex sandros
+]
+BLACKLIST_SCAM_TEXT = [
+    'BlastPulsechain', # 7017221881, @AlexSandros6, Alex sandros
+    '$BLAST', # 7017221881, @AlexSandros6, Alex sandros
+]
+
 TOKEN = env.TOKEN_neo # neo_bs_bot (neo)
 OPENAI_API_KEY = env.OPENAI_KEY
 # GROUP_ID = '-1002049491115', # $BearShares - testing
@@ -100,15 +110,31 @@ async def generate_response(update: Update, context: CallbackContext) -> None:
 
 async def check_scammer(update: Update, context):
     user = update.message.from_user
+
+    # get all input (to parse .lower() in compare)
     uid = str(user.id)
     usr_at_name = f'@{user.username}'
-    usr_handle = user.first_name
-    inp = update.message.text
+    usr_handle = str(user.first_name)
+    inp_text = str(update.message.text)
+
     lst_user_data = [uid, usr_at_name, usr_handle]
     print(f'check scammer: {lst_user_data}')
 
-    # checks blacklist of @user and tg_uid
-    if usr_at_name in BLACKLIST_SCAM_UNAMES or uid in BLACKLIST_SCAM_UIDS:
+    # generate all BLACKLIST .lower() to compare
+    lst_uid = [t.lower() for t in BLACKLIST_SCAM_UIDS]
+    lst_uname = [t.lower() for t in BLACKLIST_SCAM_UNAMES]
+    lst_handle = [t.lower() for t in BLACKLIST_SCAM_HANDLES]
+    lst_text = [t.lower() for t in BLACKLIST_SCAM_TEXT]
+
+    # check blacklist text
+    b_scam_text = False
+    for t in lst_text:
+        if t in inp_text.lower():
+            print(f'FOUND scam text: {t} _ inp_text:\n  {inp_text}')
+            b_scam_text = True
+
+    # checks blacklist of @user and tg_uid and tg_handle
+    if b_scam_text or uid.lower() in lst_uid or usr_at_name.lower() in lst_uname or usr_handle.lower() in lst_handle:
         print(f'FOUND scammer: {lst_user_data}')
         await update.message.reply_text(f"@{usr_at_name} is a known scammer, ignore him 🙄️️️️️️")
 
