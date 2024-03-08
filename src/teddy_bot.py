@@ -513,6 +513,7 @@ def gen_ai_image(str_prompt):
         if USE_GEN_IMG:
             big = BingImgGenerator(_key, _cookie) # selenium integration
             lst_imgs = big.execute_gen_image(str_prompt, use_cli=False, headless=SELENIUM_HEADLESS) 
+            if len(lst_imgs) == 0: err = 2
         else:
             gen = ImageGen(auth_cookie=_cookie, auth_cookie_SRCHHPGUSR=_cookie, quiet=False)
             # gen = ImageGenAsync(auth_cookie=cook, quiet=False)
@@ -526,7 +527,7 @@ def gen_ai_image(str_prompt):
         print(f'img request cnt: {IMG_REQUEST_CNT}')
         print(f'img request success ratio: {IMG_REQUEST_SUCCESS_CNT}/{IMG_REQUEST_CNT}')
         # print("Exception caught:", e)
-        err = 2
+        err = 3
         time.sleep(2)  # Wait for 5 seconds before the next attempt
         return lst_imgs, err
 

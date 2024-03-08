@@ -125,6 +125,7 @@ class BingImgGenerator():
 
     def input_descr(self, descr, use_cli, _driver):
         if use_cli: descr = input('\n  Input description...\n  > ') # cli input description
+        print(f'entering description:\n "{descr}"')
         INP_IMG_DESCR = (By.ID, "sb_form_q")
         WebDriverWait(_driver, 10).until(EC.element_to_be_clickable(INP_IMG_DESCR)).send_keys(descr) # wait for input & enter description 
         WebDriverWait(_driver, 10).until(EC.element_to_be_clickable((By.ID, "create_btn_i"))).click() # click join/create
@@ -143,35 +144,41 @@ class BingImgGenerator():
         # launch stuff inside
         # virtual display here.
 
-
-        print(f'\ninitializing... {get_time_now()}')
+        print(f'\nENTER - execute_gen_image')
+        print(f'initializing webdriver ... {get_time_now()}')
         print(f' use_cli: {use_cli} _ headless: {headless}')
         self.driver = self.init_webdriver(headless)
 
-        print(f'\nnav to create page... {get_time_now()}')
+        print(f'\nnavigate to create page & enter descr... {get_time_now()}')
         self.get_create_page(self.driver) # nav to bing.com/images/create
         descr = self.input_descr(str_promt, use_cli, self.driver) # True = use_cli
+        print(f'navigate to create page & enter descr... {get_time_now()} _ DONE')
 
         print(f'\nperform login... {get_time_now()}')
         self.perform_login(self.driver) # nav to 'login.live.com' (then back to bing.com/images/create)
+        print(f'perform login... {get_time_now()} _ DONE')
 
         # wait for images to load (for btn 'Creating ...' turns to 'Create')
-        print(f'\nGenerating image for descr ... {get_time_now()}\n "{descr}"')
+        print(f'\nwaiting for generated images for descr ... {get_time_now()}\n "{descr}"')
         xpath_ = "//div[@id='giscope']//form[@id='sb_form']//a[@id='create_btn_c']//span[@id='create_btn']"
-        WebDriverWait(self.driver, 60).until(EC.text_to_be_present_in_element((By.XPATH, xpath_), 'Create')) 
+        sec_wait = 60
+        WebDriverWait(self.driver, sec_wait).until(EC.text_to_be_present_in_element((By.XPATH, xpath_), 'Create')) 
+        print(f'waiting for generated images for descr ... {get_time_now()} _ DONE')
         # import time
         # time.sleep(40)
 
         # scrape page source for img urls
+        print(f'\nparsing img_urls from page_source ... {get_time_now()}')
         hc = html.fromstring(self.driver.page_source)
         img_urls = hc.xpath("//div[@class='imgpt']//a[@class='iusc']//div[@class='img_cont hoff']//img[@class='mimg']/@src")
+        print('printing native img_urls parsed ... ', *img_urls, sep='\n ')
         img_urls = [url.split('?')[0] for url in img_urls]
-        print(f'\nprinting img urls ... {get_time_now()}', *img_urls, sep='\n ')
+        print(f'\nprinting split() img urls ... {get_time_now()}', *img_urls, sep='\n ')
 
         # scrape page source for reward points count
         # pts = hc.xpath("//div[@id='id_h']//a[@id='id_rh']//span[@id='id_rc']")[0].text_content()
         # print(f'\ncurrent reward points ... {get_time_now()}\n {pts}')
-
+        if len(img_urls) == 0: print(f'** WARNING **: BING returned 0 img_urls while WebDriverWait for "Create" < {sec_wait} sec')
         return img_urls
         # test img url received
         sel_img_url = img_urls[0]
