@@ -118,7 +118,8 @@ BLACKLIST_TEXT = [
     'smart vault', 'smart-vault', 'smart_vault', # @JstKidn
     ]
 SELENIUM_HEADLESS = True
-
+MIN_DESCR_CHAR_CNT = 25
+MIN_DESCR_WORD_CNT = int(MIN_DESCR_CHAR_CNT / 5)
 #------------------------------------------------------------#
 #   FUNCTIONS                                                #
 #------------------------------------------------------------#
@@ -210,7 +211,7 @@ async def bad_command(update: Update, context):
     print(f'\nEXIT - {funcname}\n')
 
 def validate_input(str_input):
-    return len(str_input) >= 50
+    return len(str_input) >= MIN_DESCR_CHAR_CNT
 
 def validate_admin_user(str_uname):
     global LST_ADMINS
@@ -385,7 +386,7 @@ async def gen_ai_img_1(update: Update, context):
     if err > 0:
         str_err = f"@{str_uname} (aka. {str_handle}) -> BING said NO!\n   change it up & try again : /"
         if err == 1:
-            str_err = f"@{str_uname} (aka. {str_handle}) -> description TOO SHORT, need at least 50 chars (~10 words or so)"
+            str_err = f"@{str_uname} (aka. {str_handle}) -> description TOO SHORT, need at least {MIN_DESCR_CHAR_CNT} chars (~{MIN_DESCR_WORD_CNT} words or so)"
         str_err = str_err + f'\n    "{str_prompt}"'
         await context.bot.send_message(chat_id=update.message.chat_id, text=str_err)
         print(str_err)
