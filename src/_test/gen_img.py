@@ -88,6 +88,11 @@ class BingImgGenerator():
             # LEFT OFF HERE ... possible fix for failing w/ --headless 
             #   try testing headless w/ these 2 additional options
             #   seems to work in req_handler.py for trinity_bot
+            # NOTE: these 2 additions seem to work for local mac OSx
+            #   however, still having issues with chrome driver running ubuntu server
+            #   ref: https://tecadmin.net/setup-selenium-chromedriver-on-ubuntu/
+            #   ref: https://chromedriver.chromium.org/downloads
+            #   ref: https://tecadmin.net/google-chrome-headless-features/
             options.add_argument("--enable-javascript")  # Run Chrome in headless mode
             user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
             options.add_argument(f"user-agent={user_agent}")
