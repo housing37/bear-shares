@@ -117,6 +117,7 @@ WHITELIST_TG_CHAT_IDS = [
 BLACKLIST_TEXT = [
     'smart vault', 'smart-vault', 'smart_vault', # @JstKidn
     ]
+SELENIUM_HEADLESS = True
 
 #------------------------------------------------------------#
 #   FUNCTIONS                                                #
@@ -482,7 +483,7 @@ def get_rand_cookie(_dict_cookies):
     return idx_key, str_key, _dict_cookies[str_key]
     
 def gen_ai_image(str_prompt):
-    global IMG_REQUEST_CNT, IMG_REQUEST_SUCCESS_CNT, USE_GEN_IMG, USE_RAND_COOKIE
+    global IMG_REQUEST_CNT, IMG_REQUEST_SUCCESS_CNT, USE_GEN_IMG, USE_RAND_COOKIE, SELENIUM_HEADLESS
     funcname = 'gen_ai_image'
     IMG_REQUEST_CNT += 1
     print(f'\nENTER - {funcname} _ IMG_REQUEST_CNT: {IMG_REQUEST_CNT}')
@@ -511,7 +512,7 @@ def gen_ai_image(str_prompt):
     try:
         if USE_GEN_IMG:
             big = BingImgGenerator(_key, _cookie) # selenium integration
-            lst_imgs = big.execute_gen_image(str_prompt, use_cli=False, headless=True) 
+            lst_imgs = big.execute_gen_image(str_prompt, use_cli=False, headless=SELENIUM_HEADLESS) 
         else:
             gen = ImageGen(auth_cookie=_cookie, auth_cookie_SRCHHPGUSR=_cookie, quiet=False)
             # gen = ImageGenAsync(auth_cookie=cook, quiet=False)
@@ -651,7 +652,8 @@ if __name__ == "__main__":
         init_openAI_client()
         set_twitter_auth_keys()
         set_twitter_promo_text()
-        print(f'\nTelegram TOKEN: {TOKEN}')
+        print(f'\nSELENIUM_HEADLESS: {SELENIUM_HEADLESS}')
+        print(f'Telegram TOKEN: {TOKEN}')
         print(f'OpenAI OPENAI_KEY: {OPENAI_KEY}')
         print(f'CONSUMER_KEY: {CONSUMER_KEY}')
         print(f'PROMO_TWEET_TEXT:\n{PROMO_TWEET_TEXT}\n') 
