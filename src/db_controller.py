@@ -41,8 +41,8 @@ strErrConn = "FAILED to connect to db"
 ##              db connection support               ##
 #====================================================#
 def open_database_connection_remote(use_ssh=False, ssh_dict={}):
-    funcname = f'({__filename}) open_database_connection_remote(use_ssh={use_ssh})'
-    print(funcname, tprint=False)
+    funcname = f'{__filename} open_database_connection_remote(use_ssh={use_ssh})'
+    print(funcname, '- ENTER')
 
     # Connect to DB #
     try:
@@ -84,14 +84,14 @@ def open_database_connection_remote(use_ssh=False, ssh_dict={}):
         print(funcname, f' >> REMOTE CONNECTED >> to db {dbName} successfully!')
     except Exception as e:
         print(funcname, "exception hit", "FAILED to REMOTE connect to db")
-        printException(e, debugLvl=2)
+        print_except(e, debugLvl=2)
         return -1
     finally:
         return 0
 
 def open_database_connection():
-    funcname = f'({__filename}) open_database_connection'
-    print(funcname, tprint=False)
+    funcname = f'{__filename} open_database_connection'
+    print(funcname, '- ENTER')
 
     # Connect to DB #
     try:
@@ -113,14 +113,14 @@ def open_database_connection():
         print(funcname, f' >> CONNECTED >> to db {dbName} successfully!')
     except Exception as e:
         print(funcname, "exception hit", "FAILED to connect to db")
-        printException(e, debugLvl=2)
+        print_except(e, debugLvl=2)
         return -1
     finally:
         return 0
 
 def close_database_connection(use_ssh=False):
-    funcname = f'({__filename}) close_database_connection'
-    print(funcname, tprint=False)
+    funcname = f'{__filename} close_database_connection'
+    print(funcname, '- ENTER')
 
     global db, cur
     if db == None:
@@ -138,8 +138,8 @@ def close_database_connection(use_ssh=False):
 
 # Run mysqldump command to export table structure and content
 def exeMySqlDump(tableNames='nil_tables', fileName='nil_file.sql', use_remote=False, use_ssh=False, ssh_dict={}):
-    funcname = f'({__filename}) exeMySqlDump({tableNames}, {fileName}, use_remote={use_remote})'
-    print(funcname, tprint=True)
+    funcname = f'{__filename} exeMySqlDump({tableNames}, {fileName}, use_remote={use_remote})'
+    print(funcname, '- ENTER')
 
     #============ open db connection ===============#
     global cur
@@ -186,8 +186,8 @@ def exeMySqlDump(tableNames='nil_tables', fileName='nil_file.sql', use_remote=Fa
         return result
         
 def exeStoredProcedure(argsTup, strProc, strOutParam=None, exe_select=False):
-    funcname = f'({__filename}) exeStoredProcedure({argsTup}, {strProc}, {strOutParam}, exe_select={exe_select})'
-    print(funcname, tprint=True)
+    funcname = f'{__filename} exeStoredProcedure({argsTup}, {strProc}, {strOutParam}, exe_select={exe_select})'
+    print(funcname, '- ENTER')
 
     #============ open db connection ===============#
     global cur
@@ -238,8 +238,8 @@ def exeStoredProcedure(argsTup, strProc, strOutParam=None, exe_select=False):
         return result
         
 def exe_stored_proc(iUserID=-1, strProc='', dictKeyVals={}):
-    funcname = f'({__filename}) exe_stored_proc(iUserID={iUserID}, strProc={strProc}, dictKeyVals={dictKeyVals})'
-    print(funcname, tprint=True)
+    funcname = f'{__filename} exe_stored_proc(iUserID={iUserID}, strProc={strProc}, dictKeyVals={dictKeyVals})'
+    print(funcname, '- ENTER')
 
     argsTup = () # generate tuple of vals from dictKeyVals (dict order maintained in python3.7+)
     argsTup = [argsTup + (dictKeyVals[k],) for k in dictKeyVals]
@@ -256,15 +256,15 @@ def sel_2_tbl_query(d_col_val_where_1={},
                         str_tbl_as_1='',
                         str_tbl_as_2='',
                         bGetAll=False):
-    funcname = f'({__filename}) sel_2_tbl_query(d_col_val_where_1={d_col_val_where_1}, d_col_val_where_2={d_col_val_where_2}, lst_col_sel_1={lst_col_sel_1}, lst_col_sel_2={lst_col_sel_2}, str_tbl_as_1={str_tbl_as_1}, str_tbl_as_2={str_tbl_as_2}, bGetAll={bGetAll})'
-    print(funcname, tprint=True)
+    funcname = f'{__filename} sel_2_tbl_query(d_col_val_where_1={d_col_val_where_1}, d_col_val_where_2={d_col_val_where_2}, lst_col_sel_1={lst_col_sel_1}, lst_col_sel_2={lst_col_sel_2}, str_tbl_as_1={str_tbl_as_1}, str_tbl_as_2={str_tbl_as_2}, bGetAll={bGetAll})'
+    print(funcname, '- ENTER')
 
     # generate string using lst_col_sel_1|2:
     #   EX: 'SELECT <columns> FROM candidates cand INNER JOIN candidate_apps capp'
     strSel = ''
     print(funcname, f'strSel: {strSel}')
     if bGetAll:
-        #logalert(funcname, f"bGetAll: {bGetAll}")
+        #print(funcname, f"bGetAll: {bGetAll}")
         strSel = f'SELECT {str_tbl_as_1}.*, {str_tbl_as_2}.*, {str_tbl_as_1}.id AS {str_tbl_as_1}_id, {str_tbl_as_2}.id AS {str_tbl_as_2}_id FROM {str_tbl_1} {str_tbl_as_1} INNER JOIN {str_tbl_2} {str_tbl_as_2} ON {str_tbl_as_2}.fk_{str_tbl_as_1}_id = {str_tbl_as_1}.id'
     else:
         # init query string w/ select clause
@@ -295,7 +295,7 @@ def sel_2_tbl_query(d_col_val_where_1={},
     print(funcname, f'strSel: {strSel}')
     
     # check / init WHERE clause
-    logalert(funcname, f"d_col_val_where_1: {d_col_val_where_1}\n", f"d_col_val_where_2: {d_col_val_where_2}")
+    print(funcname, f"d_col_val_where_1: {d_col_val_where_1}\n", f"d_col_val_where_2: {d_col_val_where_2}")
     if len(d_col_val_where_1) > 0 or len(d_col_val_where_2) > 0:
         strSel = f"{strSel} WHERE"
 
@@ -344,8 +344,8 @@ def sel_2_tbl_query(d_col_val_where_1={},
 # db_controller support (migrated from gms_post)
 #===========================================================#
 def procValidatePIN(strPIN='-1'):
-    funcname = f'({__filename}) procValidatePIN(strPIN={strPIN})'
-    print(funcname, tprint=True)
+    funcname = f'{__filename} procValidatePIN(strPIN={strPIN})'
+    print(funcname, '- ENTER')
 
     argsTup = (strPIN, 'p_Result')
     strProc = 'ValidatePIN'
@@ -353,8 +353,8 @@ def procValidatePIN(strPIN='-1'):
     return exeStoredProcedure(argsTup, strProc, strOutParam)
 
 def procGetEmpData(strPIN=''):
-    funcname = f'({__filename}) procGetEmpData({strPIN})'
-    print(funcname, tprint=True)
+    funcname = f'{__filename} procGetEmpData({strPIN})'
+    print(funcname, '- ENTER')
 
     argsTup = (strPIN,)
     strProc = 'GetEmpDataFrom_PIN'
@@ -367,6 +367,44 @@ def isTypeInteger(varCheck=None):
     if varCheck == None:
         return False
     return isinstance(varCheck, int)
+
+def getPrintListStr(lst=[], strListTitle='list', useEnumerate=True, goIdxPrint=False, goPrint=True):
+    strGoIndexPrint = None
+    if goIdxPrint:
+        strGoIndexPrint = '(w/ indexes)'
+    else:
+        strGoIndexPrint = '(w/o indexes)'
+
+    lst_str = None
+    if useEnumerate:
+        if goIdxPrint:
+            lst_str = [f'{i}: {v}' for i,v in enumerate(lst)]
+        else:
+            lst_str = [f'{v}' for i,v in enumerate(lst)]
+    else:
+        if goIdxPrint:
+            lst_str = [f'{lst.index(x)}: {x}' for x in lst]
+        else:
+            lst_str = [f'{x}' for x in lst]
+
+    lst_len = len(lst)
+    print(f'{strListTitle} _ {strGoIndexPrint} _ count {lst_len}:', *lst_str, sep = "\n ")
+    return lst_str
+
+#ref: https://stackoverflow.com/a/1278740/2298002
+def print_except(e, debugLvl=0):
+    #print(type(e), e.args, e)
+    if debugLvl >= 0:
+        print('', cStrDivider, f' Exception Caught _ e: {e}', cStrDivider, sep='\n')
+    if debugLvl >= 1:
+        print('', cStrDivider, f' Exception Caught _ type(e): {type(e)}', cStrDivider, sep='\n')
+    if debugLvl >= 2:
+        print('', cStrDivider, f' Exception Caught _ e.args: {e.args}', cStrDivider, sep='\n')
+    if debugLvl >= 3:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        strTrace = traceback.format_exc()
+        print('', cStrDivider, f' type: {exc_type}', f' file: {fname}', f' line_no: {exc_tb.tb_lineno}', f' traceback: {strTrace}', cStrDivider, sep='\n')
     
 #====================================================#
 #====================================================#

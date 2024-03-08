@@ -8,11 +8,17 @@ print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globa
 #         imports                                     #
 #=====================================================#
 from _env import env
-from flask import request
 from db_controller import *
 from req_helpers import *
+from datetime import datetime
 import json
-import tweepy
+
+# twitter support
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options
 
 #=====================================================#
 #         global static keys                          #
@@ -166,15 +172,18 @@ def exe_tg_cmd(_lst_inp, _use_prod_accts):
     print(funcname+' - ENTER')
 
     # set twitter support keys for this request
-    set_twitter_auth_keys(_use_prod_accts)
+    # set_twitter_auth_keys(_use_prod_accts)
 
     # generate keyVals to pass as 'request' w/ 'tg_cmd!=None', to 'handle_request'
     tg_cmd = _lst_inp[0][1::] # parse out the '/'
+    lst_params = _lst_inp[1::]
     print('tg_cmd: '+tg_cmd)
+    print('_lst_inp: '+str(_lst_inp))
+    print('DICT_CMD_EXE[tg_cmd][1]: '+str(DICT_CMD_EXE[tg_cmd][1]))
     keyVals = {}
-    for i,v in enumerate(_lst_inp): 
-        print(f' _lst_inp[{i}]={v}')
-        if i == 0: continue # skip _lst_inp[0] == tg_cmd
+    for i,v in enumerate(lst_params): 
+        print(f' lst_params[{i}]={v}')
+        # if i == 0: continue # skip _lst_inp[0] == tg_cmd
         keyVals[DICT_CMD_EXE[tg_cmd][1][i]] = v # [tg_cmd][1] = LST_KEYS_...
 
     # simuate: 'handle_request(request, kREQUEST_KEY)' w/ added 'tg_cmd'
@@ -252,10 +261,12 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
     dbProcResult = None
 
     if tg_cmd != None:
+        print('tg_cmd: '+tg_cmd)
         if tg_cmd in DICT_CMD_EXE.keys():
-            if tg_cmd == 'register_as_shiller' or tg_cmd == 'confirm_twitter' and not valid_trinity_tweet(keyVals['trinity_tw_url']):
+            if (tg_cmd == 'register_as_shiller' or tg_cmd == 'confirm_twitter') and not valid_trinity_tweet(keyVals['trinity_tw_url']):
                 dbProcResult=-1
-                bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=True)
+                # bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=True)
+                bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=True) # False = force fail
                 return bErr, jsonResp, dbProcResult
                             
             # if 'user_id' in keyVals: del keyVals['user_id']
@@ -337,62 +348,58 @@ def valid_keys(keyVals, lst_valid_keys):
 #         twitter support                             #
 #=====================================================#
 def valid_trinity_tweet(_tw_url):
-    full_text = get_tweet_text(_tw_url)
-    full_text = '' if not full_text else full_text                
-    lst_text = full_text.lower().split()
-    if '@bearsharesnft' not in lst_text or 'trinity' not in lst_text:
-        dbProcResult=-1
-        bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=True)
-        return bErr, jsonResp, dbProcResult
-
-def get_tweet_text(_tw_url):
-    global CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET
-    funcname = f'get_tweet_text({_tw_url})'
-    print(cStrDivider_1, f'ENTER - {funcname}', sep='\n')
-
-    # Authenticate to Twitter
-    # client = tweepy.Client(
-    #     consumer_key=CONSUMER_KEY,
-    #     consumer_secret=CONSUMER_SECRET,
-    #     access_token=ACCESS_TOKEN,
-    #     access_token_secret=ACCESS_TOKEN_SECRET
-    # )
-    auth = tweepy.OAuth1UserHandler(
-        CONSUMER_KEY,
-        CONSUMER_SECRET,
-        ACCESS_TOKEN,
-        ACCESS_TOKEN_SECRET,
-    )
-
-    # Create API object
-    api = tweepy.API(auth, wait_on_rate_limit=True)
-    # Extract tweet ID from the URL
-    tweet_id = tweet_url.split('/')[-1]
+    funcname = f'{__filename} valid_trinity_tweet'
+    print(funcname + ' - ENTER')
+    lst_text = ['@bearsharesnft', 'trinity']
+    return search_tweet_for_text(_tw_url, lst_text, True) # True = '--headless'
     
+def search_tweet_for_text(tweet_url, _lst_text=[], _headless=True):
+    funcname = f'{__filename} search_tweet_for_text'
+    print(funcname + ' - ENTER')
     try:
-        # Fetch the tweet
-        tweet = api.get_status(tweet_id, tweet_mode='extended')
-        
-        # Extract and return the tweet text
-        return tweet.full_text
-    except tweepy.TweepError as e:
-        print(f"tweepy.TweepError: {e}")
-        return None
+        options = Options()
+        print(f' using --headless={_headless}')
+        if _headless:
+            options.add_argument("--headless")  # Run Chrome in headless mode
 
-def set_twitter_auth_keys(_use_prod_accts):
-    global CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET
-    if _use_prod_accts:
-        # @BearSharesNFT
-        CONSUMER_KEY = env.CONSUMER_KEY_1
-        CONSUMER_SECRET = env.CONSUMER_SECRET_1
-        ACCESS_TOKEN = env.ACCESS_TOKEN_1
-        ACCESS_TOKEN_SECRET = env.ACCESS_TOKEN_SECRET_1
-    else:
-        # @SolAudits
-        CONSUMER_KEY = env.CONSUMER_KEY_0
-        CONSUMER_SECRET = env.CONSUMER_SECRET_0
-        ACCESS_TOKEN = env.ACCESS_TOKEN_0
-        ACCESS_TOKEN_SECRET = env.ACCESS_TOKEN_SECRET_0
+            # required, else '--headless' fails
+            user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
+            options.add_argument(f"user-agent={user_agent}")
+            options.add_argument("--enable-javascript")  
+
+        # Initialize a Selenium WebDriver & get tweet_url page
+        print(f' getting page: {tweet_url} _ {get_time_now(dt=False)}')
+        driver = webdriver.Chrome(options=options)
+        driver.get(tweet_url)
+        print(f' getting page: {tweet_url} _ {get_time_now(dt=False)} _ DONE')
+        
+        # NOTE: when tweet 'Views' count is shown, then tweet text is shown as well
+        print(f' waiting for full html body text _ {get_time_now()}')
+        WebDriverWait(driver, 30).until(EC.text_to_be_present_in_element((By.TAG_NAME, 'BODY'), 'Views')) 
+        print(f' waiting for full html body text _ {get_time_now()} _ DONE')        
+        
+        # get / search body text for '_lst_text' items
+        body_text = driver.find_element(By.TAG_NAME, 'body').text
+        print(f' searching body_text for items in _lst_text: {_lst_text}')
+        for t in _lst_text:
+            if t.lower() in body_text.lower(): 
+                print(f' FOUND text: {t}')
+            else:
+                print(f' FAILED to find text: {t.lower()} _ returning False')
+                return False
+        print(f' SUCCESS found all text in _lst_text _ returning True')
+        return True
+        
+    except Exception as e:
+        print(f" Error scraping tweet: {e}")
+        return False
+    finally:
+        # Close the browser
+        driver.quit()
+
+def get_time_now(dt=True):
+    if dt: return '['+datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[0:-4]+']'
+    return '['+datetime.now().strftime("%H:%M:%S.%f")[0:-4]+']'
 
 #====================================================#
 #====================================================#
