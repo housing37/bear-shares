@@ -109,11 +109,11 @@ DB_PROC_GET_USR_SHILL = 'GET_USER_SHILL'
 kADMIN_PAY_SHILL_EARNS = "pay_usr_owed_shill_earns"
 LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_id']
 LST_KEYS_PAY_SHILL_EARNS_RESP = env.LST_KEYS_PLACEHOLDER
-DB_PROC_SET_USR_PAY_SUBMIT = 'SET_USER_PAY_TX_SUBMIT'
+DB_PROC_SET_USR_PAY_SUBMIT = 'SET_USER_PAY_TX_SUBMIT' # -> get_usr_pay_usd_appr_sum, set_usr_pay_usd_tx_submit
     # POST-DB: perform python/solidity 'transfer(user_earns.usd_owed, wallet_address)' to get tx data for DB_PROC_SET_USR_PAY_CONF
     #	        get 'wallet_address' from 'GET_USER_EARNINGS(tg_user_id)'
 LST_KEYS_PAY_SHILL_EARNS_CONF = ['admin_id','user_id','chain_usd_paid','tx_hash','tx_status','tok_addr','tok_symb','tok_amnt']
-DB_PROC_SET_USR_PAY_CONF = 'SET_USER_PAY_TX_STATUS'
+DB_PROC_SET_USR_PAY_CONF = 'SET_USER_PAY_TX_STATUS' # -> set_usr_pay_usd_tx_status
     # PRE-DB: perform python/solidity 'transfer' to get tx data for DB_PROC_SET_USR_PAY_CONF
 
 # '/admin_log_removed_shill'
@@ -261,7 +261,7 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
     dbProcResult = None
 
     if tg_cmd != None:
-        print('tg_cmd: '+tg_cmd)
+        print('HIT - tg_cmd: '+tg_cmd)
         if tg_cmd in DICT_CMD_EXE.keys():
             if (tg_cmd == 'register_as_shiller' or tg_cmd == 'confirm_twitter') and not valid_trinity_tweet(keyVals['trinity_tw_url']):
                 dbProcResult=-1
@@ -277,6 +277,7 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
             dbProcResult=-1
             bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=True)
     else:
+        print('HIT - http request integration')
         pass # http request integration
     
     return bErr, jsonResp, dbProcResult

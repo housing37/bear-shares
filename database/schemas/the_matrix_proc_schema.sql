@@ -133,6 +133,7 @@ BEGIN
 		ELSE
 			RETURN FALSE; -- does not exist
 		END IF;
+	END IF;
 END 
 $$ DELIMITER ;
 
@@ -154,7 +155,7 @@ BEGIN
 END 
 $$ DELIMITER ;
 
-$$ DELIMITER
+DELIMITER $$
 drop FUNCTION if exists get_usr_pay_rate; -- setup
 CREATE FUNCTION `get_usr_pay_rate`(
 		p_user_id INT(11),
@@ -174,7 +175,7 @@ BEGIN
 END 
 $$ DELIMITER ;
 
-$$ DELIMITER
+DELIMITER $$
 drop FUNCTION if exists add_user_shill_rate; -- setup
 CREATE FUNCTION `add_user_shill_rate`(
 		p_user_id INT(11),
@@ -201,7 +202,7 @@ BEGIN
 END 
 $$ DELIMITER ;
 
-$$ DELIMITER
+DELIMITER $$
 drop FUNCTION if exists usr_withdraw_requested; -- setup
 CREATE FUNCTION `usr_withdraw_requested`(
 		p_tg_user_id VARCHAR(40))
@@ -219,7 +220,7 @@ BEGIN
 		-- check if user_earns entry exists for this user id (if not, create it)
 		SELECT COUNT(*) FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_cnt;
 		IF @v_cnt = 0 THEN
-			SELECT add_default_user_earns(@v_user_id);
+			SELECT add_default_user_earns(@v_user_id) INTO @v_earn_id;
 		END IF;
 
 		-- return boolean for 'withdraw_requested'
@@ -229,7 +230,7 @@ BEGIN
 END 
 $$ DELIMITER ;
 
-$$ DELIMITER
+DELIMITER $$
 drop FUNCTION if exists get_usr_pay_usd_appr_sum; -- setup
 CREATE FUNCTION `get_usr_pay_usd_appr_sum`(
 		p_tg_user_id VARCHAR(40),
@@ -267,7 +268,7 @@ BEGIN
 END 
 $$ DELIMITER ;
 
-$$ DELIMITER
+DELIMITER $$
 drop FUNCTION if exists set_usr_pay_usd_tx_submit; -- setup
 CREATE FUNCTION `set_usr_pay_usd_tx_submit`(
 		p_tg_user_id VARCHAR(40))
@@ -293,14 +294,14 @@ BEGIN
 						WHERE fk_user_id = @v_user_id
 							AND is_approved = TRUE
 							AND is_removed = FALSE
-							AND is_paid = FALSE
-						INTO @v_tot_amnt);
+							AND pay_tx_submit = FALSE
+							AND is_paid = FALSE);
 		RETURN TRUE;
 	END IF;
 END 
 $$ DELIMITER ;
 
-$$ DELIMITER
+DELIMITER $$
 drop FUNCTION if exists set_usr_pay_usd_tx_status; -- setup
 CREATE FUNCTION `set_usr_pay_usd_tx_status`(
 		p_tg_user_id VARCHAR(40),
@@ -338,14 +339,13 @@ BEGIN
 							AND pay_tx_submit = TRUE
 							AND is_approved = TRUE
 							AND is_removed = FALSE
-							AND is_paid = FALSE
-						INTO @v_tot_amnt);
+							AND is_paid = FALSE);
 		RETURN p_pay_tx_status;
 	END IF;
 END 
 $$ DELIMITER ;
 
-$$ DELIMITER
+DELIMITER $$
 drop FUNCTION if exists add_blacklist_usr; -- setup
 CREATE FUNCTION `add_blacklist_usr`(
 		p_user_id INT(11),
@@ -363,7 +363,7 @@ BEGIN
 			tg_user_id,
 			tg_user_at,
 			tg_user_handle,
-			tg_chat_id_found,,
+			tg_chat_id_found,
 			is_enabled
 		) VALUES (
 			p_user_id,
@@ -378,7 +378,7 @@ BEGIN
 END 
 $$ DELIMITER ;
 
-$$ DELIMITER
+DELIMITER $$
 drop FUNCTION if exists usr_shill_limit_reached; -- setup
 CREATE FUNCTION `usr_shill_limit_reached`(
     	p_tg_user_id VARCHAR(40))
@@ -1020,7 +1020,7 @@ $$ DELIMITER ;
 
 -- # '/admin_pay_shill_rewards'
 -- LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_id']
--- DB_PROC_SET_USR_PAY_SUBMIT = 'SET_USER_PAY_TX_SUBMIT'
+-- DB_PROC_SET_USR_PAY_SUBMIT = 'SET_USER_PAY_TX_SUBMIT' # -> get_usr_pay_usd_appr_sum, set_usr_pay_usd_tx_submit
 -- 		# perform python/solidity 'transfer(user_earns.usd_owed)' call to 'wallet_address' for user_id
 -- 		#	wallet_address can be retreived from 'GET_USER_EARNINGS(tg_user_id)'
 -- 		#   receive tx data for DB_PROC_SET_USR_PAY_CONF
@@ -1084,7 +1084,7 @@ $$ DELIMITER ;
 
 -- # '/admin_pay_shill_rewards'
 -- LST_KEYS_PAY_SHILL_EARNS_CONF = ['admin_id','user_id','chain_usd_paid','tx_hash','tx_status','tok_addr','tok_symb','tok_amnt']
--- DB_PROC_SET_USR_PAY_CONF = 'SET_USER_PAY_TX_STATUS'
+-- DB_PROC_SET_USR_PAY_CONF = 'SET_USER_PAY_TX_STATUS' # -> set_usr_pay_usd_tx_status
 DELIMITER $$
 DROP PROCEDURE IF EXISTS SET_USER_PAY_TX_STATUS;
 CREATE PROCEDURE `SET_USER_PAY_TX_STATUS`(
