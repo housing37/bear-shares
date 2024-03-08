@@ -78,14 +78,20 @@ class BingImgGenerator():
         self.password = _pw
         self.driver = None
 
-    def init_webdriver(self, use_cli):
+    def init_webdriver(self, _headless):
         options = Options()
         # options = webdriver.ChromeOptions()
-        if use_cli:
-            ans = input('\n  Run headless? [y/n]\n  > ')
-            if ans == 'y' or ans == '1':
-                options.add_argument("--headless")  # Run Chrome in headless mode
-                # options.add_argument("--window-size=1920,1080")
+        if _headless:
+            options.add_argument("--headless")  # Run Chrome in headless mode
+            # options.add_argument("--window-size=1920,1080")
+
+            # LEFT OFF HERE ... possible fix for failing w/ --headless 
+            #   try testing headless w/ these 2 additional options
+            #   seems to work in req_handler.py for trinity_bot
+            options.add_argument("--enable-javascript")  # Run Chrome in headless mode
+            user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
+            options.add_argument(f"user-agent={user_agent}")
+                
         return webdriver.Chrome(options=options) # Create driver & get html_content
         # return webdriver.Firefox(options=options)
 
@@ -124,7 +130,7 @@ class BingImgGenerator():
         print(f'navigating to {url}')
         _driver.get(url) # go to create page
 
-    def execute_gen_image(self, str_promt, use_cli):
+    def execute_gen_image(self, str_promt, use_cli, headless=False):
 
         # vdisplay = Xvfb()
         # vdisplay.start()
@@ -134,7 +140,8 @@ class BingImgGenerator():
 
 
         print(f'\ninitializing... {get_time_now()}')
-        self.driver = self.init_webdriver(use_cli)
+        print(f' use_cli: {use_cli} _ headless: {headless}')
+        self.driver = self.init_webdriver(headless)
 
         print(f'\nnav to create page... {get_time_now()}')
         self.get_create_page(self.driver) # nav to bing.com/images/create
@@ -157,8 +164,8 @@ class BingImgGenerator():
         print(f'\nprinting img urls ... {get_time_now()}', *img_urls, sep='\n ')
 
         # scrape page source for reward points count
-        pts = hc.xpath("//div[@id='id_h']//a[@id='id_rh']//span[@id='id_rc']")[0].text_content()
-        print(f'\ncurrent reward points ... {get_time_now()}\n {pts}')
+        # pts = hc.xpath("//div[@id='id_h']//a[@id='id_rh']//span[@id='id_rc']")[0].text_content()
+        # print(f'\ncurrent reward points ... {get_time_now()}\n {pts}')
 
         return img_urls
         # test img url received

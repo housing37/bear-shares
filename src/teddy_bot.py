@@ -64,19 +64,19 @@ dict_cookies ={
     "myst37.022":
     "1SSgxK-AK9szOZgW5VucHQs3cZvNzJJ8EE3cHHP5c7r6IdrQ_qAvGTOYPWakQ6kjfumFosvTYGtsPm_TO119AKhxORgINBmbrd9hT1cF6v1qgBP_PjINJI3fyBF0aVk0WK-sE2NtF8AVJG-h7knYgu6Pv4sJ6MKiKUKVW91TIOBgxVSHuthw3n_VjplTS87tDWHdwqZxPUySODoqhwNCW0g",
 }
-dict_logins ={
+DICT_LOGINS ={
     "bear37.001@hotmail.com":
     "bear102938",
-    # "bear37.002@hotmail.com":
-    # "bear102938",
-    # "bear37.003@hotmail.com":
-    # "bear102938",
-    # "bear37.004@hotmail.com":
-    # "bear102938",
-    # "bear37.005@hotmail.com":
-    # "bear102938",
-    # "bear37.006@hotmail.com":
-    # "bear102938",
+    "bear37.002@hotmail.com":
+    "bear102938",
+    "bear37.003@hotmail.com":
+    "bear102938",
+    "bear37.004@hotmail.com":
+    "bear102938",
+    "bear37.005@hotmail.com":
+    "bear102938",
+    "bear37.006@hotmail.com":
+    "bear102938",
     # "bear37.007@hotmail.com":
     # "bear102938",
     # "bear37.008@hotmail.com":
@@ -460,6 +460,12 @@ def get_next_login(_dict_logins):
     IDX_LAST_COOKIE = idx_email
     return idx_email, str_pw, _dict_logins[str_pw]
 
+def get_rand_login(_dict_logins):
+    lst_emails = list(_dict_logins.keys())
+    idx_email = random.randint(0, len(lst_emails)-1)
+    str_pw = lst_emails[idx_email]
+    return idx_email, str_pw, _dict_logins[str_pw]
+
 def get_next_cookie(_dict_cookies):
     global IDX_LAST_COOKIE
     lst_keys = list(_dict_cookies.keys())
@@ -492,7 +498,8 @@ def gen_ai_image(str_prompt):
     # loop until no exception
     
     if USE_GEN_IMG:
-        _idx, _key, _cookie = get_next_login(dict_logins)
+        # _idx, _key, _cookie = get_next_login(DICT_LOGINS)
+        _idx, _key, _cookie = get_rand_login(DICT_LOGINS)
     else:
         if USE_RAND_COOKIE:
             _idx, _key, _cookie = get_rand_cookie(dict_cookies)
@@ -503,8 +510,8 @@ def gen_ai_image(str_prompt):
 
     try:
         if USE_GEN_IMG:
-            big = BingImgGenerator(_key, _cookie)
-            lst_imgs = big.execute_gen_image(str_prompt, False) # True = use cli prompts
+            big = BingImgGenerator(_key, _cookie) # selenium integration
+            lst_imgs = big.execute_gen_image(str_prompt, use_cli=False, headless=True) 
         else:
             gen = ImageGen(auth_cookie=_cookie, auth_cookie_SRCHHPGUSR=_cookie, quiet=False)
             # gen = ImageGenAsync(auth_cookie=cook, quiet=False)
