@@ -101,7 +101,7 @@ CREATE TABLE `user_shill_rates` (
   `fk_user_id` int(11) NOT NULL,
   `platform` VARCHAR(40) NOT NULL, -- const: unknown, twitter, tiktok, reddit
   `type_descr` VARCHAR(40) NOT NULL, -- const: unknown, htag, short_txt, long_txt, img_meme, short_vid, long_vid
-  `pay_usd` float default 0.0 -- dyn: 0.005, 0.01, 0.05, 0.25 0.50, 1.00, etc.
+  `pay_usd` float default 0.0, -- dyn: 0.005, 0.01, 0.05, 0.25 0.50, 1.00, etc.
 
   UNIQUE KEY `ID` (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
