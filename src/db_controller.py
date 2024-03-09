@@ -5,6 +5,7 @@ cStrDivider_1 = '#--------------------------------------------------------------
 print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globals', cStrDivider, sep='\n')
 
 from _env import env
+import pprint
 # from house_tools import *
 
 '''
@@ -186,7 +187,8 @@ def exeMySqlDump(tableNames='nil_tables', fileName='nil_file.sql', use_remote=Fa
         return result
         
 def exeStoredProcedure(argsTup, strProc, strOutParam=None, exe_select=False):
-    funcname = f'{__filename} exeStoredProcedure({argsTup}, {strProc}, {strOutParam}, exe_select={exe_select})'
+    # funcname = f'{__filename} exeStoredProcedure({argsTup}, {strProc}, {strOutParam}, exe_select={exe_select})'
+    funcname = f'{__filename} exeStoredProcedure'
     print(funcname, '- ENTER')
 
     #============ open db connection ===============#
@@ -213,11 +215,14 @@ def exeStoredProcedure(argsTup, strProc, strOutParam=None, exe_select=False):
             rowCnt = cur.execute(f"select {strOutParam};") if strOutParam != None else -1
             rows = cur.fetchall()
 
-        print(funcname, f" >> RESULT 'call {strProc}' procArgs: {procArgs};")
-        print(funcname, f" >> RESULT 'call {strProc}' rowCnt: {rowCnt};")
+        # print(funcname, f" >> RESULT 'call {strProc}' procArgs: {procArgs};")
+        # print(funcname, f" >> RESULT 'call {strProc}' rowCnt: {rowCnt};")
         #print(funcname, f' >> Printing... rows', *rows)
-        getPrintListStr(lst=rows, strListTitle='  >> Printing... rows', useEnumerate=True, goIdxPrint=True, goPrint=True)
+        # getPrintListStr(lst=rows, strListTitle='  >> Printing... rows', useEnumerate=True, goIdxPrint=True, goPrint=True)
         #print(funcname, f' >> Printing... rows[0]:', rows[0])
+        print(' >> Printing... rows')
+        pprint.pprint(rows)
+        print(' >> Printing... rows _ DONE')
         
         result = None
         if strOutParam == None: # stored proc invoked w/o OUT param
@@ -228,24 +233,26 @@ def exeStoredProcedure(argsTup, strProc, strOutParam=None, exe_select=False):
                 result = int(rows[0][strOutParam])
     except Exception as e: # ref: https://docs.python.org/2/tutorial/errors.html
         #============ handle db exceptions ===============#
-        strE_0 = f"Exception hit... \nFAILED to call '{funcname}'; \n\nprocArgs: {procArgs}; \n\nreturning -1"
-        strE_1 = f"\n __Exception__: \n{e}\n __Exception__"
-        print(funcname, strE_0, strE_1)
+        strE_0 = f"Exception hit... \n  FAILED to call '{funcname}'; \n\n  procArgs: {procArgs}; \n\n  returning -1"
+        strE_1 = f"\n __Exception__: \n  {e}\n __Exception__"
+        print('\n**************\n', funcname, strE_0, strE_1,'\n**************\n')
         result = -1
     finally:
         #============ close db connection ===============#
         close_database_connection()
         return result
-        
+
 def exe_stored_proc(iUserID=-1, strProc='', dictKeyVals={}):
-    funcname = f'{__filename} exe_stored_proc(iUserID={iUserID}, strProc={strProc}, dictKeyVals={dictKeyVals})'
+    # funcname = f'{__filename} exe_stored_proc(iUserID={iUserID}, strProc={strProc}, dictKeyVals={dictKeyVals})'
+    funcname = f'{__filename} exe_stored_proc'
     print(funcname, '- ENTER')
 
     argsTup = () # generate tuple of vals from dictKeyVals (dict order maintained in python3.7+)
     argsTup = [argsTup + (dictKeyVals[k],) for k in dictKeyVals]
     strOutParam = None
+    args_print = ', '.join(list(dictKeyVals.values()))
+    print(f' exe proc: {strProc}({args_print})')
     return exeStoredProcedure(argsTup, strProc, strOutParam)
-
 
 def sel_2_tbl_query(d_col_val_where_1={},
                         d_col_val_where_2={},

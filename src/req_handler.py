@@ -40,8 +40,10 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 #   TRINITY
 #-----------------------------------------------------#
 # '/register_as_shiller'
-kSHILLER_REG = "add_new_user"
-LST_KEYS_REG_USER = ['user_id', 'wallet_address', 'trinity_tw_url']
+kSHILLER_REG = "register_as_shiller"
+LST_REG_USER_PARAMS = ['<wallet_address>', '<tweet_url>']
+STR_REG_USER_ERR = f'Please tweet "@BearSharesNFT trinity" 👍️️️️️️\n Then use that link to register with cmd:\n /{kSHILLER_REG} {" ".join(LST_REG_USER_PARAMS)}'
+LST_KEYS_REG_USER = ['user_id','user_at','user_handle','wallet_address','trinity_tw_url']
 LST_KEYS_REG_USER_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_ADD_NEW_USER = 'ADD_NEW_TG_USER'
     # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
@@ -148,7 +150,7 @@ DB_PROC_ADD_BLACKLIST_SCAMMER = 'ADD_REQUEST_USER_BLACKLIST'
 
 #-----------------------------------------------------#
 DICT_CMD_EXE = {
-    "register_as_shiller":[kSHILLER_REG,LST_KEYS_REG_USER,LST_KEYS_REG_USER_RESP,DB_PROC_ADD_NEW_USER],
+    "register_as_shiller":[kSHILLER_REG,LST_KEYS_REG_USER,LST_KEYS_REG_USER_RESP,DB_PROC_ADD_NEW_USER,LST_REG_USER_PARAMS,STR_REG_USER_ERR],
     "confirm_twitter":[kTWITTER_CONF,LST_KEYS_TW_CONF,LST_KEYS_TW_CONF_RESP,DB_PROC_RENEW_TW_CONFRIM],
     "submit_shill_link":[kSUBMIT_SHILL,LST_KEYS_SUBMIT_SHILL,LST_KEYS_SUBMIT_SHILL_RESP,DB_PROC_ADD_SHILL],
     "show_my_rates":[kSHOW_RATES,LST_KEYS_SHOW_RATES,LST_KEYS_SHOW_RATES_RESP,DB_PROC_GET_USR_RATES],
@@ -177,13 +179,21 @@ def exe_tg_cmd(_lst_inp, _use_prod_accts):
     # generate keyVals to pass as 'request' w/ 'tg_cmd!=None', to 'handle_request'
     tg_cmd = _lst_inp[0][1::] # parse out the '/'
     lst_params = _lst_inp[1::]
-    print('tg_cmd: '+tg_cmd)
-    print('_lst_inp: '+str(_lst_inp))
-    print('DICT_CMD_EXE[tg_cmd][1]: '+str(DICT_CMD_EXE[tg_cmd][1]))
     keyVals = {}
+    print('tg_cmd: '+tg_cmd)
+    print('lst_params: '+str(lst_params))
+    print('DICT_CMD_EXE[tg_cmd][1]: '+str(DICT_CMD_EXE[tg_cmd][1]))
+
+    # validate input cmd params count
+    if len(lst_params) != len(DICT_CMD_EXE[tg_cmd][1]):
+        print('** WARNING **: input cmd param count != db required param count; forcing return fail')
+        str_req_params = ''.join(DICT_CMD_EXE[tg_cmd][-1])
+        bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=True, errMsg=f'invalid number of params; {str_req_params}') # False = force fail
+        return jsonResp
+    
+    # generate keyVals from input cmd params
     for i,v in enumerate(lst_params): 
         print(f' lst_params[{i}]={v}')
-        # if i == 0: continue # skip _lst_inp[0] == tg_cmd
         keyVals[DICT_CMD_EXE[tg_cmd][1][i]] = v # [tg_cmd][1] = LST_KEYS_...
 
     # simuate: 'handle_request(request, kREQUEST_KEY)' w/ added 'tg_cmd'
@@ -266,7 +276,7 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
             if (tg_cmd == 'register_as_shiller' or tg_cmd == 'confirm_twitter') and not valid_trinity_tweet(keyVals['trinity_tw_url']):
                 dbProcResult=-1
                 # bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=True)
-                bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=True) # False = force fail
+                bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=True, errMsg='invalid tweet confirmation url') # False = force fail
                 return bErr, jsonResp, dbProcResult
                             
             # if 'user_id' in keyVals: del keyVals['user_id']

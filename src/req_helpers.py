@@ -17,18 +17,19 @@ import json
 def JSONResponse(dict):
     return Response(json.dumps(dict), mimetype="application/json" )
 
-def prepJsonResponseValidParams(keyVals, validParams0=True, validParams1=True, validParams2=True, validParams3=True, tprint=False):
+def prepJsonResponseValidParams(keyVals, validParams0=True, validParams1=True, validParams2=True, validParams3=True, tprint=False, errMsg=None):
     funcname = f'{__filename} prepJsonResponseValidParams'
     print(funcname + ' - ENTER')
 
     keyVals = 'nil_keyVals' if keyVals == None or len(keyVals) < 1 else keyVals
     bErr = False
     if not validParams0 or not validParams1 or not validParams2 or not validParams3:
-        err_resp_args = {'ERROR':vErrArgs, 'MSG':kErrArgs, 'PAYLOAD':{'error':vErrArgs,'keyVals':keyVals}}
+        if not errMsg: errMsg = kErrArgs
+        err_resp_args = {'ERROR':vErrArgs, 'MSG':errMsg, 'PAYLOAD':{'error':errMsg,'keyVals':keyVals}}
         if tprint:
-            print(funcname, f'return error: {vErrArgs}', f'payloaddict: {err_resp_args}\n')
+            print(funcname, f'return error: {errMsg}', f'payloaddict: {err_resp_args}\n')
         else:
-            print(funcname, f'return error: {vErrArgs}', 'payloaddict: <print disabled>\n')
+            print(funcname, f'return error: {errMsg}', 'payloaddict: <print disabled>\n')
         bErr = True
         return bErr, JSONResponse(err_resp_args)
 
@@ -71,7 +72,7 @@ def prepJsonResponseDbProc(arrStrReturnKeys, dbProcResult, strRespSuccessMSG, tp
     return JSONResponse ({'ERROR':vErrNone,'MSG':strRespSuccessMSG,'PAYLOAD':payloaddict})
 
 def prepJsonResponseDbProc_ALL(arrStrReturnKeys, dbProcResult, strRespSuccessMSG, tprint=False):
-    funcname = f'{__filename} prepJsonResponseDbProc'
+    funcname = f'{__filename} prepJsonResponseDbProc_ALL'
     print(funcname + ' - ENTER')
     #l = []
     #l.append({arrStrReturnKeys:dbProcResult}) # append this json return list entry #
@@ -79,6 +80,7 @@ def prepJsonResponseDbProc_ALL(arrStrReturnKeys, dbProcResult, strRespSuccessMSG
     for row in dbProcResult:
         jsonRow = getJsonDictFromDBQueryRowWithKeys(row, arrStrReturnKeys, True) # True = _ALL
         l.append (jsonRow) # append this json return list entry #
+        # l.append(row)
 
     payloaddict = {'error':vErrNone,'result_arr':l,'auth_token':"TODO ; )"}
 

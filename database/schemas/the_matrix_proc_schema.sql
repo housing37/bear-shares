@@ -42,7 +42,6 @@ CREATE FUNCTION `tw_conf_exists`(
     READS SQL DATA
     DETERMINISTIC
 BEGIN
-	set @v_exp_days = 7;
 	SELECT COUNT(*) FROM users WHERE tw_conf_url = p_tw_conf_url INTO @v_cnt_fnd;
 	IF @v_cnt_fnd > 0 THEN
 		RETURN TRUE; 
@@ -188,8 +187,8 @@ CREATE FUNCTION `add_user_shill_rate`(
 BEGIN
 	INSERT INTO user_shill_rates (
 		fk_user_id,
-		fk_shill_plat_id,
-		fk_shill_type_id,
+		platform,
+		type_descr,
 		pay_usd
 	) VALUES (
 		p_user_id,
@@ -496,9 +495,12 @@ BEGIN
 				'failed' as `status`, 
 				'tw conf url already exists' as info, 
 				p_tg_user_id as tg_user_id_inp,
+				p_tg_user_at as tg_user_at_inp,
+				p_tg_user_handle as tg_user_handle_inp,
+				p_wallet_address as wallet_address_inp,
 				p_tw_conf_url as tw_conf_url_inp
 			FROM users 
-			WHERE tg_user_id = p_tg_user_id;
+			WHERE tw_conf_url = p_tw_conf_url;
 	ELSE
 		-- add to users table
 		INSERT INTO users (
@@ -543,7 +545,12 @@ BEGIN
 				'success' as `status`,
 				'added new user' as info,
 				@new_usr_id as new_users_id,
-				p_tg_user_id as tg_user_id_inp
+				p_tg_user_id as tg_user_id_inp,
+				p_tg_user_id as tg_user_id_inp,
+				p_tg_user_at as tg_user_at_inp,
+				p_tg_user_handle as tg_user_handle_inp,
+				p_wallet_address as wallet_address_inp,
+				p_tw_conf_url as tw_conf_url_inp
 			FROM users u			
 			INNER JOIN user_shill_rates r
 				ON u.id = r.fk_user_id
