@@ -10,6 +10,8 @@ print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globa
 from constants import *
 from flask import Response
 import json
+from re import match
+
 
 #=====================================================#
 #         request handler json response parsers       #
@@ -78,9 +80,10 @@ def prepJsonResponseDbProc_ALL(arrStrReturnKeys, dbProcResult, strRespSuccessMSG
     #l.append({arrStrReturnKeys:dbProcResult}) # append this json return list entry #
     l = []
     for row in dbProcResult:
-        jsonRow = getJsonDictFromDBQueryRowWithKeys(row, arrStrReturnKeys, True) # True = _ALL
+        # jsonRow = getJsonDictFromDBQueryRowWithKeys(row, arrStrReturnKeys, True) # True = _ALL
+        jsonRow = getJsonDictFromDBQueryRowWithKeys(row, list(row.keys()), True) # True = _ALL
         l.append (jsonRow) # append this json return list entry #
-        # l.append(row)
+        # NOTE: getJsonDictFromDBQueryRowWithKeys required for datetime parsing
 
     payloaddict = {'error':vErrNone,'result_arr':l,'auth_token':"TODO ; )"}
 
@@ -114,7 +117,7 @@ def getJsonDictFromDBQueryRowWithKeys(row, keys, _ALL=False):
                 jsonDict[key] = jsonTimestampFromDBQueryTimestamp(row[key])
 
             except Exception as e:
-                logerror(funcname, "\n\n!EXCEPTION HIT!\n\n e: '%s';\n\n in 'jsonDict[key] = jsonTimestampFromDBQueryTimestamp(row[key])'\n\n" % e, " falling back to 'jsonDict[key] = row[key]' instead")
+                print(funcname, "\n\n!EXCEPTION HIT!\n\n e: '%s';\n\n in 'jsonDict[key] = jsonTimestampFromDBQueryTimestamp(row[key])'\n\n" % e, " falling back to 'jsonDict[key] = row[key]' instead")
                 jsonDict[key] = row[key]
         else:
             jsonDict[key] = row[key]
