@@ -526,12 +526,12 @@ BEGIN
 		SELECT add_default_user_earns(@new_usr_id) INTO @new_earns_id;
 
 		-- set default rates for new user
-		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'htag', 0.005); -- tw, hashtag, .5c
-		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'short_txt', 0.01); -- tw, short_txt, 1c
-		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'long_txt', 0.05); -- tw, long_txt, 5c
-		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'img_meme', 0.25); -- tw, meme/img, 25c
-		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'short_vid', 0.50); -- tw, short_vid, 50c
-		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'long_vid', 1.00); -- tw, long_vid, 100c
+		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'htag', 0.005) INTO @v_rate_id; -- tw, hashtag, .5c
+		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'short_txt', 0.01) INTO @v_rate_id; -- tw, short_txt, 1c
+		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'long_txt', 0.05) INTO @v_rate_id; -- tw, long_txt, 5c
+		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'img_meme', 0.25) INTO @v_rate_id; -- tw, meme/img, 25c
+		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'short_vid', 0.50) INTO @v_rate_id; -- tw, short_vid, 50c
+		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'long_vid', 1.00) INTO @v_rate_id; -- tw, long_vid, 100c
 		-- SELECT add_user_shill_rate(@new_usr_id, 0, 0, 0.005); -- tw, hashtag, .5c
 		-- SELECT add_user_shill_rate(@new_usr_id, 0, 1, 0.01); -- tw, short_txt, 1c
 		-- SELECT add_user_shill_rate(@new_usr_id, 0, 2, 0.05); -- tw, long_txt, 5c
