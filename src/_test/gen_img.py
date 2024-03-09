@@ -90,6 +90,7 @@ class BingImgGenerator():
             #   seems to work in req_handler.py for trinity_bot
             # NOTE: these 2 additions seem to work for local mac OSx
             #   however, still having issues with chrome driver running ubuntu server
+            #   ref: https://stackoverflow.com/questions/48649230/how-to-update-chromedriver-on-ubuntu
             #   ref: https://tecadmin.net/setup-selenium-chromedriver-on-ubuntu/
             #   ref: https://chromedriver.chromium.org/downloads
             #   ref: https://tecadmin.net/google-chrome-headless-features/
