@@ -37,18 +37,20 @@ def prepJsonResponseValidParams(keyVals, validParams0=True, validParams1=True, v
 
     return bErr, JSONResponse({'ERROR':vErrNone})
 
-def prepJsonResponseDbProcErr(dbProcResult, tprint=False):
+def prepJsonResponseDbProcErr(dbProcResult, tprint=False, errMsg=None):
     funcname = f'{__filename} prepJsonResponseDbProcErr'
     print(funcname + ' - ENTER')
 
     bErr = False
     #logalert(funcname, f'dbProcResult: {dbProcResult}\n\n', simpleprint=True)
-    if dbProcResult == -1: # validate db errors #
-        err_resp_db = {'ERROR':vErrDb, 'MSG':kErrDb, 'PAYLOAD':{'error':vErrDb, 'dbProcResult':dbProcResult}}
+    if dbProcResult == -1 or (dbProcResult != -1 and errMsg): # validate db errors #
+        if not errMsg: errMsg = kErrDb
+        dbProcResult = get_datetime_parse_list(dbProcResult)
+        err_resp_db = {'ERROR':vErrDb, 'MSG':errMsg, 'PAYLOAD':{'error':errMsg, 'dbProcResult':dbProcResult}}
         if tprint:
-            print(funcname, f'return error: {vErrDb}', f'payloaddict: {err_resp_db}\n')
+            print(funcname, f'return error: {errMsg}', f'payloaddict: {err_resp_db}\n')
         else:
-            print(funcname, f'return error: {vErrDb}', 'payloaddict: <print disabled>\n')
+            print(funcname, f'return error: {errMsg}', 'payloaddict: <print disabled>\n')
         bErr = True
         return bErr, JSONResponse (err_resp_db)
 
@@ -73,17 +75,21 @@ def prepJsonResponseDbProc(arrStrReturnKeys, dbProcResult, strRespSuccessMSG, tp
 
     return JSONResponse ({'ERROR':vErrNone,'MSG':strRespSuccessMSG,'PAYLOAD':payloaddict})
 
+def get_datetime_parse_list(_dbProcResult):
+    l = []
+    for row in _dbProcResult:
+        jsonRow = getJsonDictFromDBQueryRowWithKeys(row, list(row.keys()), True) # True = _ALL
+        l.append (jsonRow) # append this json return list entry #
+        # NOTE: getJsonDictFromDBQueryRowWithKeys required for datetime parsing
+    return l
+            
 def prepJsonResponseDbProc_ALL(arrStrReturnKeys, dbProcResult, strRespSuccessMSG, tprint=False):
     funcname = f'{__filename} prepJsonResponseDbProc_ALL'
     print(funcname + ' - ENTER')
     #l = []
     #l.append({arrStrReturnKeys:dbProcResult}) # append this json return list entry #
     l = []
-    for row in dbProcResult:
-        # jsonRow = getJsonDictFromDBQueryRowWithKeys(row, arrStrReturnKeys, True) # True = _ALL
-        jsonRow = getJsonDictFromDBQueryRowWithKeys(row, list(row.keys()), True) # True = _ALL
-        l.append (jsonRow) # append this json return list entry #
-        # NOTE: getJsonDictFromDBQueryRowWithKeys required for datetime parsing
+    l = get_datetime_parse_list(dbProcResult)
 
     payloaddict = {'error':vErrNone,'result_arr':l,'auth_token':"TODO ; )"}
 

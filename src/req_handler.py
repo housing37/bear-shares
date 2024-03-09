@@ -194,7 +194,7 @@ def exe_tg_cmd(_lst_inp, _use_prod_accts):
     # generate keyVals from input cmd params
     for i,v in enumerate(lst_params): 
         print(f' lst_params[{i}]={v}')
-        keyVals[DICT_CMD_EXE[tg_cmd][1][i]] = v # [tg_cmd][1] = LST_KEYS_...
+        keyVals[DICT_CMD_EXE[tg_cmd][1][i]] = str(v) # [tg_cmd][1] = LST_KEYS_...
 
     # simuate: 'handle_request(request, kREQUEST_KEY)' w/ added 'tg_cmd'
     return handle_request(keyVals, DICT_CMD_EXE[tg_cmd][0], tg_cmd)
@@ -282,7 +282,12 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
             # if 'user_id' in keyVals: del keyVals['user_id']
             stored_proc = DICT_CMD_EXE[tg_cmd][3] # [tg_cmd][3] = 'stored-proc-name'
             dbProcResult = exe_stored_proc(-1, stored_proc, keyVals)
-            bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=True)
+            if dbProcResult[0]['status'] == 'failed': errMsg = dbProcResult[0]['info']
+            else: errMsg = None    
+            bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=False, errMsg=errMsg)
+            # bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=True)
+            
+            
         else:
             dbProcResult=-1
             bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=True)
@@ -367,6 +372,7 @@ def valid_trinity_tweet(_tw_url):
 def search_tweet_for_text(tweet_url, _lst_text=[], _headless=True):
     funcname = f'{__filename} search_tweet_for_text'
     print(funcname + ' - ENTER')
+    wait_sec = 20
     try:
         options = Options()
         print(f' using --headless={_headless}')
@@ -386,7 +392,7 @@ def search_tweet_for_text(tweet_url, _lst_text=[], _headless=True):
         
         # NOTE: when tweet 'Views' count is shown, then tweet text is shown as well
         print(f' waiting for full html body text _ {get_time_now()}')
-        WebDriverWait(driver, 30).until(EC.text_to_be_present_in_element((By.TAG_NAME, 'BODY'), 'Views')) 
+        WebDriverWait(driver, wait_sec).until(EC.text_to_be_present_in_element((By.TAG_NAME, 'BODY'), 'Views')) 
         print(f' waiting for full html body text _ {get_time_now()} _ DONE')        
         
         # get / search body text for '_lst_text' items
@@ -402,7 +408,9 @@ def search_tweet_for_text(tweet_url, _lst_text=[], _headless=True):
         return True
         
     except Exception as e:
-        print(f" Error scraping tweet: {e}")
+        print(f" Error scraping tweet")
+        print(f' waiting for full html body text _ {get_time_now()} _ {wait_sec} sec TIMEOUT (maybe)')
+        print(f"  **Exception** e = '{e}'\n  returning False")
         return False
     finally:
         # Close the browser

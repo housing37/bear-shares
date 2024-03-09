@@ -7,9 +7,9 @@ print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globa
 #------------------------------------------------------------#
 #   IMPORTS                                                  #
 #------------------------------------------------------------#
-# import random, json
+# import random, 
 from _env import env
-import time, os, traceback, sys
+import time, os, traceback, sys, json, pprint
 from datetime import datetime
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
@@ -78,93 +78,53 @@ async def cmd_handler(update: Update, context):
 
     user = update.message.from_user
     uid = user.id
-    # str_handle = user.first_name + ' ' + user.last_name
-    str_handle = user.first_name
-    str_uname = user.username
+    uname_at = user.username
+    uname_handle = user.first_name
+    # uname_handle = user.first_name + ' ' + user.last_name
     inp_split = update.message.text.split()
 
     # check if TG group is whitelisted to use (prints group info and deny)
-    valid_cmd = inp_split[0][1::] in LST_TG_CMDS # parses out the '/'
+    tg_cmd = inp_split[0][1::] # parses out the '/'
+    valid_cmd = tg_cmd in LST_TG_CMDS 
     print(inp_split[0])
-    valid_chat, str_deny = is_valid_chat_id(str(_chat_id), group_name, str_uname, str_handle)
+    valid_chat, str_deny = is_valid_chat_id(str(_chat_id), group_name, uname_at, uname_handle)
     print(valid_cmd, valid_chat, str_deny, sep='\n')
     if not valid_chat or not valid_cmd:
         await context.bot.send_message(chat_id=update.message.chat_id, text=str_deny+' '+inp_split[0])    
         print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
         return
 
-    # LEFT OFF HERE ... need to invoke req_handler
-    #   w/ str_cmd & str_
-    # d = {}
-    # d = [d[i] = i for i in inp_split]
-    print('req_handler.exe_tg_cmd ...')
-    jsonResp = req_handler.exe_tg_cmd(inp_split, USE_PROD_TG)
-    print('printing jsonResp ...')
-    print(jsonResp)
+    # ex tweet_conf (fails): https://x.com/SolAudits/status/1765925371851972744?s=20
+    # ex tweet_conf (valid): https://x.com/SolAudits/status/1765925225844089300?s=20
+
+    # handle cmds that need more data
+    if tg_cmd == 'register_as_shiller':
+        if False: # True = test from differnt tg user
+            inp_split.insert(1, '1058890141')
+            inp_split.insert(2, 'laycpirates')
+            inp_split.insert(3, 'LAO Pirates')
+        else:
+            inp_split.insert(1, uid)
+            inp_split.insert(2, uname_at)
+            inp_split.insert(3, uname_handle)
+
+    print(f'GO - req_handler.exe_tg_cmd ... {get_time_now()}')
+    response = req_handler.exe_tg_cmd(inp_split, USE_PROD_TG)
+    response_dict = json.loads(response.get_data(as_text=True))
+    print(f'GO - req_handler.exe_tg_cmd ... {get_time_now()} _ DONE')
+
+    print('\nprinting response_dict ...')
+    pprint.pprint(response_dict)
+    # print(response_dict)
 
     # return jsonResp # JSONResponse(...) -> Response(json.dumps(dict), mimetype="application/json" )
-    print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
-    print('exiting ...')
-    exit(0)
-    # inp 
-    # str_cmd = inp[:inp.find(' '):] # slicing out /<command>
-    # str_prompt = inp[inp.find(' ')+1::] # slicing out /<command>
-
-    
-
-    # filter / update prompt to deal with spammers (using 'BLACKLIST_TEXT')
-    str_prompt = filter_prompt(str_prompt)
-
-    str_conf = f'@{str_uname} (aka. {str_handle}) -> please wait, generating image ...\n    "{str_prompt}"'
-    print(str_conf)
-
-    await context.bot.send_message(chat_id=update.message.chat_id, text=str_conf)
-
-    lst_imgs, err = gen_ai_image(str_prompt)
-
-    if err > 0:
-        str_err = f"@{str_uname} (aka. {str_handle}) -> BING said NO!\n   change it up & try again : /"
-        if err == 1:
-            str_err = f"@{str_uname} (aka. {str_handle}) -> description TOO SHORT, need at least 50 chars (~10 words or so)"
-        str_err = str_err + f'\n    "{str_prompt}"'
-        await context.bot.send_message(chat_id=update.message.chat_id, text=str_err)
-        print(str_err)
-        print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
-        return
-
-    print('SENDING IMAGE to TG ...')
-    # pick one random image from lst_imgs
-    r_idx = -1
-    url = 'nil_url'
-    while True:
-        r_idx = random.randint(0, len(lst_imgs)-1)
-        is_img = 'r.bing.com' not in lst_imgs[r_idx]
-        no_end_dot = lst_imgs[r_idx][-1] != '.'
-        # if 'r.bing.com' not in lst_imgs[r_idx]:
-        if is_img and no_end_dot:
-            url = lst_imgs[r_idx]
-            break
-
-    # Create an inline keyboard markup with a button
-    inline_keyboard = [
-        [InlineKeyboardButton("Request Tweet", callback_data=f'@{str_uname} (aka. {str_handle})')]
-    ]
-    reply_markup = InlineKeyboardMarkup(inline_keyboard)
-    try:
-        await context.bot.send_message(
-            chat_id=update.message.chat_id, 
-            text=f'@{str_uname} (aka. {str_handle}) -> here is your image\n  "{str_prompt}" ...\n {url}',
-            # reply_markup = ReplyKeyboardMarkup([['Your Button Text']])
-            reply_markup = reply_markup
-            )
-    except Exception as e:
-        # note_021724: exception added for TG: @enriquebambo (aka. 🍊 👾 𝐄η𝐑𝕚ⓀẸⓑᗩｍ𝕓ㄖ 👾🍊 {I DM First, I'm Impostor})
-        #   sending response with TG button was causing a crash (but images were indeed successfully received from BING)
-        print_except(e, debugLvl=1)
-        print('Sending to TG w/o tweet button... ')
-        await context.bot.send_message(
-            chat_id=update.message.chat_id, 
-            text=f'@{str_uname} (aka. {str_handle}) -> here is your image\n  "{str_prompt}" ...\n {url}')
+    if int(response_dict['ERROR']) > 0:
+        err_num = response_dict['ERROR']
+        err_msg = response_dict['MSG']
+        await update.message.reply_text(f"err_{err_num}: {err_msg}")
+    else:
+        await update.message.reply_text(f"Registration Successful! Use cmd: '/submit_shill_link' ")
+        
     print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
 
 async def log_activity(update: Update, context):
