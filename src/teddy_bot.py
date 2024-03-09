@@ -533,7 +533,7 @@ def gen_ai_image(str_prompt):
         return lst_imgs, err
 
     print('DONE GETTING IMAGES from BING...')
-    print(*lst_imgs, sep='\n')
+    # print(*lst_imgs, sep='\n')
     print(f'cookie idx: {_idx}\ncookie key: {_key}')
     print(f'img request cnt: {IMG_REQUEST_CNT}')
     print(f'img request success ratio: {IMG_REQUEST_SUCCESS_CNT}/{IMG_REQUEST_CNT}')

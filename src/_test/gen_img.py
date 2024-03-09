@@ -90,6 +90,7 @@ class BingImgGenerator():
             #   seems to work in req_handler.py for trinity_bot
             # NOTE: these 2 additions seem to work for local mac OSx
             #   however, still having issues with chrome driver running ubuntu server
+            #   ref: https://googlechromelabs.github.io/chrome-for-testing/#stable
             #   ref: https://stackoverflow.com/questions/48649230/how-to-update-chromedriver-on-ubuntu
             #   ref: https://tecadmin.net/setup-selenium-chromedriver-on-ubuntu/
             #   ref: https://chromedriver.chromium.org/downloads
@@ -145,8 +146,7 @@ class BingImgGenerator():
         # launch stuff inside
         # virtual display here.
 
-        print(f'\nENTER - execute_gen_image')
-        print(f'initializing webdriver ... {get_time_now()}')
+        print(f'\nENTER - execute_gen_image _ initializing webdriver ... {get_time_now()}')
         print(f' use_cli: {use_cli} _ headless: {headless}')
         self.driver = self.init_webdriver(headless)
 
@@ -159,14 +159,18 @@ class BingImgGenerator():
         self.perform_login(self.driver) # nav to 'login.live.com' (then back to bing.com/images/create)
         print(f'perform login... {get_time_now()} _ DONE')
 
-        # wait for images to load (for btn 'Creating ...' turns to 'Create')
-        print(f'\nwaiting for generated images for descr ... {get_time_now()}\n "{descr}"')
-        xpath_ = "//div[@id='giscope']//form[@id='sb_form']//a[@id='create_btn_c']//span[@id='create_btn']"
         sec_wait = 60
-        WebDriverWait(self.driver, sec_wait).until(EC.text_to_be_present_in_element((By.XPATH, xpath_), 'Create')) 
-        print(f'waiting for generated images for descr ... {get_time_now()} _ DONE')
-        # import time
-        # time.sleep(40)
+        try:
+            # wait for images to load (for btn 'Creating ...' turns to 'Create')
+            print(f'\nwaiting for generated images for descr ({sec_wait} sec) ... {get_time_now()}\n "{descr}"')
+            xpath_ = "//div[@id='giscope']//form[@id='sb_form']//a[@id='create_btn_c']//span[@id='create_btn']"        
+            WebDriverWait(self.driver, sec_wait).until(EC.text_to_be_present_in_element((By.XPATH, xpath_), 'Create')) 
+            print(f'waiting for generated images for descr ... {get_time_now()} _ DONE')
+        except Exception as e:
+            print(f'** WARNING **: exception caught during BING {sec_wait} sec wait time _ {get_time_now()}')
+            print(f'    exception _ e: {e}')
+            print('     returning emtpy lst for img_urls')
+            return []
 
         # scrape page source for img urls
         print(f'\nparsing img_urls from page_source ... {get_time_now()}')
