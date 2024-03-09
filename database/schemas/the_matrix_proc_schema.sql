@@ -42,7 +42,7 @@ CREATE FUNCTION `tw_conf_exists`(
     READS SQL DATA
     DETERMINISTIC
 BEGIN
-	SELECT COUNT(*) FROM users WHERE tw_conf_url = p_tw_conf_url INTO @v_cnt_fnd;
+	SELECT COUNT(*) FROM log_tw_conf_urls WHERE tw_conf_url = p_tw_conf_url INTO @v_cnt_fnd;
 	IF @v_cnt_fnd > 0 THEN
 		RETURN TRUE; 
 	ELSE
@@ -491,7 +491,9 @@ BEGIN
 
 	-- vaidate p_tw_conf_url has not been used yet
 	ELSEIF tw_conf_exists(p_tw_conf_url) THEN
-		SELECT id, tg_user_id, tg_user_at, tg_user_handle, is_admin, tw_conf_url, dt_last_tw_conf,
+		SELECT u.id as OG_user_id, u.tg_user_id as OG_tg_user_id, 
+				u.tw_conf_url as OG_tw_conf_url_curr, u.dt_last_tw_conf as OG_dt_last_tw_conf,
+				l.tw_conf_url as LOG_tw_conf_url_found,
 				'failed' as `status`, 
 				'tw conf url already exists' as info, 
 				p_tg_user_id as tg_user_id_inp,
@@ -499,8 +501,10 @@ BEGIN
 				p_tg_user_handle as tg_user_handle_inp,
 				p_wallet_address as wallet_address_inp,
 				p_tw_conf_url as tw_conf_url_inp
-			FROM users 
-			WHERE tw_conf_url = p_tw_conf_url;
+			FROM users u
+			INNER JOIN log_tw_conf_urls l
+				ON u.id = l.fk_user_id
+			WHERE l.tw_conf_url = p_tw_conf_url;
 	ELSE
 		-- add to users table
 		INSERT INTO users (
@@ -574,6 +578,19 @@ BEGIN
 				'user not found' as info, 
 				p_tg_user_id as tg_user_id_inp,
 				p_tw_conf_url as tw_conf_url_inp;
+	-- vaidate p_tw_conf_url has not been used yet
+	ELSEIF tw_conf_exists(p_tw_conf_url) THEN
+		SELECT u.id as OG_user_id, u.tg_user_id as OG_tg_user_id, 
+				u.tw_conf_url as OG_tw_conf_url_curr, u.dt_last_tw_conf as OG_dt_last_tw_conf,
+				l.tw_conf_url as LOG_tw_conf_url_found,
+				'failed' as `status`, 
+				'tw conf url already exists' as info, 
+				p_tg_user_id as tg_user_id_inp,
+				p_tw_conf_url as tw_conf_url_inp
+			FROM users u
+			INNER JOIN log_tw_conf_urls l
+				ON u.id = l.fk_user_id
+			WHERE l.tw_conf_url = p_tw_conf_url;
 	ELSE
 		UPDATE users
 			SET dt_updated = NOW(),

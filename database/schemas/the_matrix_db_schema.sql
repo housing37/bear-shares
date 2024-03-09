@@ -37,11 +37,27 @@ CREATE TABLE `users` (
   `tw_user_at` varchar(1024) default '',
   `tw_user_handle` varchar(1024) default '',
   `tw_conf_url` varchar(1024) default '',
+  `tw_conf_id` varchar(40) default '',
   `dt_last_tw_conf` timestamp NULL DEFAULT NULL,
   `fk_last_shill_id` int(11) default -1, -- for rate-limit
   `wallet_address` varchar(255) default '0x0',
   `is_admin` BOOLEAN DEFAULT FALSE, -- admin required for some stored procs
   `is_admin_pay` BOOLEAN DEFAULT FALSE, -- admin_pay required for some stored procs
+
+  UNIQUE KEY `ID` (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+drop table if exists log_tw_conf_urls;
+CREATE TABLE `log_tw_conf_urls` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `dt_created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `dt_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `dt_deleted` timestamp NULL DEFAULT NULL,
+  `fk_user_id` varchar(40) NOT NULL,
+  `tw_user_at` varchar(1024) default '',
+  `tw_user_handle` varchar(1024) default '',
+  `tw_conf_url` varchar(1024) default '',
+  `tw_conf_id` varchar(40) default '',
 
   UNIQUE KEY `ID` (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
