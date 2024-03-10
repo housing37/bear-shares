@@ -41,15 +41,17 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 #-----------------------------------------------------#
 # '/register_as_shiller'
 kSHILLER_REG = "register_as_shiller"
-LST_REG_USER_PARAMS = ['<wallet_address>', '<tweet_url>']
-STR_REG_USER_ERR = f'Please tweet "@BearSharesNFT trinity" 👍️️️️️️\n Then use that link to register with cmd:\n /{kSHILLER_REG} {" ".join(LST_REG_USER_PARAMS)}'
+LST_CMD_REG_USER = ['<wallet_address>', '<tweet_url>']
+STR_ERR_REG_USER = f'Please tweet "@BearSharesNFT trinity" 👍️️️️️️\n Then use that link to register with cmd:\n /{kSHILLER_REG} {" ".join(LST_CMD_REG_USER)}'
 LST_KEYS_REG_USER = ['user_id','user_at','user_handle','wallet_address','trinity_tw_url']
 LST_KEYS_REG_USER_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_ADD_NEW_USER = 'ADD_NEW_TG_USER'
     # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
 
 # '/confirm_twitter'
-kTWITTER_CONF = "validate_twitter"
+kTWITTER_CONF = "confirm_twitter"
+LST_CMD_TW_CONF = ['<tweet_url>']
+STR_ERR_TW_CONF = f'To keep your registration up-to-date, please tweet "@BearSharesNFT trinity" once a week 👍️️️️️️\n Then use that link to confirm your twitter with cmd:\n /{kTWITTER_CONF} {" ".join(LST_CMD_TW_CONF)}'
 LST_KEYS_TW_CONF = ['user_id', 'trinity_tw_url']
 LST_KEYS_TW_CONF_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_RENEW_TW_CONFRIM = 'UPDATE_TWITTER_CONF'
@@ -150,8 +152,8 @@ DB_PROC_ADD_BLACKLIST_SCAMMER = 'ADD_REQUEST_USER_BLACKLIST'
 
 #-----------------------------------------------------#
 DICT_CMD_EXE = {
-    "register_as_shiller":[kSHILLER_REG,LST_KEYS_REG_USER,LST_KEYS_REG_USER_RESP,DB_PROC_ADD_NEW_USER,LST_REG_USER_PARAMS,STR_REG_USER_ERR],
-    "confirm_twitter":[kTWITTER_CONF,LST_KEYS_TW_CONF,LST_KEYS_TW_CONF_RESP,DB_PROC_RENEW_TW_CONFRIM],
+    "register_as_shiller":[kSHILLER_REG,LST_KEYS_REG_USER,LST_KEYS_REG_USER_RESP,DB_PROC_ADD_NEW_USER,LST_CMD_REG_USER,STR_ERR_REG_USER],
+    "confirm_twitter":[kTWITTER_CONF,LST_KEYS_TW_CONF,LST_KEYS_TW_CONF_RESP,DB_PROC_RENEW_TW_CONFRIM,LST_CMD_TW_CONF,STR_ERR_TW_CONF],
     "submit_shill_link":[kSUBMIT_SHILL,LST_KEYS_SUBMIT_SHILL,LST_KEYS_SUBMIT_SHILL_RESP,DB_PROC_ADD_SHILL],
     "show_my_rates":[kSHOW_RATES,LST_KEYS_SHOW_RATES,LST_KEYS_SHOW_RATES_RESP,DB_PROC_GET_USR_RATES],
     "show_my_earnings":[kSHOW_EARNINGS,LST_KEYS_SHOW_EARNINGS,LST_KEYS_SHOW_EARNINGS_RESP,DB_PROC_GET_USR_EARNS],
@@ -284,7 +286,7 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
             dbProcResult = exe_stored_proc(-1, stored_proc, keyVals)
             if dbProcResult[0]['status'] == 'failed': errMsg = dbProcResult[0]['info']
             else: errMsg = None    
-            bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=False, errMsg=errMsg)
+            bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=False, errMsg=errMsg) # errMsg != None: force fail from db
             # bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=True)
             
             
@@ -368,11 +370,12 @@ def valid_trinity_tweet(_tw_url):
     print(funcname + ' - ENTER')
     lst_text = ['@bearsharesnft', 'trinity']
     return search_tweet_for_text(_tw_url, lst_text, True) # True = '--headless'
-    
+    # return soup_search_tweet_for_text(_tw_url, lst_text)
+
 def search_tweet_for_text(tweet_url, _lst_text=[], _headless=True):
     funcname = f'{__filename} search_tweet_for_text'
     print(funcname + ' - ENTER')
-    wait_sec = 20
+    wait_sec = 30
     try:
         options = Options()
         print(f' using --headless={_headless}')
@@ -380,26 +383,44 @@ def search_tweet_for_text(tweet_url, _lst_text=[], _headless=True):
             options.add_argument("--headless")  # Run Chrome in headless mode
 
             # required, else '--headless' fails
-            user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
+            # user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
+            user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15"
             options.add_argument(f"user-agent={user_agent}")
             options.add_argument("--enable-javascript")  
 
         # Initialize a Selenium WebDriver & get tweet_url page
         print(f' getting page: {tweet_url} _ {get_time_now(dt=False)}')
         driver = webdriver.Chrome(options=options)
+        # if '?' in tweet_url: 
+        #     tweet_url = tweet_url.split('?')[0]
+        #     print(" found '?' in tweet_url; parsed out and going with:\n  "+tweet_url)
         driver.get(tweet_url)
         print(f' getting page: {tweet_url} _ {get_time_now(dt=False)} _ DONE')
         
-        # NOTE: when tweet 'Views' count is shown, then tweet text is shown as well
-        print(f' waiting for full html body text _ {get_time_now()}')
-        WebDriverWait(driver, wait_sec).until(EC.text_to_be_present_in_element((By.TAG_NAME, 'BODY'), 'Views')) 
-        print(f' waiting for full html body text _ {get_time_now()} _ DONE')        
-        
+        # # searching <body> tag example...
+        # #  NOTE: when tweet 'Views' count is shown, then tweet text is shown as well
+        # print(f' waiting for full html body text _ {get_time_now()}')
+        # WebDriverWait(driver, wait_sec).until(EC.text_to_be_present_in_element((By.TAG_NAME, 'BODY'), 'Views')) 
+        # print(f' waiting for full html body text _ {get_time_now()} _ DONE')        
+        # 
         # get / search body text for '_lst_text' items
-        body_text = driver.find_element(By.TAG_NAME, 'body').text
-        print(f' searching body_text for items in _lst_text: {_lst_text}')
+        # body_text = driver.find_element(By.TAG_NAME, 'body').text
+        # search_text = str(body_text)
+
+        # Wait for the meta tag with specific property
+        print(f' Waiting for meta tag _ {get_time_now()}')
+        WebDriverWait(driver, wait_sec).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'meta[property="og:title"]')))
+        print(f' Found meta tag _ {get_time_now()}')
+
+        # extract meta tag content
+        meta_tag = driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]')
+        title = meta_tag.get_attribute("content")
+        print(" Title:", title)
+
+        search_text = str(title)
+        print(f' searching html text for items in _lst_text: {_lst_text}')
         for t in _lst_text:
-            if t.lower() in body_text.lower(): 
+            if t.lower() in search_text.lower(): 
                 print(f' FOUND text: {t}')
             else:
                 print(f' FAILED to find text: {t.lower()} _ returning False')
@@ -426,3 +447,51 @@ def get_time_now(dt=True):
 print(__filename, f"\n CLASSES & FUNCTIONS initialized:- STARTING -> additional '{__filename}' run scripts (if applicable) . . .")
 print(__filename, f"\n  DONE Executing additional '{__filename}' run scripts ...")
 print('#======================================================================#')
+
+
+
+# def soup_search_tweet_for_text(tweet_url, _lst_text=[]):
+#     funcname = f'{__filename} soup_search_tweet_for_text'
+#     print(funcname + f' - ENTER _ {get_time_now()}')
+#     import requests
+#     from bs4 import BeautifulSoup
+
+#     user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
+#     headers = {
+#         'User-Agent': user_agent,
+#         }
+#     # response = requests.get(url, headers=headers)
+#     # Send a GET request to the URL
+#     print(f' getting ur: {tweet_url}')
+#     response = requests.get(tweet_url, headers=headers)
+#     print(f' response.content: {response.content}')
+#     print()
+#     print()
+#     # Check if the request was successful
+#     if response.status_code == 200:
+#         # Parse the HTML content using BeautifulSoup
+#         soup = BeautifulSoup(response.content, 'html.parser')
+
+#         # Find the meta tag with the specified property
+#         meta_tag = soup.find('meta', property='og:title')
+
+#         # Extract the content attribute of the meta tag
+#         if meta_tag:
+#             title = meta_tag.get('content')
+#             print(" Title:", title)
+#             print(f' searching body_text for items in _lst_text: {_lst_text}')
+#             for t in _lst_text:
+#                 if t.lower() in title.lower(): 
+#                     print(f' FOUND text: {t}')
+#                 else:
+#                     print(f' FAILED to find text: {t.lower()} _ returning False')
+#                     return False
+#             print(f' SUCCESS found all text in _lst_text _ returning True ... {get_time_now()}')
+#             return True
+#         else:
+#             print(f" Meta tag not found, returning False ... {get_time_now()}")
+#             return False
+#     else:
+#         print(f" Failed to fetch URL: (returning False _ {get_time_now()})\n  status_code: {response.status_code}")
+#         return False
+        

@@ -84,27 +84,35 @@ async def cmd_handler(update: Update, context):
     inp_split = update.message.text.split()
 
     # check if TG group is whitelisted to use (prints group info and deny)
+    #   NOTE: at this point, inp_split[0] is indeed a valid command
+    print(f'handling cmd: '+inp_split[0])
     tg_cmd = inp_split[0][1::] # parses out the '/'
-    valid_cmd = tg_cmd in LST_TG_CMDS 
-    print(inp_split[0])
     valid_chat, str_deny = is_valid_chat_id(str(_chat_id), group_name, uname_at, uname_handle)
-    print(valid_cmd, valid_chat, str_deny, sep='\n')
-    if not valid_chat or not valid_cmd:
+    # print(valid_cmd, valid_chat, str_deny, sep='\n')
+    if not valid_chat:
         await context.bot.send_message(chat_id=update.message.chat_id, text=str_deny+' '+inp_split[0])    
         print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
         return
 
     # ex tweet_conf (fails): https://x.com/SolAudits/status/1765925371851972744?s=20
     # ex tweet_conf (valid): https://x.com/SolAudits/status/1765925225844089300?s=20
+    # ex tweet_conf (valid): https://x.com/SolAudits/status/1766554515094778118?s=20
+    # ex tweet_conf (valid): https://x.com/SolAudits/status/1766580860604571739?s=20
+    # ex tweet_conf (valid): https://x.com/SolAudits/status/1766584748527247440?s=20 # 1700
+    # ex tweet_conf (valid): https://x.com/SolAudits/status/1766586177438564670?s=20
+    
+    # NOTE: all db procs require uid as 'p_tg_user_id' or 'p_admin_user_id'
+    #   uid used for 'p_admin_user_id', then additional input_uid required for 'p_tg_user_id'
+    inp_split.insert(1, uid)
 
     # handle cmds that need more data
     if tg_cmd == 'register_as_shiller':
-        if False: # True = test from differnt tg user
-            inp_split.insert(1, '1058890141')
+        if False: # True = alt user
+        # if True:
+            inp_split[1] = '1058890141'
             inp_split.insert(2, 'laycpirates')
             inp_split.insert(3, 'LAO Pirates')
         else:
-            inp_split.insert(1, uid)
             inp_split.insert(2, uname_at)
             inp_split.insert(3, uname_handle)
 
@@ -123,7 +131,7 @@ async def cmd_handler(update: Update, context):
         err_msg = response_dict['MSG']
         await update.message.reply_text(f"err_{err_num}: {err_msg}")
     else:
-        await update.message.reply_text(f"Registration Successful! Use cmd: '/submit_shill_link' ")
+        await update.message.reply_text(f"'/{tg_cmd}' Executed Successfully!")
         
     print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
 

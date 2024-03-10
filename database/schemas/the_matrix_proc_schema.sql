@@ -35,6 +35,27 @@ END
 $$ DELIMITER ;
 
 DELIMITER $$
+drop FUNCTION if exists add_tw_conf_url_log; -- setup
+CREATE FUNCTION `add_tw_conf_url_log`(
+		p_user_id INT(11),
+		p_tw_conf_url VARCHAR(1024)) 
+		RETURNS INT(11)
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	INSERT INTO log_tw_conf_urls (
+		fk_user_id,
+		tw_conf_url
+	) VALUES (
+		p_user_id,
+		p_tw_conf_url
+	);
+	SELECT LAST_INSERT_ID() INTO @new_conf_id;
+	RETURN @new_conf_id;
+END 
+$$ DELIMITER ;
+
+DELIMITER $$
 drop FUNCTION if exists tw_conf_exists; -- setup
 CREATE FUNCTION `tw_conf_exists`(
 		p_tw_conf_url VARCHAR(1024)) 
@@ -491,9 +512,9 @@ BEGIN
 
 	-- vaidate p_tw_conf_url has not been used yet
 	ELSEIF tw_conf_exists(p_tw_conf_url) THEN
-		SELECT u.id as OG_user_id, u.tg_user_id as OG_tg_user_id, 
-				u.tw_conf_url as OG_tw_conf_url_curr, u.dt_last_tw_conf as OG_dt_last_tw_conf,
-				l.tw_conf_url as LOG_tw_conf_url_found,
+		SELECT u.id as user_id_OG, u.tg_user_id as tg_user_id_OG, 
+				u.tw_conf_url as tw_conf_url_OG, u.dt_last_tw_conf as dt_last_tw_conf_OG,
+				l.tw_conf_url as tw_conf_url_LOG,
 				'failed' as `status`, 
 				'tw conf url already exists' as info, 
 				p_tg_user_id as tg_user_id_inp,
@@ -526,6 +547,9 @@ BEGIN
 		-- get new user id
 		SELECT LAST_INSERT_ID() into @new_usr_id;
 
+		-- log conf url used (so it can't be used again)
+		SELECT add_tw_conf_url_log(@new_usr_id, p_tw_conf_url) INTO @new_log_url_id;
+
 		-- set default earnings for new user
 		SELECT add_default_user_earns(@new_usr_id) INTO @new_earns_id;
 
@@ -544,7 +568,7 @@ BEGIN
 		-- SELECT add_user_shill_rate(@new_usr_id, 0, 5, 1.00); -- tw, long_vid, 100c
 
 		-- return
-		SELECT u.dt_updated, u.tg_user_id, u.tg_user_at, u.tg_user_handle, u.is_admin,
+		SELECT u.dt_updated, u.tg_user_id, u.tg_user_at, u.tg_user_handle, u.is_admin, u.tw_conf_url, u.dt_last_tw_conf,
 				r.platform, r.type_descr, r.pay_usd,
 				'success' as `status`,
 				'added new user' as info,
@@ -580,9 +604,9 @@ BEGIN
 				p_tw_conf_url as tw_conf_url_inp;
 	-- vaidate p_tw_conf_url has not been used yet
 	ELSEIF tw_conf_exists(p_tw_conf_url) THEN
-		SELECT u.id as OG_user_id, u.tg_user_id as OG_tg_user_id, 
-				u.tw_conf_url as OG_tw_conf_url_curr, u.dt_last_tw_conf as OG_dt_last_tw_conf,
-				l.tw_conf_url as LOG_tw_conf_url_found,
+		SELECT u.id as user_id_OG, u.tg_user_id as tg_user_id_OG, 
+				u.tw_conf_url as tw_conf_url_OG, u.dt_last_tw_conf as dt_last_tw_conf_OG,
+				l.tw_conf_url as tw_conf_url_LOG,
 				'failed' as `status`, 
 				'tw conf url already exists' as info, 
 				p_tg_user_id as tg_user_id_inp,
@@ -592,12 +616,20 @@ BEGIN
 				ON u.id = l.fk_user_id
 			WHERE l.tw_conf_url = p_tw_conf_url;
 	ELSE
+		-- get support requirements
+		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+		
+		-- update conf url for this user
 		UPDATE users
 			SET dt_updated = NOW(),
 				dt_last_tw_conf = NOW(),
 				tw_conf_url = p_tw_conf_url
-			WHERE tg_user_id = p_tg_user_id;
-		SELECT id, dt_created, dt_updated, tg_user_id, tg_user_at, tg_user_handle, is_admin, tw_conf_url,
+			WHERE id = @v_user_id;
+
+		-- log conf url used (so it can't be used again)
+		SELECT add_tw_conf_url_log(@v_user_id, p_tw_conf_url) INTO @new_log_url_id;
+
+		SELECT id, dt_created, dt_updated, tg_user_id, tg_user_at, tg_user_handle, is_admin, tw_conf_url, dt_last_tw_conf,
 				'success' as `status`,
 				'set new exp' as info,
 				p_tg_user_id as tg_user_id_inp
