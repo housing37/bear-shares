@@ -122,8 +122,11 @@ BEGIN
 	SELECT COUNT(*) FROM shills
 		WHERE post_url = p_post_url
 		INTO @v_cnt;
+	SELECT tw_conf_exists(p_post_url) INTO @v_exists;
 	IF @v_cnt > 0 THEN
 		RETURN FALSE; -- not new
+	ELSEIF @v_exists = TRUE THEN
+		RETURN FALSE; -- url used as conf
 	ELSE
 		RETURN TRUE;
 	END IF;
@@ -641,7 +644,7 @@ $$ DELIMITER ;
 
 -- # '/submit_shill_link'
 -- LST_KEYS_SUBMIT_SHILL = ['user_id', 'post_url']
--- DB_PROC_ADD_SHILL = 'ADD_USER_SHILL'
+-- DB_PROC_ADD_SHILL = 'ADD_USER_SHILL_TW'
 DELIMITER $$
 DROP PROCEDURE IF EXISTS ADD_USER_SHILL_TW;
 CREATE PROCEDURE `ADD_USER_SHILL_TW`(
@@ -655,7 +658,7 @@ BEGIN
 				@v_valid as info, 
 				p_tg_user_id as tg_user_id_inp;
 
-	-- validate 'post_url' is not in 'shills' table yet
+	-- validate 'post_url' is not in 'shills' table yet (or log_tw_conf_urls)
 	ELSEIF NOT valid_new_shill(p_post_url) THEN
 		SELECT 'failed' as `status`, 
 				'shill already exists' as info, 
@@ -677,8 +680,8 @@ BEGIN
 		SELECT LAST_INSERT_ID() into @new_shill_id;
 		
 		-- return
-		SELECT s.id as s_id, s.dt_created as s_dt_created, s.post_url, s.shill_plat, s.shill_type, s.is_approved,
-				u.id as u_id, u.tw_conf_url as u_tw_conf_url, u.tg_user_id, u.tg_user_at, u.tg_user_handle,
+		SELECT s.id as shill_id, s.dt_created as dt_created_s, s.post_url, s.shill_plat, s.shill_type, s.is_approved,
+				u.id as user_id, u.tw_conf_url as tw_conf_url_u, u.tg_user_id, u.tg_user_at, u.tg_user_handle,
 				'success' as `status`,
 				'added new shill' as info,
 				p_tg_user_id as tg_user_id_inp

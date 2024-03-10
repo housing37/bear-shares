@@ -220,9 +220,11 @@ def exeStoredProcedure(argsTup, strProc, strOutParam=None, exe_select=False):
         #print(funcname, f' >> Printing... rows', *rows)
         # getPrintListStr(lst=rows, strListTitle='  >> Printing... rows', useEnumerate=True, goIdxPrint=True, goPrint=True)
         #print(funcname, f' >> Printing... rows[0]:', rows[0])
-        print(' >> Printing... rows')
-        pprint.pprint(rows)
-        print(' >> Printing... rows _ DONE')
+        if False:
+            print(' >> Printing... rows')
+            pprint.pprint(rows)
+            print(' >> Printing... rows _ DONE')
+        else: print(' >> Printing.. rows <disabled>')
         
         result = None
         if strOutParam == None: # stored proc invoked w/o OUT param

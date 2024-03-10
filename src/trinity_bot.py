@@ -24,7 +24,8 @@ LST_TG_CMDS = req_handler.DICT_CMD_EXE.keys()
 WHITELIST_CHAT_IDS = [
     '-1002041092613', # $BearShares
     '-1002049491115', # $BearShares - testing
-    '-4139183080', # TeddyShares - testing
+    # '-4139183080', # ?
+    '-1001941928043', # TeddyShares - testing
     ]
 BLACKLIST_TEXT = [
     'smart vault', 'smart-vault', 'smart_vault', # @JstKidn
@@ -33,6 +34,7 @@ BLACKLIST_TEXT = [
 # input select
 USE_PROD_TG = False
 TOKEN = 'nil_tg_token'
+USE_ALT_ACCT = False # True = alt user 'LAO Pirates'
 
 #------------------------------------------------------------#
 #   FUNCTIONS                                                #
@@ -71,6 +73,7 @@ def filter_prompt(_prompt):
     return _prompt
     
 async def cmd_handler(update: Update, context):
+    global USE_ALT_ACCT
     funcname = 'cmd_handler'
     print(cStrDivider_1, f'ENTER - {funcname} _ {get_time_now()}', sep='\n')
     group_name = update.message.chat.title if update.message.chat.type == 'supergroup' else None
@@ -94,22 +97,27 @@ async def cmd_handler(update: Update, context):
         print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
         return
 
-    # ex tweet_conf (fails): https://x.com/SolAudits/status/1765925371851972744?s=20
+    # ex tweet_conf (fails): https://x.com/SolAudits/status/1765925371851972744?s=20 # only '@BearSharesNFT'
     # ex tweet_conf (valid): https://x.com/SolAudits/status/1765925225844089300?s=20
     # ex tweet_conf (valid): https://x.com/SolAudits/status/1766554515094778118?s=20
     # ex tweet_conf (valid): https://x.com/SolAudits/status/1766580860604571739?s=20
     # ex tweet_conf (valid): https://x.com/SolAudits/status/1766584748527247440?s=20 # 1700
     # ex tweet_conf (valid): https://x.com/SolAudits/status/1766586177438564670?s=20
+
+    # ex tweet_shill (fails): https://x.com/TopGunHexadian/status/1766339571342553408?s=20
+    # ex tweet_shill (valid): https://x.com/SolAudits/status/1766663759961940205?s=20
+    
     
     # NOTE: all db procs require uid as 'p_tg_user_id' or 'p_admin_user_id'
     #   uid used for 'p_admin_user_id', then additional input_uid required for 'p_tg_user_id'
     inp_split.insert(1, uid)
+    if USE_ALT_ACCT: 
+            inp_split[1] = '1058890141'
 
     # handle cmds that need more data
     if tg_cmd == 'register_as_shiller':
-        if False: # True = alt user
-        # if True:
-            inp_split[1] = '1058890141'
+        if USE_ALT_ACCT: 
+            # inp_split[1] = '1058890141'
             inp_split.insert(2, 'laycpirates')
             inp_split.insert(3, 'LAO Pirates')
         else:
@@ -151,17 +159,12 @@ async def test(update, context):
 
 def main():
     # global TOKEN
+    # create dispatcher with TG bot token
     dp = Application.builder().token(TOKEN).build()
-    # Create the Update and pass in the bot's token
-    # update = Update(token=TOKEN, use_context=True)
-
-    # Get the dispatcher to register handlers
-    # dp = update.dispatcher
 
     # Register command handlers
     # dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("test", test))
-    
 
     # register all commands -> from req_handler.DICT_CMD_EXE.keys()
     for str_cmd in LST_TG_CMDS:
@@ -175,42 +178,10 @@ def main():
     dp.add_handler(MessageHandler(filters.ALL, log_activity))
     print('added handler ALL: log_activity')
 
-    # dp.add_handler(CommandHandler("register_as_shiller", cmd_handler)) # user_id, wallet addr, twitter prof link
-    # dp.add_handler(CommandHandler("submit_shill_link", cmd_handler)) # user_id, tweet link
-    # dp.add_handler(CommandHandler("show_my_rates", cmd_handler)) # user_id
-    # dp.add_handler(CommandHandler("show_my_earnings", cmd_handler)) # user_id
-
-    # # user cash-out, checks for admin approval first
-    # dp.add_handler(CommandHandler("withdraw_my_earnings", cmd_handler)) # user_id
-
-    # # admin: list shills waiting for approval (user_id | all)
-    # #   include remove history / cnt
-    # dp.add_handler(CommandHandler("admin_list_pend_shills", cmd_handler) # user_id
-    # dp.add_handler(CommandHandler("admin_list_pend_shills_all", cmd_handler))
-    # dp.add_handler(CommandHandler("admin_approve_shill", cmd_handler) # shill_id | url
-    # dp.add_handler(CommandHandler("admin_view_user_shills", cmd_handler) # user_id
-    # dp.add_handler(CommandHandler("admin_view_shill_status", cmd_handler_shill_status) # user_id, shill_id
-    # dp.add_handler(CommandHandler("admin_pay_shill", cmd_handler) # shill_id | url
-    # dp.add_handler(CommandHandler("admin_log_removed_shill", cmd_handler) # shill_id | url
-    # dp.add_handler(CommandHandler("admin_scan_for_removed_shills", cmd_handler)
-    # dp.add_handler(CommandHandler("admin_set_shiller_rates", cmd_handler) # user_id, [rates]
-
-
-    # Add the button click handler
-    # dp.add_handler(CallbackQueryHandler(button_click))
-    # Register message handler for new chat members
-    # dp.add_handler(MessageHandler(filters.StatusUpdate._NewChatMembers, new_chat_members))
-
-    # Register message handler for all other messages
-    # dp.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo)) # ~ = negate (ie. AND NOT)
-    # dp.add_handler(MessageHandler(filters.Command, bad_command))
     # Start the Bot
     print('\nbot running ...\n')
     dp.run_polling()
-    # Update.start_polling()
 
-    # Run the bot until you press Ctrl-C
-    # Update.idle()
     
 
 #------------------------------------------------------------#
@@ -267,16 +238,23 @@ if __name__ == "__main__":
     RUN_TIME_START = get_time_now()
     print(f'\n\nRUN_TIME_START: {RUN_TIME_START}\n'+READ_ME)
     lst_argv_OG, argv_cnt = read_cli_args()
+    # USE_ALT_ACCT = len(lst_argv_OG) > 1 # True = alt user 'LAO Pirates'
     
     ## exe ##
     try:
         # select to use prod bot or dev bot
-        inp = input('Select token type to use:\n  0 = prod (@BearSharesBot)\n  1 = dev \n  > ')
+        inp = input('\nSelect token type to use:\n  0 = prod (@BearSharesBot)\n  1 = dev \n  > ')
         USE_PROD_TG = True if inp == '0' else False
         print(f'  input = {inp} _ USE_PROD_TG = {USE_PROD_TG}')
 
+        inp = input('\nUse reg input tg_user_id (not alt "LAO Pirates")? [y/n]:\n  > ')
+        USE_ALT_ACCT = False if inp.lower() == 'y' or inp.lower() == '1' else True
+        print(f'  input = {inp} _ USE_ALT_ACCT = {USE_ALT_ACCT}')
+
         set_tg_token()  
-        print(f'\nTelegram TOKEN: {TOKEN}')
+        print(f'\nUSE_PROD_TG: {USE_PROD_TG}')
+        print(f'USE_ALT_ACCT: {USE_ALT_ACCT}')
+        print(f'Telegram TOKEN: {TOKEN}\n')
         # print(f'OpenAI OPENAI_KEY: {OPENAI_KEY}')
         # print(f'CONSUMER_KEY: {CONSUMER_KEY}')
         # print(f'PROMO_TWEET_TEXT:\n{PROMO_TWEET_TEXT}\n')    

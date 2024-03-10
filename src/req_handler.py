@@ -58,7 +58,9 @@ DB_PROC_RENEW_TW_CONFRIM = 'UPDATE_TWITTER_CONF'
     # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
 
 # '/submit_shill_link'
-kSUBMIT_SHILL = "add_new_shill"
+kSUBMIT_SHILL = "submit_shill_link"
+LST_CMD_SUBMIT_SHILL = ['<tweet_url>']
+STR_ERR_SUBMIT_SHILL = f'Please submit your shill using the cmd:\n /{kSUBMIT_SHILL} {" ".join(LST_CMD_SUBMIT_SHILL)}\n tweets must at least contain "@BearSharesNFT" to be credited'
 LST_KEYS_SUBMIT_SHILL = ['user_id', 'post_url']
 LST_KEYS_SUBMIT_SHILL_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_ADD_SHILL = 'ADD_USER_SHILL_TW'
@@ -154,7 +156,7 @@ DB_PROC_ADD_BLACKLIST_SCAMMER = 'ADD_REQUEST_USER_BLACKLIST'
 DICT_CMD_EXE = {
     "register_as_shiller":[kSHILLER_REG,LST_KEYS_REG_USER,LST_KEYS_REG_USER_RESP,DB_PROC_ADD_NEW_USER,LST_CMD_REG_USER,STR_ERR_REG_USER],
     "confirm_twitter":[kTWITTER_CONF,LST_KEYS_TW_CONF,LST_KEYS_TW_CONF_RESP,DB_PROC_RENEW_TW_CONFRIM,LST_CMD_TW_CONF,STR_ERR_TW_CONF],
-    "submit_shill_link":[kSUBMIT_SHILL,LST_KEYS_SUBMIT_SHILL,LST_KEYS_SUBMIT_SHILL_RESP,DB_PROC_ADD_SHILL],
+    "submit_shill_link":[kSUBMIT_SHILL,LST_KEYS_SUBMIT_SHILL,LST_KEYS_SUBMIT_SHILL_RESP,DB_PROC_ADD_SHILL,LST_CMD_SUBMIT_SHILL,STR_ERR_SUBMIT_SHILL],
     "show_my_rates":[kSHOW_RATES,LST_KEYS_SHOW_RATES,LST_KEYS_SHOW_RATES_RESP,DB_PROC_GET_USR_RATES],
     "show_my_earnings":[kSHOW_EARNINGS,LST_KEYS_SHOW_EARNINGS,LST_KEYS_SHOW_EARNINGS_RESP,DB_PROC_GET_USR_EARNS],
     "request_cashout":[kREQUEST_CASHOUT,LST_KEYS_REQUEST_CASHOUT,LST_KEYS_REQUEST_CASHOUT_RESP,DB_PROC_REQUEST_CASHOUT],
@@ -175,20 +177,17 @@ def exe_tg_cmd(_lst_inp, _use_prod_accts):
     funcname = f'{__filename} exe_tg_cmd(_use_prod_accts={_use_prod_accts})'
     print(funcname+' - ENTER')
 
-    # set twitter support keys for this request
-    # set_twitter_auth_keys(_use_prod_accts)
-
     # generate keyVals to pass as 'request' w/ 'tg_cmd!=None', to 'handle_request'
     tg_cmd = _lst_inp[0][1::] # parse out the '/'
     lst_params = _lst_inp[1::]
     keyVals = {}
-    print('tg_cmd: '+tg_cmd)
-    print('lst_params: '+str(lst_params))
-    print('DICT_CMD_EXE[tg_cmd][1]: '+str(DICT_CMD_EXE[tg_cmd][1]))
+    print(' tg_cmd: '+tg_cmd)
+    print(' lst_params: '+str(lst_params))
+    print(' DICT_CMD_EXE[tg_cmd][1]: '+str(DICT_CMD_EXE[tg_cmd][1]))
 
     # validate input cmd params count
     if len(lst_params) != len(DICT_CMD_EXE[tg_cmd][1]):
-        print('** WARNING **: input cmd param count != db required param count; forcing return fail')
+        print(' ** WARNING **: input cmd param count != db required param count; forcing return fail')
         str_req_params = ''.join(DICT_CMD_EXE[tg_cmd][-1])
         bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=True, errMsg=f'invalid number of params; {str_req_params}') # False = force fail
         return jsonResp
@@ -275,11 +274,20 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
     if tg_cmd != None:
         print('HIT - tg_cmd: '+tg_cmd)
         if tg_cmd in DICT_CMD_EXE.keys():
-            if (tg_cmd == 'register_as_shiller' or tg_cmd == 'confirm_twitter') and not valid_trinity_tweet(keyVals['trinity_tw_url']):
-                dbProcResult=-1
-                # bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=True)
-                bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=True, errMsg='invalid tweet confirmation url') # False = force fail
-                return bErr, jsonResp, dbProcResult
+            if tg_cmd == 'register_as_shiller' or tg_cmd == 'confirm_twitter':
+                success, msg = valid_trinity_tweet(keyVals['trinity_tw_url'], ['@bearsharesnft', 'trinity'])
+                if not success:
+                    dbProcResult=-1
+                    # bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=True)
+                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=False, errMsg='invalid tweet confirmation, '+msg) # False = force fail
+                    return bErr, jsonResp, dbProcResult
+
+            if tg_cmd == 'submit_shill_link':
+                success, msg = valid_trinity_tweet(keyVals['post_url'], ['@bearsharesnft'])
+                if not success:
+                    dbProcResult=-1
+                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=False, errMsg='invalid shill, '+msg) # False = force fail
+                    return bErr, jsonResp, dbProcResult
                             
             # if 'user_id' in keyVals: del keyVals['user_id']
             stored_proc = DICT_CMD_EXE[tg_cmd][3] # [tg_cmd][3] = 'stored-proc-name'
@@ -365,11 +373,10 @@ def valid_keys(keyVals, lst_valid_keys):
 #=====================================================#
 #         twitter support                             #
 #=====================================================#
-def valid_trinity_tweet(_tw_url):
+def valid_trinity_tweet(_tw_url, _lst_text):
     funcname = f'{__filename} valid_trinity_tweet'
     print(funcname + ' - ENTER')
-    lst_text = ['@bearsharesnft', 'trinity']
-    return search_tweet_for_text(_tw_url, lst_text, True) # True = '--headless'
+    return search_tweet_for_text(_tw_url, _lst_text, True) # True = '--headless'
     # return soup_search_tweet_for_text(_tw_url, lst_text)
 
 def search_tweet_for_text(tweet_url, _lst_text=[], _headless=True):
@@ -424,15 +431,15 @@ def search_tweet_for_text(tweet_url, _lst_text=[], _headless=True):
                 print(f' FOUND text: {t}')
             else:
                 print(f' FAILED to find text: {t.lower()} _ returning False')
-                return False
+                return False, 'must contain '+t
         print(f' SUCCESS found all text in _lst_text _ returning True')
-        return True
+        return True, ''
         
     except Exception as e:
         print(f" Error scraping tweet")
         print(f' waiting for full html body text _ {get_time_now()} _ {wait_sec} sec TIMEOUT (maybe)')
         print(f"  **Exception** e = '{e}'\n  returning False")
-        return False
+        return False, 'network error, please try again'
     finally:
         # Close the browser
         driver.quit()
