@@ -74,7 +74,7 @@ LST_CMD_TW_CONF = ['<tweet_url>']
 STR_ERR_TW_CONF = f'To keep your registration up-to-date, please tweet "@BearSharesNFT trinity" once a week 👍️️️️️️\n Then use that link to confirm your twitter with cmd:\n /{kTWITTER_CONF} {" ".join(LST_CMD_TW_CONF)}'
 LST_KEYS_TW_CONF_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_RENEW_TW_CONFRIM = 'UPDATE_TWITTER_CONF'
-LST_KEYS_TW_CONF = ['user_id', 'trinity_tw_url']
+LST_KEYS_TW_CONF = ['user_id','user_at','trinity_tw_url']
     # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
 
 # '/submit_shill_link'
@@ -83,7 +83,7 @@ LST_CMD_SUBMIT_SHILL = ['<tweet_url>']
 STR_ERR_SUBMIT_SHILL = f'Please submit your shill using the cmd:\n /{kSUBMIT_SHILL} {" ".join(LST_CMD_SUBMIT_SHILL)}\n tweets must at least contain "@BearSharesNFT" to be credited'
 LST_KEYS_SUBMIT_SHILL_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_ADD_SHILL = 'ADD_USER_SHILL_TW'
-LST_KEYS_SUBMIT_SHILL = ['user_id', 'post_url']
+LST_KEYS_SUBMIT_SHILL = ['user_id','user_at','post_url']
 
 # '/request_cashout'
 kREQUEST_CASHOUT = "request_cashout"
@@ -91,7 +91,7 @@ LST_CMD_REQUEST_CASHOUT = [] # ['<tg_user>']
 STR_ERR_REQUEST_CASHOUT = f'nil_err_response_tg'
 LST_KEYS_REQUEST_CASHOUT_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_REQUEST_CASHOUT = 'SET_USER_WITHDRAW_REQUESTED'
-LST_KEYS_REQUEST_CASHOUT = ['user_id']
+LST_KEYS_REQUEST_CASHOUT = ['user_id','user_at']
     # POST-DB: python TG notify admin_pay to process
 	# POST-DB: python TG notify p_tg_user_id that request has been submit (w/ user_earns.usd_owed)
 
@@ -101,7 +101,7 @@ LST_CMD_SHOW_RATES = [] # ['<tg_user>','<twitter|tiktok|reddit>']
 STR_ERR_SHOW_RATES = f'''please use cmd format:\n /{kSHOW_USR_RATES} {" ".join(LST_CMD_SHOW_RATES)}'''
 LST_KEYS_SHOW_RATES_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_GET_USR_RATES = 'GET_USER_PAY_RATES'
-LST_KEYS_SHOW_RATES = ['user_id', 'platform'] # const: unknown, twitter, tiktok, reddit
+LST_KEYS_SHOW_RATES = ['user_id','user_at','platform'] # const: unknown, twitter, tiktok, reddit
 
 # '/show_my_earnings'
 kSHOW_USR_EARNS = "show_my_earnings" # '/show_my_earnings'
@@ -109,7 +109,7 @@ LST_CMD_SHOW_EARNS = [] # ['<tg_user>']
 STR_ERR_SHOW_EARNS = f'''please user cmd format :\n /{kSHOW_USR_EARNS} {" ".join(LST_CMD_SHOW_EARNS)}'''
 LST_KEYS_SHOW_EARNS_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_GET_USR_EARNS = 'GET_USER_EARNINGS'
-LST_KEYS_SHOW_EARNS = ['user_id']
+LST_KEYS_SHOW_EARNS = ['user_id','user_at']
 
 # '/admin_show_user_rates'
 kADMIN_SHOW_USR_RATES = "admin_show_user_rates" 
@@ -229,8 +229,8 @@ def exe_tg_cmd(_lst_inp, _use_prod_accts):
     lst_params = _lst_inp[1::]
     keyVals = {}
     print(' tg_cmd: '+tg_cmd)
-    print(' lst_params: '+str(lst_params))
-    print(' DICT_CMD_EXE[tg_cmd][1]: '+str(DICT_CMD_EXE[tg_cmd][1]))
+    print(' lst_params: ', *lst_params, sep='\n  ')
+    print(' DICT_CMD_EXE[tg_cmd][1]: ', *DICT_CMD_EXE[tg_cmd][1], sep='\n  ')
 
     # validate input cmd params count
     if len(lst_params) != len(DICT_CMD_EXE[tg_cmd][1]):
@@ -243,7 +243,9 @@ def exe_tg_cmd(_lst_inp, _use_prod_accts):
     for i,v in enumerate(lst_params): 
         print(f' lst_params[{i}]={v}')
         keyVals[DICT_CMD_EXE[tg_cmd][1][i]] = str(v) # [tg_cmd][1] = LST_KEYS_...
-
+    
+    print(' generated keyVals ...')
+    [print(f'  keyVals[{k}]={keyVals[k]}') for k in keyVals.keys()]
     # simuate: 'handle_request(request, kREQUEST_KEY)' w/ added 'tg_cmd'
     return handle_request(keyVals, DICT_CMD_EXE[tg_cmd][0], tg_cmd)
 
