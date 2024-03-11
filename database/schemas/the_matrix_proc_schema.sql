@@ -63,8 +63,8 @@ BEGIN
 					dt_updated = NOW()
 				WHERE tg_user_id = p_tg_user_id;
 
-			-- log tg_user_at change in log_tg_user_at_updates
-			INSERT INTO log_tg_user_at_updates (
+			-- log tg_user_at change in log_tg_user_at_changes
+			INSERT INTO log_tg_user_at_changes (
 					fk_user_id,
 					tg_user_id_const,
 					tg_user_at_prev,
@@ -162,6 +162,7 @@ CREATE FUNCTION `valid_tg_user_tw_conf`(
     READS SQL DATA
     DETERMINISTIC
 BEGIN
+	-- fail: if tg_user_id is indeed taken (updates 'users.tg_user_at' if needed)
 	IF NOT valid_tg_user(p_tg_user_id, p_tg_user_at) THEN
 		RETURN 'user not found';
 	END IF;
@@ -541,14 +542,15 @@ CREATE PROCEDURE `ADD_NEW_TG_USER`(
     IN p_wallet_address VARCHAR(255),
     IN p_tw_conf_url VARCHAR(1024))
 BEGIN
+	-- fail: if tg_user_at is taken
 	IF valid_tg_user_at(p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user already exists; contact support' as info, 
 				p_tg_user_id as tg_user_id_inp,
 				p_tg_user_at as tg_user_at_inp;
 	
-	-- vaidate user does NOT exists (only)
-	ELSEIF valid_tg_user(p_tg_user_id, p_tg_user_at) THEN -- updates tg_user_at if needed
+	-- fail: if tg_user_id is indeed taken (updates 'users.tg_user_at' if needed)
+	ELSEIF valid_tg_user(p_tg_user_id, p_tg_user_at) THEN
 		SELECT id, tg_user_id, tg_user_at, tg_user_handle, is_admin,
 				'failed' as `status`, 
 				'user already exists' as info, 
@@ -556,7 +558,7 @@ BEGIN
 			FROM users 
 			WHERE tg_user_id = p_tg_user_id;
 
-	-- vaidate p_tw_conf_url has not been used yet
+	-- fail: if p_tw_conf_url has already been used
 	ELSEIF tw_conf_exists(p_tw_conf_url) THEN
 		SELECT u.id as user_id_OG, u.tg_user_id as tg_user_id_OG, 
 				u.tw_conf_url as tw_conf_url_OG, u.dt_last_tw_conf as dt_last_tw_conf_OG,
@@ -643,7 +645,7 @@ CREATE PROCEDURE `UPDATE_TWITTER_CONF`(
 	IN p_tg_user_at VARCHAR(40),
     IN p_tw_conf_url VARCHAR(1024))
 BEGIN
-	-- vaidate user exists (only)
+	-- fail: if tg_user_id is indeed taken (updates 'users.tg_user_at' if needed)
 	IF NOT valid_tg_user(p_tg_user_id, p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
@@ -697,6 +699,7 @@ CREATE PROCEDURE `ADD_USER_SHILL_TW`(
     IN p_post_url VARCHAR(1024))
 BEGIN
 	-- vaidate user exists & tw conf not expired
+	-- fail: if tg_user_id is indeed taken (updates 'users.tg_user_at' if needed)
 	set @v_valid = valid_tg_user_tw_conf(p_tg_user_id, p_tg_user_at); -- invokes 'valid_tg_user'
 	IF NOT @v_valid = 'valid user' THEN
 		SELECT 'failed' as `status`, 
@@ -750,6 +753,7 @@ CREATE PROCEDURE `SET_USER_WITHDRAW_REQUESTED`(
 	IN p_tg_user_at VARCHAR(40))
 BEGIN
 	-- vaidate user exists & tw conf not expired
+	-- fail: if tg_user_id is indeed taken (updates 'users.tg_user_at' if needed)
 	set @v_valid = valid_tg_user_tw_conf(p_tg_user_id, p_tg_user_at); -- invokes 'valid_tg_user'
 	IF NOT @v_valid = 'valid user' THEN
 		SELECT 'failed' as `status`, 
@@ -799,7 +803,7 @@ CREATE PROCEDURE `GET_USER_PAY_RATES`(
 	IN p_tg_user_at VARCHAR(40),
 	IN p_platform VARCHAR(40)) -- const: unknown, twitter, tiktok, reddit
 BEGIN
-	-- vaidate user exists
+	-- fail: if tg_user_id is indeed taken (updates 'users.tg_user_at' if needed)
 	IF NOT valid_tg_user(p_tg_user_id, p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
@@ -838,7 +842,7 @@ CREATE PROCEDURE `GET_USER_EARNINGS`(
     IN p_tg_user_id VARCHAR(40),
 	IN p_tg_user_at VARCHAR(40))
 BEGIN
-	-- vaidate user exists
+	-- fail: if tg_user_id is indeed taken (updates 'users.tg_user_at' if needed)
 	IF NOT valid_tg_user(p_tg_user_id, p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
