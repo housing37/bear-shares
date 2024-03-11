@@ -870,7 +870,7 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS GET_USER_PAY_RATES_ADMIN;
 CREATE PROCEDURE `GET_USER_PAY_RATES_ADMIN`(
 	IN p_tg_admin_id VARCHAR(40),
-    IN p_tg_user_id VARCHAR(40),
+    IN p_tg_user_at VARCHAR(40),
 	IN p_platform VARCHAR(40)) -- const: unknown, twitter, tiktok, reddit
 BEGIN
 	-- validate admin
@@ -879,7 +879,8 @@ BEGIN
 				'invalid admin' as info, 
 				p_tg_admin_id as tg_admin_id;
 	ELSE
-		CALL GET_USER_PAY_RATES(p_tg_user_id, p_platform);
+		SELECT tg_user_id FROM users WHERE tg_user_at = p_tg_user_at INTO @v_tg_user_id;
+		CALL GET_USER_PAY_RATES(@v_tg_user_id, p_tg_user_at, p_platform);
 	END IF;
 END 
 $$ DELIMITER ;
@@ -891,7 +892,7 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS GET_USER_EARNINGS_ADMIN;
 CREATE PROCEDURE `GET_USER_EARNINGS_ADMIN`(
 	IN p_tg_admin_id VARCHAR(40),
-    IN p_tg_user_id VARCHAR(40))
+	IN p_tg_user_at VARCHAR(40))
 BEGIN
 	-- validate admin
 	IF NOT valid_tg_user_admin(p_tg_admin_id) THEN
@@ -899,7 +900,8 @@ BEGIN
 				'invalid admin' as info, 
 				p_tg_admin_id as tg_admin_id;
 	ELSE
-		CALL GET_USER_EARNINGS(p_tg_user_id);
+		SELECT tg_user_id FROM users WHERE tg_user_at = p_tg_user_at INTO @v_tg_user_id;
+		CALL GET_USER_EARNINGS(@v_tg_user_id, p_tg_user_at);
 	END IF;
 END 
 $$ DELIMITER ;
@@ -916,7 +918,7 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS GET_USER_SHILLS_ALL;
 CREATE PROCEDURE `GET_USER_SHILLS_ALL`(
     IN p_tg_admin_id VARCHAR(40),
-    IN p_tg_user_id VARCHAR(40),
+    IN p_tg_user_at VARCHAR(40),
     IN p_approved BOOLEAN,
     IN p_removed BOOLEAN)
 BEGIN
@@ -930,15 +932,17 @@ BEGIN
 	ELSEIF NOT admin_valid_tg_user(p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
-				p_tg_user_id as tg_user_id_inp;
+				p_tg_user_at as tg_user_at_inp;
 	ELSE
-		-- return all 'p_tg_user_id' data from 'user_earns' table
-		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+		-- return all 'p_tg_user_at' data from 'shills' table
+		SELECT tg_user_id FROM users WHERE tg_user_at = p_tg_user_at INTO @v_tg_user_id;
+		SELECT id FROM users WHERE tg_user_id = @v_tg_user_id INTO @v_user_id;
 		SELECT *, 
 				'success' as `status`,
 				'get user shills all' as info,
 				@v_user_id as user_id,
-				p_tg_user_id as tg_user_id_inp,
+				@v_tg_user_id as tg_user_id,
+				p_tg_user_at as tg_user_at_inp,
 				p_approved as is_approved_inp,
 				p_removed as is_removed_inp
 			FROM shills
@@ -969,8 +973,7 @@ BEGIN
 		SELECT *, 
 				'success' as `status`,
 				'get all pending shills' as info,
-				@v_user_id as user_id,
-				p_tg_user_id as tg_user_id_inp,
+				p_tg_admin_id as tg_admin_id_inp,
 				p_removed as is_removed_inp
 			FROM shills
 			WHERE is_approved = FALSE -- FALSE = 'pending'
@@ -989,7 +992,7 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS UPDATE_USER_SHILL_APPR_EARNS;
 CREATE PROCEDURE `UPDATE_USER_SHILL_APPR_EARNS`(
     IN p_tg_admin_id VARCHAR(40),
-	IN p_tg_user_id VARCHAR(40),
+	IN p_tg_user_at VARCHAR(40),
     IN p_shill_id VARCHAR(40),
 	IN p_shill_plat VARCHAR(40), -- const: unknown, twitter, tiktok, reddit
 	IN p_shill_type VARCHAR(40), -- const: unknown, htag, short_txt, long_txt, img_meme, short_vid, long_vid
@@ -1006,11 +1009,12 @@ BEGIN
 	ELSEIF NOT admin_valid_tg_user(p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
-				p_tg_user_id as tg_user_id_inp;
+				p_tg_user_at as tg_user_at_inp;
 
 	ELSE
-		-- get shill counts & user earngs counts for 'p_tg_user_id' (w/ additional vars needed)
-		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+		-- get shill counts & user earngs counts for 'p_tg_user_at' (w/ additional vars needed)
+		SELECT tg_user_id FROM users WHERE tg_user_at = p_tg_user_at INTO @v_tg_user_id;
+		SELECT id FROM users WHERE tg_user_id = @v_tg_user_id INTO @v_user_id;
 		SELECT COUNT(*) FROM shills WHERE id = p_shill_id AND fk_user_id = @v_user_id INTO @v_cnt_ids;
 		SELECT COUNT(*) FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_cnt_earns;
 		SELECT is_removed FROM shills WHERE id = p_shill_id INTO @v_shill_removed;
@@ -1020,7 +1024,8 @@ BEGIN
 		IF @v_cnt_ids = 0 THEN
 			SELECT 'failed' as `status`, 
 					'shill id not found' as info, 
-					p_tg_user_id as tg_user_id_inp,
+					@v_tg_user_id as tg_user_id_inp,
+					p_tg_user_at as tg_user_at_inp,
 					p_shill_id as shill_id_inp,
 					p_approved as approved_inp;
 
@@ -1028,8 +1033,9 @@ BEGIN
 		ELSEIF @v_shill_removed = TRUE THEN
 			SELECT post_url,
 					'failed' as `status`, 
-					'dead shill post url' as info, 
-					p_tg_user_id as tg_user_id_inp,
+					'dead shill post url' as info,
+					@v_tg_user_id as tg_user_id_inp, 
+					p_tg_user_at as tg_user_at_inp,
 					p_shill_id as shill_id_inp,
 					p_approved as approved_inp
 				FROM shills 
@@ -1037,10 +1043,11 @@ BEGIN
 
 		-- validate max shills per day for @v_user_id as NOT been met
 		-- 	note: includes is_removed=TRUE|FALSE (limit earns to those removing shills)
-		ELSEIF p_approved = TRUE AND usr_shill_limit_reached(p_tg_user_id) THEN
+		ELSEIF p_approved = TRUE AND usr_shill_limit_reached(@v_tg_user_id) THEN
 			SELECT 'failed' as `status`, 
 					'daily shill approve limit reached' as info, 
-					p_tg_user_id as tg_user_id_inp,
+					@v_tg_user_id as tg_user_id_inp,					
+					p_tg_user_at as tg_user_at_inp,
 					p_shill_id as shill_id_inp,
 					p_approved as approved_inp;
 
@@ -1081,7 +1088,8 @@ BEGIN
 					'updated user earns' as info,
 					@v_user_id as user_id,
 					@v_post_url as shill_url,
-					p_tg_user_id as tg_user_id_inp,
+					@v_tg_user_id as tg_user_id_inp,
+					p_tg_user_at as tg_user_at_inp,
 					p_shill_id as shill_id_inp,
 					p_shill_plat_inp as shill_id_plat_inp,
 					p_shill_type_inp as shill_id_type_inp,
@@ -1102,7 +1110,7 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS GET_USER_SHILL;
 CREATE PROCEDURE `GET_USER_SHILL`(
     IN p_tg_admin_id VARCHAR(40),
-    IN p_tg_user_id VARCHAR(40),
+    IN p_tg_user_at VARCHAR(40),
     IN p_shill_id INT(11),
     IN p_shill_url VARCHAR(1024))
 BEGIN
@@ -1116,10 +1124,11 @@ BEGIN
 	ELSEIF NOT admin_valid_tg_user(p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
-				p_tg_user_id as tg_user_id_inp;
+				p_tg_user_at as tg_user_at_inp;
 	ELSE
-		-- check shill counts by id & url for 'p_tg_user_id'
-		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+		-- check shill counts by id & url for 'p_tg_user_at'
+		SELECT tg_user_id FROM users WHERE tg_user_at = p_tg_user_at INTO @v_tg_user_id;
+		SELECT id FROM users WHERE tg_user_id = @v_tg_user_id INTO @v_user_id;
 		SELECT COUNT(*) FROM shills WHERE id = p_shill_id AND fk_user_id = @v_user_id INTO @v_cnt_ids;
 		SELECT COUNT(*) FROM shills WHERE id = p_shill_url AND fk_user_id = @v_user_id INTO @v_cnt_urls;
 
@@ -1128,7 +1137,8 @@ BEGIN
 			IF @v_cnt_urls = 0 THEN
 				SELECT 'failed' as `status`, 
 						'shill url not found' as info, 
-						p_tg_user_id as tg_user_id_inp,
+						@v_tg_user_id as tg_user_id_inp,
+						p_tg_user_at as tg_user_at_inp,
 						p_shill_id as shill_id_inp,
 						p_shill_url as shill_url_inp;
 			ELSE
@@ -1136,7 +1146,8 @@ BEGIN
 						'success' as `status`,
 						'get user shill url' as info,
 						@v_user_id as user_id,
-						p_tg_user_id as tg_user_id_inp,
+						@v_tg_user_id as tg_user_id_inp,
+						p_tg_user_at as tg_user_at_inp,
 						p_shill_id as shill_id_inp,
 						p_shill_url as post_url_inp
 					FROM shills
@@ -1149,7 +1160,8 @@ BEGIN
 			IF @v_cnt_ids = 0 THEN
 				SELECT 'failed' as `status`, 
 						'shill id not found' as info, 
-						p_tg_user_id as tg_user_id_inp,
+						@v_tg_user_id as tg_user_id_inp,
+						p_tg_user_at as tg_user_at_inp,
 						p_shill_id as shill_id_inp,
 						p_shill_url as shill_url_inp;
 			ELSE
@@ -1157,7 +1169,8 @@ BEGIN
 						'success' as `status`,
 						'get user shill id' as info,
 						@v_user_id as user_id,
-						p_tg_user_id as tg_user_id_inp,
+						@v_tg_user_id as tg_user_id_inp,
+						p_tg_user_at as tg_user_at_inp,
 						p_shill_id as shill_id_inp,
 						p_shill_url as post_url_inp
 					FROM shills
@@ -1179,8 +1192,10 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS SET_USER_PAY_TX_SUBMIT;
 CREATE PROCEDURE `SET_USER_PAY_TX_SUBMIT`(
     IN p_tg_admin_id VARCHAR(40),
-	IN p_tg_user_id VARCHAR(40))
+	IN p_tg_user_at VARCHAR(40))
 BEGIN
+	SELECT tg_user_id FROM users WHERE tg_user_at = p_tg_user_at INTO @v_tg_user_id;
+	SELECT id FROM users WHERE tg_user_id = @v_tg_user_id INTO @v_user_id;
 	-- validate admin
 	IF NOT valid_tg_user_admin(p_tg_admin_id) THEN
 		SELECT 'failed' as `status`, 
@@ -1191,21 +1206,21 @@ BEGIN
 	ELSEIF NOT admin_valid_tg_user(p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
-				p_tg_user_id as tg_user_id_inp;
+				p_tg_user_at as tg_user_at_inp;
 
-	-- check withdraw indeed requested by 'p_tg_user_id'
+	-- check withdraw indeed requested by '@v_tg_user_id'
 	-- 	note: executes 'add_default_user_earns' (if needed)
-	ELSEIF NOT usr_withdraw_requested(p_tg_user_id) THEN
+	ELSEIF NOT usr_withdraw_requested(@v_tg_user_id) THEN
 		SELECT 'failed' as `status`, 
 				'withdraw not requested by user' as info, 
-				p_tg_user_id as tg_user_id;
+				@v_tg_user_id as tg_user_id,
+				p_tg_user_at as tg_user_at_inp;
 
 	ELSE
 		-- calc total pay sum of all approved shills w/ txs non-pending
-		--	get total usd_owed for p_tg_user_id
+		--	get total usd_owed for p_tg_user_at (@v_tg_user_id)
 		SET @v_is_paid = FALSE;
-		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
-		SELECT get_usr_pay_usd_appr_sum(p_tg_user_id, @v_is_paid) INTO @v_tot_pay_usd;
+		SELECT get_usr_pay_usd_appr_sum(@v_tg_user_id, @v_is_paid) INTO @v_tot_pay_usd;
 		SELECT usd_owed FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_tot_owed;
 
 		-- validate total pay sum from 'shills' == total usd_owed from 'user_earns'
@@ -1214,10 +1229,11 @@ BEGIN
 					'total pay_usd != total usd_owed' as info, 
 					@v_tot_pay_usd as tot_pend_pay_usd,
 					@v_tot_owed as tot_pend_usd_owed,
-					p_tg_user_id as tg_user_id_inp;
+					@v_tg_user_id as tg_user_id,
+					p_tg_user_at as tg_user_at_inp;
 		ELSE
 			-- set 'pay_tx_submit=TRUE' for all approved shills that are not tx pending yet
-			SELECT set_usr_pay_usd_tx_submit(p_tg_user_id) INTO @v_success;
+			SELECT set_usr_pay_usd_tx_submit(@v_tg_user_id) INTO @v_success;
 			SELECT *, 
 					'success' as `status`,
 					'user pay tx submitted' as info,
@@ -1225,7 +1241,8 @@ BEGIN
 					@v_success as tx_pending,
 					@v_tot_pay_usd as tot_pay_usd,
 					@v_tot_owed as tot_owed,
-					p_tg_user_id as tg_user_id_inp
+					@v_tg_user_id as tg_user_id,
+					p_tg_user_at as tg_user_at_inp
 				FROM user_earns
 				WHERE fk_user_id = @v_user_id;
 		END IF;
@@ -1240,7 +1257,7 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS SET_USER_PAY_TX_STATUS;
 CREATE PROCEDURE `SET_USER_PAY_TX_STATUS`(
     IN p_tg_admin_id VARCHAR(40),
-	IN p_tg_user_id VARCHAR(40),
+	IN p_tg_user_at VARCHAR(40),
 	IN p_chain_usd_paid FLOAT,
 	IN p_pay_tx_hash VARCHAR(255),
 	IN p_pay_tx_status VARCHAR(40), -- const: baseFee, pending, queued
@@ -1258,11 +1275,12 @@ BEGIN
 	ELSEIF NOT admin_valid_tg_user(p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
-				p_tg_user_id as tg_user_id_inp;
+				p_tg_user_at as tg_user_at_inp;
 	
 	ELSE
 		-- set support variables
-		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+		SELECT tg_user_id FROM users WHERE tg_user_at = p_tg_user_at INTO @v_tg_user_id;		
+		SELECT id FROM users WHERE tg_user_id = @v_tg_user_id INTO @v_user_id;
 		SELECT usd_owed FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_curr_usd_owed;
 		SELECT usd_paid FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_curr_usd_paid;
 
@@ -1273,7 +1291,8 @@ BEGIN
 					@v_user_id as user_id,
 					@v_curr_usd_owed as curr_usd_owed,
 					@v_curr_usd_paid as curr_usd_paid,
-					p_tg_user_id as tg_user_id_inp,
+					p_tg_user_at as tg_user_at_inp,
+					@v_tg_user_id as tg_user_id,
 					p_chain_usd_paid as chain_usd_paid_inp,
 					p_pay_tx_hash as pay_tx_hash_inp;
 		ELSE
@@ -1285,8 +1304,8 @@ BEGIN
 					withdraw_requested = FALSE
 				WHERE fk_user_id = @v_user_id;
 			
-			-- update tx data (w/ is_paid) for all shills that were submitted by p_tg_user_id
-			SELECT set_usr_pay_usd_tx_status(p_tg_user_id, p_pay_tx_hash, p_pay_tx_status, p_pay_tok_addr, p_pay_tok_symb, p_pay_tok_amnt) INTO @v_status;
+			-- update tx data (w/ is_paid) for all shills that were submitted by @v_tg_user_id
+			SELECT set_usr_pay_usd_tx_status(@v_tg_user_id, p_pay_tx_hash, p_pay_tx_status, p_pay_tok_addr, p_pay_tok_symb, p_pay_tok_amnt) INTO @v_status;
 
 			-- return
 			SELECT *, 
@@ -1300,7 +1319,8 @@ BEGIN
 					p_pay_tok_addr as pay_tok_addr_inp,
 					p_pay_tok_symb as pay_tok_symb_inp,
 					p_pay_tok_amnt as pay_tok_amnt_inp,
-					p_tg_user_id as tg_user_id_inp
+					p_tg_user_at as tg_user_at_inp,
+					@v_tg_user_id as tg_user_id
 				FROM user_earns
 				WHERE fk_user_id = @v_user_id;
 		END IF; 	
@@ -1316,11 +1336,11 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS SET_USER_SHILL_REMOVED;
 CREATE PROCEDURE `SET_USER_SHILL_REMOVED`(
     IN p_tg_admin_id VARCHAR(40),
-    IN p_tg_user_id VARCHAR(40),
 	IN p_tg_user_at VARCHAR(40),
     IN p_shill_id VARCHAR(40),
 	IN p_removed BOOLEAN)
 BEGIN
+	SELECT tg_user_id FROM users WHERE tg_user_at = p_tg_user_at INTO @v_tg_user_id;
 	-- validate admin
 	IF NOT valid_tg_user_admin(p_tg_admin_id) THEN
 		SELECT 'failed' as `status`, 
@@ -1331,13 +1351,13 @@ BEGIN
 	ELSEIF NOT admin_valid_tg_user(p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
-				p_tg_user_id as tg_user_id_inp;
+				p_tg_user_at as tg_user_at_inp;
 
 	-- vaidate user / shill combo
-	ELSEIF NOT valid_shill_for_user(p_tg_user_id, p_shill_id) THEN
+	ELSEIF NOT valid_shill_for_user(@v_tg_user_id, p_shill_id) THEN
 		SELECT 'failed' as `status`, 
 				'user / shill combo not found' as info, 
-				p_tg_user_id as tg_user_id_inp,
+				@v_tg_user_id as tg_user_id,
 				p_shill_id as shill_id_inp;
 	ELSE
 		-- set shill id as removed
@@ -1349,7 +1369,8 @@ BEGIN
 		SELECT post_url, fk_user_id, is_removed,
 				'success' as `status`,
 				'removed shill id' as info,
-				p_tg_user_id as tg_user_id_inp,
+				#v_tg_user_id as tg_user_id,
+				p_tg_user_at as tg_user_at_inp,
 				p_shill_id as shill_id_inp,
 				p_removed as removed_inp
 			FROM shills
@@ -1365,7 +1386,7 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS SET_USER_PAY_RATE;
 CREATE PROCEDURE `SET_USER_PAY_RATE`(
     IN p_tg_admin_id VARCHAR(40),
-    IN p_tg_user_id VARCHAR(40),
+    IN p_tg_user_at VARCHAR(40),
 	IN p_shill_plat VARCHAR(40),
 	IN p_shill_type VARCHAR(40),
 	IN p_pay_usd FLOAT(40))
@@ -1380,18 +1401,20 @@ BEGIN
 	ELSEIF NOT admin_valid_tg_user(p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
-				p_tg_user_id as tg_user_id_inp;
+				p_tg_user_at as tg_user_at_inp;
 
 	ELSE
 		-- add new entry to user_shill_rates table
-		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+		SELECT tg_user_id FROM users WHERE tg_user_at = p_tg_user_at INTO @v_tg_user_id;
+		SELECT id FROM users WHERE tg_user_id = @v_tg_user_id INTO @v_user_id;
 		SELECT add_user_shill_rate(@v_user_id, p_shill_plat, p_shill_type, p_pay_usd) INTO @v_new_rate_id;
 
 		-- return
 		SELECT *,
 				'success' as `status`,
 				'added user shill rate' as info,
-				p_tg_user_id as tg_user_id_inp,
+				@v_tg_user_id as tg_user_id,
+				p_tg_user_at as tg_user_at_inp,
 				p_shill_plat as shill_plat_inp,
 				p_shill_type as shill_type_inp,
 				p_pay_usd as pay_usd_inp
@@ -1401,7 +1424,8 @@ BEGIN
 END 
 $$ DELIMITER ;
 
--- # '/blacklist_user'
+-- _ NOTE_031124 _ : need to consider/fix not having tg_user_id if invoked from non-admin
+-- # '/blacklist_user' 
 -- LST_KEYS_ADD_BLACKLIST_SCAMMER = ['admin_or_user_id','bl_user_id','bl_user_at','bl_user_handle','tg_chan_id']
 -- DB_PROC_ADD_BLACKLIST_SCAMMER = 'ADD_REQUEST_USER_BLACKLIST'
 DELIMITER $$
