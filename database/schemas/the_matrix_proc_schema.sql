@@ -1,4 +1,3 @@
-DELIMITER $$
 -- #================================================================# --
 --		SUPPORT FUNCTIONS
 -- #================================================================# --
@@ -19,18 +18,80 @@ END
 $$ DELIMITER ;
 
 DELIMITER $$
-drop FUNCTION if exists valid_tg_user; -- setup
-CREATE FUNCTION `valid_tg_user`(
-		p_tg_user_id VARCHAR(40)) RETURNS BOOLEAN
+drop FUNCTION if exists valid_tg_user_at; -- setup
+CREATE FUNCTION `valid_tg_user_at`(
+		p_tg_user_at VARCHAR(40)) RETURNS BOOLEAN
     READS SQL DATA
     DETERMINISTIC
 BEGIN
-	SELECT COUNT(*) FROM users WHERE tg_user_id = p_tg_user_id INTO @v_cnt;
-	IF @v_cnt > 0 THEN
+	-- check if user_id exits yet
+	SELECT COUNT(*) FROM users WHERE tg_user_at = p_tg_user_at INTO @v_cnt;
+	IF @v_cnt > 0 THEN -- yes exists
 		RETURN TRUE; 
-	ELSE
+	ELSE -- does not exist
 		RETURN FALSE;
 	END IF;
+END 
+$$ DELIMITER ;
+
+DELIMITER $$
+drop FUNCTION if exists valid_tg_user; -- setup
+CREATE FUNCTION `valid_tg_user`(
+		p_tg_user_id VARCHAR(40),
+		p_tg_user_at VARCHAR(40)) RETURNS BOOLEAN
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	-- check if user_id exits yet
+	SELECT COUNT(*) FROM users WHERE tg_user_id = p_tg_user_id INTO @v_cnt;
+	IF @v_cnt > 0 THEN -- yes exists
+		-- check if user_id / user_at comnbo exists
+		--	if not, update user_at for this user_id
+		SELECT COUNT(*) 
+			FROM users 
+			WHERE tg_user_at = p_tg_user_at 
+				AND tg_user_id = p_tg_user_id 
+			INTO @v_found_match;
+		IF @v_found_match = 0 THEN -- combo w/ user_at NOT found
+			-- get support variables
+			SELECT id FROM users where tg_user_id = p_tg_user_id INTO @v_user_id;
+			SELECT tg_user_at FROM users where id = @v_user_id INTO @v_prev_tg_user_at;
+			
+			-- update existing user with new p_tg_user_at
+			UPDATE users 
+				SET tg_user_at = p_tg_user_at,
+					dt_updated = NOW()
+				WHERE tg_user_id = p_tg_user_id;
+
+			-- log tg_user_at change in log_tg_user_at_updates
+			INSERT INTO log_tg_user_at_updates (
+					fk_user_id,
+					tg_user_id_const,
+					tg_user_at_prev,
+					tg_user_at_new
+				) VALUES (
+					@v_user_id,
+					p_tg_user_id,
+					@v_prev_tg_user_at,
+					p_tg_user_at
+				);
+		END IF;
+		RETURN TRUE; 
+	ELSE -- does not exist
+		RETURN FALSE;
+	END IF;
+END 
+$$ DELIMITER ;
+
+DELIMITER $$
+drop FUNCTION if exists admin_valid_tg_user; -- setup
+CREATE FUNCTION `admin_valid_tg_user`(
+		p_tg_user_at VARCHAR(40)) RETURNS BOOLEAN
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	SELECT valid_tg_user_at(p_tg_user_at) INTO @v_ret_bool;
+	RETURN @v_ret_bool;
 END 
 $$ DELIMITER ;
 
@@ -95,12 +156,13 @@ $$ DELIMITER ;
 DELIMITER $$
 drop FUNCTION if exists valid_tg_user_tw_conf; -- setup
 CREATE FUNCTION `valid_tg_user_tw_conf`(
-		p_tg_user_id VARCHAR(40)) 
+		p_tg_user_id VARCHAR(40),
+		p_tg_user_at VARCHAR(40)) 
 		RETURNS VARCHAR(1024)
     READS SQL DATA
     DETERMINISTIC
 BEGIN
-	IF NOT valid_tg_user(p_tg_user_id) THEN
+	IF NOT valid_tg_user(p_tg_user_id, p_tg_user_at) THEN
 		RETURN 'user not found';
 	END IF;
 	IF exp_tw_conf(p_tg_user_id) THEN
@@ -142,20 +204,15 @@ CREATE FUNCTION `valid_shill_for_user`(
     READS SQL DATA
     DETERMINISTIC
 BEGIN
-	SELECT valid_tg_user(p_tg_user_id) INTO @v_valid_user;
-	IF @v_valid_user = FALSE THEN
-		RETURN FALSE;
-	ELSE 
-		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
-		SELECT COUNT(*) FROM shills
-			WHERE id = p_shill_id
-				AND fk_user_id = @v_user_id
-			INTO @v_cnt;
-		IF @v_cnt > 0 THEN
-			RETURN TRUE; -- yes exists
-		ELSE
-			RETURN FALSE; -- does not exist
-		END IF;
+	SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+	SELECT COUNT(*) FROM shills
+		WHERE id = p_shill_id
+			AND fk_user_id = @v_user_id
+		INTO @v_cnt;
+	IF @v_cnt > 0 THEN
+		RETURN TRUE; -- yes exists
+	ELSE
+		RETURN FALSE; -- does not exist
 	END IF;
 END 
 $$ DELIMITER ;
@@ -233,23 +290,18 @@ CREATE FUNCTION `usr_withdraw_requested`(
     READS SQL DATA
     DETERMINISTIC
 BEGIN
-	-- validate user exists in 'users' table
-	IF NOT valid_tg_user(p_tg_user_id) THEN
-		RETURN FALSE;
-	ELSE
-		-- get id from users table
-		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+	-- get id from users table
+	SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
 
-		-- check if user_earns entry exists for this user id (if not, create it)
-		SELECT COUNT(*) FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_cnt;
-		IF @v_cnt = 0 THEN
-			SELECT add_default_user_earns(@v_user_id) INTO @v_earn_id;
-		END IF;
-
-		-- return boolean for 'withdraw_requested'
-		SELECT withdraw_requested FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_requested;
-		RETURN @v_requested;
+	-- check if user_earns entry exists for this user id (if not, create it)
+	SELECT COUNT(*) FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_cnt;
+	IF @v_cnt = 0 THEN
+		SELECT add_default_user_earns(@v_user_id) INTO @v_earn_id;
 	END IF;
+
+	-- return boolean for 'withdraw_requested'
+	SELECT withdraw_requested FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_requested;
+	RETURN @v_requested;
 END 
 $$ DELIMITER ;
 
@@ -262,32 +314,27 @@ CREATE FUNCTION `get_usr_pay_usd_appr_sum`(
     READS SQL DATA
     DETERMINISTIC
 BEGIN
-	-- return -1 if p_tg_user_id doesn't exist in 'users' table
-	IF NOT valid_tg_user(p_tg_user_id) THEN
-		RETURN -1.0; 
-	ELSE
-		-- get id for p_tg_user_id in users table
-		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+	-- get id for p_tg_user_id in users table
+	SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
 
-		-- get sum of all pay_usd in shills table
-		--	where approved, not removed, not pending, p_is_paid
-		SELECT SUM(pay_usd)
-			FROM shills 
-			WHERE fk_user_id = @v_user_id
-				AND is_approved = TRUE
-				AND is_removed = FALSE
-				AND pay_tx_submit = FALSE
-				AND is_paid = p_is_paid
-			INTO @v_tot_amnt;
+	-- get sum of all pay_usd in shills table
+	--	where approved, not removed, not pending, p_is_paid
+	SELECT SUM(pay_usd)
+		FROM shills 
+		WHERE fk_user_id = @v_user_id
+			AND is_approved = TRUE
+			AND is_removed = FALSE
+			AND pay_tx_submit = FALSE
+			AND is_paid = p_is_paid
+		INTO @v_tot_amnt;
 
-		-- return -37 is no entries for p_tg_user_id in shills table
-		IF @v_tot_amnt IS NULL THEN
-			SET @v_tot_amnt = -37.0; 
-		END IF;
-
-		-- return
-		RETURN @v_tot_amnt;
+	-- return -37 is no entries for p_tg_user_id in shills table
+	IF @v_tot_amnt IS NULL THEN
+		SET @v_tot_amnt = -37.0; 
 	END IF;
+
+	-- return
+	RETURN @v_tot_amnt;
 END 
 $$ DELIMITER ;
 
@@ -299,28 +346,23 @@ CREATE FUNCTION `set_usr_pay_usd_tx_submit`(
     READS SQL DATA
     DETERMINISTIC
 BEGIN
-	-- return -1 if p_tg_user_id doesn't exist in 'users' table
-	IF NOT valid_tg_user(p_tg_user_id) THEN
-		RETURN FALSE; 
-	ELSE
-		-- get id for p_tg_user_id in users table
-		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+	-- get id for p_tg_user_id in users table
+	SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
 
-		-- set tx submit to TRUE for all approved shills and not tx sumbit yet
-		--	for user_id where approved, not removed, not paid
-		UPDATE shills
-			SET pay_tx_submit = TRUE,
-				dt_tx_submit = NOW()
-			WHERE id 
-				IN (SELECT id
-						FROM shills 
-						WHERE fk_user_id = @v_user_id
-							AND is_approved = TRUE
-							AND is_removed = FALSE
-							AND pay_tx_submit = FALSE
-							AND is_paid = FALSE);
-		RETURN TRUE;
-	END IF;
+	-- set tx submit to TRUE for all approved shills and not tx sumbit yet
+	--	for user_id where approved, not removed, not paid
+	UPDATE shills
+		SET pay_tx_submit = TRUE,
+			dt_tx_submit = NOW()
+		WHERE id 
+			IN (SELECT id
+					FROM shills 
+					WHERE fk_user_id = @v_user_id
+						AND is_approved = TRUE
+						AND is_removed = FALSE
+						AND pay_tx_submit = FALSE
+						AND is_paid = FALSE);
+	RETURN TRUE;
 END 
 $$ DELIMITER ;
 
@@ -337,34 +379,29 @@ CREATE FUNCTION `set_usr_pay_usd_tx_status`(
     READS SQL DATA
     DETERMINISTIC
 BEGIN
-	-- return -1 if p_tg_user_id doesn't exist in 'users' table
-	IF NOT valid_tg_user(p_tg_user_id) THEN
-		RETURN '-37'; 
-	ELSE
-		-- get id for p_tg_user_id in users table
-		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+	-- get id for p_tg_user_id in users table
+	SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
 
-		-- set various tx data & paid to TRUE for all approved shills and tx submitted
-		--	for user_id where approved, not removed, not paid
-		UPDATE shills
-			SET pay_tx_status = p_pay_tx_status,
-				dt_tx_status = NOW(),
-				pay_tx_hash = p_pay_tx_hash,
-				pay_tx_status = p_pay_tx_status,
-				pay_tok_addr = p_pay_tok_addr,
-				pay_tok_symb = p_pay_tok_symb,
-				pay_tok_amnt = p_pay_tok_amnt,
-				is_paid = TRUE
-			WHERE id 
-				IN (SELECT id
-						FROM shills 
-						WHERE fk_user_id = @v_user_id
-							AND pay_tx_submit = TRUE
-							AND is_approved = TRUE
-							AND is_removed = FALSE
-							AND is_paid = FALSE);
-		RETURN p_pay_tx_status;
-	END IF;
+	-- set various tx data & paid to TRUE for all approved shills and tx submitted
+	--	for user_id where approved, not removed, not paid
+	UPDATE shills
+		SET pay_tx_status = p_pay_tx_status,
+			dt_tx_status = NOW(),
+			pay_tx_hash = p_pay_tx_hash,
+			pay_tx_status = p_pay_tx_status,
+			pay_tok_addr = p_pay_tok_addr,
+			pay_tok_symb = p_pay_tok_symb,
+			pay_tok_amnt = p_pay_tok_amnt,
+			is_paid = TRUE
+		WHERE id 
+			IN (SELECT id
+					FROM shills 
+					WHERE fk_user_id = @v_user_id
+						AND pay_tx_submit = TRUE
+						AND is_approved = TRUE
+						AND is_removed = FALSE
+						AND is_paid = FALSE);
+	RETURN p_pay_tx_status;
 END 
 $$ DELIMITER ;
 
@@ -492,7 +529,7 @@ $$ DELIMITER ;
 --		STORED PROCEDURES
 -- #================================================================# --
 -- # '/register_as_shiller'
--- LST_KEYS_REG_SHILLER = ['user_id', 'wallet_address', 'trinity_tw_url']
+-- LST_KEYS_REG_SHILLER = ['user_id','user_at','user_handle','wallet_address','trinity_tw_url']
 -- DB_PROC_ADD_NEW_USER = 'ADD_NEW_TG_USER'
 --     # validate 'p_tw_conf_url' contains texts '@BearSharesNFT' & 'trinity'
 DELIMITER $$
@@ -504,8 +541,14 @@ CREATE PROCEDURE `ADD_NEW_TG_USER`(
     IN p_wallet_address VARCHAR(255),
     IN p_tw_conf_url VARCHAR(1024))
 BEGIN
+	IF valid_tg_user_at(p_tg_user_at) THEN
+		SELECT 'failed' as `status`, 
+				'user already exists; contact support' as info, 
+				p_tg_user_id as tg_user_id_inp,
+				p_tg_user_at as tg_user_at_inp;
+	
 	-- vaidate user does NOT exists (only)
-	IF valid_tg_user(p_tg_user_id) THEN
+	ELSEIF valid_tg_user(p_tg_user_id, p_tg_user_at) THEN -- updates tg_user_at if needed
 		SELECT id, tg_user_id, tg_user_at, tg_user_handle, is_admin,
 				'failed' as `status`, 
 				'user already exists' as info, 
@@ -591,16 +634,17 @@ END
 $$ DELIMITER ;
 
 -- # '/confirm_twitter'
--- LST_KEYS_TW_CONF = ['user_id', 'trinity_tw_url']
+-- LST_KEYS_TW_CONF = ['user_id','user_at','trinity_tw_url']
 -- DB_PROC_RENEW_TW_CONFRIM = 'UPDATE_TWITTER_CONF'
 DELIMITER $$
 DROP PROCEDURE IF EXISTS UPDATE_TWITTER_CONF;
 CREATE PROCEDURE `UPDATE_TWITTER_CONF`(
     IN p_tg_user_id VARCHAR(40), -- ex: '-1000342'
+	IN p_tg_user_at VARCHAR(40),
     IN p_tw_conf_url VARCHAR(1024))
 BEGIN
 	-- vaidate user exists (only)
-	IF NOT valid_tg_user(p_tg_user_id) THEN
+	IF NOT valid_tg_user(p_tg_user_id, p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
 				p_tg_user_id as tg_user_id_inp,
@@ -643,16 +687,17 @@ END
 $$ DELIMITER ;
 
 -- # '/submit_shill_link'
--- LST_KEYS_SUBMIT_SHILL = ['user_id', 'post_url']
+-- LST_KEYS_SUBMIT_SHILL = ['user_id','user_at','post_url']
 -- DB_PROC_ADD_SHILL = 'ADD_USER_SHILL_TW'
 DELIMITER $$
 DROP PROCEDURE IF EXISTS ADD_USER_SHILL_TW;
 CREATE PROCEDURE `ADD_USER_SHILL_TW`(
     IN p_tg_user_id VARCHAR(40),
+	IN p_tg_user_at VARCHAR(40),
     IN p_post_url VARCHAR(1024))
 BEGIN
 	-- vaidate user exists & tw conf not expired
-	set @v_valid = valid_tg_user_tw_conf(p_tg_user_id);
+	set @v_valid = valid_tg_user_tw_conf(p_tg_user_id, p_tg_user_at); -- invokes 'valid_tg_user'
 	IF NOT @v_valid = 'valid user' THEN
 		SELECT 'failed' as `status`, 
 				@v_valid as info, 
@@ -694,17 +739,18 @@ END
 $$ DELIMITER ;
 
 -- # '/request_cashout'
--- LST_KEYS_REQUEST_CASHOUT = ['user_id']
+-- LST_KEYS_REQUEST_CASHOUT = ['user_id','user_at']
 -- DB_PROC_REQUEST_CASHOUT = 'SET_USER_WITHDRAW_REQUESTED'
 -- # python TG notify admin_pay to process
 -- # python TG notify p_tg_user_id that request has been submit (w/ user_earns.usd_owed)
 DELIMITER $$
 DROP PROCEDURE IF EXISTS SET_USER_WITHDRAW_REQUESTED;
 CREATE PROCEDURE `SET_USER_WITHDRAW_REQUESTED`(
-    IN p_tg_user_id VARCHAR(40))
+    IN p_tg_user_id VARCHAR(40),
+	IN p_tg_user_at VARCHAR(40))
 BEGIN
 	-- vaidate user exists & tw conf not expired
-	set @v_valid = valid_tg_user_tw_conf(p_tg_user_id);
+	set @v_valid = valid_tg_user_tw_conf(p_tg_user_id, p_tg_user_at); -- invokes 'valid_tg_user'
 	IF NOT @v_valid = 'valid user' THEN
 		SELECT 'failed' as `status`, 
 				@v_valid as info, 
@@ -744,16 +790,17 @@ END
 $$ DELIMITER ;
 
 -- # '/show_my_rates'
--- LST_KEYS_SHOW_RATES = ['user_id', 'platform'] # const: unknown, twitter, tiktok, reddit
+-- LST_KEYS_SHOW_RATES = ['user_id','user_at','platform'] # const: unknown, twitter, tiktok, reddit
 -- DB_PROC_GET_USR_RATES = 'GET_USER_PAY_RATES'
 DELIMITER $$
 DROP PROCEDURE IF EXISTS GET_USER_PAY_RATES;
 CREATE PROCEDURE `GET_USER_PAY_RATES`(
     IN p_tg_user_id VARCHAR(40),
+	IN p_tg_user_at VARCHAR(40),
 	IN p_platform VARCHAR(40)) -- const: unknown, twitter, tiktok, reddit
 BEGIN
 	-- vaidate user exists
-	IF NOT valid_tg_user(p_tg_user_id) THEN
+	IF NOT valid_tg_user(p_tg_user_id, p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
 				p_tg_user_id as tg_user_id_inp,
@@ -783,15 +830,16 @@ END
 $$ DELIMITER ;
 
 -- # '/show_my_earnings'
--- LST_KEYS_SHOW_EARNINGS = ['user_id']
+-- LST_KEYS_SHOW_EARNINGS = ['user_id','user_at']
 -- DB_PROC_GET_USR_EARNS = 'GET_USER_EARNINGS'
 DELIMITER $$
 DROP PROCEDURE IF EXISTS GET_USER_EARNINGS;
 CREATE PROCEDURE `GET_USER_EARNINGS`(
-    IN p_tg_user_id VARCHAR(40))
+    IN p_tg_user_id VARCHAR(40),
+	IN p_tg_user_at VARCHAR(40))
 BEGIN
 	-- vaidate user exists
-	IF NOT valid_tg_user(p_tg_user_id) THEN
+	IF NOT valid_tg_user(p_tg_user_id, p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
 				p_tg_user_id as tg_user_id_inp;
@@ -875,7 +923,7 @@ BEGIN
 				p_tg_admin_id as tg_admin_id;
 
 	-- vaidate user exists
-	ELSEIF NOT valid_tg_user(p_tg_user_id) THEN
+	ELSEIF NOT admin_valid_tg_user(p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
 				p_tg_user_id as tg_user_id_inp;
@@ -951,7 +999,7 @@ BEGIN
 				p_tg_admin_id as tg_admin_id;
 
 	-- vaidate user exists
-	ELSEIF NOT valid_tg_user(p_tg_user_id) THEN
+	ELSEIF NOT admin_valid_tg_user(p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
 				p_tg_user_id as tg_user_id_inp;
@@ -1061,7 +1109,7 @@ BEGIN
 				p_tg_admin_id as tg_admin_id;
 
 	-- vaidate user exists
-	ELSEIF NOT valid_tg_user(p_tg_user_id) THEN
+	ELSEIF NOT admin_valid_tg_user(p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
 				p_tg_user_id as tg_user_id_inp;
@@ -1136,14 +1184,14 @@ BEGIN
 				p_tg_admin_id as tg_admin_id;
 
 	-- vaidate user exists
-	ELSEIF NOT valid_tg_user(p_tg_user_id) THEN
+	ELSEIF NOT admin_valid_tg_user(p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
 				p_tg_user_id as tg_user_id_inp;
 
 	-- check withdraw indeed requested by 'p_tg_user_id'
 	-- 	note: executes 'add_default_user_earns' (if needed)
-	ELSEIF NOT usr_withdraw_requested(p_tg_user_id) THEN -- checks 'valid_tg_user'
+	ELSEIF NOT usr_withdraw_requested(p_tg_user_id) THEN
 		SELECT 'failed' as `status`, 
 				'withdraw not requested by user' as info, 
 				p_tg_user_id as tg_user_id;
@@ -1203,7 +1251,7 @@ BEGIN
 				p_tg_admin_id as tg_admin_id;
 
 	-- vaidate user exists
-	ELSEIF NOT valid_tg_user(p_tg_user_id) THEN
+	ELSEIF NOT admin_valid_tg_user(p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
 				p_tg_user_id as tg_user_id_inp;
@@ -1265,6 +1313,7 @@ DROP PROCEDURE IF EXISTS SET_USER_SHILL_REMOVED;
 CREATE PROCEDURE `SET_USER_SHILL_REMOVED`(
     IN p_tg_admin_id VARCHAR(40),
     IN p_tg_user_id VARCHAR(40),
+	IN p_tg_user_at VARCHAR(40),
     IN p_shill_id VARCHAR(40),
 	IN p_removed BOOLEAN)
 BEGIN
@@ -1274,7 +1323,13 @@ BEGIN
 				'invalid admin' as info, 
 				p_tg_admin_id as tg_admin_id;
 
-	-- vaidate user / shill combo (invokes: valid_tg_user(...))
+	-- vaidate user exists
+	ELSEIF NOT admin_valid_tg_user(p_tg_user_at) THEN
+		SELECT 'failed' as `status`, 
+				'user not found' as info, 
+				p_tg_user_id as tg_user_id_inp;
+
+	-- vaidate user / shill combo
 	ELSEIF NOT valid_shill_for_user(p_tg_user_id, p_shill_id) THEN
 		SELECT 'failed' as `status`, 
 				'user / shill combo not found' as info, 
@@ -1318,7 +1373,7 @@ BEGIN
 				p_tg_admin_id as tg_admin_id;
 
 	-- vaidate user exists
-	ELSEIF NOT valid_tg_user(p_tg_user_id) THEN
+	ELSEIF NOT admin_valid_tg_user(p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
 				p_tg_user_id as tg_user_id_inp;
@@ -1342,7 +1397,7 @@ BEGIN
 END 
 $$ DELIMITER ;
 
--- # '/admin_set_shiller_rate'
+-- # '/blacklist_user'
 -- LST_KEYS_ADD_BLACKLIST_SCAMMER = ['admin_or_user_id','bl_user_id','bl_user_at','bl_user_handle','tg_chan_id']
 -- DB_PROC_ADD_BLACKLIST_SCAMMER = 'ADD_REQUEST_USER_BLACKLIST'
 DELIMITER $$
@@ -1357,7 +1412,7 @@ BEGIN
 	DECLARE v_new_bl_id INT(11);
 	DECLARE v_enabled BOOLEAN;
 	-- validate user
-	IF NOT valid_tg_user(p_tg_admin_or_user_id) THEN
+	IF NOT admin_valid_tg_user(p_tg_admin_or_user_id) THEN
 		SELECT 'failed' as `status`, 
 				'request user not found' as info, 
 				p_tg_admin_or_user_id as tg_admin_or_user_id;

@@ -47,6 +47,20 @@ CREATE TABLE `users` (
   UNIQUE KEY `ID` (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
+drop table if exists log_tg_user_at_changes;
+CREATE TABLE `log_tg_user_at_changes` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `dt_created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `dt_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `dt_deleted` timestamp NULL DEFAULT NULL,
+  `fk_user_id` varchar(40) NOT NULL,
+  `tg_user_id_const` varchar(40) NOT NULL,
+  `tg_user_at_prev` varchar(40) NOT NULL,
+  `tg_user_at_new` varchar(40) NOT NULL,
+
+  UNIQUE KEY `ID` (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
 drop table if exists log_tw_conf_urls;
 CREATE TABLE `log_tw_conf_urls` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
