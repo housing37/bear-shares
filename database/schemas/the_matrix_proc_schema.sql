@@ -1,5 +1,5 @@
 -- #================================================================# --
---		SUPPORT FUNCTIONS
+-- # SUPPORT FUNCTIONS
 -- #================================================================# --
 DELIMITER $$
 drop FUNCTION if exists valid_tg_user_admin; -- setup
@@ -527,12 +527,12 @@ $$ DELIMITER ;
 -- $$ DELIMITER ;
 
 -- #================================================================# --
---		STORED PROCEDURES
+-- #STORED PROCEDURES
 -- #================================================================# --
 -- # '/register_as_shiller'
 -- LST_KEYS_REG_SHILLER = ['user_id','user_at','user_handle','wallet_address','trinity_tw_url']
 -- DB_PROC_ADD_NEW_USER = 'ADD_NEW_TG_USER'
---     # validate 'p_tw_conf_url' contains texts '@BearSharesNFT' & 'trinity'
+-- # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
 DELIMITER $$
 DROP PROCEDURE IF EXISTS ADD_NEW_TG_USER;
 CREATE PROCEDURE `ADD_NEW_TG_USER`(
@@ -638,6 +638,7 @@ $$ DELIMITER ;
 -- # '/confirm_twitter'
 -- LST_KEYS_TW_CONF = ['user_id','user_at','trinity_tw_url']
 -- DB_PROC_RENEW_TW_CONFRIM = 'UPDATE_TWITTER_CONF'
+-- # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
 DELIMITER $$
 DROP PROCEDURE IF EXISTS UPDATE_TWITTER_CONF;
 CREATE PROCEDURE `UPDATE_TWITTER_CONF`(
@@ -744,8 +745,8 @@ $$ DELIMITER ;
 -- # '/request_cashout'
 -- LST_KEYS_REQUEST_CASHOUT = ['user_id','user_at']
 -- DB_PROC_REQUEST_CASHOUT = 'SET_USER_WITHDRAW_REQUESTED'
--- # python TG notify admin_pay to process
--- # python TG notify p_tg_user_id that request has been submit (w/ user_earns.usd_owed)
+-- # POST-DB: python TG notify admin_pay to process
+-- # POST-DB: python TG notify p_tg_user_id that request has been submit (w/ user_earns.usd_owed)
 DELIMITER $$
 DROP PROCEDURE IF EXISTS SET_USER_WITHDRAW_REQUESTED;
 CREATE PROCEDURE `SET_USER_WITHDRAW_REQUESTED`(
@@ -913,7 +914,7 @@ $$ DELIMITER ;
 -- # '/admin_scan_web_for_removed_shills'
 -- LST_KEYS_CHECK_USR_REM_SHILLS = ['admin_id','user_id','approved','removed']
 -- DB_PROC_CHECK_USR_REM_SHILL = 'GET_USER_SHILLS_ALL'
--- # then web scrape those post_urls to see if they are still working / viewable
+-- # POST-DB: web scrape those post_urls to see if they are still working / viewable
 DELIMITER $$
 DROP PROCEDURE IF EXISTS GET_USER_SHILLS_ALL;
 CREATE PROCEDURE `GET_USER_SHILLS_ALL`(
@@ -986,8 +987,8 @@ $$ DELIMITER ;
 -- # '/admin_approve_pend_shill'
 -- LST_KEYS_APPROVE_SHILL = ['admin_id','user_id', 'shill_id','shill_plat','shill_type','pay_usd','approved']
 -- DB_PROC_APPROVE_SHILL_STATUS = "UPDATE_USER_SHILL_APPR_EARNS" 
--- # admin views / inspects shill_url on the web (determines: plat, type, pay, approve)
--- # python TG message to shiller confirming approval & earnings updated (w/ shill url, shill type, pay_usd)
+-- # POST-DB: python TG notify admin_pay to process
+-- # POST-DB: python TG notify p_tg_user_id that request has been submit (w/ user_earns.usd_owed)
 DELIMITER $$
 DROP PROCEDURE IF EXISTS UPDATE_USER_SHILL_APPR_EARNS;
 CREATE PROCEDURE `UPDATE_USER_SHILL_APPR_EARNS`(
@@ -1185,9 +1186,8 @@ $$ DELIMITER ;
 -- # '/admin_pay_shill_rewards'
 -- LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_id']
 -- DB_PROC_SET_USR_PAY_SUBMIT = 'SET_USER_PAY_TX_SUBMIT' # -> get_usr_pay_usd_appr_sum, set_usr_pay_usd_tx_submit
--- # perform python/solidity 'transfer(user_earns.usd_owed)' call to 'wallet_address' for user_id
--- #	wallet_address can be retreived from 'GET_USER_EARNINGS(tg_user_id)'
--- #   receive tx data for DB_PROC_SET_USR_PAY_CONF
+-- # POST-DB: perform python/solidity 'transfer(user_earns.usd_owed, wallet_address)' to get tx data for DB_PROC_SET_USR_PAY_CONF
+-- #	        get 'wallet_address' from 'GET_USER_EARNINGS(tg_user_id)'
 DELIMITER $$
 DROP PROCEDURE IF EXISTS SET_USER_PAY_TX_SUBMIT;
 CREATE PROCEDURE `SET_USER_PAY_TX_SUBMIT`(
@@ -1253,6 +1253,7 @@ $$ DELIMITER ;
 -- # '/admin_pay_shill_rewards'
 -- LST_KEYS_PAY_SHILL_EARNS_CONF = ['admin_id','user_id','chain_usd_paid','tx_hash','tx_status','tok_addr','tok_symb','tok_amnt']
 -- DB_PROC_SET_USR_PAY_CONF = 'SET_USER_PAY_TX_STATUS' # -> set_usr_pay_usd_tx_status
+-- # PRE-DB: perform python/solidity 'transfer' to get tx data for DB_PROC_SET_USR_PAY_CONF
 DELIMITER $$
 DROP PROCEDURE IF EXISTS SET_USER_PAY_TX_STATUS;
 CREATE PROCEDURE `SET_USER_PAY_TX_STATUS`(
@@ -1475,7 +1476,7 @@ END
 $$ DELIMITER ;
 
 -- #================================================================# --
---		LEGACY
+-- # LEGACY
 -- #================================================================# --
 
 -- DELIMITER $$
