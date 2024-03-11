@@ -693,6 +693,56 @@ BEGIN
 END 
 $$ DELIMITER ;
 
+-- # '/request_cashout'
+-- LST_KEYS_REQUEST_CASHOUT = ['user_id']
+-- DB_PROC_REQUEST_CASHOUT = 'SET_USER_WITHDRAW_REQUESTED'
+-- # python TG notify admin_pay to process
+-- # python TG notify p_tg_user_id that request has been submit (w/ user_earns.usd_owed)
+DELIMITER $$
+DROP PROCEDURE IF EXISTS SET_USER_WITHDRAW_REQUESTED;
+CREATE PROCEDURE `SET_USER_WITHDRAW_REQUESTED`(
+    IN p_tg_user_id VARCHAR(40))
+BEGIN
+	-- vaidate user exists & tw conf not expired
+	set @v_valid = valid_tg_user_tw_conf(p_tg_user_id);
+	IF NOT @v_valid = 'valid user' THEN
+		SELECT 'failed' as `status`, 
+				@v_valid as info, 
+				p_tg_user_id as tg_user_id_inp;
+	ELSE
+		SET @v_usd_min = 1.00;
+		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+		SELECT usd_owed FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_usd_owed;
+
+		-- validate amnt owed is at least min aloud (ie. minimize gas used on withdrawels)
+		IF @v_usd_owed >= @v_usd_min THEN
+			SELECT 'failed' as `status`, 
+					'owed balance too low' as info,
+					@v_user_id as user_id,
+					@v_usd_owed as usd_owed,
+					@v_usd_min as usd_withdraw_min,
+					p_tg_user_id as tg_user_id_inp;
+		ELSE
+			-- set withdraw requested
+			UPDATE user_earns
+				SET withdraw_requested = TRUE
+				WHERE fk_user_id = @v_user_id;
+
+			-- return
+			SELECT tg_user_id, tg_user_at, tg_user_handle, wallet_address,
+					'success' as `status`,
+					'set withdraw requested' as info,
+					@v_user_id as user_id,
+					@v_usd_owed as usd_owed,
+					@v_usd_min as usd_withdraw_min,
+					p_tg_user_id as tg_user_id_inp
+				FROM users
+				WHERE id = @v_user_id;
+		END IF;
+	END IF;
+END 
+$$ DELIMITER ;
+
 -- # '/show_my_rates'
 -- LST_KEYS_SHOW_RATES = ['user_id', 'platform'] # const: unknown, twitter, tiktok, reddit
 -- DB_PROC_GET_USR_RATES = 'GET_USER_PAY_RATES'
@@ -757,56 +807,6 @@ BEGIN
 			INNER JOIN users u
 				ON ue.fk_user_id = u.id
 			WHERE ue.fk_user_id = @v_user_id;
-	END IF;
-END 
-$$ DELIMITER ;
-
--- # '/request_cashout'
--- LST_KEYS_REQUEST_CASHOUT = ['user_id']
--- DB_PROC_REQUEST_CASHOUT = 'SET_USER_WITHDRAW_REQUESTED'
--- # python TG notify admin_pay to process
--- # python TG notify p_tg_user_id that request has been submit (w/ user_earns.usd_owed)
-DELIMITER $$
-DROP PROCEDURE IF EXISTS SET_USER_WITHDRAW_REQUESTED;
-CREATE PROCEDURE `SET_USER_WITHDRAW_REQUESTED`(
-    IN p_tg_user_id VARCHAR(40))
-BEGIN
-	-- vaidate user exists & tw conf not expired
-	set @v_valid = valid_tg_user_tw_conf(p_tg_user_id);
-	IF NOT @v_valid = 'valid user' THEN
-		SELECT 'failed' as `status`, 
-				@v_valid as info, 
-				p_tg_user_id as tg_user_id_inp;
-	ELSE
-		SET @v_usd_min = 1.00;
-		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
-		SELECT usd_owed FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_usd_owed;
-
-		-- validate amnt owed is at least min aloud (ie. minimize gas used on withdrawels)
-		IF @v_usd_owed >= @v_usd_min THEN
-			SELECT 'failed' as `status`, 
-					'owed balance too low' as info,
-					@v_user_id as user_id,
-					@v_usd_owed as usd_owed,
-					@v_usd_min as usd_withdraw_min,
-					p_tg_user_id as tg_user_id_inp;
-		ELSE
-			-- set withdraw requested
-			UPDATE user_earns
-				SET withdraw_requested = TRUE
-				WHERE fk_user_id = @v_user_id;
-
-			-- return
-			SELECT tg_user_id, tg_user_at, tg_user_handle, wallet_address,
-					'success' as `status`,
-					'set withdraw requested' as info,
-					@v_user_id as user_id,
-					@v_usd_owed as usd_owed,
-					@v_usd_min as usd_withdraw_min,
-					p_tg_user_id as tg_user_id_inp
-				FROM users
-				WHERE id = @v_user_id;
-		END IF;
 	END IF;
 END 
 $$ DELIMITER ;
