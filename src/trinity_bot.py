@@ -101,49 +101,54 @@ async def cmd_handler(update: Update, context):
     # ex tweet_conf (valid): https://x.com/SolAudits/status/1765925225844089300?s=20
     # ex tweet_conf (valid): https://x.com/SolAudits/status/1766554515094778118?s=20
     # ex tweet_conf (valid): https://x.com/SolAudits/status/1766580860604571739?s=20
-    # ex tweet_conf (valid): https://x.com/SolAudits/status/1766584748527247440?s=20 # 1700
+    # ex tweet_conf (valid): https://x.com/SolAudits/status/1766584748527247440?s=20
     # ex tweet_conf (valid): https://x.com/SolAudits/status/1766586177438564670?s=20
 
     # ex tweet_shill (fails): https://x.com/TopGunHexadian/status/1766339571342553408?s=20
     # ex tweet_shill (valid): https://x.com/SolAudits/status/1766663759961940205?s=20
     
     
-    # NOTE: all db procs require uid as 'p_tg_user_id' or 'p_admin_user_id'
-    #   uid used for 'p_admin_user_id', then additional input_uid required for 'p_tg_user_id'
-    inp_split.insert(1, uid)
-    if USE_ALT_ACCT: 
-            inp_split[1] = '1058890141'
-
-    # handle cmds that need more data
-    if tg_cmd == 'register_as_shiller':
-        if USE_ALT_ACCT: 
-            # inp_split[1] = '1058890141'
-            inp_split.insert(2, 'laycpirates')
-            inp_split.insert(3, 'LAO Pirates')
-        else:
-            inp_split.insert(2, uname_at)
-            inp_split.insert(3, uname_handle)
     
-    if tg_cmd == 'request_cashout': # ['<tg_user>']
-        # NOTE: inp_split[1] should be '<tg_user>'
-        # NOTE: TODO
-        pass
+    # NOTE: all non-admin db procs require 'tg_user_id' & 'tg_user_at' (ie. uid & uname_at)
+    if 'admin' not in tg_cmd:
+        inp_split.insert(1, uid)
+        inp_split.insert(2, uname_at)
+        if USE_ALT_ACCT: 
+                inp_split[1] = '1058890141'
+                inp_split[2] = 'laycpirates'
 
-    if tg_cmd == 'show_my_rates': # ['<tg_user>','<twitter|tiktok|reddit>']
-        # NOTE: inp_split[1] should be '<tg_user>'
-        inp_split.insert(2, 'twitter') # const: unknown, twitter, tiktok, reddit
+        # handle cmds that need more data
+        if tg_cmd == 'register_as_shiller':
+            if USE_ALT_ACCT: 
+                inp_split.insert(3, 'LAO Pirates')
+            else:
+                inp_split.insert(3, uname_handle)
+        
+        if tg_cmd == 'request_cashout': # ['<tg_user_at>']
+            # NOTE: inp_split[1] should be '<tg_user_at>'
+            # NOTE: TODO
+            pass
 
-    # if tg_cmd == 'show_my_earnings': # # ['<tg_user>']
-    #     # NOTE: inp_split[1] should be '<tg_user>'
-    #     pass
+        if tg_cmd == 'show_my_rates': # ['<tg_user_at>','<twitter|tiktok|reddit>']
+            # NOTE: inp_split[1] should be '<tg_user_at>'
+            inp_split.insert(2, 'twitter') # const: unknown, twitter, tiktok, reddit
 
-    if tg_cmd == 'admin_show_user_rates': # + ['<tg_user>','<twitter|tiktok|reddit>']
-        # NOTE: inp_split[2] should be '<tg_user>'
-        inp_split.insert(3, 'twitter') # const: unknown, twitter, tiktok, reddit
+        # if tg_cmd == 'show_my_earnings': # # ['<tg_user_at>']
+        #     # NOTE: inp_split[1] should be '<tg_user_at>'
+        #     pass
 
-    # if tg_cmd == 'admin_show_user_earnings': # ['<tg_user>']
-    #     # NOTE: inp_split[2] should be '<tg_user>'
-    #     pass
+    # NOTE: all admin db procs require 'tg_admin_id' & 'tg_user_at' (ie. uid & <tg_user_at>)    
+    else: # if 'admin' in tg_cmd
+        
+        inp_split.insert(1, uid)
+
+        if tg_cmd == 'admin_show_user_rates': # + ['<tg_user_at>','<twitter|tiktok|reddit>']
+            # NOTE: inp_split[2] should be '<tg_user_at>'
+            inp_split.insert(3, 'twitter') # const: unknown, twitter, tiktok, reddit
+
+        # if tg_cmd == 'admin_show_user_earnings': # ['<tg_user_at>']
+        #     # NOTE: inp_split[2] should be '<tg_user_at>'
+        #     pass
 
 
     print(f'GO - req_handler.exe_tg_cmd ... {get_time_now()}')

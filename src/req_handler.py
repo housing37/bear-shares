@@ -87,7 +87,7 @@ LST_KEYS_SUBMIT_SHILL = ['user_id','user_at','post_url']
 
 # '/request_cashout'
 kREQUEST_CASHOUT = "request_cashout"
-LST_CMD_REQUEST_CASHOUT = [] # ['<tg_user>']
+LST_CMD_REQUEST_CASHOUT = [] # ['<tg_user_at>']
 STR_ERR_REQUEST_CASHOUT = f'nil_err_response_tg'
 LST_KEYS_REQUEST_CASHOUT_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_REQUEST_CASHOUT = 'SET_USER_WITHDRAW_REQUESTED'
@@ -97,7 +97,7 @@ LST_KEYS_REQUEST_CASHOUT = ['user_id','user_at']
 
 # '/show_my_rates'
 kSHOW_USR_RATES = "show_my_rates" # '/show_my_rates'
-LST_CMD_SHOW_RATES = [] # ['<tg_user>','<twitter|tiktok|reddit>']
+LST_CMD_SHOW_RATES = [] # ['<tg_user_at>','<twitter|tiktok|reddit>']
 STR_ERR_SHOW_RATES = f'''please use cmd format:\n /{kSHOW_USR_RATES} {" ".join(LST_CMD_SHOW_RATES)}'''
 LST_KEYS_SHOW_RATES_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_GET_USR_RATES = 'GET_USER_PAY_RATES'
@@ -105,7 +105,7 @@ LST_KEYS_SHOW_RATES = ['user_id','user_at','platform'] # const: unknown, twitter
 
 # '/show_my_earnings'
 kSHOW_USR_EARNS = "show_my_earnings" # '/show_my_earnings'
-LST_CMD_SHOW_EARNS = [] # ['<tg_user>']
+LST_CMD_SHOW_EARNS = [] # ['<tg_user_at>']
 STR_ERR_SHOW_EARNS = f'''please user cmd format :\n /{kSHOW_USR_EARNS} {" ".join(LST_CMD_SHOW_EARNS)}'''
 LST_KEYS_SHOW_EARNS_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_GET_USR_EARNS = 'GET_USER_EARNINGS'
@@ -113,7 +113,7 @@ LST_KEYS_SHOW_EARNS = ['user_id','user_at']
 
 # '/admin_show_user_rates'
 kADMIN_SHOW_USR_RATES = "admin_show_user_rates" 
-LST_CMD_SHOW_RATES_ADMIN = ['<tg_user>'] # ['<tg_user>','<twitter|tiktok|reddit>']
+LST_CMD_SHOW_RATES_ADMIN = ['<tg_user_at>'] # ['<tg_user_at>','<twitter|tiktok|reddit>']
 STR_ERR_SHOW_RATES_ADMIN = f'''please use cmd format:\n /{kADMIN_SHOW_USR_RATES} {" ".join(LST_CMD_SHOW_RATES_ADMIN)}'''
 LST_KEYS_SHOW_RATES_RESP_ADMIN = env.LST_KEYS_PLACEHOLDER
 DB_PROC_GET_USR_RATES_ADMIN = 'GET_USER_PAY_RATES_ADMIN'
@@ -121,7 +121,7 @@ LST_KEYS_SHOW_RATES_ADMIN = ['admin_id','user_id','platform'] # const: unknown, 
 
 # '/admin_show_user_earnings'
 kADMIN_SHOW_USR_EARNS = "admin_show_user_earnings" 
-LST_CMD_SHOW_EARNS_ADMIN = ['<tg_user>']
+LST_CMD_SHOW_EARNS_ADMIN = ['<tg_user_at>']
 STR_ERR_SHOW_EARNS_ADMIN = f'''please user cmd format :\n /{kADMIN_SHOW_USR_EARNS} {" ".join(LST_CMD_SHOW_EARNS_ADMIN)}'''
 LST_KEYS_SHOW_EARNS_RESP_ADMIN = env.LST_KEYS_PLACEHOLDER
 DB_PROC_GET_USR_EARNS_ADMIN = 'GET_USER_EARNINGS_ADMIN'
@@ -328,7 +328,7 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
                 if not success:
                     dbProcResult=-1
                     # bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=True)
-                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=False, errMsg='invalid tweet confirmation, '+msg) # False = force fail
+                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=False, errMsg='invalid tweet confirmation / '+msg) # False = force fail
                     return bErr, jsonResp, dbProcResult
 
             if tg_cmd == 'submit_shill_link':
