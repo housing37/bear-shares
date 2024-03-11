@@ -123,6 +123,28 @@ async def cmd_handler(update: Update, context):
         else:
             inp_split.insert(2, uname_at)
             inp_split.insert(3, uname_handle)
+    
+    if tg_cmd == 'request_cashout': # ['<tg_user>']
+        # NOTE: inp_split[1] should be '<tg_user>'
+        # NOTE: TODO
+        pass
+
+    if tg_cmd == 'show_my_rates': # ['<tg_user>','<twitter|tiktok|reddit>']
+        # NOTE: inp_split[1] should be '<tg_user>'
+        inp_split.insert(2, 'twitter') # const: unknown, twitter, tiktok, reddit
+
+    # if tg_cmd == 'show_my_earnings': # # ['<tg_user>']
+    #     # NOTE: inp_split[1] should be '<tg_user>'
+    #     pass
+
+    if tg_cmd == 'admin_show_user_rates': # + ['<tg_user>','<twitter|tiktok|reddit>']
+        # NOTE: inp_split[2] should be '<tg_user>'
+        inp_split.insert(3, 'twitter') # const: unknown, twitter, tiktok, reddit
+
+    # if tg_cmd == 'admin_show_user_earnings': # ['<tg_user>']
+    #     # NOTE: inp_split[2] should be '<tg_user>'
+    #     pass
+
 
     print(f'GO - req_handler.exe_tg_cmd ... {get_time_now()}')
     response = req_handler.exe_tg_cmd(inp_split, USE_PROD_TG)
@@ -247,8 +269,8 @@ if __name__ == "__main__":
         USE_PROD_TG = True if inp == '0' else False
         print(f'  input = {inp} _ USE_PROD_TG = {USE_PROD_TG}')
 
-        inp = input('\nUse reg input tg_user_id (not alt "LAO Pirates")? [y/n]:\n  > ')
-        USE_ALT_ACCT = False if inp.lower() == 'y' or inp.lower() == '1' else True
+        inp = input('\nUse alt tg_user_id ("LAO Pirates")? [y/n]:\n  > ')
+        USE_ALT_ACCT = True if inp.lower() == 'y' or inp.lower() == '1' else False
         print(f'  input = {inp} _ USE_ALT_ACCT = {USE_ALT_ACCT}')
 
         set_tg_token()  

@@ -811,6 +811,47 @@ BEGIN
 END 
 $$ DELIMITER ;
 
+-- # '/admin_show_user_rates'
+-- LST_KEYS_SHOW_RATES_ADMIN = ['admin_id','user_id','platform'] # const: unknown, twitter, tiktok, reddit
+-- DB_PROC_GET_USR_RATES_ADMIN = 'GET_USER_PAY_RATES_ADMIN'
+DELIMITER $$
+DROP PROCEDURE IF EXISTS GET_USER_PAY_RATES_ADMIN;
+CREATE PROCEDURE `GET_USER_PAY_RATES_ADMIN`(
+	IN p_tg_admin_id VARCHAR(40),
+    IN p_tg_user_id VARCHAR(40),
+	IN p_platform VARCHAR(40)) -- const: unknown, twitter, tiktok, reddit
+BEGIN
+	-- validate admin
+	IF NOT valid_tg_user_admin(p_tg_admin_id) THEN
+		SELECT 'failed' as `status`, 
+				'invalid admin' as info, 
+				p_tg_admin_id as tg_admin_id;
+	ELSE
+		CALL GET_USER_PAY_RATES(p_tg_user_id, p_platform);
+	END IF;
+END 
+$$ DELIMITER ;
+
+-- # '/admin_show_user_earnings'
+-- LST_KEYS_SHOW_EARNS_ADMIN = ['admin_id','user_id']
+-- DB_PROC_GET_USR_EARNS_ADMIN = 'GET_USER_EARNINGS'
+DELIMITER $$
+DROP PROCEDURE IF EXISTS GET_USER_EARNINGS_ADMIN;
+CREATE PROCEDURE `GET_USER_EARNINGS_ADMIN`(
+	IN p_tg_admin_id VARCHAR(40),
+    IN p_tg_user_id VARCHAR(40))
+BEGIN
+	-- validate admin
+	IF NOT valid_tg_user_admin(p_tg_admin_id) THEN
+		SELECT 'failed' as `status`, 
+				'invalid admin' as info, 
+				p_tg_admin_id as tg_admin_id;
+	ELSE
+		CALL GET_USER_EARNINGS(p_tg_user_id);
+	END IF;
+END 
+$$ DELIMITER ;
+
 -- # '/admin_show_user_shills' | # '/admin_scan_web_for_removed_shills'
 -- # '/admin_show_user_shills'
 -- LST_KEYS_USR_SHILLS = ['admin_id','user_id','approved','removed']

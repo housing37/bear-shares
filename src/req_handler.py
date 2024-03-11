@@ -37,53 +37,95 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 #         TG cmd / request handler static keys        #
 #=====================================================#
 #-----------------------------------------------------#
+# TRINITY _  'Edit Commands' (TG: @BotFather)
+#-----------------------------------------------------#
+# register_as_shiller - nil
+# confirm_twitter - nil
+# submit_shill_link - nil
+# request_cashout - nil
+# show_my_rates - nil
+# show_my_earnings - nil
+# admin_show_user_rates - nil
+# admin_show_user_earnings - nil
+# admin_show_user_shills - nil
+# admin_list_all_pend_shills - nil
+# admin_approve_pend_shill - nil
+# admin_view_shill_status - nil
+# admin_pay_shill_rewards - nil
+# admin_log_removed_shill - nil
+# admin_scan_web_for_dead_shills - nil
+# admin_set_shiller_rates - nil
+
+#-----------------------------------------------------#
 #   TRINITY
 #-----------------------------------------------------#
 # '/register_as_shiller'
 kSHILLER_REG = "register_as_shiller"
 LST_CMD_REG_USER = ['<wallet_address>', '<tweet_url>']
 STR_ERR_REG_USER = f'Please tweet "@BearSharesNFT trinity" 👍️️️️️️\n Then use that link to register with cmd:\n /{kSHILLER_REG} {" ".join(LST_CMD_REG_USER)}'
-LST_KEYS_REG_USER = ['user_id','user_at','user_handle','wallet_address','trinity_tw_url']
 LST_KEYS_REG_USER_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_ADD_NEW_USER = 'ADD_NEW_TG_USER'
+LST_KEYS_REG_USER = ['user_id','user_at','user_handle','wallet_address','trinity_tw_url']
     # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
 
 # '/confirm_twitter'
 kTWITTER_CONF = "confirm_twitter"
 LST_CMD_TW_CONF = ['<tweet_url>']
 STR_ERR_TW_CONF = f'To keep your registration up-to-date, please tweet "@BearSharesNFT trinity" once a week 👍️️️️️️\n Then use that link to confirm your twitter with cmd:\n /{kTWITTER_CONF} {" ".join(LST_CMD_TW_CONF)}'
-LST_KEYS_TW_CONF = ['user_id', 'trinity_tw_url']
 LST_KEYS_TW_CONF_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_RENEW_TW_CONFRIM = 'UPDATE_TWITTER_CONF'
+LST_KEYS_TW_CONF = ['user_id', 'trinity_tw_url']
     # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
 
 # '/submit_shill_link'
 kSUBMIT_SHILL = "submit_shill_link"
 LST_CMD_SUBMIT_SHILL = ['<tweet_url>']
 STR_ERR_SUBMIT_SHILL = f'Please submit your shill using the cmd:\n /{kSUBMIT_SHILL} {" ".join(LST_CMD_SUBMIT_SHILL)}\n tweets must at least contain "@BearSharesNFT" to be credited'
-LST_KEYS_SUBMIT_SHILL = ['user_id', 'post_url']
 LST_KEYS_SUBMIT_SHILL_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_ADD_SHILL = 'ADD_USER_SHILL_TW'
-
-# '/show_my_rates'
-kSHOW_RATES = "get_user_rates"
-LST_KEYS_SHOW_RATES = ['user_id', 'platform'] # const: unknown, twitter, tiktok, reddit
-LST_KEYS_SHOW_RATES_RESP = env.LST_KEYS_PLACEHOLDER
-DB_PROC_GET_USR_RATES = 'GET_USER_PAY_RATES'
-
-# '/show_my_earnings'
-kSHOW_EARNINGS = "get_user_earns"
-LST_KEYS_SHOW_EARNINGS = ['user_id']
-LST_KEYS_SHOW_EARNINGS_RESP = env.LST_KEYS_PLACEHOLDER
-DB_PROC_GET_USR_EARNS = 'GET_USER_EARNINGS'
+LST_KEYS_SUBMIT_SHILL = ['user_id', 'post_url']
 
 # '/request_cashout'
-kREQUEST_CASHOUT = "request_user_earns_cashout"
-LST_KEYS_REQUEST_CASHOUT = ['user_id']
+kREQUEST_CASHOUT = "request_cashout"
+LST_CMD_REQUEST_CASHOUT = [] # ['<tg_user>']
+STR_ERR_REQUEST_CASHOUT = f'nil_err_response_tg'
 LST_KEYS_REQUEST_CASHOUT_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_REQUEST_CASHOUT = 'SET_USER_WITHDRAW_REQUESTED'
+LST_KEYS_REQUEST_CASHOUT = ['user_id']
     # POST-DB: python TG notify admin_pay to process
 	# POST-DB: python TG notify p_tg_user_id that request has been submit (w/ user_earns.usd_owed)
+
+# '/show_my_rates'
+kSHOW_USR_RATES = "show_my_rates" # '/show_my_rates'
+LST_CMD_SHOW_RATES = [] # ['<tg_user>','<twitter|tiktok|reddit>']
+STR_ERR_SHOW_RATES = f'''please use cmd format:\n /{kSHOW_USR_RATES} {" ".join(LST_CMD_SHOW_RATES)}'''
+LST_KEYS_SHOW_RATES_RESP = env.LST_KEYS_PLACEHOLDER
+DB_PROC_GET_USR_RATES = 'GET_USER_PAY_RATES'
+LST_KEYS_SHOW_RATES = ['user_id', 'platform'] # const: unknown, twitter, tiktok, reddit
+
+# '/show_my_earnings'
+kSHOW_USR_EARNS = "show_my_earnings" # '/show_my_earnings'
+LST_CMD_SHOW_EARNS = [] # ['<tg_user>']
+STR_ERR_SHOW_EARNS = f'''please user cmd format :\n /{kSHOW_USR_EARNS} {" ".join(LST_CMD_SHOW_EARNS)}'''
+LST_KEYS_SHOW_EARNS_RESP = env.LST_KEYS_PLACEHOLDER
+DB_PROC_GET_USR_EARNS = 'GET_USER_EARNINGS'
+LST_KEYS_SHOW_EARNS = ['user_id']
+
+# '/admin_show_user_rates'
+kADMIN_SHOW_USR_RATES = "admin_show_user_rates" 
+LST_CMD_SHOW_RATES_ADMIN = ['<tg_user>'] # ['<tg_user>','<twitter|tiktok|reddit>']
+STR_ERR_SHOW_RATES_ADMIN = f'''please use cmd format:\n /{kADMIN_SHOW_USR_RATES} {" ".join(LST_CMD_SHOW_RATES_ADMIN)}'''
+LST_KEYS_SHOW_RATES_RESP_ADMIN = env.LST_KEYS_PLACEHOLDER
+DB_PROC_GET_USR_RATES_ADMIN = 'GET_USER_PAY_RATES_ADMIN'
+LST_KEYS_SHOW_RATES_ADMIN = ['admin_id','user_id','platform'] # const: unknown, twitter, tiktok, reddit
+
+# '/admin_show_user_earnings'
+kADMIN_SHOW_USR_EARNS = "admin_show_user_earnings" 
+LST_CMD_SHOW_EARNS_ADMIN = ['<tg_user>']
+STR_ERR_SHOW_EARNS_ADMIN = f'''please user cmd format :\n /{kADMIN_SHOW_USR_EARNS} {" ".join(LST_CMD_SHOW_EARNS_ADMIN)}'''
+LST_KEYS_SHOW_EARNS_RESP_ADMIN = env.LST_KEYS_PLACEHOLDER
+DB_PROC_GET_USR_EARNS_ADMIN = 'GET_USER_EARNINGS_ADMIN'
+LST_KEYS_SHOW_EARNS_ADMIN = ['admin_id','user_id']
 
 # '/admin_show_user_shills'
 kADMIN_SHOW_USR_SHILLS = "get_usr_shills"
@@ -154,12 +196,17 @@ DB_PROC_ADD_BLACKLIST_SCAMMER = 'ADD_REQUEST_USER_BLACKLIST'
 
 #-----------------------------------------------------#
 DICT_CMD_EXE = {
-    "register_as_shiller":[kSHILLER_REG,LST_KEYS_REG_USER,LST_KEYS_REG_USER_RESP,DB_PROC_ADD_NEW_USER,LST_CMD_REG_USER,STR_ERR_REG_USER],
-    "confirm_twitter":[kTWITTER_CONF,LST_KEYS_TW_CONF,LST_KEYS_TW_CONF_RESP,DB_PROC_RENEW_TW_CONFRIM,LST_CMD_TW_CONF,STR_ERR_TW_CONF],
-    "submit_shill_link":[kSUBMIT_SHILL,LST_KEYS_SUBMIT_SHILL,LST_KEYS_SUBMIT_SHILL_RESP,DB_PROC_ADD_SHILL,LST_CMD_SUBMIT_SHILL,STR_ERR_SUBMIT_SHILL],
-    "show_my_rates":[kSHOW_RATES,LST_KEYS_SHOW_RATES,LST_KEYS_SHOW_RATES_RESP,DB_PROC_GET_USR_RATES],
-    "show_my_earnings":[kSHOW_EARNINGS,LST_KEYS_SHOW_EARNINGS,LST_KEYS_SHOW_EARNINGS_RESP,DB_PROC_GET_USR_EARNS],
-    "request_cashout":[kREQUEST_CASHOUT,LST_KEYS_REQUEST_CASHOUT,LST_KEYS_REQUEST_CASHOUT_RESP,DB_PROC_REQUEST_CASHOUT],
+    kSHILLER_REG:[kSHILLER_REG,LST_KEYS_REG_USER,LST_KEYS_REG_USER_RESP,DB_PROC_ADD_NEW_USER,LST_CMD_REG_USER,STR_ERR_REG_USER],
+    kTWITTER_CONF:[kTWITTER_CONF,LST_KEYS_TW_CONF,LST_KEYS_TW_CONF_RESP,DB_PROC_RENEW_TW_CONFRIM,LST_CMD_TW_CONF,STR_ERR_TW_CONF],
+    kSUBMIT_SHILL:[kSUBMIT_SHILL,LST_KEYS_SUBMIT_SHILL,LST_KEYS_SUBMIT_SHILL_RESP,DB_PROC_ADD_SHILL,LST_CMD_SUBMIT_SHILL,STR_ERR_SUBMIT_SHILL],
+    
+    kREQUEST_CASHOUT:[kREQUEST_CASHOUT,LST_KEYS_REQUEST_CASHOUT,LST_KEYS_REQUEST_CASHOUT_RESP,DB_PROC_REQUEST_CASHOUT,LST_CMD_REQUEST_CASHOUT,STR_ERR_REQUEST_CASHOUT],
+
+    kSHOW_USR_RATES:[kSHOW_USR_RATES,LST_KEYS_SHOW_RATES,LST_KEYS_SHOW_RATES_RESP,DB_PROC_GET_USR_RATES,LST_CMD_SHOW_RATES,STR_ERR_SHOW_RATES],
+    kSHOW_USR_EARNS:[kSHOW_USR_EARNS,LST_KEYS_SHOW_EARNS,LST_KEYS_SHOW_EARNS_RESP,DB_PROC_GET_USR_EARNS,LST_CMD_SHOW_EARNS,STR_ERR_SHOW_EARNS],
+    kADMIN_SHOW_USR_RATES:[kADMIN_SHOW_USR_RATES,LST_KEYS_SHOW_RATES_ADMIN,LST_KEYS_SHOW_RATES_RESP_ADMIN,DB_PROC_GET_USR_RATES_ADMIN,LST_CMD_SHOW_RATES_ADMIN,STR_ERR_SHOW_RATES_ADMIN],
+    kADMIN_SHOW_USR_EARNS:[kADMIN_SHOW_USR_EARNS,LST_KEYS_SHOW_EARNS_ADMIN,LST_KEYS_SHOW_EARNS_RESP_ADMIN,DB_PROC_GET_USR_EARNS_ADMIN,LST_CMD_SHOW_EARNS_ADMIN,STR_ERR_SHOW_EARNS_ADMIN],
+    
     "admin_show_user_shills":[kADMIN_SHOW_USR_SHILLS,LST_KEYS_USR_SHILLS,LST_KEYS_USR_SHILLS_RESP,DB_PROC_GET_USR_SHILLS_ALL],
     "admin_list_all_pend_shills":[kADMIN_LIST_ALL_PEND_SHILLS,LST_KEYS_ALL_PEND_SHILLS,LST_KEYS_ALL_PEND_SHILLS_RESP,DB_PROC_GET_PEND_SHILLS],
     "admin_approve_pend_shill":[kADMIN_APPROVE_SHILL,LST_KEYS_APPROVE_SHILL,LST_KEYS_APPROVE_SHILL_RESP,DB_PROC_APPROVE_SHILL_STATUS],
@@ -191,7 +238,7 @@ def exe_tg_cmd(_lst_inp, _use_prod_accts):
         str_req_params = ''.join(DICT_CMD_EXE[tg_cmd][-1])
         bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=True, errMsg=f'invalid number of params; {str_req_params}') # False = force fail
         return jsonResp
-    
+
     # generate keyVals from input cmd params
     for i,v in enumerate(lst_params): 
         print(f' lst_params[{i}]={v}')
