@@ -294,14 +294,26 @@ def parse_request(request, req_handler_key, tg_cmd=None): # (1)
                 if not success:
                     bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=False, errMsg='invalid twitter url, please try again') # False = force fail
                     return bErr, jsonResp, None # JSONResponse(...)
+
+                # check if tweet url contains text list
+                success, msg = valid_trinity_tweet(keyVals['trinity_tw_url'], ['@BearSharesNFT', 'Trinity'])
+                if not success:
+                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=False, errMsg='invalid tweet confirmation / '+msg) # False = force fail
+                    return bErr, jsonResp, None # dbProcResult
                 
             if tg_cmd == 'submit_shill_link':
                 # add 'tweet_id' & 'twitter_at' to keyVals
                 keyVals, success = parse_twitter_url(keyVals, 'post_url')
                 if not success:
-                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=False, errMsg='Invalid witter url, please try again') # False = force fail
+                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=False, errMsg='invalid twitter shill url, please try again') # False = force fail
                     return bErr, jsonResp, None # JSONResponse(...)
                 del keyVals['twitter_at'] # not needed for this cmd
+
+                # check if tweet url contains text list
+                success, msg = valid_trinity_tweet(keyVals['post_url'], ['@BearSharesNFT'])
+                if not success:
+                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=False, errMsg='invalid shill, '+msg) # False = force fail
+                    return bErr, jsonResp, None # dbProcResult
         else:
             bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=False, errMsg='command not found') # False = force fail
             return bErr, jsonResp, -1 # dbProcResult
@@ -345,22 +357,7 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
 
     if tg_cmd != None:
         print('HIT - tg_cmd: '+tg_cmd)
-        if tg_cmd in DICT_CMD_EXE.keys():
-            if tg_cmd == 'register_as_shiller' or tg_cmd == 'confirm_twitter':
-                success, msg = valid_trinity_tweet(keyVals['trinity_tw_url'], ['@BearSharesNFT', 'Trinity'])
-                if not success:
-                    dbProcResult=-1
-                    # bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=True)
-                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=False, errMsg='invalid tweet confirmation / '+msg) # False = force fail
-                    return bErr, jsonResp, dbProcResult
-
-            if tg_cmd == 'submit_shill_link':
-                success, msg = valid_trinity_tweet(keyVals['post_url'], ['@BearSharesNFT'])
-                if not success:
-                    dbProcResult=-1
-                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=False, errMsg='invalid shill, '+msg) # False = force fail
-                    return bErr, jsonResp, dbProcResult
-                            
+        if tg_cmd in DICT_CMD_EXE.keys():                            
             # if 'user_id' in keyVals: del keyVals['user_id']
             stored_proc = DICT_CMD_EXE[tg_cmd][3] # [tg_cmd][3] = 'stored-proc-name'
             dbProcResult = exe_stored_proc(-1, stored_proc, keyVals)
@@ -368,7 +365,6 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
             else: errMsg = None    
             bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=False, errMsg=errMsg) # errMsg != None: force fail from db
             # bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=True)
-            
             
         else:
             dbProcResult=-1
