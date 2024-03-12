@@ -6,8 +6,8 @@ from _env import env
 
 WHITELIST_TG_CHAT_IDS = [
     '-1002041092613', # $BearShares
-    '-1002049491115', # $BearShares - testing
-    '-4139183080', # TeddyShares - testing
+    '-1002049491115', # bear shares - testing
+    '-4139183080', # bear shares - testing - priv
     ]
 
 # check scammer: ['5486688786', '@Genstlell', 'Teller']
@@ -116,6 +116,10 @@ async def generate_response(update: Update, context: CallbackContext) -> None:
 #     return str(update.message.chat_id) == GROUP_ID
 
 async def check_scammer(update: Update, context):
+    if update.message.from_user == None:
+        print("check_scammer _ found '.message.from_user' = NoneType; attempting to print message.text, then failing...")
+        print(update.message.text)
+
     user = update.message.from_user
 
     # get all input (to parse .lower() in compare)
