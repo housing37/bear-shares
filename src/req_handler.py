@@ -456,7 +456,7 @@ def search_tweet_for_text(tweet_url, _lst_text=[], _headless=True):
         # loop setup
         MAX_TW_DRIVER_WAIT_CNT = 5
         title = ''
-        title_check = 'X:' # end loop when found
+        title_check = 'X:' # end loop when found (signifies full tweet text is extractable)
         check_cnt = 1
 
         # loop through 'WebDriverWait' to find a meta tag w/ specific 'property' & 'content'
@@ -493,8 +493,6 @@ def search_tweet_for_text(tweet_url, _lst_text=[], _headless=True):
             return False, 'must contain '+t
     print(f' SUCCESS found all text in _lst_text _ returning True')
     return True, ''
-        
-
 
 def get_time_now(dt=True):
     if dt: return '['+datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[0:-4]+']'
