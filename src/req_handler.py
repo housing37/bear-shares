@@ -66,6 +66,7 @@ STR_ERR_REG_USER = f'Please tweet "@BearSharesNFT trinity" 👍️️️️️�
 LST_KEYS_REG_USER_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_ADD_NEW_USER = 'ADD_NEW_TG_USER'
 LST_KEYS_REG_USER = ['user_id','user_at','user_handle','wallet_address','trinity_tw_url']
+# LST_KEYS_REG_USER = ['user_id','user_at','user_handle','wallet_address','trinity_tw_url','trinity_tw_id','tw_user_at']
     # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
 
 # '/confirm_twitter'
@@ -75,6 +76,7 @@ STR_ERR_TW_CONF = f'To keep your registration up-to-date, please tweet "@BearSha
 LST_KEYS_TW_CONF_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_RENEW_TW_CONFRIM = 'UPDATE_TWITTER_CONF'
 LST_KEYS_TW_CONF = ['user_id','user_at','trinity_tw_url']
+# LST_KEYS_TW_CONF = ['user_id','user_at','trinity_tw_url','trinity_tw_id','tw_user_at']
     # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
 
 # '/submit_shill_link'
@@ -84,6 +86,7 @@ STR_ERR_SUBMIT_SHILL = f'Please submit your shill using the cmd:\n /{kSUBMIT_SHI
 LST_KEYS_SUBMIT_SHILL_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_ADD_SHILL = 'ADD_USER_SHILL_TW'
 LST_KEYS_SUBMIT_SHILL = ['user_id','user_at','post_url']
+# LST_KEYS_SUBMIT_SHILL = ['user_id','user_at','post_url','post_id']
 
 # '/request_cashout'
 kREQUEST_CASHOUT = "request_cashout"
@@ -276,13 +279,33 @@ def handle_request(request, req_handler_key, tg_cmd=None):
     
     # (5) return client response
     return jsonResp # JSONResponse(...) -> Response(json.dumps(dict), mimetype="application/json" )
-    
+
 def parse_request(request, req_handler_key, tg_cmd=None): # (1)
     funcname = f'{__filename} parse_request'
     print(funcname + ' - ENTER')
     
     if tg_cmd:
         keyVals = dict(request)
+        print('HIT - tg_cmd: '+tg_cmd)
+        if tg_cmd in DICT_CMD_EXE.keys():
+            if tg_cmd == 'register_as_shiller' or tg_cmd == 'confirm_twitter':
+                # add 'tweet_id' & 'twitter_at' to keyVals
+                keyVals, success = parse_twitter_url(keyVals, 'trinity_tw_url') 
+                if not success:
+                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=False, errMsg='invalid twitter url, please try again') # False = force fail
+                    return bErr, jsonResp, None # JSONResponse(...)
+                
+            if tg_cmd == 'submit_shill_link':
+                # add 'tweet_id' & 'twitter_at' to keyVals
+                keyVals, success = parse_twitter_url(keyVals, 'post_url')
+                if not success:
+                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=False, errMsg='Invalid witter url, please try again') # False = force fail
+                    return bErr, jsonResp, None # JSONResponse(...)
+                del keyVals['twitter_at'] # not needed for this cmd
+        else:
+            bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=False, errMsg='command not found') # False = force fail
+            return bErr, jsonResp, -1 # dbProcResult
+        
     else:
         # note: utilizing additional dict here (instead of just request.form/args/get_json())
         #   because we want to be secure the params passed to the database are only the keys we want
@@ -427,6 +450,20 @@ def valid_trinity_tweet(_tw_url, _lst_text):
     print(funcname + ' - ENTER')
     return search_tweet_for_text(_tw_url, _lst_text, True) # True = '--headless'
     # return soup_search_tweet_for_text(_tw_url, lst_text)
+
+def parse_twitter_url(_keyVals, _key):
+    funcname = f'{__filename} parse_twitter_url'
+    print(funcname + ' - ENTER')
+
+    # parse twitter @username & tweet id (note: 'https' required, else fails)
+    #   ex: https://x.com/SolAudits/status/1765925225844089300?s=20
+    tw_url = _keyVals[_key]
+    lst_items = tw_url.split('/')
+    valid_dom = 'x.com' in lst_items[2] or 'twitter.com' in lst_items[2]
+    if not valid_dom: return _keyVals, False
+    _keyVals['tweet_id'] = lst_items[5].split('?')[0] if '?' in lst_items[5] else lst_items[5]
+    _keyVals['twitter_at'] = lst_items[3]
+    return _keyVals, True
 
 def search_tweet_for_text(tweet_url, _lst_text=[], _headless=True):
     funcname = f'{__filename} search_tweet_for_text'

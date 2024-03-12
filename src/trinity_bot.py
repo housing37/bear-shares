@@ -172,7 +172,7 @@ async def cmd_handler(update: Update, context):
         # [print(k, d_resp[k]) for k in d_resp.keys()]
 
         if tg_cmd == 'register_as_shiller':
-            str_r = f"user: {d_resp['tg_user_at']}\n wallet: {d_resp['wallet_address_inp']}\n user_conf: {d_resp['tw_conf_url']}"
+            str_r = f"user: {d_resp['tg_user_at']}\n wallet: {d_resp['wallet_address_inp']}\n twitter: {d_resp['tw_user_at']}\n twitter_conf: {d_resp['tw_conf_url']}"
             lst_d_resp = response_dict['PAYLOAD']['result_arr']
             for d in lst_d_resp:
                 str_r = str_r + f"\n {d['platform']} pay_usd_{d['type_descr']}: {d['pay_usd']}"
