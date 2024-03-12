@@ -97,6 +97,7 @@ async def cmd_handler(update: Update, context):
         print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
         return
 
+    # @BearSharesNFT ...
     # ex tweet_conf (fails): https://x.com/SolAudits/status/1765925371851972744?s=20 # only '@BearSharesNFT'
     # ex tweet_conf (valid): https://x.com/SolAudits/status/1765925225844089300?s=20
     # ex tweet_conf (valid): https://x.com/SolAudits/status/1766554515094778118?s=20
@@ -106,6 +107,9 @@ async def cmd_handler(update: Update, context):
 
     # ex tweet_shill (fails): https://x.com/TopGunHexadian/status/1766339571342553408?s=20
     # ex tweet_shill (valid): https://x.com/SolAudits/status/1766663759961940205?s=20
+
+    # @TeddyShares ...
+    # ex tweet_conf (valid): https://x.com/TeddyShares/status/1767453126896881733?s=20
     
     # NOTE: all non-admin db procs require 'tg_user_id' & 'tg_user_at' (ie. uid & uname_at)
     if 'admin' not in tg_cmd:

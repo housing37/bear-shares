@@ -2,6 +2,22 @@
 -- # SUPPORT FUNCTIONS
 -- #================================================================# --
 DELIMITER $$
+drop FUNCTION if exists _clear_all_tables; -- setup
+CREATE FUNCTION `_clear_all_tables`() RETURNS VARCHAR(2)
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	delete from users;
+	delete from user_shill_rates;
+	delete from user_earns;
+	delete from shills;
+	delete from log_tw_conf_urls;
+	delete from log_tg_user_at_changes;
+	RETURN "QQ";
+END 
+$$ DELIMITER ;
+
+DELIMITER $$
 drop FUNCTION if exists valid_tg_user_admin; -- setup
 CREATE FUNCTION `valid_tg_user_admin`(
 		p_tg_user_id VARCHAR(40)) RETURNS BOOLEAN
@@ -553,6 +569,9 @@ CREATE PROCEDURE `ADD_NEW_TG_USER`(
 	IN p_tw_conf_id VARCHAR(40),
 	IN p_tw_user_at VARCHAR(255))
 BEGIN
+	-- setup
+	SELECT COUNT(*) FROM users WHERE tw_user_at = p_tw_user_at INTO @v_tw_at_found;
+
 	-- fail: if tg_user_at is taken
 	IF valid_tg_user_at(p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
@@ -560,6 +579,13 @@ BEGIN
 				p_tg_user_id as tg_user_id_inp,
 				p_tg_user_at as tg_user_at_inp;
 	
+	-- fail: if p_tw_user_at is already registerd
+	ELSEIF @v_tw_at_found > 0 THEN
+		SELECT 'failed' as `status`,
+				'twitter user already registered' as info,
+				p_tw_user_at as tw_user_at_inp,
+				p_tw_conf_url as tw_conf_url_inp;
+
 	-- fail: if tg_user_id is indeed taken (updates 'users.tg_user_at' if needed)
 	ELSEIF valid_tg_user(p_tg_user_id, p_tg_user_at) THEN
 		SELECT id, tg_user_id, tg_user_at, tg_user_handle, is_admin,
@@ -667,12 +693,25 @@ CREATE PROCEDURE `UPDATE_TWITTER_CONF`(
 	IN p_tw_conf_id VARCHAR(255),
 	IN p_tw_user_at VARCHAR(40))
 BEGIN
+	-- get support requirements
+	SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+	SELECT tw_user_at FROM users WHERE id = @v_user_id INTO @v_tw_user_at;
+
 	-- fail: if tg_user_id is indeed taken (updates 'users.tg_user_at' if needed)
 	IF NOT valid_tg_user(p_tg_user_id, p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
 				p_tg_user_id as tg_user_id_inp,
 				p_tw_conf_url as tw_conf_url_inp;
+
+	-- fail: if current twitter user does not match twitter user for new confirmation
+	ELSEIF @v_tw_user_at != p_tw_user_at THEN
+		SELECT 'failed' as `status`,
+				'twitter user cannot be changed' as info,
+				@v_tw_user_at as tw_user_at,
+				p_tw_user_at as tw_user_at_inp,
+				p_tw_conf_url as tw_conf_url_inp;
+
 	-- vaidate p_tw_conf_url has not been used yet
 	ELSEIF tw_conf_exists(p_tw_conf_url, p_tw_conf_id) THEN
 		SELECT u.id as user_id_OG, u.tg_user_id as tg_user_id_OG, 
@@ -688,10 +727,8 @@ BEGIN
 			INNER JOIN log_tw_conf_urls l
 				ON u.id = l.fk_user_id
 			WHERE l.tw_conf_url = p_tw_conf_url;
-	ELSE
-		-- get support requirements
-		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
-		
+
+	ELSE	
 		-- update conf url for this user
 		UPDATE users
 			SET dt_updated = NOW(),
