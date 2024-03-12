@@ -100,6 +100,7 @@ CREATE TABLE `shills` (
   `fk_user_id` int(11) NOT NULL,
   `post_url` varchar(1024) NOT NULL, -- ex: twitter = https://x.com/SolAudits/status/1765925225844089300?s=20
   `post_id` varchar(1024) DEFAULT '<nil_post_id>', -- ex: twitter = 1765925225844089300
+  `post_uname` varchar(255) DEFAULT '<nil_post_uname>', -- ex: twitter = SolAudits
   -- `fk_shill_plat_id` int(11) NOT NULL,
   -- `fk_shill_type_id` int(11) DEFAULT -1, -- set by admin
   -- `fk_shill_rate_id` int(11) NOT NULL, -- latest fk_user_id rate: platform, type, & pay_usd

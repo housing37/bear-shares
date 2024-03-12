@@ -761,8 +761,13 @@ CREATE PROCEDURE `ADD_USER_SHILL_TW`(
     IN p_tg_user_id VARCHAR(40),
 	IN p_tg_user_at VARCHAR(40),
     IN p_post_url VARCHAR(1024),
-	IN p_post_id VARCHAR(255))
+	IN p_post_id VARCHAR(255),
+	IN p_post_uname VARCHAR(255))
 BEGIN
+	-- get support requirements
+	SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+	SELECT tw_user_at FROM users WHERE id = @v_user_id INTO @v_tw_user_at;
+
 	-- vaidate user exists & tw conf not expired
 	-- fail: if tg_user_id is indeed taken (updates 'users.tg_user_at' if needed)
 	set @v_valid = valid_tg_user_tw_conf(p_tg_user_id, p_tg_user_at); -- invokes 'valid_tg_user'
@@ -770,6 +775,14 @@ BEGIN
 		SELECT 'failed' as `status`, 
 				@v_valid as info, 
 				p_tg_user_id as tg_user_id_inp;
+
+	-- fail: if TG user's tw_user_at does not match incoming new shill p_post_uname
+	ELSEIF @v_tw_user_at != p_post_uname THEN
+		SELECT 'failed' as `status`,
+				'twitter user / post mismatch' as info,
+				@v_tw_user_at as tw_user_at,
+				p_post_uname as post_uname_inp,
+				p_post_url as post_url_inp;
 
 	-- validate 'post_url' is not in 'shills' table yet (or log_tw_conf_urls)
 	ELSEIF NOT valid_new_shill(p_post_url, p_post_id) THEN
@@ -779,28 +792,32 @@ BEGIN
 				p_post_url as post_url;
 	ELSE
 		-- insert into 'shills' (...) values (...) for user_id
-		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
 		INSERT INTO shills (
 				fk_user_id,
 				post_url,
 				post_id,
+				post_uname,
 				shill_plat
 			) VALUES (
 				@v_user_id,
 				p_post_url,
 				p_post_id,
+				p_post_uname,
 				'twitter'
 			);
 		-- get new shill id
 		SELECT LAST_INSERT_ID() into @new_shill_id;
 		
 		-- return
-		SELECT s.id as shill_id, s.dt_created as dt_created_s, s.post_url, s.post_id, s.shill_plat, s.shill_type, s.is_approved,
+		SELECT s.id as shill_id, s.dt_created as dt_created_s, s.post_url, s.post_id, s.post_uname, s.shill_plat, s.shill_type, s.is_approved,
 				u.id as user_id, u.tw_conf_url as tw_conf_url_u, u.tg_user_id, u.tg_user_at, u.tg_user_handle, u.tw_user_at,
 				'success' as `status`,
 				'added new shill' as info,
 				p_tg_user_id as tg_user_id_inp,
-				p_tg_user_at as tg_user_at_inp
+				p_tg_user_at as tg_user_at_inp,
+				p_post_uname as post_uname_inp,
+				p_post_url as post_url_inp,
+				p_post_id as post_id_inp
 			FROM shills s
 			INNER JOIN users u
 				ON s.fk_user_id = u.id

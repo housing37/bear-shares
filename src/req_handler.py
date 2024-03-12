@@ -307,7 +307,6 @@ def parse_request(request, req_handler_key, tg_cmd=None): # (1)
                 if not success:
                     bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=False, errMsg='invalid twitter shill url, please try again') # False = force fail
                     return bErr, jsonResp, None # JSONResponse(...)
-                del keyVals['twitter_at'] # not needed for this cmd
 
                 # check if tweet url contains text list
                 success, msg = valid_trinity_tweet(keyVals['post_url'], ['@BearSharesNFT'])
