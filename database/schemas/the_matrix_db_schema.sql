@@ -34,10 +34,10 @@ CREATE TABLE `users` (
   `tg_user_id` varchar(40) NOT NULL, -- ex: '581475171'
   `tg_user_at` varchar(1024) default 'nil_at', -- ex: '@whatever'
   `tg_user_handle` varchar(1024) default 'nil_handle', -- ex: 'bob joe'
-  `tw_user_at` varchar(1024) default '',
+  `tw_user_at` varchar(255) default '',
   `tw_user_handle` varchar(1024) default '',
-  `tw_conf_url` varchar(1024) default '',
-  `tw_conf_id` varchar(40) default '',
+  `tw_conf_url` varchar(1024) default '', -- ex: twitter = https://x.com/SolAudits/status/1765925225844089300?s=20
+  `tw_conf_id` varchar(40) default '', -- ex: twitter = 1765925225844089300
   `dt_last_tw_conf` timestamp NULL DEFAULT NULL,
   `fk_last_shill_id` int(11) default -1, -- for rate-limit
   `wallet_address` varchar(255) default '0x0',
@@ -70,8 +70,8 @@ CREATE TABLE `log_tw_conf_urls` (
   `fk_user_id` varchar(40) NOT NULL,
   `tw_user_at` varchar(1024) default '',
   `tw_user_handle` varchar(1024) default '',
-  `tw_conf_url` varchar(1024) default '',
-  `tw_conf_id` varchar(40) default '',
+  `tw_conf_url` varchar(1024) default '', -- ex: twitter = https://x.com/SolAudits/status/1765925225844089300?s=20
+  `tw_conf_id` varchar(40) default '', -- ex: twitter = 1765925225844089300
 
   UNIQUE KEY `ID` (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -98,7 +98,8 @@ CREATE TABLE `shills` (
   `dt_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `dt_deleted` timestamp NULL DEFAULT NULL,
   `fk_user_id` int(11) NOT NULL,
-  `post_url` varchar(1024) NOT NULL,
+  `post_url` varchar(1024) NOT NULL, -- ex: twitter = https://x.com/SolAudits/status/1765925225844089300?s=20
+  `post_id` varchar(1024) DEFAULT '<nil_post_id>', -- ex: twitter = 1765925225844089300
   -- `fk_shill_plat_id` int(11) NOT NULL,
   -- `fk_shill_type_id` int(11) DEFAULT -1, -- set by admin
   -- `fk_shill_rate_id` int(11) NOT NULL, -- latest fk_user_id rate: platform, type, & pay_usd

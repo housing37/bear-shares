@@ -99,17 +99,23 @@ DELIMITER $$
 drop FUNCTION if exists add_tw_conf_url_log; -- setup
 CREATE FUNCTION `add_tw_conf_url_log`(
 		p_user_id INT(11),
-		p_tw_conf_url VARCHAR(1024)) 
+		p_tw_conf_url VARCHAR(1024),
+		p_tw_conf_id VARCHAR(40),
+		p_tw_user_at VARCHAR(255)) 
 		RETURNS INT(11)
     READS SQL DATA
     DETERMINISTIC
 BEGIN
 	INSERT INTO log_tw_conf_urls (
 		fk_user_id,
-		tw_conf_url
+		tw_conf_url,
+		tw_conf_id,
+		tw_user_at
 	) VALUES (
 		p_user_id,
-		p_tw_conf_url
+		p_tw_conf_url,
+		p_tw_conf_id,
+		p_tw_user_at
 	);
 	SELECT LAST_INSERT_ID() INTO @new_conf_id;
 	RETURN @new_conf_id;
@@ -119,12 +125,14 @@ $$ DELIMITER ;
 DELIMITER $$
 drop FUNCTION if exists tw_conf_exists; -- setup
 CREATE FUNCTION `tw_conf_exists`(
-		p_tw_conf_url VARCHAR(1024)) 
+		p_tw_conf_url VARCHAR(1024),
+		p_tw_conf_id VARCHAR(255)) 
 		RETURNS BOOLEAN
     READS SQL DATA
     DETERMINISTIC
 BEGIN
-	SELECT COUNT(*) FROM log_tw_conf_urls WHERE tw_conf_url = p_tw_conf_url INTO @v_cnt_fnd;
+	-- SELECT COUNT(*) FROM log_tw_conf_urls WHERE tw_conf_url = p_tw_conf_url INTO @v_cnt_fnd; -- legacy
+	SELECT COUNT(*) FROM log_tw_conf_urls WHERE tw_conf_id = p_tw_conf_id INTO @v_cnt_fnd;
 	IF @v_cnt_fnd > 0 THEN
 		RETURN TRUE; 
 	ELSE
@@ -177,7 +185,8 @@ $$ DELIMITER ;
 DELIMITER $$
 drop FUNCTION if exists valid_new_shill; -- setup
 CREATE FUNCTION `valid_new_shill`(
-		p_post_url VARCHAR(1024)) 
+		p_post_url VARCHAR(1024),
+		p_post_id VARCHAR(255)) 
 		RETURNS BOOLEAN
     READS SQL DATA
     DETERMINISTIC
@@ -185,7 +194,7 @@ BEGIN
 	SELECT COUNT(*) FROM shills
 		WHERE post_url = p_post_url
 		INTO @v_cnt;
-	SELECT tw_conf_exists(p_post_url) INTO @v_exists;
+	SELECT tw_conf_exists(p_post_url, p_post_id) INTO @v_exists;
 	IF @v_cnt > 0 THEN
 		RETURN FALSE; -- not new
 	ELSEIF @v_exists = TRUE THEN
@@ -540,7 +549,9 @@ CREATE PROCEDURE `ADD_NEW_TG_USER`(
 	IN p_tg_user_at VARCHAR(1024), -- '@whatever'
 	IN p_tg_user_handle VARCHAR(1024), -- 'my handle'
     IN p_wallet_address VARCHAR(255),
-    IN p_tw_conf_url VARCHAR(1024))
+    IN p_tw_conf_url VARCHAR(1024),
+	IN p_tw_conf_id VARCHAR(40),
+	IN p_tw_user_at VARCHAR(255))
 BEGIN
 	-- fail: if tg_user_at is taken
 	IF valid_tg_user_at(p_tg_user_at) THEN
@@ -554,12 +565,13 @@ BEGIN
 		SELECT id, tg_user_id, tg_user_at, tg_user_handle, is_admin,
 				'failed' as `status`, 
 				'user already exists' as info, 
-				p_tg_user_id as tg_user_id_inp
+				p_tg_user_id as tg_user_id_inp,
+				p_tg_user_at as tg_user_at_inp
 			FROM users 
 			WHERE tg_user_id = p_tg_user_id;
 
 	-- fail: if p_tw_conf_url has already been used
-	ELSEIF tw_conf_exists(p_tw_conf_url) THEN
+	ELSEIF tw_conf_exists(p_tw_conf_url, p_tw_conf_id) THEN
 		SELECT u.id as user_id_OG, u.tg_user_id as tg_user_id_OG, 
 				u.tw_conf_url as tw_conf_url_OG, u.dt_last_tw_conf as dt_last_tw_conf_OG,
 				l.tw_conf_url as tw_conf_url_LOG,
@@ -569,7 +581,8 @@ BEGIN
 				p_tg_user_at as tg_user_at_inp,
 				p_tg_user_handle as tg_user_handle_inp,
 				p_wallet_address as wallet_address_inp,
-				p_tw_conf_url as tw_conf_url_inp
+				p_tw_conf_url as tw_conf_url_inp,
+				p_tw_user_at as tw_user_at_inp
 			FROM users u
 			INNER JOIN log_tw_conf_urls l
 				ON u.id = l.fk_user_id
@@ -582,21 +595,25 @@ BEGIN
 				tg_user_handle,
 				wallet_address,
 				tw_conf_url,
-				dt_last_tw_conf
+				dt_last_tw_conf,
+				tw_conf_id,
+				tw_user_at
 			) VALUES (
 				p_tg_user_id,
 				p_tg_user_at,
 				p_tg_user_handle,
 				p_wallet_address,
 				p_tw_conf_url,
-				NOW()
+				NOW(),
+				p_tw_conf_id,
+				p_tw_user_at
 			);
 
 		-- get new user id
 		SELECT LAST_INSERT_ID() into @new_usr_id;
 
 		-- log conf url used (so it can't be used again)
-		SELECT add_tw_conf_url_log(@new_usr_id, p_tw_conf_url) INTO @new_log_url_id;
+		SELECT add_tw_conf_url_log(@new_usr_id, p_tw_conf_url, p_tw_conf_id, p_tw_user_at) INTO @new_log_url_id;
 
 		-- set default earnings for new user
 		SELECT add_default_user_earns(@new_usr_id) INTO @new_earns_id;
@@ -626,7 +643,8 @@ BEGIN
 				p_tg_user_at as tg_user_at_inp,
 				p_tg_user_handle as tg_user_handle_inp,
 				p_wallet_address as wallet_address_inp,
-				p_tw_conf_url as tw_conf_url_inp
+				p_tw_conf_url as tw_conf_url_inp,
+				p_tw_user_at as tw_user_at_inp
 			FROM users u			
 			INNER JOIN user_shill_rates r
 				ON u.id = r.fk_user_id
@@ -644,7 +662,9 @@ DROP PROCEDURE IF EXISTS UPDATE_TWITTER_CONF;
 CREATE PROCEDURE `UPDATE_TWITTER_CONF`(
     IN p_tg_user_id VARCHAR(40), -- ex: '-1000342'
 	IN p_tg_user_at VARCHAR(40),
-    IN p_tw_conf_url VARCHAR(1024))
+    IN p_tw_conf_url VARCHAR(1024),
+	IN p_tw_conf_id VARCHAR(255),
+	IN p_tw_user_at VARCHAR(40))
 BEGIN
 	-- fail: if tg_user_id is indeed taken (updates 'users.tg_user_at' if needed)
 	IF NOT valid_tg_user(p_tg_user_id, p_tg_user_at) THEN
@@ -653,14 +673,16 @@ BEGIN
 				p_tg_user_id as tg_user_id_inp,
 				p_tw_conf_url as tw_conf_url_inp;
 	-- vaidate p_tw_conf_url has not been used yet
-	ELSEIF tw_conf_exists(p_tw_conf_url) THEN
+	ELSEIF tw_conf_exists(p_tw_conf_url, p_tw_conf_id) THEN
 		SELECT u.id as user_id_OG, u.tg_user_id as tg_user_id_OG, 
 				u.tw_conf_url as tw_conf_url_OG, u.dt_last_tw_conf as dt_last_tw_conf_OG,
 				l.tw_conf_url as tw_conf_url_LOG,
 				'failed' as `status`, 
 				'tw conf url already exists' as info, 
 				p_tg_user_id as tg_user_id_inp,
-				p_tw_conf_url as tw_conf_url_inp
+				p_tw_conf_url as tw_conf_url_inp,
+				p_tw_conf_id as tw_conf_id_inp,
+				p_tw_user_at as tw_user_at_inp
 			FROM users u
 			INNER JOIN log_tw_conf_urls l
 				ON u.id = l.fk_user_id
@@ -673,11 +695,14 @@ BEGIN
 		UPDATE users
 			SET dt_updated = NOW(),
 				dt_last_tw_conf = NOW(),
-				tw_conf_url = p_tw_conf_url
+				tw_conf_url = p_tw_conf_url,
+				tw_conf_id = p_tw_conf_id,
+				tw_user_at = p_tw_user_at
 			WHERE id = @v_user_id;
 
 		-- log conf url used (so it can't be used again)
-		SELECT add_tw_conf_url_log(@v_user_id, p_tw_conf_url) INTO @new_log_url_id;
+		-- SELECT add_tw_conf_url_log(@v_user_id, p_tw_conf_url) INTO @new_log_url_id;
+		SELECT add_tw_conf_url_log(@v_user_id, p_tw_conf_url, p_tw_conf_id, p_tw_user_at) INTO @new_log_url_id;
 
 		SELECT id, dt_created, dt_updated, tg_user_id, tg_user_at, tg_user_handle, is_admin, tw_conf_url, dt_last_tw_conf,
 				'success' as `status`,
@@ -697,7 +722,8 @@ DROP PROCEDURE IF EXISTS ADD_USER_SHILL_TW;
 CREATE PROCEDURE `ADD_USER_SHILL_TW`(
     IN p_tg_user_id VARCHAR(40),
 	IN p_tg_user_at VARCHAR(40),
-    IN p_post_url VARCHAR(1024))
+    IN p_post_url VARCHAR(1024),
+	IN p_post_id VARCHAR(255))
 BEGIN
 	-- vaidate user exists & tw conf not expired
 	-- fail: if tg_user_id is indeed taken (updates 'users.tg_user_at' if needed)
@@ -708,8 +734,8 @@ BEGIN
 				p_tg_user_id as tg_user_id_inp;
 
 	-- validate 'post_url' is not in 'shills' table yet (or log_tw_conf_urls)
-	ELSEIF NOT valid_new_shill(p_post_url) THEN
-		SELECT 'failed' as `status`, 
+	ELSEIF NOT valid_new_shill(p_post_url, p_post_id) THEN
+		SELECT 'failed' as `status`,
 				'shill already exists' as info, 
 				p_tg_user_id as tg_user_id_inp,
 				p_post_url as post_url;
@@ -719,21 +745,24 @@ BEGIN
 		INSERT INTO shills (
 				fk_user_id,
 				post_url,
+				post_id,
 				shill_plat
 			) VALUES (
 				@v_user_id,
 				p_post_url,
+				p_post_id,
 				'twitter'
 			);
 		-- get new shill id
 		SELECT LAST_INSERT_ID() into @new_shill_id;
 		
 		-- return
-		SELECT s.id as shill_id, s.dt_created as dt_created_s, s.post_url, s.shill_plat, s.shill_type, s.is_approved,
-				u.id as user_id, u.tw_conf_url as tw_conf_url_u, u.tg_user_id, u.tg_user_at, u.tg_user_handle,
+		SELECT s.id as shill_id, s.dt_created as dt_created_s, s.post_url, s.post_id, s.shill_plat, s.shill_type, s.is_approved,
+				u.id as user_id, u.tw_conf_url as tw_conf_url_u, u.tg_user_id, u.tg_user_at, u.tg_user_handle, u.tw_user_at,
 				'success' as `status`,
 				'added new shill' as info,
-				p_tg_user_id as tg_user_id_inp
+				p_tg_user_id as tg_user_id_inp,
+				p_tg_user_at as tg_user_at_inp
 			FROM shills s
 			INNER JOIN users u
 				ON s.fk_user_id = u.id
@@ -1474,206 +1503,3 @@ BEGIN
 		WHERE id = @v_new_bl_id;
 END 
 $$ DELIMITER ;
-
--- #================================================================# --
--- # LEGACY
--- #================================================================# --
-
--- DELIMITER $$
--- drop PROCEDURE if exists AVM_GET_CNT_DT_EVT_TYPE; -- setup
--- CREATE PROCEDURE `AVM_GET_CNT_DT_EVT_TYPE`(
--- 	IN p_dt_updated VARCHAR(40),
--- 	IN p_evt_type VARCHAR(10))
--- BEGIN
--- 	SELECT count(*) 
--- 		FROM avm_logs
--- 		INTO @v_count;
-
--- 	IF @v_count > 0 THEN
--- 		-- 	GET FROM X TIME TO X TIME
--- 		-- SELECT CONCAT(p_dt_updated, " 03:00:00") INTO @v_dt_utc_start;
---         SELECT CONCAT(p_dt_updated, " 05:00:00") INTO @v_dt_utc_start;
--- 		-- SELECT DATE_ADD(@v_dt_utc_start, INTERVAL 4 HOUR) INTO @v_dt_edt_start;
--- 		SELECT DATE_ADD(@v_dt_utc_start, INTERVAL 5 HOUR) INTO @v_dt_edt_start; -- EST
--- 		SELECT DATE_ADD(@v_dt_edt_start, INTERVAL 1 DAY) INTO @v_dt_edt_end;
--- 		SELECT dt_updated, count(*) as 'evt_type count',
--- 				p_evt_type as input_evt_type,
--- 				'success' as `status`,
--- 				'retrieved avm_log count for dt_updated & evt_type' as info,
--- 				p_dt_updated as input_dt_updated
--- 			FROM avm_logs 
--- 			WHERE evt_code = p_evt_type
--- 				AND dt_updated 
--- 					BETWEEN @v_dt_edt_start AND @v_dt_edt_end
--- 				ORDER BY dt_updated DESC;
--- 	ELSE
--- 		SELECT 'failed' as `status`, 
--- 				'no avm_logs found at all' as info, 
--- 				p_dt_updated as input_dt_updated,
--- 				p_evt_type as input_evt_type;
--- 	END IF;
--- END 
--- $$ DELIMITER ;
-
--- DELIMITER $$
--- drop FUNCTION if exists AVM_GET_CNT_DT_EVT; -- setup
--- CREATE FUNCTION `AVM_GET_CNT_DT_EVT`(
--- 		p_dt_updated VARCHAR(40),
--- 		p_cnt_evt_type VARCHAR(10),
--- 		p_get_total_cnt BOOL) RETURNS INT(11)
---     READS SQL DATA
---     DETERMINISTIC
--- BEGIN
--- 	DECLARE v_i INT;
--- 	DECLARE v_lvl FLOAT;
--- 	-- 	GET FROM X TIME TO X TIME
--- 	-- SELECT CONCAT(p_dt_updated, " 03:00:00") INTO @v_dt_utc_start;
---     SELECT CONCAT(p_dt_updated, " 05:00:00") INTO @v_dt_utc_start;
--- 	-- SELECT DATE_ADD(@v_dt_utc_start, INTERVAL 4 HOUR) INTO @v_dt_edt_start;
--- 	SELECT DATE_ADD(@v_dt_utc_start, INTERVAL 5 HOUR) INTO @v_dt_edt_start; -- EST
--- 	SELECT DATE_ADD(@v_dt_edt_start, INTERVAL 1 DAY) INTO @v_dt_edt_end;
-
--- 	IF p_get_total_cnt = TRUE THEN
--- 		SELECT count(*)
--- 			FROM avm_logs 
--- 			WHERE evt_code = p_cnt_evt_type 
--- 				AND dt_updated 
--- 					BETWEEN @v_dt_edt_start AND @v_dt_edt_end
--- 				INTO v_i;
--- 		return v_i;
--- 	ELSE
--- 		SELECT count(*)
--- 			FROM avm_logs 
--- 			WHERE evt_code = p_cnt_evt_type 
--- 				AND evt_level >= 0.25 -- ignores less than 0.25
--- 				AND dt_updated 
--- 					BETWEEN @v_dt_edt_start AND @v_dt_edt_end
--- 				INTO v_i;
--- 		return v_i;
--- 	END IF;
--- END 
--- $$ DELIMITER ;
-
--- DELIMITER $$
--- drop PROCEDURE if exists AVM_GET_EVENT_LOG_2; -- setup
--- CREATE PROCEDURE `AVM_GET_EVENT_LOG_2`(
--- 	IN p_dt_updated VARCHAR(40),
--- 	IN p_cnt_evt_type VARCHAR(10),
--- 	IN p_get_all BOOL)
--- BEGIN
--- 	SELECT count(*) 
--- 		FROM avm_logs
--- 		INTO @v_count;
-
--- 	-- get counts just once (total & specific) to return as vars in select statements
--- 	SELECT AVM_GET_CNT_DT_EVT(p_dt_updated, p_cnt_evt_type, TRUE) INTO @evt_type_cnt_tot;
--- 	SELECT AVM_GET_CNT_DT_EVT(p_dt_updated, p_cnt_evt_type, FALSE) INTO @evt_type_cnt;
-
--- 	IF @v_count > 0 THEN
--- 		-- compensate 4hr EDT diff (JS client side will calc from UTC to EDT)
--- 		-- 	GET FROM X TIME TO X TIME
--- 		SELECT CONCAT(p_dt_updated, " 05:00:00") INTO @v_dt_utc_start;
--- 		SELECT DATE_ADD(@v_dt_utc_start, INTERVAL 5 HOUR) INTO @v_dt_edt_start; -- EST
--- 		SELECT NOW() INTO @v_dt_edt_end;
--- 		SELECT *, 
--- -- 		SELECT
--- 				p_cnt_evt_type as input_cnt_evt_type,
--- 				@evt_type_cnt_tot as 'evt_type_cnt_tot',
--- 				@evt_type_cnt as 'evt_type_cnt',																	
-				
--- 				-- client side bar-graph support: log x-axis true event level 
--- -- 				case when (evt_code='S') then evt_level else NULL end as 'seizure',
--- 				case when (evt_code='S') and evt_level >= 0.009 then evt_level else NULL end as 'seizure',
--- -- 				case when (evt_code='P') then evt_level else NULL end as 'pain',
--- 				case when (evt_code='R') then 1 else NULL end as 'rest_hour',
--- 				case when (evt_code='T') then evt_level else NULL end as 'tizanidine_2mg',
--- 				case when (evt_code='X') then evt_level else NULL end as 'xanax_1mg',
--- 				case when (evt_code='V') and (DATE(dt_updated) >= '2023-01-22') then evt_level else NULL end as 'ativan_2mg',
--- --                 case when (evt_code='J') and (DATE(dt_updated) < '2022-12-04') then evt_level else NULL end as 'arjuna_powd_500mg',
---                 case when (evt_code='J') and (DATE(dt_updated) >= '2022-12-04') then evt_level else NULL end as 'arjuna_extr_500mg',	
--- 				-- case when (evt_code='W') then evt_level else NULL end as 'workout_100cnt',
--- 				-- client side bar-graph support: log x-axis blank space
--- -- 				case when (evt_code='A') then 0 else NULL end as 'anxiety',
--- -- 				case when (evt_code='F') then 0 else NULL end as 'food', 
--- -- 				case when (evt_code='O') then 0 else NULL end as 'other',
--- -- 				case when (evt_code='K') then 0 else NULL end as 'keppra_1000mg',
-
-                
--- 				'success' as `status`,
--- 				'retrieved avm_logs for dt_updated' as info,
--- 				p_dt_updated as input_dt_updated,
--- 				p_cnt_evt_type as input_cnt_evt_type,
--- 				p_get_all as get_all
--- 			FROM avm_logs
--- 			WHERE dt_updated
--- 				BETWEEN @v_dt_edt_start AND @v_dt_edt_end
--- 			ORDER BY dt_updated DESC;
--- 	ELSE
--- 		SELECT 'failed' as `status`, 
--- 				'no avm_logs found at all' as info, 
--- 				p_dt_updated as input_dt_updated,
--- 				p_get_all as get_all;
--- 	END IF;
--- END 
--- $$ DELIMITER ;
-
--- DELIMITER $$
--- drop PROCEDURE if exists AVM_ADD_EVENT_LOG;
--- CREATE PROCEDURE `AVM_ADD_EVENT_LOG`(
--- 	IN p_evt_code VARCHAR(40),
--- 	IN p_evt_level FLOAT,
--- 	IN p_evt_descr VARCHAR(255))
--- BEGIN
--- 	-- add event log
--- 	INSERT INTO avm_logs (
--- 			evt_code,
--- 			evt_level,
--- 			evt_descr
--- 		) VALUES (
--- 			p_evt_code,
--- 			p_evt_level,
--- 			p_evt_descr
--- 		);
-
--- 	-- s reasons email default support 
--- 	SELECT 'null_r' into @v_reason;
--- 	SELECT -1 into @v_s_cnt;
--- 	SELECT 'nil_email' INTO @v_email_0;
--- 	SELECT 'nil_email' INTO @v_email_1;
--- 	SELECT 'nil_email' INTO @v_email_2;
--- 	SELECT 'nil_email' INTO @v_email_3;
-
--- 	-- ========================================================== --
--- 	-- comment this block to disbale s reasons email
--- 	-- GET 1 s_reasons if this entry is first for the day
--- 	SELECT COUNT(*) FROM avm_logs WHERE DATE(dt_updated) = CURDATE() INTO @v_entry_cnt;
--- 	IF @v_entry_cnt = 1 THEN
--- 		SELECT COUNT(*) FROM avm_logs 
--- 			WHERE DATE(dt_updated) = CURDATE()-1 AND evt_code = 'S'
--- 			INTO @v_s_cnt;
--- 		SELECT reason FROM avm_reasons ORDER BY RAND() LIMIT 1 into @v_reason;
--- 	END IF;
--- 	-- uncomment these emails wanted to go live with ...
--- 	-- SELECT 'NAME@EMAIL0.com' INTO @v_email_0;
--- 	SELECT 'NAME@EMAIL1.com' INTO @v_email_1;
--- 	SELECT 'NAME@EMAIL2.com' INTO @v_email_2;
--- 	SELECT 'NAME@EMAIL3.com' INTO @v_email_3;
--- 	-- ========================================================== --
-
--- 	-- RETURN	
--- 	SELECT LAST_INSERT_ID() into @new_evt_id;
--- 	SELECT dt_updated, 
--- 				'success' as `status`,
--- 				'added new avm event log' as info,
--- 				@new_evt_id as new_evt_id,
--- 				p_evt_descr as evt_set,
--- 				@v_s_cnt as s_cnt,
--- 				@v_reason as reason,
--- 				@v_email_0 as e_0,
--- 				@v_email_1 as e_1,
--- 				@v_email_2 as e_2,
--- 				@v_email_3 as e_3
--- 		FROM avm_logs
--- 		WHERE id = @new_evt_id;
--- END $$
--- DELIMITER ;
