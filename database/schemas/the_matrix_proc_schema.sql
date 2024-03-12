@@ -633,7 +633,8 @@ BEGIN
 		-- SELECT add_user_shill_rate(@new_usr_id, 0, 5, 1.00); -- tw, long_vid, 100c
 
 		-- return
-		SELECT u.dt_updated, u.tg_user_id, u.tg_user_at, u.tg_user_handle, u.is_admin, u.tw_conf_url, u.dt_last_tw_conf,
+		SELECT u.dt_updated, u.tg_user_id, u.tg_user_at, u.tg_user_handle, u.is_admin, 
+				u.tw_conf_url, u.tw_conf_id, u.dt_last_tw_conf, u.tw_user_at, 
 				r.platform, r.type_descr, r.pay_usd,
 				'success' as `status`,
 				'added new user' as info,
