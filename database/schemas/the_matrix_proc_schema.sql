@@ -199,6 +199,29 @@ END
 $$ DELIMITER ;
 
 DELIMITER $$
+drop FUNCTION if exists valid_new_tw_conf; -- setup
+CREATE FUNCTION `valid_new_tw_conf`(
+		p_post_url VARCHAR(1024),
+		p_post_id VARCHAR(255)) 
+		RETURNS BOOLEAN
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	SELECT COUNT(*) FROM shills
+		WHERE post_url = p_post_url
+		INTO @v_cnt;
+	SELECT tw_conf_exists(p_post_url, p_post_id) INTO @v_exists;
+	IF @v_cnt > 0 THEN
+		RETURN FALSE; -- not valid: found as shill
+	ELSEIF @v_exists = TRUE THEN
+		RETURN FALSE; -- not valid: found as conf
+	ELSE
+		RETURN TRUE;
+	END IF;
+END 
+$$ DELIMITER ;
+
+DELIMITER $$
 drop FUNCTION if exists valid_new_shill; -- setup
 CREATE FUNCTION `valid_new_shill`(
 		p_post_url VARCHAR(1024),
@@ -212,9 +235,9 @@ BEGIN
 		INTO @v_cnt;
 	SELECT tw_conf_exists(p_post_url, p_post_id) INTO @v_exists;
 	IF @v_cnt > 0 THEN
-		RETURN FALSE; -- not new
+		RETURN FALSE; -- not valid: found as shill
 	ELSEIF @v_exists = TRUE THEN
-		RETURN FALSE; -- url used as conf
+		RETURN FALSE; -- not valid: found as conf
 	ELSE
 		RETURN TRUE;
 	END IF;
@@ -582,7 +605,7 @@ BEGIN
 	-- fail: if p_tw_user_at is already registerd
 	ELSEIF @v_tw_at_found > 0 THEN
 		SELECT 'failed' as `status`,
-				'twitter user already registered' as info,
+				'twitter user already exists' as info,
 				p_tw_user_at as tw_user_at_inp,
 				p_tw_conf_url as tw_conf_url_inp;
 
@@ -590,14 +613,14 @@ BEGIN
 	ELSEIF valid_tg_user(p_tg_user_id, p_tg_user_at) THEN
 		SELECT id, tg_user_id, tg_user_at, tg_user_handle, is_admin,
 				'failed' as `status`, 
-				'user already exists' as info, 
+				'telegram user already exists' as info, 
 				p_tg_user_id as tg_user_id_inp,
 				p_tg_user_at as tg_user_at_inp
 			FROM users 
 			WHERE tg_user_id = p_tg_user_id;
 
 	-- fail: if p_tw_conf_url has already been used
-	ELSEIF tw_conf_exists(p_tw_conf_url, p_tw_conf_id) THEN
+	ELSEIF NOT valid_new_tw_conf(p_tw_conf_url, p_tw_conf_id) THEN -- checks url used for shill | conf
 		SELECT u.id as user_id_OG, u.tg_user_id as tg_user_id_OG, 
 				u.tw_conf_url as tw_conf_url_OG, u.dt_last_tw_conf as dt_last_tw_conf_OG,
 				l.tw_conf_url as tw_conf_url_LOG,
@@ -713,7 +736,7 @@ BEGIN
 				p_tw_conf_url as tw_conf_url_inp;
 
 	-- vaidate p_tw_conf_url has not been used yet
-	ELSEIF tw_conf_exists(p_tw_conf_url, p_tw_conf_id) THEN
+	ELSEIF NOT valid_new_tw_conf(p_tw_conf_url, p_tw_conf_id) THEN -- checks url used for shill | conf
 		SELECT u.id as user_id_OG, u.tg_user_id as tg_user_id_OG, 
 				u.tw_conf_url as tw_conf_url_OG, u.dt_last_tw_conf as dt_last_tw_conf_OG,
 				l.tw_conf_url as tw_conf_url_LOG,
@@ -779,13 +802,13 @@ BEGIN
 	-- fail: if TG user's tw_user_at does not match incoming new shill p_post_uname
 	ELSEIF @v_tw_user_at != p_post_uname THEN
 		SELECT 'failed' as `status`,
-				'twitter user / post mismatch' as info,
+				'invalid twitter account for this user' as info,
 				@v_tw_user_at as tw_user_at,
 				p_post_uname as post_uname_inp,
 				p_post_url as post_url_inp;
 
 	-- validate 'post_url' is not in 'shills' table yet (or log_tw_conf_urls)
-	ELSEIF NOT valid_new_shill(p_post_url, p_post_id) THEN
+	ELSEIF NOT valid_new_shill(p_post_url, p_post_id) THEN -- checks url used for shill | conf
 		SELECT 'failed' as `status`,
 				'shill already exists' as info, 
 				p_tg_user_id as tg_user_id_inp,
