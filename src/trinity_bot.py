@@ -107,8 +107,6 @@ async def cmd_handler(update: Update, context):
     # ex tweet_shill (fails): https://x.com/TopGunHexadian/status/1766339571342553408?s=20
     # ex tweet_shill (valid): https://x.com/SolAudits/status/1766663759961940205?s=20
     
-    
-    
     # NOTE: all non-admin db procs require 'tg_user_id' & 'tg_user_at' (ie. uid & uname_at)
     if 'admin' not in tg_cmd:
         inp_split.insert(1, uid)
@@ -124,29 +122,33 @@ async def cmd_handler(update: Update, context):
             else:
                 inp_split.insert(3, uname_handle)
         
-        if tg_cmd == 'request_cashout': # ['<tg_user_at>']
-            # NOTE: inp_split[1] should be '<tg_user_at>'
+        if tg_cmd == 'request_cashout': # ['user_id','user_at']
+            # NOTE: inp_split[1] should be 'uid'
+            # NOTE: inp_split[2] should be 'uname_at'
             # NOTE: TODO
             pass
 
-        if tg_cmd == 'show_my_rates': # ['<tg_user_at>','<twitter|tiktok|reddit>']
-            # NOTE: inp_split[1] should be '<tg_user_at>'
-            inp_split.insert(2, 'twitter') # const: unknown, twitter, tiktok, reddit
+        if tg_cmd == 'show_my_rates': # ['user_id','user_at','platform']
+            # NOTE: inp_split[1] should be 'uid'
+            # NOTE: inp_split[2] should be 'uname_at'
+            inp_split.insert(3, 'twitter') # const: unknown, twitter, tiktok, reddit
 
-        # if tg_cmd == 'show_my_earnings': # # ['<tg_user_at>']
-        #     # NOTE: inp_split[1] should be '<tg_user_at>'
+        # if tg_cmd == 'show_my_earnings': # ['user_id','user_at']
+        #     # NOTE: inp_split[1] should be 'uid'
+        #     # NOTE: inp_split[2] should be 'uname_at'
         #     pass
 
     # NOTE: all admin db procs require 'tg_admin_id' & 'tg_user_at' (ie. uid & <tg_user_at>)    
     else: # if 'admin' in tg_cmd
-        
         inp_split.insert(1, uid)
 
-        if tg_cmd == 'admin_show_user_rates': # + ['<tg_user_at>','<twitter|tiktok|reddit>']
+        if tg_cmd == 'admin_show_user_rates': # ['admin_id','user_id','platform']
+            # NOTE: inp_split[1] should be 'uid'
             # NOTE: inp_split[2] should be '<tg_user_at>'
             inp_split.insert(3, 'twitter') # const: unknown, twitter, tiktok, reddit
 
-        # if tg_cmd == 'admin_show_user_earnings': # ['<tg_user_at>']
+        # if tg_cmd == 'admin_show_user_earnings': # ['admin_id','user_id']
+        #     # NOTE: inp_split[1] should be 'uid'
         #     # NOTE: inp_split[2] should be '<tg_user_at>'
         #     pass
 
@@ -166,7 +168,29 @@ async def cmd_handler(update: Update, context):
         err_msg = response_dict['MSG']
         await update.message.reply_text(f"err_{err_num}: {err_msg}")
     else:
-        await update.message.reply_text(f"'/{tg_cmd}' Executed Successfully!")
+        d_resp = response_dict['PAYLOAD']['result_arr'][0]
+        # [print(k, d_resp[k]) for k in d_resp.keys()]
+
+        if tg_cmd == 'register_as_shiller':
+            str_r = f"user: {d_resp['tg_user_at']}\n wallet: {d_resp['wallet_address_inp']}\n user_conf: {d_resp['tw_conf_url']}"
+            lst_d_resp = response_dict['PAYLOAD']['result_arr']
+            for d in lst_d_resp:
+                str_r = str_r + f"\n {d['platform']} pay_usd_{d['type_descr']}: {d['pay_usd']}"
+            await update.message.reply_text(f"Shiller Registration Successfull! ...\n {str_r}")
+        elif tg_cmd == 'confirm_twitter':
+            await update.message.reply_text(f"Twitter confirmation updated successfully!")
+        elif tg_cmd == 'submit_shill_link':
+            await update.message.reply_text(f"Shilled tweet submitted for approval! Thanks!")
+        elif tg_cmd == 'show_my_rates' or tg_cmd == 'admin_show_user_rates':   
+            ommit_ = ['status','info','user_id','tg_user_id_inp','platform_inp']
+            str_r = '\n '.join([str(k)+': '+str(round(float(d_resp[k]), 3)) for k in d_resp.keys() if str(k) not in ommit_])
+            await update.message.reply_text(f"Your current rates (per tweet) ...\n {str_r}")
+        elif tg_cmd == 'show_my_earnings' or tg_cmd == 'admin_show_user_earnings':
+            inc_ = ['usd_total','usd_paid','usd_owed','wallet_address','withdraw_requested']
+            str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
+            await update.message.reply_text(f"Your current earnings ...\n {str_r}")
+        else:
+            await update.message.reply_text(f"'/{tg_cmd}' Executed Successfully! _ ")
         
     print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
 

@@ -324,7 +324,7 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
         print('HIT - tg_cmd: '+tg_cmd)
         if tg_cmd in DICT_CMD_EXE.keys():
             if tg_cmd == 'register_as_shiller' or tg_cmd == 'confirm_twitter':
-                success, msg = valid_trinity_tweet(keyVals['trinity_tw_url'], ['@bearsharesnft', 'trinity'])
+                success, msg = valid_trinity_tweet(keyVals['trinity_tw_url'], ['@BearSharesNFT', 'Trinity'])
                 if not success:
                     dbProcResult=-1
                     # bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=True)
@@ -332,7 +332,7 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
                     return bErr, jsonResp, dbProcResult
 
             if tg_cmd == 'submit_shill_link':
-                success, msg = valid_trinity_tweet(keyVals['post_url'], ['@bearsharesnft'])
+                success, msg = valid_trinity_tweet(keyVals['post_url'], ['@BearSharesNFT'])
                 if not success:
                     dbProcResult=-1
                     bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=False, errMsg='invalid shill, '+msg) # False = force fail
