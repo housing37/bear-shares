@@ -39,22 +39,22 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 #-----------------------------------------------------#
 # TRINITY _  'Edit Commands' (TG: @BotFather)
 #-----------------------------------------------------#
-# register_as_shiller - nil
-# confirm_twitter - nil
-# submit_shill_link - nil
-# request_cashout - nil
-# show_my_rates - nil
-# show_my_earnings - nil
-# admin_show_user_rates - nil
-# admin_show_user_earnings - nil
-# admin_show_user_shills - nil
-# admin_list_all_pend_shills - nil
-# admin_approve_pend_shill - nil
-# admin_view_shill_status - nil
-# admin_pay_shill_rewards - nil
-# admin_log_removed_shill - nil
-# admin_scan_web_for_dead_shills - nil
-# admin_set_shiller_rates - nil
+# register_as_shiller - DONE
+# confirm_twitter - DONE
+# submit_shill_link - DONE
+# request_cashout - pending
+# show_my_rates - working
+# show_my_earnings - working
+# admin_show_user_rates - working
+# admin_show_user_earnings - working
+# admin_show_user_shills - pending
+# admin_list_all_pend_shills - pending
+# admin_approve_pend_shill - pending
+# admin_view_shill_status - pending
+# admin_pay_shill_rewards - pending
+# admin_log_removed_shill - pending
+# admin_scan_web_for_dead_shills - pending
+# admin_set_shiller_rates - pending
 
 #-----------------------------------------------------#
 #   TRINITY
@@ -453,45 +453,48 @@ def search_tweet_for_text(tweet_url, _lst_text=[], _headless=True):
         driver.get(tweet_url)
         print(f' getting page: {tweet_url} _ {get_time_now(dt=False)} _ DONE')
         
-        # # searching <body> tag example...
-        # #  NOTE: when tweet 'Views' count is shown, then tweet text is shown as well
-        # print(f' waiting for full html body text _ {get_time_now()}')
-        # WebDriverWait(driver, wait_sec).until(EC.text_to_be_present_in_element((By.TAG_NAME, 'BODY'), 'Views')) 
-        # print(f' waiting for full html body text _ {get_time_now()} _ DONE')        
-        # 
-        # get / search body text for '_lst_text' items
-        # body_text = driver.find_element(By.TAG_NAME, 'body').text
-        # search_text = str(body_text)
+        # loop setup
+        MAX_TW_DRIVER_WAIT_CNT = 5
+        title = ''
+        title_check = 'X:' # end loop when found
+        check_cnt = 1
 
-        # Wait for the meta tag with specific property
-        print(f' Waiting for meta tag _ {get_time_now()}')
-        WebDriverWait(driver, wait_sec).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'meta[property="og:title"]')))
-        print(f' Found meta tag _ {get_time_now()}')
+        # loop through 'WebDriverWait' to find a meta tag w/ specific 'property' & 'content'
+        #   keep trying until 'title_check' is found or MAX_TW_DRIVER_WAIT_CNT reached 
+        while title_check not in title and check_cnt <= MAX_TW_DRIVER_WAIT_CNT:
+            try:
+                print(f' Waiting for meta tag _ *ATTEMPT* # {check_cnt} _ {get_time_now()}')    
+                WebDriverWait(driver, wait_sec).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'meta[property="og:title"]')))
+                meta_tag = driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]')
+                title = str(meta_tag.get_attribute("content"))
+                print(f' Found meta tag w/ Title:\n  {title} _ {get_time_now()}')
+            except Exception as e:
+                print(f'  Error waiting for html text _ {get_time_now()} _ {wait_sec} sec TIMEOUT (maybe)')
+                if check_cnt == MAX_TW_DRIVER_WAIT_CNT:
+                    raise # end loop, break & raise if last check is exception
+                else:
+                    print(f"   **Exception** e: '{e}'\n  continuing while loop ...")
+            check_cnt += 1
 
-        # extract meta tag content
-        meta_tag = driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]')
-        title = meta_tag.get_attribute("content")
-        print(" Title:", title)
-
-        search_text = str(title)
-        print(f' searching html text for items in _lst_text: {_lst_text}')
-        for t in _lst_text:
-            if t.lower() in search_text.lower(): 
-                print(f' FOUND text: {t}')
-            else:
-                print(f' FAILED to find text: {t.lower()} _ returning False')
-                return False, 'must contain '+t
-        print(f' SUCCESS found all text in _lst_text _ returning True')
-        return True, ''
-        
     except Exception as e:
-        print(f" Error scraping tweet")
-        print(f' waiting for full html body text _ {get_time_now()} _ {wait_sec} sec TIMEOUT (maybe)')
-        print(f"  **Exception** e = '{e}'\n  returning False")
-        return False, 'network error, please try again'
+        print(f" Error scraping tweet\n  **Exception** e: '{e}'\n  returning False")
+        return False, 'network error, check your tweet url'
     finally:
         # Close the browser
         driver.quit()
+
+    search_text = str(title)
+    print(f' searching html text for items in _lst_text: {_lst_text}')
+    for t in _lst_text:
+        if t.lower() in search_text.lower(): 
+            print(f' FOUND text: {t}')
+        else:
+            print(f' FAILED to find text: {t.lower()} _ returning False')
+            return False, 'must contain '+t
+    print(f' SUCCESS found all text in _lst_text _ returning True')
+    return True, ''
+        
+
 
 def get_time_now(dt=True):
     if dt: return '['+datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[0:-4]+']'
@@ -504,6 +507,16 @@ print(__filename, f"\n CLASSES & FUNCTIONS initialized:- STARTING -> additional 
 print(__filename, f"\n  DONE Executing additional '{__filename}' run scripts ...")
 print('#======================================================================#')
 
+
+# # searching <body> tag example...
+# #  NOTE: when tweet 'Views' count is shown, then tweet text is shown as well
+# print(f' waiting for full html body text _ {get_time_now()}')
+# WebDriverWait(driver, wait_sec).until(EC.text_to_be_present_in_element((By.TAG_NAME, 'BODY'), 'Views')) 
+# print(f' waiting for full html body text _ {get_time_now()} _ DONE')        
+# 
+# get / search body text for '_lst_text' items
+# body_text = driver.find_element(By.TAG_NAME, 'body').text
+# search_text = str(body_text)
 
 
 # def soup_search_tweet_for_text(tweet_url, _lst_text=[]):
