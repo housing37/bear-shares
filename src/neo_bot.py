@@ -10,21 +10,26 @@ WHITELIST_TG_CHAT_IDS = [
     '-4139183080', # TeddyShares - testing
     ]
 
+# check scammer: ['5486688786', '@Genstlell', 'Teller']
 BLACKLIST_SCAM_UNAMES = [
     '@EmileUly',
     '@AlexSandros6', # 7017221881, @AlexSandros6, Alex sandros
+    '@Genstlell', # ['5486688786', '@Genstlell', 'Teller']
     # '@housing37',
 ]
 BLACKLIST_SCAM_UIDS = [
     # '581475171', # @housing37
     '7017221881', # 7017221881, @AlexSandros6, Alex sandros
+    '5486688786', # ['5486688786', '@Genstlell', 'Teller']
 ]
 BLACKLIST_SCAM_HANDLES = [
     'Alex sandros', # 7017221881, @AlexSandros6, Alex sandros
+    'Teller', # ['5486688786', '@Genstlell', 'Teller']
 ]
 BLACKLIST_SCAM_TEXT = [
     'BlastPulsechain', # 7017221881, @AlexSandros6, Alex sandros
     '$BLAST', # 7017221881, @AlexSandros6, Alex sandros
+    '$Wen', # ['5486688786', '@Genstlell', 'Teller']
 ]
 
 TOKEN = env.TOKEN_neo # neo_bs_bot (neo)
