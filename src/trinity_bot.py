@@ -129,7 +129,6 @@ async def cmd_handler(update: Update, context):
         if tg_cmd == 'request_cashout': # ['user_id','user_at']
             # NOTE: inp_split[1] should be 'uid'
             # NOTE: inp_split[2] should be 'uname_at'
-            # NOTE: TODO
             pass
 
         if tg_cmd == 'show_my_rates': # ['user_id','user_at','platform']
