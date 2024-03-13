@@ -148,6 +148,11 @@ async def cmd_handler(update: Update, context):
         if USE_ALT_ACCT: 
                 inp_split[1] = '1058890141'
                 # inp_split[2] = 'laycpirates'
+
+        # compensate for users using '@' or not
+        if inp_split[2][0] == '@': # remove '@' if there
+            inp_split[2] = inp_split[2][1:]
+
         if tg_cmd == 'admin_show_user_rates': # ['admin_id','user_id','platform']
             # NOTE: inp_split[1] should be 'uid'
             # NOTE: inp_split[2] should be '<tg_user_at>'
