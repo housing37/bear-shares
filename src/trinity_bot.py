@@ -71,7 +71,8 @@ def filter_prompt(_prompt):
     if found_blacklist:
         return prompt_edit
     return _prompt
-    
+
+# def handl 
 async def cmd_handler(update: Update, context):
     global USE_ALT_ACCT
     funcname = 'cmd_handler'
@@ -176,17 +177,24 @@ async def cmd_handler(update: Update, context):
         d_resp = response_dict['PAYLOAD']['result_arr'][0]
         # [print(k, d_resp[k]) for k in d_resp.keys()]
 
-        if tg_cmd == 'register_as_shiller':
+        # if tg_cmd == 'register_as_shiller':
+        if tg_cmd == req_handler.kSHILLER_REG:
             str_r = f"user: {d_resp['tg_user_at']}\n wallet: {d_resp['wallet_address_inp']}\n twitter: {d_resp['tw_user_at']}\n twitter_conf: {d_resp['tw_conf_url']}"
             lst_d_resp = response_dict['PAYLOAD']['result_arr']
             for d in lst_d_resp:
                 str_r = str_r + f"\n {d['platform']} pay_usd_{d['type_descr']}: {d['pay_usd']}"
             await update.message.reply_text(f"Shiller Registration Successfull! ...\n {str_r}")
-        elif tg_cmd == 'confirm_twitter':
+
+        # elif tg_cmd == 'confirm_twitter':
+        elif tg_cmd == req_handler.kTWITTER_CONF:
             await update.message.reply_text(f"Twitter confirmation updated successfully!")
-        elif tg_cmd == 'submit_shill_link':
+
+        # elif tg_cmd == 'submit_shill_link':
+        elif tg_cmd == req_handler.kSUBMIT_SHILL:
             await update.message.reply_text(f"Shilled tweet submitted for approval! Thanks!")
-        elif tg_cmd == 'request_cashout':
+
+        # elif tg_cmd == 'request_cashout':
+        elif tg_cmd == req_handler.kREQUEST_CASHOUT:
             lst_resp_arr = response_dict['PAYLOAD']['result_arr']
             lst_admin_tg_at = [f"@{r['tg_user_at']}" for r in lst_resp_arr if r['is_admin'] or r['is_admin_pay']]
             if len(lst_resp_arr) == 1: # admin invoked '/request_cashout'
@@ -196,14 +204,37 @@ async def cmd_handler(update: Update, context):
             str_r = "".join(lst_user_tg_at)
             str_r = str_r + f'\n\n Notifying Admins(TG): {" ".join(lst_admin_tg_at)}'
             await update.message.reply_text(f"Cashout request submitted! ...\n {str_r}")
-        elif tg_cmd == 'show_my_rates' or tg_cmd == 'admin_show_user_rates':   
+
+        # elif tg_cmd == 'show_my_rates' or tg_cmd == 'admin_show_user_rates':   
+        elif tg_cmd == req_handler.kSHOW_USR_RATES or tg_cmd == req_handler.kADMIN_SHOW_USR_RATES:
             ommit_ = ['status','info','user_id','tg_user_id_inp','platform_inp']
             str_r = '\n '.join([str(k)+': '+str(round(float(d_resp[k]), 3)) for k in d_resp.keys() if str(k) not in ommit_])
             await update.message.reply_text(f"Your current rates (per tweet) ...\n {str_r}")
-        elif tg_cmd == 'show_my_earnings' or tg_cmd == 'admin_show_user_earnings':
+
+        # elif tg_cmd == 'show_my_earnings' or tg_cmd == 'admin_show_user_earnings':
+        elif tg_cmd == req_handler.kSHOW_USR_EARNS or tg_cmd == req_handler.kADMIN_SHOW_USR_EARNS:
             inc_ = ['usd_total','usd_paid','usd_owed','wallet_address','withdraw_requested']
             str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
             await update.message.reply_text(f"Your current earnings ...\n {str_r}")
+
+        elif tg_cmd == req_handler.kADMIN_SHOW_USR_SHILLS:
+            # get common params for str_r
+            lst_resp_0 = response_dict['PAYLOAD']['result_arr'][0]
+            tg_user_at = lst_resp_0['tg_user_at_inp']
+            appr = 'yes' if lst_resp_0['is_approved'] else 'no'
+            rem = 'yes' if lst_resp_0['is_removed'] else 'no'
+            str_r = f'@{tg_user_at} | approved: {appr} | removed: {rem}'
+            
+            # loop through & append unique params for str_r
+            lst_resp = response_dict['PAYLOAD']['result_arr']
+            inc_ = ['shill_id','pay_usd','is_paid','post_url']
+            for d in lst_resp:
+                str_r = str_r + '\n'
+                for k in inc_:
+                    v = d[k]
+                    if k == 'is_paid': v = bool(v)
+                    str_r = str_r + f'\n {k}: {v}'
+            await update.message.reply_text(f"Shill list for {str_r}")
         else:
             await update.message.reply_text(f"'/{tg_cmd}' Executed Successfully! _ ")
         
