@@ -41,22 +41,22 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 #-----------------------------------------------------#
 # TRINITY _  'Edit Commands' (TG: @BotFather)
 #-----------------------------------------------------#
-# register_as_shiller - DONE
-# confirm_twitter - DONE
-# submit_shill_link - DONE
-# request_cashout - DONE
-# show_my_rates - DONE
-# show_my_earnings - DONE
-# admin_show_user_rates - DONE
-# admin_show_user_earnings - DONE
-# admin_show_user_shills - pending
-# admin_list_all_pend_shills - pending
-# admin_approve_pend_shill - pending
-# admin_view_shill_status - pending
-# admin_pay_shill_rewards - pending
-# admin_log_removed_shill - pending
-# admin_scan_web_for_dead_shills - pending
-# admin_set_shiller_rates - pending
+# /register_as_shiller - DONE
+# /confirm_twitter - DONE
+# /submit_shill_link - DONE
+# /request_cashout - DONE
+# /show_my_rates - DONE
+# /show_my_earnings - DONE
+# /admin_show_user_rates - DONE
+# /admin_show_user_earnings - DONE
+# /admin_show_user_shills - pending
+# /admin_list_all_pend_shills - WORKING
+# /admin_approve_pend_shill - WORKING
+# /admin_view_shill_status - WORKING
+# /admin_pay_shill_rewards - pending
+# /admin_log_removed_shill - pending
+# /admin_scan_web_for_dead_shills - pending
+# /admin_set_shiller_rates - pending
 
 #-----------------------------------------------------#
 #   TRINITY
