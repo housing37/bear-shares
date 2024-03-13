@@ -15,7 +15,7 @@ BLACKLIST_SCAM_UNAMES = [
     '@EmileUly',
     '@AlexSandros6', # 7017221881, @AlexSandros6, Alex sandros
     '@Genstlell', # ['5486688786', '@Genstlell', 'Teller']
-    # '@housing37',
+    '@KriskcKrypto', # recommended by @psi931 (simon B) _ 031224
 ]
 BLACKLIST_SCAM_UIDS = [
     # '581475171', # @housing37
