@@ -144,7 +144,9 @@ async def cmd_handler(update: Update, context):
     # NOTE: all admin db procs require 'tg_admin_id' & 'tg_user_at' (ie. uid & <tg_user_at>)    
     else: # if 'admin' in tg_cmd
         inp_split.insert(1, uid)
-
+        if USE_ALT_ACCT: 
+                inp_split[1] = '1058890141'
+                # inp_split[2] = 'laycpirates'
         if tg_cmd == 'admin_show_user_rates': # ['admin_id','user_id','platform']
             # NOTE: inp_split[1] should be 'uid'
             # NOTE: inp_split[2] should be '<tg_user_at>'
@@ -184,6 +186,16 @@ async def cmd_handler(update: Update, context):
             await update.message.reply_text(f"Twitter confirmation updated successfully!")
         elif tg_cmd == 'submit_shill_link':
             await update.message.reply_text(f"Shilled tweet submitted for approval! Thanks!")
+        elif tg_cmd == 'request_cashout':
+            lst_resp_arr = response_dict['PAYLOAD']['result_arr']
+            lst_admin_tg_at = [f"@{r['tg_user_at']}" for r in lst_resp_arr if r['is_admin'] or r['is_admin_pay']]
+            if len(lst_resp_arr) == 1: # admin invoked '/request_cashout'
+                lst_user_tg_at = [f"User(TG): @{r['tg_user_at']}\n Twitter: @{r['tw_user_at']}\n usd_amnt: {r['usd_owed']}\n wallet: {r['wallet_address']}" for r in lst_resp_arr]
+            else: # non-admin invoked '/request_cashout'
+                lst_user_tg_at = [f"User(TG): @{r['tg_user_at']}\n Twitter: @{r['tw_user_at']}\n usd_amnt: {r['usd_owed']}\n wallet: {r['wallet_address']}" for r in lst_resp_arr if not r['is_admin'] and not r['is_admin_pay']]
+            str_r = "".join(lst_user_tg_at)
+            str_r = str_r + f'\n\n Notifying Admins(TG): {" ".join(lst_admin_tg_at)}'
+            await update.message.reply_text(f"Cashout request submitted! ...\n {str_r}")
         elif tg_cmd == 'show_my_rates' or tg_cmd == 'admin_show_user_rates':   
             ommit_ = ['status','info','user_id','tg_user_id_inp','platform_inp']
             str_r = '\n '.join([str(k)+': '+str(round(float(d_resp[k]), 3)) for k in d_resp.keys() if str(k) not in ommit_])
@@ -301,7 +313,7 @@ if __name__ == "__main__":
         USE_PROD_TG = True if inp == '0' else False
         print(f'  input = {inp} _ USE_PROD_TG = {USE_PROD_TG}')
 
-        inp = input('\nUse alt tg_user_id ("LAO Pirates")? [y/n]:\n  > ')
+        inp = input('\nUse alt tg_user_id (@laycpirates "LAO Pirates")? [y/n]:\n  > ')
         USE_ALT_ACCT = True if inp.lower() == 'y' or inp.lower() == '1' else False
         print(f'  input = {inp} _ USE_ALT_ACCT = {USE_ALT_ACCT}')
 

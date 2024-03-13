@@ -44,11 +44,11 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 # register_as_shiller - DONE
 # confirm_twitter - DONE
 # submit_shill_link - DONE
-# request_cashout - pending
-# show_my_rates - working
-# show_my_earnings - working
-# admin_show_user_rates - working
-# admin_show_user_earnings - working
+# request_cashout - DONE
+# show_my_rates - DONE
+# show_my_earnings - DONE
+# admin_show_user_rates - DONE
+# admin_show_user_earnings - DONE
 # admin_show_user_shills - pending
 # admin_list_all_pend_shills - pending
 # admin_approve_pend_shill - pending
