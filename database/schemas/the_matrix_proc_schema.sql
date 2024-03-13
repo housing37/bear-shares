@@ -1090,7 +1090,7 @@ BEGIN
 					p_approved as is_approved_inp,
 					p_removed as is_removed_inp;
 		ELSE
-			SELECT *, -- return all 'p_tg_user_at' data from 'shills' table
+			SELECT *, id as shill_id, -- return all 'p_tg_user_at' data from 'shills' table
 					'success' as `status`,
 					'get user shills all' as info,
 					@v_user_id as user_id,
