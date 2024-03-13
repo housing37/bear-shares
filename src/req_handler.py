@@ -49,7 +49,7 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 # show_my_earnings - DONE
 # admin_show_user_rates - DONE
 # admin_show_user_earnings - DONE
-# admin_show_user_shills - WORKING
+# admin_show_user_shills - DONE
 # admin_list_all_pend_shills - WORKING
 # admin_approve_pend_shill - WORKING
 # admin_view_shill_status - WORKING
