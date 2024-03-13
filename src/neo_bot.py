@@ -31,6 +31,9 @@ BLACKLIST_SCAM_TEXT = [
     '$BLAST', # 7017221881, @AlexSandros6, Alex sandros
     '$Wen', # ['5486688786', '@Genstlell', 'Teller']
 ]
+BLACKLIST_SCAM_COMBO_TEXT = [
+    ['$','t.me'], # trying to catch '$whatever' w/ 't.me/whatever'
+]
 
 TOKEN = env.TOKEN_neo # neo_bs_bot (neo)
 OPENAI_API_KEY = env.OPENAI_KEY
@@ -116,9 +119,9 @@ async def generate_response(update: Update, context: CallbackContext) -> None:
 #     return str(update.message.chat_id) == GROUP_ID
 
 async def check_scammer(update: Update, context):
-    if update.message.from_user == None:
-        print("check_scammer _ found '.message.from_user' = NoneType; attempting to print message.text, then failing...")
-        print(update.message.text)
+    if update.message == None:
+        print("check_scammer _ found 'update.message' = NoneType; returning")
+        return
 
     user = update.message.from_user
 
@@ -136,9 +139,23 @@ async def check_scammer(update: Update, context):
     lst_uname = [t.lower() for t in BLACKLIST_SCAM_UNAMES]
     lst_handle = [t.lower() for t in BLACKLIST_SCAM_HANDLES]
     lst_text = [t.lower() for t in BLACKLIST_SCAM_TEXT]
+    lst_text_combo = [lst for lst in BLACKLIST_SCAM_COMBO_TEXT]
 
-    # check blacklist text
+    # log scam found
     b_scam_text = False
+
+    # check inp_text for blacklist text 'combos'
+    for lst in lst_text_combo:
+        found_combo = True
+        for t in lst:
+            if t not in inp_text.lower():
+                found_combo = False
+                
+        if found_combo:
+            print(f'FOUND scam combo text: {lst} _ inp_text:\n  {inp_text}')
+            b_scam_text = True
+
+    # check inp_text for individual blacklisted text
     for t in lst_text:
         if t in inp_text.lower():
             print(f'FOUND scam text: {t} _ inp_text:\n  {inp_text}')
@@ -147,7 +164,7 @@ async def check_scammer(update: Update, context):
     # checks blacklist of @user and tg_uid and tg_handle
     if b_scam_text or uid.lower() in lst_uid or usr_at_name.lower() in lst_uname or usr_handle.lower() in lst_handle:
         print(f'FOUND scammer: {lst_user_data}')
-        await update.message.reply_text(f"@{usr_at_name} is a known scammer, ignore him 🙄️️️️️️")
+        await update.message.reply_text(f"inside The Matrix, {usr_at_name} is known as a scammer 👆️️️️️️")
 
 def main():
     print('ENTER - main()')

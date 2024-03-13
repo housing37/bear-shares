@@ -210,9 +210,9 @@ async def cmd_handler(update: Update, context):
     print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
 
 async def log_activity(update: Update, context):
-    if update.message.from_user == None:
-        print("log_activity _ found '.message.from_user' = NoneType; attempting to print message.text, then failing...")
-        print(update.message.text)
+    if update.message == None:
+        print("check_scammer _ found 'update.message' = NoneType; returning")
+        return
 
     user = update.message.from_user
     uid = str(user.id)
