@@ -885,20 +885,50 @@ BEGIN
 			UPDATE user_earns
 				SET withdraw_requested = TRUE
 				WHERE fk_user_id = @v_user_id;
+			
+			-- return request confirmation + admin contact info to notify
+			SELECT is_admin FROM users WHERE id = @v_user_id INTO @v_is_admin;
+			SELECT is_admin_pay FROM users WHERE id = @v_user_id INTO @v_is_admin_pay;
 
-			-- return
-			SELECT tg_user_id, tg_user_at, tg_user_handle, tw_user_at,
-					wallet_address, is_admin, is_admin_pay,
-					'success' as `status`,
-					'set withdraw requested' as info,
-					@v_user_id as user_id,
-					@v_usd_owed as usd_owed,
-					@v_usd_min as usd_withdraw_min,
-					p_tg_user_id as tg_user_id_inp
-				FROM users
-				WHERE id = @v_user_id
-					OR is_admin = TRUE
-					OR is_admin_pay = TRUE;
+			--	NOTE: if withdraw request user is indeed an admin, then no need for UNION
+			IF @v_is_admin = TRUE OR @v_is_admin_pay = TRUE THEN
+				SELECT tg_user_id, tg_user_at, is_admin, is_admin_pay,
+						tg_user_handle, tw_user_at, wallet_address, 
+						'success' as `status`,
+						'set withdraw requested' as info,
+						@v_user_id as user_id,
+						@v_usd_owed as usd_owed,
+						CAST(@v_usd_min AS FLOAT) as usd_withdraw_min,
+						p_tg_user_id as tg_user_id_inp
+					FROM users
+					WHERE id = @v_user_id;
+
+			--	NOTE: if withdraw request user is not an admin, 
+			--		then use UNION to ensure admins are returned as well
+			ELSE
+				SELECT tg_user_id, tg_user_at, is_admin, is_admin_pay,
+						tg_user_handle, tw_user_at, wallet_address, 
+						'success' as `status`,
+						'set withdraw requested' as info,
+						@v_user_id as user_id,
+						@v_usd_owed as usd_owed,
+						CAST(@v_usd_min AS FLOAT) as usd_withdraw_min,
+						p_tg_user_id as tg_user_id_inp
+					FROM users
+					WHERE id = @v_user_id
+				UNION
+				SELECT tg_user_id, tg_user_at, is_admin, is_admin_pay, 
+						NULL as tg_user_handle, NULL as tw_user_at, NULL as wallet_address,
+						'ADMIN' as `status`,
+						NULL as info,
+						NULL as user_id,
+						NULL as usd_owed,
+						NULL as usd_withdraw_min,
+						NULL as tg_user_id_inp
+					FROM users
+					WHERE is_admin = TRUE 
+						OR is_admin_pay = TRUE;
+			END IF;
 		END IF;
 	END IF;
 END 

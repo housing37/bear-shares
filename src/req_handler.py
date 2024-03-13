@@ -27,6 +27,8 @@ kPin = 'admin_pin'
 kUserId = "user_id"
 kKeyVals = "key_vals"
 
+VERBOSE_LOG = True
+
 # twitter access globals
 CONSUMER_KEY = 'nil_tw_key'
 CONSUMER_SECRET = 'nil_tw_key'
@@ -274,8 +276,8 @@ def handle_request(request, req_handler_key, tg_cmd=None):
     
     # (4) prepare return json model
     # jsonResp = prepJsonResponseDbProc(arrStrReturnKeys, dbProcResult, strRespSuccessMSG, tprint=False)
-    if tg_cmd: jsonResp = prepJsonResponseDbProc_ALL(arrStrReturnKeys, dbProcResult, strRespSuccessMSG, tprint=False)
-    else: jsonResp = prepJsonResponseDbProc(arrStrReturnKeys, dbProcResult, strRespSuccessMSG, tprint=False)
+    if tg_cmd: jsonResp = prepJsonResponseDbProc_ALL(arrStrReturnKeys, dbProcResult, strRespSuccessMSG, tprint=VERBOSE_LOG)
+    else: jsonResp = prepJsonResponseDbProc(arrStrReturnKeys, dbProcResult, strRespSuccessMSG, tprint=VERBOSE_LOG)
     
     # (5) return client response
     return jsonResp # JSONResponse(...) -> Response(json.dumps(dict), mimetype="application/json" )
@@ -292,29 +294,29 @@ def parse_request(request, req_handler_key, tg_cmd=None): # (1)
                 # add 'tweet_id' & 'twitter_at' to keyVals
                 keyVals, success = parse_twitter_url(keyVals, 'trinity_tw_url') 
                 if not success:
-                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=False, errMsg='invalid twitter url, please try again') # False = force fail
+                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=VERBOSE_LOG, errMsg='invalid twitter url, please try again') # False = force fail
                     return bErr, jsonResp, None # JSONResponse(...)
 
                 # check if tweet url contains text list
                 success, msg = valid_trinity_tweet(keyVals['trinity_tw_url'], ['@BearSharesNFT', 'Trinity'])
                 if not success:
-                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=False, errMsg='invalid tweet confirmation / '+msg) # False = force fail
+                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=VERBOSE_LOG, errMsg='invalid tweet confirmation / '+msg) # False = force fail
                     return bErr, jsonResp, None # dbProcResult
                 
             if tg_cmd == 'submit_shill_link':
                 # add 'tweet_id' & 'twitter_at' to keyVals
                 keyVals, success = parse_twitter_url(keyVals, 'post_url')
                 if not success:
-                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=False, errMsg='invalid twitter shill url, please try again') # False = force fail
+                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=VERBOSE_LOG, errMsg='invalid twitter shill url, please try again') # False = force fail
                     return bErr, jsonResp, None # JSONResponse(...)
 
                 # check if tweet url contains text list
                 success, msg = valid_trinity_tweet(keyVals['post_url'], ['@BearSharesNFT'])
                 if not success:
-                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=False, errMsg='invalid shill, '+msg) # False = force fail
+                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=VERBOSE_LOG, errMsg='invalid shill, '+msg) # False = force fail
                     return bErr, jsonResp, None # dbProcResult
         else:
-            bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=False, errMsg='command not found') # False = force fail
+            bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=VERBOSE_LOG, errMsg='command not found') # False = force fail
             return bErr, jsonResp, -1 # dbProcResult
         
     else:
@@ -362,7 +364,7 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
             dbProcResult = exe_stored_proc(-1, stored_proc, keyVals)
             if dbProcResult[0]['status'] == 'failed': errMsg = dbProcResult[0]['info']
             else: errMsg = None    
-            bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=False, errMsg=errMsg) # errMsg != None: force fail from db
+            bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=VERBOSE_LOG, errMsg=errMsg) # errMsg != None: force fail from db
             # bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=True)
             
         else:
