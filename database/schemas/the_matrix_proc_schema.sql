@@ -872,13 +872,13 @@ BEGIN
 		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
 		SELECT usd_owed FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_usd_owed;
 
-		-- validate amnt owed is at least min aloud (ie. minimize gas used on withdrawels)
-		IF @v_usd_owed >= @v_usd_min THEN
+		-- fail: if owed amount is at least equal to min withdraw amount
+		IF NOT @v_usd_owed >= @v_usd_min THEN
 			SELECT 'failed' as `status`, 
 					'owed balance too low' as info,
 					@v_user_id as user_id,
 					@v_usd_owed as usd_owed,
-					@v_usd_min as usd_withdraw_min,
+					CAST(@v_usd_min AS FLOAT) as usd_withdraw_min,
 					p_tg_user_id as tg_user_id_inp;
 		ELSE
 			-- set withdraw requested
@@ -887,7 +887,8 @@ BEGIN
 				WHERE fk_user_id = @v_user_id;
 
 			-- return
-			SELECT tg_user_id, tg_user_at, tg_user_handle, wallet_address,
+			SELECT tg_user_id, tg_user_at, tg_user_handle, tw_user_at,
+					wallet_address, is_admin, is_admin_pay,
 					'success' as `status`,
 					'set withdraw requested' as info,
 					@v_user_id as user_id,
@@ -895,7 +896,9 @@ BEGIN
 					@v_usd_min as usd_withdraw_min,
 					p_tg_user_id as tg_user_id_inp
 				FROM users
-				WHERE id = @v_user_id;
+				WHERE id = @v_user_id
+					OR is_admin = TRUE
+					OR is_admin_pay = TRUE;
 		END IF;
 	END IF;
 END 
