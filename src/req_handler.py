@@ -41,22 +41,22 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 #-----------------------------------------------------#
 # TRINITY _  'Edit Commands' (TG: @BotFather)
 #-----------------------------------------------------#
-# /register_as_shiller - DONE
-# /confirm_twitter - DONE
-# /submit_shill_link - DONE
-# /request_cashout - DONE
-# /show_my_rates - DONE
-# /show_my_earnings - DONE
-# /admin_show_user_rates - DONE
-# /admin_show_user_earnings - DONE
-# /admin_show_user_shills - pending
-# /admin_list_all_pend_shills - WORKING
-# /admin_approve_pend_shill - WORKING
-# /admin_view_shill_status - WORKING
-# /admin_pay_shill_rewards - pending
-# /admin_log_removed_shill - pending
-# /admin_scan_web_for_dead_shills - pending
-# /admin_set_shiller_rates - pending
+# register_as_shiller - DONE
+# confirm_twitter - DONE
+# submit_shill_link - DONE
+# request_cashout - DONE
+# show_my_rates - DONE
+# show_my_earnings - DONE
+# admin_show_user_rates - DONE
+# admin_show_user_earnings - DONE
+# admin_show_user_shills - WORKING
+# admin_list_all_pend_shills - WORKING
+# admin_approve_pend_shill - WORKING
+# admin_view_shill_status - WORKING
+# admin_pay_shill_rewards - pending
+# admin_log_removed_shill - pending
+# admin_scan_web_for_dead_shills - pending
+# admin_set_shiller_rates - pending
 
 #-----------------------------------------------------#
 #   TRINITY
@@ -308,7 +308,7 @@ def parse_request(request, req_handler_key, tg_cmd=None): # (1)
         keyVals = dict(request)
         print('HIT - tg_cmd: '+tg_cmd)
         if tg_cmd in DICT_CMD_EXE.keys():
-            if tg_cmd == 'register_as_shiller' or tg_cmd == 'confirm_twitter':
+            if tg_cmd == kTWITTER_CONF or tg_cmd == kSHILLER_REG:
                 # add 'tweet_id' & 'twitter_at' to keyVals
                 keyVals, success = parse_twitter_url(keyVals, 'trinity_tw_url') 
                 if not success:
@@ -321,7 +321,7 @@ def parse_request(request, req_handler_key, tg_cmd=None): # (1)
                     bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=VERBOSE_LOG, errMsg='invalid tweet confirmation / '+msg) # False = force fail
                     return bErr, jsonResp, None # dbProcResult
                 
-            if tg_cmd == 'submit_shill_link':
+            if tg_cmd == kSUBMIT_SHILL:
                 # add 'tweet_id' & 'twitter_at' to keyVals
                 keyVals, success = parse_twitter_url(keyVals, 'post_url')
                 if not success:
@@ -333,6 +333,18 @@ def parse_request(request, req_handler_key, tg_cmd=None): # (1)
                 if not success:
                     bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=VERBOSE_LOG, errMsg='invalid shill, '+msg) # False = force fail
                     return bErr, jsonResp, None # dbProcResult
+                
+            if tg_cmd == kADMIN_SHOW_USR_SHILLS:
+                # LST_KEYS_USR_SHILLS = ['admin_id','user_at','approved','removed']
+                if keyVals['approved']=='yes' or keyVals['approved']=='approved' or keyVals['approved']=='1' or keyVals['approved'].lower()=='true':
+                    keyVals['approved'] = '1'
+                else:
+                    keyVals['approved'] = '0'
+
+                if keyVals['removed']=='yes' or keyVals['removed']=='removed' or keyVals['removed']=='1' or keyVals['removed'].lower()=='true':
+                    keyVals['removed'] = '1'
+                else:
+                    keyVals['removed'] = '0'
         else:
             bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=VERBOSE_LOG, errMsg='command not found') # False = force fail
             return bErr, jsonResp, -1 # dbProcResult

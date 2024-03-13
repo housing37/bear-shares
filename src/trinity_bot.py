@@ -211,7 +211,7 @@ async def cmd_handler(update: Update, context):
 
 async def log_activity(update: Update, context):
     if update.message == None:
-        print("check_scammer _ found 'update.message' = NoneType; returning")
+        print(f'{get_time_now()} _ activity : found .message == None; returning')
         return
 
     user = update.message.from_user
