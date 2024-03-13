@@ -1075,22 +1075,35 @@ BEGIN
 				'user not found' as info, 
 				p_tg_user_at as tg_user_at_inp;
 	ELSE
-		-- return all 'p_tg_user_at' data from 'shills' table
-		SELECT tg_user_id FROM users WHERE tg_user_at = p_tg_user_at INTO @v_tg_user_id;
-		SELECT id FROM users WHERE tg_user_id = @v_tg_user_id INTO @v_user_id;
-		SELECT *, 
-				'success' as `status`,
-				'get user shills all' as info,
-				@v_user_id as user_id,
-				@v_tg_user_id as tg_user_id,
-				p_tg_user_at as tg_user_at_inp,
-				p_approved as is_approved_inp,
-				p_removed as is_removed_inp
-			FROM shills
-			WHERE fk_user_id = @v_user_id
-				AND is_approved = p_approved
-				AND is_removed = p_removed
-			ORDER BY id desc;
+		-- setup
+		SELECT id FROM users WHERE tg_user_at = p_tg_user_at INTO @v_user_id;
+		SELECT tg_user_id FROM users WHERE id = @v_user_id INTO @v_tg_user_id; -- for return only
+		SELECT COUNT(*) FROM shills WHERE fk_user_id = @v_user_id AND is_approved = p_approved AND is_removed = p_removed INTO @v_shill_cnt;
+
+		-- fail: if no shills exist for this query
+		IF @v_shill_cnt = 0 THEN
+			SELECT 'failed' as `status`, 
+					'no shills found' as info, 
+					@v_user_id as user_id,
+					@v_tg_user_id as tg_user_id,
+					p_tg_user_at as tg_user_at_inp,
+					p_approved as is_approved_inp,
+					p_removed as is_removed_inp;
+		ELSE
+			SELECT *, -- return all 'p_tg_user_at' data from 'shills' table
+					'success' as `status`,
+					'get user shills all' as info,
+					@v_user_id as user_id,
+					@v_tg_user_id as tg_user_id,
+					p_tg_user_at as tg_user_at_inp,
+					p_approved as is_approved_inp,
+					p_removed as is_removed_inp
+				FROM shills
+				WHERE fk_user_id = @v_user_id
+					AND is_approved = p_approved
+					AND is_removed = p_removed
+				ORDER BY id desc;
+		END IF;
 	END IF;
 END 
 $$ DELIMITER ;
