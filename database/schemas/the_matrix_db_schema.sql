@@ -105,8 +105,8 @@ CREATE TABLE `shills` (
   -- `fk_shill_type_id` int(11) DEFAULT -1, -- set by admin
   -- `fk_shill_rate_id` int(11) NOT NULL, -- latest fk_user_id rate: platform, type, & pay_usd
   `pay_usd` FLOAT DEFAULT -1.0, -- set by admin after review
-  `shill_plat` VARCHAR(40) DEFAULT 'unknown', -- set by admin after post_url review
-  `shill_type` VARCHAR(40) DEFAULT 'unknown', -- set by admin after post_url review
+  `shill_plat` VARCHAR(40) DEFAULT 'unknown', -- const (admin set): unknown, twitter, tiktok, reddit
+  `shill_type` VARCHAR(40) DEFAULT 'unknown', -- const (admin set): unknown, htag, short_txt, long_txt, img_meme, short_vid, long_vid
   `is_approved` BOOLEAN DEFAULT FALSE,
   `dt_updated_approve` timestamp NULL DEFAULT NULL,
   `is_paid` BOOLEAN DEFAULT FALSE,
