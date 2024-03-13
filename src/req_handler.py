@@ -111,7 +111,7 @@ LST_KEYS_SHOW_RATES = ['user_id','user_at','platform'] # const: unknown, twitter
 # '/show_my_earnings'
 kSHOW_USR_EARNS = "show_my_earnings" # '/show_my_earnings'
 LST_CMD_SHOW_EARNS = [] # ['<tg_user_at>']
-STR_ERR_SHOW_EARNS = f'''please user cmd format :\n /{kSHOW_USR_EARNS} {" ".join(LST_CMD_SHOW_EARNS)}'''
+STR_ERR_SHOW_EARNS = f'''please use cmd format :\n /{kSHOW_USR_EARNS} {" ".join(LST_CMD_SHOW_EARNS)}'''
 LST_KEYS_SHOW_EARNS_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_GET_USR_EARNS = 'GET_USER_EARNINGS'
 LST_KEYS_SHOW_EARNS = ['user_id','user_at']
@@ -122,104 +122,122 @@ LST_CMD_SHOW_RATES_ADMIN = ['<tg_user_at>'] # ['<tg_user_at>','<twitter|tiktok|r
 STR_ERR_SHOW_RATES_ADMIN = f'''please use cmd format:\n /{kADMIN_SHOW_USR_RATES} {" ".join(LST_CMD_SHOW_RATES_ADMIN)}'''
 LST_KEYS_SHOW_RATES_RESP_ADMIN = env.LST_KEYS_PLACEHOLDER
 DB_PROC_GET_USR_RATES_ADMIN = 'GET_USER_PAY_RATES_ADMIN'
-LST_KEYS_SHOW_RATES_ADMIN = ['admin_id','user_id','platform'] # const: unknown, twitter, tiktok, reddit
+LST_KEYS_SHOW_RATES_ADMIN = ['admin_id','user_at','platform'] # const: unknown, twitter, tiktok, reddit
 
 # '/admin_show_user_earnings'
 kADMIN_SHOW_USR_EARNS = "admin_show_user_earnings" 
 LST_CMD_SHOW_EARNS_ADMIN = ['<tg_user_at>']
-STR_ERR_SHOW_EARNS_ADMIN = f'''please user cmd format :\n /{kADMIN_SHOW_USR_EARNS} {" ".join(LST_CMD_SHOW_EARNS_ADMIN)}'''
+STR_ERR_SHOW_EARNS_ADMIN = f'''please use cmd format :\n /{kADMIN_SHOW_USR_EARNS} {" ".join(LST_CMD_SHOW_EARNS_ADMIN)}'''
 LST_KEYS_SHOW_EARNS_RESP_ADMIN = env.LST_KEYS_PLACEHOLDER
 DB_PROC_GET_USR_EARNS_ADMIN = 'GET_USER_EARNINGS_ADMIN'
-LST_KEYS_SHOW_EARNS_ADMIN = ['admin_id','user_id']
+LST_KEYS_SHOW_EARNS_ADMIN = ['admin_id','user_at']
 
 # '/admin_show_user_shills'
-kADMIN_SHOW_USR_SHILLS = "get_usr_shills"
-LST_KEYS_USR_SHILLS = ['admin_id','user_id','approved','removed']
+kADMIN_SHOW_USR_SHILLS = "admin_show_user_shills"
+LST_CMD_USR_SHILLS_ADMIN = ['<tg_user_at>','<approved|yes>','<removed|yes>']
+STR_ERR_USR_SHILLS_ADMIN = f'''please use cmd format :\n /{kADMIN_SHOW_USR_SHILLS} {" ".join(LST_CMD_USR_SHILLS_ADMIN)}'''
 LST_KEYS_USR_SHILLS_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_GET_USR_SHILLS_ALL = 'GET_USER_SHILLS_ALL'
+LST_KEYS_USR_SHILLS = ['admin_id','user_at','approved','removed']
 
 # '/admin_list_all_pend_shills'
-kADMIN_LIST_ALL_PEND_SHILLS = "get_all_pend_shills"
-LST_KEYS_ALL_PEND_SHILLS = ['admin_id','removed']
+kADMIN_LIST_ALL_PEND_SHILLS = "admin_list_all_pend_shills"
+LST_CMD_PEND_SHILLS_ADMIN = ['<removed|yes>']
+STR_ERR_PEND_SHILLS_ADMIN = f'''please use cmd format :\n /{kADMIN_LIST_ALL_PEND_SHILLS} {" ".join(LST_CMD_PEND_SHILLS_ADMIN)}'''
 LST_KEYS_ALL_PEND_SHILLS_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_GET_PEND_SHILLS = 'GET_PEND_SHILLS_ALL' # get where 'is_approved' = False
+LST_KEYS_ALL_PEND_SHILLS = ['admin_id','removed']
 
 # '/admin_approve_pend_shill'
-kADMIN_APPROVE_SHILL = "approve_pend_shill"
-LST_KEYS_APPROVE_SHILL = ['admin_id','user_id', 'shill_id','shill_plat','shill_type','pay_usd','approved']
+kADMIN_APPROVE_SHILL = "admin_approve_pend_shill"
+LST_CMD_APPROVE_SHILLS_ADMIN = ['<tg_user_at>','<shill_id>','<pay_usd>','<twitter|tiktok|reddit>','<htag|short_txt|long_txt|img_meme|short_vid|long_vid>','<yes|no>']
+STR_ERR_APPROVE_SHILLS_ADMIN = f'''please use cmd format :\n /{kADMIN_APPROVE_SHILL} {" ".join(LST_CMD_APPROVE_SHILLS_ADMIN)}'''
 LST_KEYS_APPROVE_SHILL_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_APPROVE_SHILL_STATUS = "UPDATE_USER_SHILL_APPR_EARNS" 
+LST_KEYS_APPROVE_SHILL = ['admin_id','user_at', 'shill_id','shill_plat','shill_type','pay_usd','approved']
     # PRE-DB: admin views / inspects shill_url on the web (determines: plat, type, pay, approve)
     # POST-DB: python TG message to shiller confirming approval & earnings updated (w/ shill url, shill type, pay_usd)
 
 # '/admin_view_shill_status'
-kADMIN_VIEW_SHILL = "get_usr_shill"
-LST_KEYS_VIEW_SHILL = ['admin_id','user_id','shill_id','shill_url']
+kADMIN_VIEW_SHILL = "admin_view_shill_status"
+LST_CMD_VIEW_SHILL_ADMIN = ['<tg_user_at>','<shill_id>','<shill_url>']
+STR_ERR_VIEW_SHILL_ADMIN = f'''please use cmd format :\n /{kADMIN_VIEW_SHILL} {" ".join(LST_CMD_VIEW_SHILL_ADMIN)}'''
 LST_KEYS_VIEW_SHILL_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_GET_USR_SHILL = 'GET_USER_SHILL'
+LST_KEYS_VIEW_SHILL = ['admin_id','user_at','shill_id','shill_url']
 
 # '/admin_pay_shill_rewards' _ NOTE: requires solidty 'transfer' call _ ** HOUSE ONLY **
-kADMIN_PAY_SHILL_EARNS = "pay_usr_owed_shill_earns"
-LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_id']
+kADMIN_PAY_SHILL_EARNS = "admin_pay_shill_rewards"
+LST_CMD_PAY_SHILL_ADMIN = ['<tg_user_at>','<shill_id>']
+STR_ERR_PAY_SHILL_ADMIN = f'''please use cmd format :\n /{kADMIN_PAY_SHILL_EARNS} {" ".join(LST_CMD_PAY_SHILL_ADMIN)}'''
 LST_KEYS_PAY_SHILL_EARNS_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_SET_USR_PAY_SUBMIT = 'SET_USER_PAY_TX_SUBMIT' # -> get_usr_pay_usd_appr_sum, set_usr_pay_usd_tx_submit
+LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_at']
     # POST-DB: perform python/solidity 'transfer(user_earns.usd_owed, wallet_address)' to get tx data for DB_PROC_SET_USR_PAY_CONF
     #	        get 'wallet_address' from 'GET_USER_EARNINGS(tg_user_id)'
-LST_KEYS_PAY_SHILL_EARNS_CONF = ['admin_id','user_id','chain_usd_paid','tx_hash','tx_status','tok_addr','tok_symb','tok_amnt']
 DB_PROC_SET_USR_PAY_CONF = 'SET_USER_PAY_TX_STATUS' # -> set_usr_pay_usd_tx_status
+LST_KEYS_PAY_SHILL_EARNS_CONF = ['admin_id','user_at','chain_usd_paid','tx_hash','tx_status','tok_addr','tok_symb','tok_amnt']
     # PRE-DB: perform python/solidity 'transfer' to get tx data for DB_PROC_SET_USR_PAY_CONF
 
 # '/admin_log_removed_shill'
-kADMIN_SET_SHILL_REM = "set_shill_removed"
-LST_KEYS_SET_SHILL_REM = ['admin_id','tg_user_id','shill_id','removed']
+kADMIN_SET_SHILL_REM = "admin_log_removed_shill"
+LST_CMD_SET_SHILL_REM_ADMIN = ['<tg_user_at>','<shill_id>','removed']
+STR_ERR_SET_SHILL_REM_ADMIN = f'''please use cmd format :\n /{kADMIN_SET_SHILL_REM} {" ".join(LST_CMD_SET_SHILL_REM_ADMIN)}'''
 LST_KEYS_SET_SHILL_REM_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_SET_SHILL_REM = 'SET_USER_SHILL_REMOVED'
+LST_KEYS_SET_SHILL_REM = ['admin_id','tg_user_at','shill_id','removed']
 
 # '/admin_scan_web_for_dead_shills' _ NOTE: requires twitter post web scrape
-kADMIN_CHECK_USR_REM_SHILLS = "check_usr_removed_shills"
-LST_KEYS_CHECK_USR_REM_SHILLS = ['admin_id','user_id','approved','removed']
+kADMIN_CHECK_USR_REM_SHILLS = "admin_scan_web_for_dead_shills"
+LST_CMD_CHECK_USR_REM_ADMIN = ['<tg_user_at>','<approved|yes>','removed|no']
+STR_ERR_CHECK_USR_REM_ADMIN = f'''please use cmd format :\n /{kADMIN_CHECK_USR_REM_SHILLS} {" ".join(LST_CMD_CHECK_USR_REM_ADMIN)}'''
 LST_KEYS_CHECK_USR_REM_SHILLS_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_CHECK_USR_REM_SHILL = DB_PROC_GET_USR_SHILLS_ALL 
+LST_KEYS_CHECK_USR_REM_SHILLS = ['admin_id','user_at','approved','removed']
     # POST-DB: web scrape those post_urls to see if they are still working / viewable
 
 # '/admin_set_shiller_rate'
-kADMIN_SET_USR_SHILL_PAY_RATE = "set_user_shill_pay_rate"
-LST_KEYS_SET_USR_SHILL_PAY_RATE = ['admin_id','user_id','shill_plat','shill_type','pay_usd']
+kADMIN_SET_USR_SHILL_PAY_RATE = "admin_set_shiller_rate"
+LST_CMD_SET_USR_RATE_ADMIN = ['<tg_user_at>','<pay_usd>','<twitter|tiktok|reddit>','<htag|short_txt|long_txt|img_meme|short_vid|long_vid>']
+STR_ERR_SET_USR_RATE_ADMIN = f'''please use cmd format :\n /{kADMIN_SET_USR_SHILL_PAY_RATE} {" ".join(LST_CMD_SET_USR_RATE_ADMIN)}'''
 LST_KEYS_SET_USR_SHILL_PAY_RATE_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_SET_USR_RATES = 'SET_USER_PAY_RATE'
+LST_KEYS_SET_USR_SHILL_PAY_RATE = ['admin_id','user_at','shill_plat','shill_type','pay_usd']
 
 #-----------------------------------------------------#
 #   NEO
 #-----------------------------------------------------#
 # '/blacklist_user'
-kADD_BLACKLIST_SCAMMER = "add_user_to_blacklist_scammers"
-LST_KEYS_ADD_BLACKLIST_SCAMMER = ['admin_or_user_id','bl_user_id','bl_user_at','bl_user_handle','tg_chan_id']
+kADD_BLACKLIST_SCAMMER = "blacklist_user"
+LST_CMD_BLIST_REQUEST_ADMIN = ['<tg_user_at>','<bl_user_at>']
+STR_ERR_BLIST_REQUEST_ADMIN = f'''please use cmd format :\n /{kADD_BLACKLIST_SCAMMER} {" ".join(LST_CMD_BLIST_REQUEST_ADMIN)}'''
 LST_KEYS_ADD_BLACKLIST_SCAMMER_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_ADD_BLACKLIST_SCAMMER = 'ADD_REQUEST_USER_BLACKLIST'
+LST_KEYS_ADD_BLACKLIST_SCAMMER = ['admin_or_user_id','bl_user_id','bl_user_at','bl_user_handle','tg_chan_id']
 
 # LEFT OFF HERE ... need endpoint for neo to check if a user is blacklisted (instead of using array in neo_bot.py)
 
 #-----------------------------------------------------#
 DICT_CMD_EXE = {
+    # USER CMDS
     kSHILLER_REG:[kSHILLER_REG,LST_KEYS_REG_USER,LST_KEYS_REG_USER_RESP,DB_PROC_ADD_NEW_USER,LST_CMD_REG_USER,STR_ERR_REG_USER],
     kTWITTER_CONF:[kTWITTER_CONF,LST_KEYS_TW_CONF,LST_KEYS_TW_CONF_RESP,DB_PROC_RENEW_TW_CONFRIM,LST_CMD_TW_CONF,STR_ERR_TW_CONF],
     kSUBMIT_SHILL:[kSUBMIT_SHILL,LST_KEYS_SUBMIT_SHILL,LST_KEYS_SUBMIT_SHILL_RESP,DB_PROC_ADD_SHILL,LST_CMD_SUBMIT_SHILL,STR_ERR_SUBMIT_SHILL],
-    
     kREQUEST_CASHOUT:[kREQUEST_CASHOUT,LST_KEYS_REQUEST_CASHOUT,LST_KEYS_REQUEST_CASHOUT_RESP,DB_PROC_REQUEST_CASHOUT,LST_CMD_REQUEST_CASHOUT,STR_ERR_REQUEST_CASHOUT],
-
     kSHOW_USR_RATES:[kSHOW_USR_RATES,LST_KEYS_SHOW_RATES,LST_KEYS_SHOW_RATES_RESP,DB_PROC_GET_USR_RATES,LST_CMD_SHOW_RATES,STR_ERR_SHOW_RATES],
     kSHOW_USR_EARNS:[kSHOW_USR_EARNS,LST_KEYS_SHOW_EARNS,LST_KEYS_SHOW_EARNS_RESP,DB_PROC_GET_USR_EARNS,LST_CMD_SHOW_EARNS,STR_ERR_SHOW_EARNS],
+
+    # ADMIN CMDS
     kADMIN_SHOW_USR_RATES:[kADMIN_SHOW_USR_RATES,LST_KEYS_SHOW_RATES_ADMIN,LST_KEYS_SHOW_RATES_RESP_ADMIN,DB_PROC_GET_USR_RATES_ADMIN,LST_CMD_SHOW_RATES_ADMIN,STR_ERR_SHOW_RATES_ADMIN],
     kADMIN_SHOW_USR_EARNS:[kADMIN_SHOW_USR_EARNS,LST_KEYS_SHOW_EARNS_ADMIN,LST_KEYS_SHOW_EARNS_RESP_ADMIN,DB_PROC_GET_USR_EARNS_ADMIN,LST_CMD_SHOW_EARNS_ADMIN,STR_ERR_SHOW_EARNS_ADMIN],
-    
-    "admin_show_user_shills":[kADMIN_SHOW_USR_SHILLS,LST_KEYS_USR_SHILLS,LST_KEYS_USR_SHILLS_RESP,DB_PROC_GET_USR_SHILLS_ALL],
-    "admin_list_all_pend_shills":[kADMIN_LIST_ALL_PEND_SHILLS,LST_KEYS_ALL_PEND_SHILLS,LST_KEYS_ALL_PEND_SHILLS_RESP,DB_PROC_GET_PEND_SHILLS],
-    "admin_approve_pend_shill":[kADMIN_APPROVE_SHILL,LST_KEYS_APPROVE_SHILL,LST_KEYS_APPROVE_SHILL_RESP,DB_PROC_APPROVE_SHILL_STATUS],
-    "admin_view_shill_status":[kADMIN_VIEW_SHILL,LST_KEYS_VIEW_SHILL,LST_KEYS_VIEW_SHILL_RESP,DB_PROC_GET_USR_SHILL],
-    "admin_pay_shill_rewards":[kADMIN_PAY_SHILL_EARNS,LST_KEYS_PAY_SHILL_EARNS,LST_KEYS_PAY_SHILL_EARNS_RESP,DB_PROC_SET_USR_PAY_SUBMIT],
-    "admin_log_removed_shill":[kADMIN_SET_SHILL_REM,LST_KEYS_SET_SHILL_REM,LST_KEYS_SET_SHILL_REM_RESP,DB_PROC_SET_SHILL_REM],
-    "admin_scan_web_for_dead_shills":[kADMIN_CHECK_USR_REM_SHILLS,LST_KEYS_CHECK_USR_REM_SHILLS,LST_KEYS_CHECK_USR_REM_SHILLS_RESP,DB_PROC_CHECK_USR_REM_SHILL],
-    'admin_set_shiller_rates':[kADMIN_SET_USR_SHILL_PAY_RATE,LST_KEYS_SET_USR_SHILL_PAY_RATE,LST_KEYS_SET_USR_SHILL_PAY_RATE_RESP,DB_PROC_SET_USR_RATES],
+    kADMIN_SHOW_USR_SHILLS:[kADMIN_SHOW_USR_SHILLS,LST_KEYS_USR_SHILLS,LST_KEYS_USR_SHILLS_RESP,DB_PROC_GET_USR_SHILLS_ALL,LST_CMD_USR_SHILLS_ADMIN,STR_ERR_USR_SHILLS_ADMIN],
+    kADMIN_LIST_ALL_PEND_SHILLS:[kADMIN_LIST_ALL_PEND_SHILLS,LST_KEYS_ALL_PEND_SHILLS,LST_KEYS_ALL_PEND_SHILLS_RESP,DB_PROC_GET_PEND_SHILLS,LST_CMD_PEND_SHILLS_ADMIN,STR_ERR_PEND_SHILLS_ADMIN],
+    kADMIN_APPROVE_SHILL:[kADMIN_APPROVE_SHILL,LST_KEYS_APPROVE_SHILL,LST_KEYS_APPROVE_SHILL_RESP,DB_PROC_APPROVE_SHILL_STATUS,LST_CMD_APPROVE_SHILLS_ADMIN,STR_ERR_APPROVE_SHILLS_ADMIN],
+    kADMIN_VIEW_SHILL:[kADMIN_VIEW_SHILL,LST_KEYS_VIEW_SHILL,LST_KEYS_VIEW_SHILL_RESP,DB_PROC_GET_USR_SHILL,LST_CMD_VIEW_SHILL_ADMIN,STR_ERR_VIEW_SHILL_ADMIN],
+    kADMIN_PAY_SHILL_EARNS:[kADMIN_PAY_SHILL_EARNS,LST_KEYS_PAY_SHILL_EARNS,LST_KEYS_PAY_SHILL_EARNS_RESP,DB_PROC_SET_USR_PAY_SUBMIT,LST_CMD_PAY_SHILL_ADMIN,STR_ERR_PAY_SHILL_ADMIN],
+    kADMIN_SET_SHILL_REM:[kADMIN_SET_SHILL_REM,LST_KEYS_SET_SHILL_REM,LST_KEYS_SET_SHILL_REM_RESP,DB_PROC_SET_SHILL_REM,LST_CMD_SET_SHILL_REM_ADMIN,STR_ERR_SET_SHILL_REM_ADMIN],
+    kADMIN_CHECK_USR_REM_SHILLS:[kADMIN_CHECK_USR_REM_SHILLS,LST_KEYS_CHECK_USR_REM_SHILLS,LST_KEYS_CHECK_USR_REM_SHILLS_RESP,DB_PROC_CHECK_USR_REM_SHILL,LST_CMD_CHECK_USR_REM_ADMIN,STR_ERR_CHECK_USR_REM_ADMIN],
+    kADMIN_SET_USR_SHILL_PAY_RATE:[kADMIN_SET_USR_SHILL_PAY_RATE,LST_KEYS_SET_USR_SHILL_PAY_RATE,LST_KEYS_SET_USR_SHILL_PAY_RATE_RESP,DB_PROC_SET_USR_RATES,LST_CMD_SET_USR_RATE_ADMIN,STR_ERR_SET_USR_RATE_ADMIN],
 }
 
 #=====================================================#
