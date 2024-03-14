@@ -1306,7 +1306,7 @@ BEGIN
 		SELECT tg_user_id FROM users WHERE tg_user_at = p_tg_user_at INTO @v_tg_user_id;
 		SELECT id FROM users WHERE tg_user_id = @v_tg_user_id INTO @v_user_id;
 		SELECT COUNT(*) FROM shills WHERE id = p_shill_id AND fk_user_id = @v_user_id INTO @v_cnt_ids;
-		SELECT COUNT(*) FROM shills WHERE id = p_shill_url AND fk_user_id = @v_user_id INTO @v_cnt_urls;
+		SELECT COUNT(*) FROM shills WHERE post_url = p_shill_url AND fk_user_id = @v_user_id INTO @v_cnt_urls;
 
 		-- get shill by url
 		IF p_shill_id = -1 THEN
@@ -1318,7 +1318,7 @@ BEGIN
 						p_shill_id as shill_id_inp,
 						p_shill_url as shill_url_inp;
 			ELSE
-				SELECT *, 
+				SELECT *, id as shill_id,
 						'success' as `status`,
 						'get user shill url' as info,
 						@v_user_id as user_id,
@@ -1341,7 +1341,7 @@ BEGIN
 						p_shill_id as shill_id_inp,
 						p_shill_url as shill_url_inp;
 			ELSE
-				SELECT *, 
+				SELECT *, id as shill_id,
 						'success' as `status`,
 						'get user shill id' as info,
 						@v_user_id as user_id,

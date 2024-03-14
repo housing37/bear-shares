@@ -181,7 +181,7 @@ async def cmd_handler(update: Update, context):
                 inp_split.append('0') # set is_remved=False
         
         if tg_cmd == req_handler.kADMIN_APPROVE_SHILL:
-            # if user gave 2 params ['<tg_user_at>','<shill_id>']
+            # if user did not give 2 params ['<tg_user_at>','<shill_id>']
             if len(inp_split) != 4:
                 str_r = f'invalid number of params; please use cmd format:\n /{tg_cmd} {" ".join(req_handler.LST_CMD_APPROVE_SHILLS_ADMIN)}'
                 print(str_r)
@@ -201,8 +201,13 @@ async def cmd_handler(update: Update, context):
                 ]
                 context.user_data['inp_split'] = list(inp_split)
                 print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
-                await update.message.reply_text('Select shill type:', reply_markup=InlineKeyboardMarkup(keyboard))
+                await update.message.reply_text('Select shill type (used to calc payment):', reply_markup=InlineKeyboardMarkup(keyboard))
             return # invokes 'exe_cmd'
+        
+        if tg_cmd == req_handler.kADMIN_VIEW_SHILL: # ['<tg_user_at>','<shill_id>','<shill_url>']
+            # if user gave 2 params 
+            if len(inp_split) == 4:
+                inp_split.append('<nil_shill_url>')
         
     context.user_data['inp_split'] = list(inp_split)
     await exe_cmd(update, context)
@@ -329,8 +334,16 @@ async def exe_cmd(update: Update, context):
             inc_ = ['tg_user_at_inp','shill_id_inp','pay_usd','usd_owed','usd_paid','usd_total','shill_url','shill_type_inp']
             str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
             await update.callback_query.message.reply_text(f"Shill has been approved for payment ...\n {str_r}")
+
+        elif tg_cmd == req_handler.kADMIN_VIEW_SHILL:
+            d_resp = response_dict['PAYLOAD']['result_arr'][0]
+            shill_id = d_resp['shill_id']
+            inc_ = ['post_url','shill_id','pay_usd','is_approved','tg_user_at_inp','is_paid','shill_plat','shill_type']
+            str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
+            await update.message.reply_text(f"Info for shill id: {shill_id} ...\n {str_r}")
         else:
             await update.message.reply_text(f"'/{tg_cmd}' Executed Successfully! _ ")
+        
         
     print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
 

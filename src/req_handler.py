@@ -52,8 +52,8 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 # admin_show_user_shills - DONE
 # admin_list_all_pend_shills - DONE
 # admin_approve_pend_shill - DONE
-# admin_view_shill_status - WORKING
-# admin_pay_shill_rewards - pending
+# admin_view_shill_status - DONE
+# admin_pay_shill_rewards - WORKING
 # admin_log_removed_shill - pending
 # admin_scan_web_for_dead_shills - pending
 # admin_set_shiller_rates - pending
