@@ -12,7 +12,7 @@ from _env import env
 import time, os, traceback, sys, json, pprint
 from datetime import datetime
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler
 
 import req_handler
 
@@ -72,7 +72,6 @@ def filter_prompt(_prompt):
         return prompt_edit
     return _prompt
 
-# def handl 
 async def cmd_handler(update: Update, context):
     global USE_ALT_ACCT
     funcname = 'cmd_handler'
@@ -85,7 +84,7 @@ async def cmd_handler(update: Update, context):
     uname_at = user.username
     uname_handle = user.first_name
     # uname_handle = user.first_name + ' ' + user.last_name
-    inp_split = update.message.text.split()
+    inp_split = list(update.message.text.split())
 
     # check if TG group is whitelisted to use (prints group info and deny)
     #   NOTE: at this point, inp_split[0] is indeed a valid command
@@ -180,8 +179,53 @@ async def cmd_handler(update: Update, context):
             # if user gave no params, auto add 'removed'
             if len(inp_split) == 2:
                 inp_split.append('0') # set is_remved=False
+        
+        if tg_cmd == req_handler.kADMIN_APPROVE_SHILL:
+            # if user gave 2 params ['<tg_user_at>','<shill_id>']
+            if len(inp_split) != 4:
+                str_r = f'invalid number of params; please use cmd format:\n /{tg_cmd} {" ".join(req_handler.LST_CMD_APPROVE_SHILLS_ADMIN)}'
+                print(str_r)
+                print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
+                await update.message.reply_text(str_r)
+            else:
+                # Creating buttons for the first step
+                keyboard = [
+                    [
+                        InlineKeyboardButton("hashtag", callback_data='htag'),
+                        InlineKeyboardButton("short text", callback_data='short_txt'),
+                        InlineKeyboardButton("long text", callback_data='long_txt')],
+                    [
+                        InlineKeyboardButton("image/meme", callback_data='img_meme'),
+                        InlineKeyboardButton("short video", callback_data='short_vid'),
+                        InlineKeyboardButton("long video", callback_data='long_vid')],
+                ]
+                context.user_data['inp_split'] = list(inp_split)
+                print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
+                await update.message.reply_text('Select shill type:', reply_markup=InlineKeyboardMarkup(keyboard))
+            return # invokes 'exe_cmd'
+        
+    context.user_data['inp_split'] = list(inp_split)
+    await exe_cmd(update, context)
+    print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
 
+async def btn_select_shill_type(update: Update, context):
+    print('btn_select_shill_type - ENTER')
+    query = update.callback_query
+    shill_type = str(query.data)
+    inp_split = context.user_data['inp_split']
+    inp_split.append('twitter') # set shill_plat='twitter'
+    inp_split.append(shill_type) # set shill_type='unknown'
+    context.user_data['inp_split'] = list(inp_split)
+    await exe_cmd(update, context)
 
+async def exe_cmd(update: Update, context):
+    funcname = 'exe_cmd'
+    print(cStrDivider_1, f'ENTER - {funcname} _ {get_time_now()}', sep='\n')
+    
+    inp_split = list(context.user_data['inp_split'])
+    print(f'exe_cmd: '+inp_split[0])
+    tg_cmd = inp_split[0][1::] # parses out the '/'
+    
     print(f'GO - req_handler.exe_tg_cmd ... {get_time_now()}')
     response = req_handler.exe_tg_cmd(inp_split, USE_PROD_TG)
     response_dict = json.loads(response.get_data(as_text=True))
@@ -195,7 +239,11 @@ async def cmd_handler(update: Update, context):
     if int(response_dict['ERROR']) > 0:
         err_num = response_dict['ERROR']
         err_msg = response_dict['MSG']
-        await update.message.reply_text(f"err_{err_num}: {err_msg}")
+
+        if not update.message:
+            await update.callback_query.message.reply_text(f"err_{err_num}: {err_msg}")
+        else:
+            await update.message.reply_text(f"err_{err_num}: {err_msg}")
     else:
         d_resp = response_dict['PAYLOAD']['result_arr'][0]
         # [print(k, d_resp[k]) for k in d_resp.keys()]
@@ -258,6 +306,7 @@ async def cmd_handler(update: Update, context):
                     if k == 'is_paid' or k == 'is_approved' : v = bool(v)
                     str_r = str_r + f'\n {k}: {v}'
             await update.message.reply_text(f"Shill list for {str_r}")
+
         elif tg_cmd == req_handler.kADMIN_LIST_ALL_PEND_SHILLS:
             # loop through & append unique params for str_r
             lst_resp = response_dict['PAYLOAD']['result_arr']
@@ -274,6 +323,12 @@ async def cmd_handler(update: Update, context):
                         v = '@'+v
                     str_r = str_r + f'\n {k_}: {v}'
             await update.message.reply_text(f"Pending Shills (not yet approved for pay) {str_r}")
+
+        elif tg_cmd == req_handler.kADMIN_APPROVE_SHILL:
+            d_resp = response_dict['PAYLOAD']['result_arr'][0]
+            inc_ = ['tg_user_at_inp','shill_id_inp','pay_usd','usd_owed','usd_paid','usd_total','shill_url','shill_type_inp']
+            str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
+            await update.callback_query.message.reply_text(f"Shill has been approved for payment ...\n {str_r}")
         else:
             await update.message.reply_text(f"'/{tg_cmd}' Executed Successfully! _ ")
         
@@ -305,6 +360,7 @@ def main():
     # Register command handlers
     # dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("test", test))
+    dp.add_handler(CallbackQueryHandler(btn_select_shill_type))
 
     # register all commands -> from req_handler.DICT_CMD_EXE.keys()
     for str_cmd in LST_TG_CMDS:

@@ -1154,7 +1154,7 @@ END
 $$ DELIMITER ;
 
 -- # '/admin_approve_pend_shill'
--- LST_KEYS_APPROVE_SHILL = ['admin_id','user_id', 'shill_id','shill_plat','shill_type','pay_usd','approved']
+-- LST_KEYS_APPROVE_SHILL = ['admin_id','user_at', 'shill_id','shill_plat','shill_type','approved']
 -- DB_PROC_APPROVE_SHILL_STATUS = "UPDATE_USER_SHILL_APPR_EARNS" 
 -- # POST-DB: python TG notify admin_pay to process
 -- # POST-DB: python TG notify p_tg_user_id that request has been submit (w/ user_earns.usd_owed)
@@ -1165,9 +1165,7 @@ CREATE PROCEDURE `UPDATE_USER_SHILL_APPR_EARNS`(
 	IN p_tg_user_at VARCHAR(40),
     IN p_shill_id VARCHAR(40),
 	IN p_shill_plat VARCHAR(40), -- const: unknown, twitter, tiktok, reddit
-	IN p_shill_type VARCHAR(40), -- const: unknown, htag, short_txt, long_txt, img_meme, short_vid, long_vid
-	IN p_pay_usd VARCHAR(40), -- dyn: 0.005, 0.01, 0.05, 0.25 0.50, 1.00, etc.
-    IN p_approved BOOLEAN)
+	IN p_shill_type VARCHAR(40)) -- const: unknown, htag, short_txt, long_txt, img_meme, short_vid, long_vid
 BEGIN
 	-- validate admin
 	IF NOT valid_tg_user_admin(p_tg_admin_id) THEN
@@ -1188,7 +1186,11 @@ BEGIN
 		SELECT COUNT(*) FROM shills WHERE id = p_shill_id AND fk_user_id = @v_user_id INTO @v_cnt_ids;
 		SELECT COUNT(*) FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_cnt_earns;
 		SELECT is_removed FROM shills WHERE id = p_shill_id INTO @v_shill_removed;
+		SELECT is_approved FROM shills WHERE id = p_shill_id INTO @v_shill_approved_curr;
 		SELECT post_url FROM shills WHERE id = p_shill_id INTO @v_post_url;
+
+		-- get users current pay rate
+		SELECT get_usr_pay_rate(@v_user_id, p_shill_plat, p_shill_type) INTO @v_pay_usd_rate;		
 
 		-- check shill_id exists
 		IF @v_cnt_ids = 0 THEN
@@ -1196,8 +1198,15 @@ BEGIN
 					'shill id not found' as info, 
 					@v_tg_user_id as tg_user_id_inp,
 					p_tg_user_at as tg_user_at_inp,
-					p_shill_id as shill_id_inp,
-					p_approved as approved_inp;
+					p_shill_id as shill_id_inp;
+
+		-- fail: shill already approved
+		ELSEIF @v_shill_approved_curr = TRUE THEN
+			SELECT 'failed' as `status`, 
+					'shill id already approved' as info, 
+					@v_tg_user_id as tg_user_id_inp,
+					p_tg_user_at as tg_user_at_inp,
+					p_shill_id as shill_id_inp;
 
 		-- validate shill post_url is still active  (is_removed not set to True)
 		ELSEIF @v_shill_removed = TRUE THEN
@@ -1206,21 +1215,18 @@ BEGIN
 					'dead shill post url' as info,
 					@v_tg_user_id as tg_user_id_inp, 
 					p_tg_user_at as tg_user_at_inp,
-					p_shill_id as shill_id_inp,
-					p_approved as approved_inp
+					p_shill_id as shill_id_inp
 				FROM shills 
 				WHERE id = p_shill_id;
 
 		-- validate max shills per day for @v_user_id as NOT been met
 		-- 	note: includes is_removed=TRUE|FALSE (limit earns to those removing shills)
-		ELSEIF p_approved = TRUE AND usr_shill_limit_reached(@v_tg_user_id) THEN
+		ELSEIF usr_shill_limit_reached(@v_tg_user_id) THEN
 			SELECT 'failed' as `status`, 
 					'daily shill approve limit reached' as info, 
 					@v_tg_user_id as tg_user_id_inp,					
 					p_tg_user_at as tg_user_at_inp,
-					p_shill_id as shill_id_inp,
-					p_approved as approved_inp;
-
+					p_shill_id as shill_id_inp;
 		ELSE
 			-- update shill plat, type, and pay with admin data (prev. reviewed & selected)
 			-- 	NOTE: is_removed gauranteed 'FALSE' for p_shill_id, due to prev. check w/ @v_shill_removed
@@ -1228,8 +1234,8 @@ BEGIN
 				SET dt_updated = NOW(),
 					shill_plat = p_shill_plat,
 					shill_type = p_shill_type,
-					pay_usd = p_pay_usd,
-					is_approved = p_approved,
+					pay_usd = @v_pay_usd_rate,
+					is_approved = TRUE,
 					dt_updated_approve = NOW()
 				WHERE id = p_shill_id
 					AND fk_user_id = @v_user_id
@@ -1244,8 +1250,9 @@ BEGIN
 			-- calc & update user_earns for this user_id
 			SELECT usd_total FROM user_earns WHERE fk_user_id = @v_user_id INTO @u_total;
 			SELECT usd_owed FROM user_earns WHERE fk_user_id = @v_user_id INTO @u_owed;
-			SET @v_tot = @u_total + p_pay_usd;
-			SET @v_owe = @u_owed + p_pay_usd;
+			SET @v_tot = @u_total + @v_pay_usd_rate;
+			SET @v_owe = @u_owed + @v_pay_usd_rate;
+
 			UPDATE user_earns
 				SET dt_updated = NOW(),
 					usd_total = @v_tot,
@@ -1261,10 +1268,9 @@ BEGIN
 					@v_tg_user_id as tg_user_id_inp,
 					p_tg_user_at as tg_user_at_inp,
 					p_shill_id as shill_id_inp,
-					p_shill_plat_inp as shill_id_plat_inp,
-					p_shill_type_inp as shill_id_type_inp,
-					p_pay_usd as pay_usd_inp,
-					p_approved as approved_inp
+					p_shill_plat as shill_plat_inp,
+					p_shill_type as shill_type_inp,
+					@v_pay_usd_rate as pay_usd
 				FROM user_earns
 				WHERE fk_user_id = @v_user_id
 				ORDER BY id desc;

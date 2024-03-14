@@ -51,7 +51,7 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 # admin_show_user_earnings - DONE
 # admin_show_user_shills - DONE
 # admin_list_all_pend_shills - DONE
-# admin_approve_pend_shill - WORKING
+# admin_approve_pend_shill - DONE
 # admin_view_shill_status - WORKING
 # admin_pay_shill_rewards - pending
 # admin_log_removed_shill - pending
@@ -150,11 +150,11 @@ LST_KEYS_ALL_PEND_SHILLS = ['admin_id','removed']
 
 # '/admin_approve_pend_shill'
 kADMIN_APPROVE_SHILL = "admin_approve_pend_shill"
-LST_CMD_APPROVE_SHILLS_ADMIN = ['<tg_user_at>','<shill_id>','<pay_usd>','<twitter|tiktok|reddit>','<htag|short_txt|long_txt|img_meme|short_vid|long_vid>','<yes|no>']
+LST_CMD_APPROVE_SHILLS_ADMIN = ['<tg_user_at>','<shill_id>'] # default: ['<twitter|tiktok|reddit>'] # select: ['<htag|short_txt|long_txt|img_meme|short_vid|long_vid>']
 STR_ERR_APPROVE_SHILLS_ADMIN = f'''please use cmd format :\n /{kADMIN_APPROVE_SHILL} {" ".join(LST_CMD_APPROVE_SHILLS_ADMIN)}'''
 LST_KEYS_APPROVE_SHILL_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_APPROVE_SHILL_STATUS = "UPDATE_USER_SHILL_APPR_EARNS" 
-LST_KEYS_APPROVE_SHILL = ['admin_id','user_at', 'shill_id','shill_plat','shill_type','pay_usd','approved']
+LST_KEYS_APPROVE_SHILL = ['admin_id','user_at', 'shill_id','shill_plat','shill_type']
     # PRE-DB: admin views / inspects shill_url on the web (determines: plat, type, pay, approve)
     # POST-DB: python TG message to shiller confirming approval & earnings updated (w/ shill url, shill type, pay_usd)
 
