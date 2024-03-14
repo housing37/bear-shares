@@ -19,6 +19,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+    # ref: https://stackoverflow.com/a/53073789
+    # ref: https://googlechromelabs.github.io/chrome-for-testing/#stable
+    # $ wget https://storage.googleapis.com/chrome-for-testing-public/122.0.6261.128/linux64/chromedriver-linux64.zip
     # $ unzip chromedriver_linux64.zip
     # $ cd chromedriver_linux64
     # $ sudo rm /usr/bin/chromedriver
@@ -515,8 +518,8 @@ def search_tweet_for_text(tweet_url, _lst_text=[], _headless=True):
             # user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
             # user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15"
             user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.111 Safari/537.36" # AWS ubuntu instance
-            
-            options.add_argument("--no-sandbox") # ref: https://stackoverflow.com/a/53073789 (required for AWS ubuntu instance)
+
+            options.add_argument("--no-sandbox") # ref: https://stackoverflow.com/a/53073789 (required for 'headless' on AWS ubuntu instance)
             options.add_argument("--headless")  # Run Chrome in headless mode
             options.add_argument(f"user-agent={user_agent}") # required, else '--headless' fails
             options.add_argument("--enable-javascript")  

@@ -16,6 +16,9 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 
 import req_handler
 
+# Define the timestamp representing the bot's last online time
+last_online_time = time.time()  # Initialize with current time
+
 #------------------------------------------------------------#
 #   GLOBALS                                                  #
 #------------------------------------------------------------#
@@ -41,8 +44,8 @@ USE_ALT_ACCT = False # True = alt user 'LAO Pirates'
 #------------------------------------------------------------#
 def set_tg_token():
     global TOKEN
-    # TOKEN = env.TOKEN_prod if USE_PROD_TG else env.TOKEN_dev
-    TOKEN = env.TOKEN_prod if USE_PROD_TG else env.TOKEN_trin
+    TOKEN = env.TOKEN_prod if USE_PROD_TG else env.TOKEN_dev
+    # TOKEN = env.TOKEN_prod if USE_PROD_TG else env.TOKEN_trin
 
 def is_valid_chat_id(_chat_id, _group_name, _uname, _handle):
     print("chat_id:", _chat_id)
@@ -72,10 +75,19 @@ def filter_prompt(_prompt):
         return prompt_edit
     return _prompt
 
+def past_queue_limit(_msg_time, _q_sec=5*60):
+    sec_diff = time.time() - _msg_time
+    if sec_diff > _q_sec: print(f"Ignoring message sent more than {_q_sec} sec ago.")
+    return sec_diff > _q_sec
+
 async def cmd_handler(update: Update, context):
+    # Calculate the timestamp of 5 minutes ago
+    if past_queue_limit(update.message.date.timestamp()): return
+
     global USE_ALT_ACCT
     funcname = 'cmd_handler'
     print(cStrDivider_1, f'ENTER - {funcname} _ {get_time_now()}', sep='\n')
+    
     group_name = update.message.chat.title if update.message.chat.type == 'supergroup' else None
     _chat_id = update.message.chat_id
 
@@ -202,7 +214,7 @@ async def cmd_handler(update: Update, context):
                 context.user_data['inp_split'] = list(inp_split)
                 print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
                 await update.message.reply_text('Select shill type (used to calc payment):', reply_markup=InlineKeyboardMarkup(keyboard))
-            return # invokes 'exe_cmd'
+            return # invokes 'cmd_exe'
         
         if tg_cmd == req_handler.kADMIN_VIEW_SHILL: # ['<tg_user_at>','<shill_id>','<shill_url>']
             # if user gave 2 params 
@@ -210,7 +222,7 @@ async def cmd_handler(update: Update, context):
                 inp_split.append('<nil_shill_url>')
         
     context.user_data['inp_split'] = list(inp_split)
-    await exe_cmd(update, context)
+    await cmd_exe(update, context)
     print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
 
 async def btn_select_shill_type(update: Update, context):
@@ -221,14 +233,14 @@ async def btn_select_shill_type(update: Update, context):
     inp_split.append('twitter') # set shill_plat='twitter'
     inp_split.append(shill_type) # set shill_type='unknown'
     context.user_data['inp_split'] = list(inp_split)
-    await exe_cmd(update, context)
+    await cmd_exe(update, context)
 
-async def exe_cmd(update: Update, context):
-    funcname = 'exe_cmd'
+async def cmd_exe(update: Update, context):
+    funcname = 'cmd_exe'
     print(cStrDivider_1, f'ENTER - {funcname} _ {get_time_now()}', sep='\n')
     
     inp_split = list(context.user_data['inp_split'])
-    print(f'exe_cmd: '+inp_split[0])
+    print(f'cmd_exe: '+inp_split[0])
     tg_cmd = inp_split[0][1::] # parses out the '/'
     
     print(f'GO - req_handler.exe_tg_cmd ... {get_time_now()}')
