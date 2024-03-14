@@ -1123,16 +1123,29 @@ BEGIN
 				'invalid admin' as info, 
 				p_tg_admin_id as tg_admin_id;
 	ELSE
-		-- return all 'is_approved=FALSE' from shills table
-		SELECT *, 
-				'success' as `status`,
-				'get all pending shills' as info,
-				p_tg_admin_id as tg_admin_id_inp,
-				p_removed as is_removed_inp
-			FROM shills
-			WHERE is_approved = FALSE -- FALSE = 'pending'
-				AND is_removed = p_removed
-			ORDER BY id desc;
+		-- setup
+		-- SELECT id FROM users WHERE tg_user_at = p_tg_user_at INTO @v_user_id;
+		-- SELECT tg_user_id FROM users WHERE id = @v_user_id INTO @v_tg_user_id; -- for return only
+		SELECT COUNT(*) FROM shills WHERE is_approved = FALSE AND is_removed = p_removed INTO @v_shill_cnt;
+
+		-- fail: if no shills exist for this query
+		IF @v_shill_cnt = 0 THEN
+			SELECT 'failed' as `status`, 
+					'no pending shills found' as info, 
+					p_tg_admin_id as tg_admin_id_inp,
+					p_removed as is_removed_inp;
+		ELSE
+			-- return all 'is_approved=FALSE' from shills table
+			SELECT *, 
+					'success' as `status`,
+					'get all pending shills' as info,
+					p_tg_admin_id as tg_admin_id_inp,
+					p_removed as is_removed_inp
+				FROM shills
+				WHERE is_approved = FALSE -- FALSE = 'pending'
+					AND is_removed = p_removed
+				ORDER BY id desc;
+		END IF;
 	END IF;
 END 
 $$ DELIMITER ;
