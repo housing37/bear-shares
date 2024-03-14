@@ -54,7 +54,7 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 # admin_approve_pend_shill - DONE
 # admin_view_shill_status - DONE
 # admin_pay_shill_rewards - WORKING
-# admin_log_removed_shill - pending
+# admin_log_removed_shill - WORKING
 # admin_scan_web_for_dead_shills - pending
 # admin_set_shiller_rates - pending
 
@@ -491,6 +491,8 @@ def parse_twitter_url(_keyVals, _key):
     # parse twitter @username & tweet id (note: 'https' required, else fails)
     #   ex: https://x.com/SolAudits/status/1765925225844089300?s=20
     tw_url = _keyVals[_key]
+    if not tw_url.startswith('https://'): return _keyVals, False # check for no slash ('/') in url
+    
     lst_items = tw_url.split('/')
     valid_dom = 'x.com' in lst_items[2] or 'twitter.com' in lst_items[2]
     if not valid_dom: return _keyVals, False
