@@ -273,7 +273,7 @@ async def cmd_handler(update: Update, context):
                         k_ = 'User(TG)'
                         v = '@'+v
                     str_r = str_r + f'\n {k_}: {v}'
-            await update.message.reply_text(f"Pending Shill list {str_r}")
+            await update.message.reply_text(f"Pending Shills (not yet approved for pay) {str_r}")
         else:
             await update.message.reply_text(f"'/{tg_cmd}' Executed Successfully! _ ")
         

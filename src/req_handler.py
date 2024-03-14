@@ -27,7 +27,7 @@ kPin = 'admin_pin'
 kUserId = "user_id"
 kKeyVals = "key_vals"
 
-VERBOSE_LOG = True
+VERBOSE_LOG = False
 
 # twitter access globals
 CONSUMER_KEY = 'nil_tw_key'
