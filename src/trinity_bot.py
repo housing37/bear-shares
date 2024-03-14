@@ -162,6 +162,21 @@ async def cmd_handler(update: Update, context):
         #     # NOTE: inp_split[1] should be 'uid'
         #     # NOTE: inp_split[2] should be '<tg_user_at>'
         #     pass
+        
+        if tg_cmd == req_handler.kADMIN_SHOW_USR_SHILLS:
+            # if user gave 1 param, auto add 'approved' & 'removed'
+            if len(inp_split) == 3:
+                inp_split.append('0') # set is_approved=False
+                inp_split.append('0') # set is_remved=False
+
+            # if user gave 2 param, auto add 'removed'
+            if len(inp_split) == 4:
+                inp_split.append('0') # set is_remved=False
+
+        if tg_cmd == req_handler.kADMIN_LIST_ALL_PEND_SHILLS:
+            # if user gave no params, auto add 'removed'
+            if len(inp_split) == 2:
+                inp_split.append('0') # set is_remved=False
 
 
     print(f'GO - req_handler.exe_tg_cmd ... {get_time_now()}')
@@ -232,12 +247,12 @@ async def cmd_handler(update: Update, context):
             
             # loop through & append unique params for str_r
             lst_resp = response_dict['PAYLOAD']['result_arr']
-            inc_ = ['shill_id','pay_usd','is_paid','post_url']
+            inc_ = ['shill_id','pay_usd','is_paid','is_approved','post_url']
             for d in lst_resp:
                 str_r = str_r + '\n'
                 for k in inc_:
                     v = d[k]
-                    if k == 'is_paid': v = bool(v)
+                    if k == 'is_paid' or k == 'is_approved' : v = bool(v)
                     str_r = str_r + f'\n {k}: {v}'
             await update.message.reply_text(f"Shill list for {str_r}")
         else:

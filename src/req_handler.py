@@ -345,6 +345,12 @@ def parse_request(request, req_handler_key, tg_cmd=None): # (1)
                     keyVals['removed'] = '1'
                 else:
                     keyVals['removed'] = '0'
+
+            if tg_cmd == kADMIN_LIST_ALL_PEND_SHILLS:
+                if keyVals['removed']=='yes' or keyVals['removed']=='removed' or keyVals['removed']=='1' or keyVals['removed'].lower()=='true':
+                    keyVals['removed'] = '1'
+                else:
+                    keyVals['removed'] = '0'
         else:
             bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=VERBOSE_LOG, errMsg='command not found') # False = force fail
             return bErr, jsonResp, -1 # dbProcResult
