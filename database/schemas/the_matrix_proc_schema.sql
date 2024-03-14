@@ -1136,12 +1136,15 @@ BEGIN
 					p_removed as is_removed_inp;
 		ELSE
 			-- return all 'is_approved=FALSE' from shills table
-			SELECT *, 
+			SELECT s.*, s.id as shill_id,
+					u.id as user_id, u.tg_user_at,
 					'success' as `status`,
 					'get all pending shills' as info,
 					p_tg_admin_id as tg_admin_id_inp,
 					p_removed as is_removed_inp
-				FROM shills
+				FROM shills s
+					INNER JOIN users u
+					ON s.fk_user_id = u.id
 				WHERE is_approved = FALSE -- FALSE = 'pending'
 					AND is_removed = p_removed
 				ORDER BY id desc;

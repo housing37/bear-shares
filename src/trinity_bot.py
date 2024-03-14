@@ -111,6 +111,9 @@ async def cmd_handler(update: Update, context):
 
     # @TeddyShares ...
     # ex tweet_conf (valid): https://x.com/TeddyShares/status/1767453126896881733?s=20
+    # ex tweet_shill (valid): https://x.com/teddyshares/status/1768088560433787068?s=46&t=nEQblYL5Q2q_AqjDvXnRZg
+
+    
     
     # NOTE: all non-admin db procs require 'tg_user_id' & 'tg_user_at' (ie. uid & uname_at)
     if 'admin' not in tg_cmd:
@@ -255,6 +258,22 @@ async def cmd_handler(update: Update, context):
                     if k == 'is_paid' or k == 'is_approved' : v = bool(v)
                     str_r = str_r + f'\n {k}: {v}'
             await update.message.reply_text(f"Shill list for {str_r}")
+        elif tg_cmd == req_handler.kADMIN_LIST_ALL_PEND_SHILLS:
+            # loop through & append unique params for str_r
+            lst_resp = response_dict['PAYLOAD']['result_arr']
+            inc_ = ['shill_id','pay_usd','is_paid','is_approved','is_removed','post_url','tg_user_at']
+            str_r = ''
+            for d in lst_resp:
+                str_r = str_r + '\n'
+                for k in inc_:
+                    v = d[k]
+                    k_ = str(k)
+                    if k_ == 'is_paid' or k_ == 'is_approved' or k_ == 'is_removed' : v = bool(v)
+                    if k == 'tg_user_at': 
+                        k_ = 'User(TG)'
+                        v = '@'+v
+                    str_r = str_r + f'\n {k_}: {v}'
+            await update.message.reply_text(f"Pending Shill list {str_r}")
         else:
             await update.message.reply_text(f"'/{tg_cmd}' Executed Successfully! _ ")
         

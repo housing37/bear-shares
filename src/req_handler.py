@@ -50,7 +50,7 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 # admin_show_user_rates - DONE
 # admin_show_user_earnings - DONE
 # admin_show_user_shills - DONE
-# admin_list_all_pend_shills - WORKING
+# admin_list_all_pend_shills - DONE
 # admin_approve_pend_shill - WORKING
 # admin_view_shill_status - WORKING
 # admin_pay_shill_rewards - pending
@@ -134,7 +134,7 @@ LST_KEYS_SHOW_EARNS_ADMIN = ['admin_id','user_at']
 
 # '/admin_show_user_shills'
 kADMIN_SHOW_USR_SHILLS = "admin_show_user_shills"
-LST_CMD_USR_SHILLS_ADMIN = ['<tg_user_at>','<approved|yes>','<removed|yes>']
+LST_CMD_USR_SHILLS_ADMIN = ['<tg_user_at>'] # optional: ['<tg_user_at>','<approved|yes>','<removed|yes>']
 STR_ERR_USR_SHILLS_ADMIN = f'''please use cmd format :\n /{kADMIN_SHOW_USR_SHILLS} {" ".join(LST_CMD_USR_SHILLS_ADMIN)}'''
 LST_KEYS_USR_SHILLS_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_GET_USR_SHILLS_ALL = 'GET_USER_SHILLS_ALL'
@@ -142,7 +142,7 @@ LST_KEYS_USR_SHILLS = ['admin_id','user_at','approved','removed']
 
 # '/admin_list_all_pend_shills'
 kADMIN_LIST_ALL_PEND_SHILLS = "admin_list_all_pend_shills"
-LST_CMD_PEND_SHILLS_ADMIN = ['<removed|yes>']
+LST_CMD_PEND_SHILLS_ADMIN = [] # optional: ['<removed|yes>']
 STR_ERR_PEND_SHILLS_ADMIN = f'''please use cmd format :\n /{kADMIN_LIST_ALL_PEND_SHILLS} {" ".join(LST_CMD_PEND_SHILLS_ADMIN)}'''
 LST_KEYS_ALL_PEND_SHILLS_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_GET_PEND_SHILLS = 'GET_PEND_SHILLS_ALL' # get where 'is_approved' = False
