@@ -492,7 +492,6 @@ def parse_twitter_url(_keyVals, _key):
     #   ex: https://x.com/SolAudits/status/1765925225844089300?s=20
     tw_url = _keyVals[_key]
     if not tw_url.startswith('https://'): return _keyVals, False # check for no slash ('/') in url
-    
     lst_items = tw_url.split('/')
     valid_dom = 'x.com' in lst_items[2] or 'twitter.com' in lst_items[2]
     if not valid_dom: return _keyVals, False
@@ -512,7 +511,9 @@ def search_tweet_for_text(tweet_url, _lst_text=[], _headless=True):
 
             # required, else '--headless' fails
             # user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
-            user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15"
+            user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.90 Safari/537.36"
+            
+            # user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15"
             options.add_argument(f"user-agent={user_agent}")
             options.add_argument("--enable-javascript")  
 
