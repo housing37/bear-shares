@@ -62,7 +62,7 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 # admin_approve_pend_shill - DONE
 # admin_view_shill_status - DONE
 # admin_pay_shill_rewards - WORKING
-# admin_log_removed_shill - WORKING
+# admin_log_removed_shill - DONE
 # admin_scan_web_for_dead_shills - pending
 # admin_set_shiller_rates - pending
 
@@ -189,7 +189,7 @@ LST_KEYS_PAY_SHILL_EARNS_CONF = ['admin_id','user_at','chain_usd_paid','tx_hash'
 
 # '/admin_log_removed_shill'
 kADMIN_SET_SHILL_REM = "admin_log_removed_shill"
-LST_CMD_SET_SHILL_REM_ADMIN = ['<tg_user_at>','<shill_id>','removed']
+LST_CMD_SET_SHILL_REM_ADMIN = ['<tg_user_at>','<shill_id>'] # default: ['<removed>']
 STR_ERR_SET_SHILL_REM_ADMIN = f'''please use cmd format :\n /{kADMIN_SET_SHILL_REM} {" ".join(LST_CMD_SET_SHILL_REM_ADMIN)}'''
 LST_KEYS_SET_SHILL_REM_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_SET_SHILL_REM = 'SET_USER_SHILL_REMOVED'
@@ -355,6 +355,12 @@ def parse_request(request, req_handler_key, tg_cmd=None): # (1)
                     keyVals['removed'] = '0'
 
             if tg_cmd == kADMIN_LIST_ALL_PEND_SHILLS:
+                if keyVals['removed']=='yes' or keyVals['removed']=='removed' or keyVals['removed']=='1' or keyVals['removed'].lower()=='true':
+                    keyVals['removed'] = '1'
+                else:
+                    keyVals['removed'] = '0'
+
+            if tg_cmd == kADMIN_SET_SHILL_REM:
                 if keyVals['removed']=='yes' or keyVals['removed']=='removed' or keyVals['removed']=='1' or keyVals['removed'].lower()=='true':
                     keyVals['removed'] = '1'
                 else:

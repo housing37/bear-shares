@@ -1513,10 +1513,13 @@ DROP PROCEDURE IF EXISTS SET_USER_SHILL_REMOVED;
 CREATE PROCEDURE `SET_USER_SHILL_REMOVED`(
     IN p_tg_admin_id VARCHAR(40),
 	IN p_tg_user_at VARCHAR(40),
-    IN p_shill_id VARCHAR(40),
+    IN p_shill_id INT(11),
 	IN p_removed BOOLEAN)
 BEGIN
-	SELECT tg_user_id FROM users WHERE tg_user_at = p_tg_user_at INTO @v_tg_user_id;
+	SELECT id FROM users WHERE tg_user_at = p_tg_user_at INTO @v_user_id;
+	SELECT tg_user_id FROM users WHERE id = @v_user_id INTO @v_tg_user_id;
+	SELECT is_removed FROM shills WHERE id = p_shill_id INTO @v_is_removed;
+
 	-- validate admin
 	IF NOT valid_tg_user_admin(p_tg_admin_id) THEN
 		SELECT 'failed' as `status`, 
@@ -1535,6 +1538,14 @@ BEGIN
 				'user / shill combo not found' as info, 
 				@v_tg_user_id as tg_user_id,
 				p_shill_id as shill_id_inp;
+
+	-- fail: if shill 'is_removed' would be unchanged
+	ELSEIF @v_is_removed = p_removed THEN
+		SELECT 'failed' as `status`, 
+				'shill remove status resulted in no change' as info, 
+				@v_tg_user_id as tg_user_id,
+				p_shill_id as shill_id_inp,
+				p_removed as removed_inp;
 	ELSE
 		-- set shill id as removed
 		UPDATE shills

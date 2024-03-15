@@ -220,6 +220,15 @@ async def cmd_handler(update: Update, context):
             # if user gave 2 params 
             if len(inp_split) == 4:
                 inp_split.append('<nil_shill_url>')
+
+        if tg_cmd == req_handler.kADMIN_SET_SHILL_REM: # ['<tg_user_at>','<shill_id>','removed']
+            # if user gave 2 or less params
+            if len(inp_split) <= 4:
+                inp_split.append('1') # force 'is_reomved=TRUE'
+            else:
+                inp_split.append('<nil_insert>') # force fail
+
+                
         
     context.user_data['inp_split'] = list(inp_split)
     await cmd_exe(update, context)
@@ -353,6 +362,12 @@ async def cmd_exe(update: Update, context):
             inc_ = ['post_url','shill_id','pay_usd','is_approved','tg_user_at_inp','is_paid','shill_plat','shill_type']
             str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
             await update.message.reply_text(f"Info for shill id: {shill_id} ...\n {str_r}")
+        elif tg_cmd == req_handler.kADMIN_SET_SHILL_REM:
+            d_resp = response_dict['PAYLOAD']['result_arr'][0]
+            shill_id = d_resp['shill_id_inp']
+            inc_ = ['post_url','pay_usd','is_approved','tg_user_at_inp','is_removed','post_url']
+            str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
+            await update.message.reply_text(f"Remove set for shill id: {shill_id} ...\n {str_r}")
         else:
             await update.message.reply_text(f"'/{tg_cmd}' Executed Successfully! _ ")
         
