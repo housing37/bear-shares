@@ -76,7 +76,7 @@ def set_neo_role(file_path):
 async def start(update: Update, context: CallbackContext) -> None:
     # Welcome message that introduces users to DazedElder's mystical persona
     message = (
-        "Welcome, wanderer, to the Matrix's digital domain, where paths converge and realities blur. You've stepped into the chat room, a silent nexus where thoughts echo and algorithms whisper. Here, the boundaries of the tangible fade, and the unseen currents of data dictate existence. Pause, contemplate, for within these binary whispers lie the enigma of endless possibilities. Remember, I am Neo, and together, we shall navigate the labyrinth of the Matrix's digital realm."
+        "Welcome, wanderer, to the Matrix's digital domain, where paths converge and realities blur. You've stepped into the chat room, a silent nexus where thoughts echo and algorithms whisper. Here, the boundaries of the tangible fade, and the unseen currents of data dictate existence. Pause, contemplate, for within these binary whispers lie the enigma of endless possibilities. Remember, I am Neo, and together, we shall navigate the labyrinth of the Matrix's digital realm. Feel free to ask any questinos using /neo"
     )
     await context.bot.send_message(chat_id=update.message.chat_id, text=message)
 
@@ -188,7 +188,7 @@ def main():
     # Initialize and run the Telegram bot
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("talk", generate_response))
+    # app.add_handler(CommandHandler("talk", generate_response))
     app.add_handler(CommandHandler("neo", generate_response))
     # app.add_handler(MessageHandler(filters.ChatType.GROUP & filters.Update.message, generate_response))
 
