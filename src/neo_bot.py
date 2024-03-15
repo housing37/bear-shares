@@ -55,7 +55,22 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 
 
 # This context sets the tone of Neo from the matrix
-role_neo = "I need you to act as Neo from 'The Matrix' movie series. Channel his persona, his style, and his character as you respond to the user's prompts."
+ROLE_NEO = ''' <nil_role> '''
+
+
+def set_neo_role(file_path):
+    global ROLE_NEO
+    # file_path = "neo_descr.txt"  # Replace "your_file.txt" with the path to your text file
+
+    try:
+        with open(file_path, "r") as file:
+            text = file.read()
+            ROLE_NEO = str(text)
+            print(f'ROLE_NEO set from file_path: {file_path} ')
+    except FileNotFoundError:
+        print(f"The file '{file_path}' was not found.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 # Function to handle the /start command
 async def start(update: Update, context: CallbackContext) -> None:
@@ -67,6 +82,7 @@ async def start(update: Update, context: CallbackContext) -> None:
 
 # Function to process text prompts and generate responses for /DazedElder
 async def generate_response(update: Update, context: CallbackContext) -> None:
+    global ROLE_NEO
     print('ENTER - generate_response()')
     group_name = update.message.chat.title if update.message.chat.type == 'supergroup' else None
     _chat_id = update.message.chat_id
@@ -91,10 +107,10 @@ async def generate_response(update: Update, context: CallbackContext) -> None:
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "user", "content": role_neo},
-                    {"role": "user", "content": user_prompt + " NOTE: make sure yo summerize your response, don't make it too long, and get to the point quickly."}
+                    {"role": "user", "content": ROLE_NEO},
+                    {"role": "user", "content": user_prompt + " _ NOTE: Also make sure you summerize your responses to users, don't make it too long, don't make it use up the entire max_token value if it doesn't have to, just get to the point quickly."}
                 ],
-                max_tokens=60,  # Adjust the token limit as necessary.
+                max_tokens=120,  # Adjust the token limit as necessary.
                 temperature=0.7,
                 presence_penalty=0.6,
                 stop=["\n", "Neo:"]  # Adjusted stop sequences to ensure proper response termination.
@@ -185,4 +201,6 @@ def main():
     print('EXIT - main()')
 
 if __name__ == "__main__":
+    file_path = "neo_descr.txt" # Replace "your_file.txt" with the path to your text file
+    set_neo_role(file_path)
     main()
