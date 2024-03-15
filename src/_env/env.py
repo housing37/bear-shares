@@ -71,8 +71,10 @@ OPENAI_KEY = os.environ['OPENAI_KEY']
 # telegram
 TOKEN_dev = os.environ['TG_TOKEN_DEV'] # (dev)
 TOKEN_prod = os.environ['TG_TOKEN_PROD'] # (prod)
-TOKEN_neo = os.environ['TG_TOKEN_NEO'] # (neo) @neo_bs_bot
+TOKEN_neo = os.environ['TG_TOKEN_NEO'] # (neo) @bs_neo_bot
 TOKEN_trin = os.environ['TG_TOKEN_TRIN'] # (trinity) @bs_trinity_bot
+TOKEN_morph = os.environ['TG_TOKEN_MORPH'] # @bs_morpheus_bot
+
 # LST_TG_TOKENS = [{'@TeddySharesBot':TOKEN_dev},
 #                  {'@BearSharesBot':TOKEN_prod},
 #                  {'@neo_bs_bot':TOKEN_neo},
