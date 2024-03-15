@@ -66,6 +66,10 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 # admin_scan_web_for_dead_shills - pending
 # admin_set_shiller_rates - pending
 
+# LEFT OFF HERE .... 031424
+# TODO: i don’t think admins can view shills the are NOT pending and NOT removed (in order to review and update is_approved=TRUE to is_removed=TRUE)
+	# - however, this may be what ‘/admin_scan_web_for_dead_shills’ is for
+
 #-----------------------------------------------------#
 #   TRINITY
 #-----------------------------------------------------#
