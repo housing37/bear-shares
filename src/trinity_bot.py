@@ -222,6 +222,27 @@ async def cmd_handler(update: Update, context):
                 inp_split.append('<nil_shill_url>')
 
         if tg_cmd == req_handler.kADMIN_SET_SHILL_REM: # ['<tg_user_at>','<shill_id>','removed']
+            # if user did not give 2 params ['<tg_user_at>','<shill_id>']
+            if len(inp_split) != 4:
+                str_r = f'invalid number of params; please use cmd format:\n /{tg_cmd} {" ".join(req_handler.LST_CMD_SET_SHILL_REM_ADMIN)}'
+                print(str_r)
+                print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
+                await update.message.reply_text(str_r)
+            else:
+                # Creating buttons for the first step
+                keyboard = [
+                    [
+                        InlineKeyboardButton("removed", callback_data='1'),
+                    ],
+                    [
+                        InlineKeyboardButton("not-removed", callback_data='0'),
+                    ],
+                ]
+                context.user_data['inp_split'] = list(inp_split)
+                print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
+                await update.message.reply_text(f'Mark this shill as removed or not-removed?', reply_markup=InlineKeyboardMarkup(keyboard))
+            return # invokes 'cmd_exe'
+            
             # if user gave 2 or less params
             if len(inp_split) <= 4:
                 inp_split.append('1') # force 'is_reomved=TRUE'
@@ -234,13 +255,20 @@ async def cmd_handler(update: Update, context):
     await cmd_exe(update, context)
     print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
 
-async def btn_select_shill_type(update: Update, context):
-    print('btn_select_shill_type - ENTER')
+async def btn_option_selects(update: Update, context):
+    print('btn_option_selects - ENTER')
     query = update.callback_query
-    shill_type = str(query.data)
+
     inp_split = context.user_data['inp_split']
-    inp_split.append('twitter') # set shill_plat='twitter'
-    inp_split.append(shill_type) # set shill_type='unknown'
+    tg_cmd = inp_split[0][1::] # parses out the '/'
+    if tg_cmd == req_handler.kADMIN_APPROVE_SHILL:
+        shill_type = str(query.data)
+        inp_split.append('twitter') # set shill_plat='twitter'
+        inp_split.append(shill_type) # set shill_type='unknown'
+    if tg_cmd == req_handler.kADMIN_SET_SHILL_REM:
+        is_removed = str(query.data)
+        inp_split.append(is_removed) # set removed=is_removed
+
     context.user_data['inp_split'] = list(inp_split)
     await cmd_exe(update, context)
 
@@ -362,12 +390,14 @@ async def cmd_exe(update: Update, context):
             inc_ = ['post_url','shill_id','pay_usd','is_approved','tg_user_at_inp','is_paid','shill_plat','shill_type']
             str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
             await update.message.reply_text(f"Info for shill id: {shill_id} ...\n {str_r}")
+
         elif tg_cmd == req_handler.kADMIN_SET_SHILL_REM:
             d_resp = response_dict['PAYLOAD']['result_arr'][0]
             shill_id = d_resp['shill_id_inp']
             inc_ = ['post_url','pay_usd','is_approved','tg_user_at_inp','is_removed','post_url']
             str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
-            await update.message.reply_text(f"Remove set for shill id: {shill_id} ...\n {str_r}")
+            await update.callback_query.message.reply_text(f"Remove set for shill id: {shill_id} ...\n {str_r}")
+            
         else:
             await update.message.reply_text(f"'/{tg_cmd}' Executed Successfully! _ ")
         
@@ -390,7 +420,7 @@ async def log_activity(update: Update, context):
 async def test(update, context):
     funcname = 'test'
     print(f'\nENTER - {funcname}\n')
-    await context.bot.send_message(chat_id=update.message.chat_id, text="test successful")
+    await context.bot.send_message(chat_id=update.message.chat_id, text="test successful trinity")
 
 def main():
     # global TOKEN
@@ -400,7 +430,7 @@ def main():
     # Register command handlers
     # dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("test", test))
-    dp.add_handler(CallbackQueryHandler(btn_select_shill_type))
+    dp.add_handler(CallbackQueryHandler(btn_option_selects))
 
     # register all commands -> from req_handler.DICT_CMD_EXE.keys()
     for str_cmd in LST_TG_CMDS:
