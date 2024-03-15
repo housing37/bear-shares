@@ -44,7 +44,7 @@ USE_ALT_ACCT = False # True = alt user 'LAO Pirates'
 #------------------------------------------------------------#
 def set_tg_token():
     global TOKEN
-    TOKEN = env.TOKEN_prod if USE_PROD_TG else env.TOKEN_dev
+    TOKEN = env.TOKEN_trin if USE_PROD_TG else env.TOKEN_dev
     # TOKEN = env.TOKEN_prod if USE_PROD_TG else env.TOKEN_trin
 
 def is_valid_chat_id(_chat_id, _group_name, _uname, _handle):
