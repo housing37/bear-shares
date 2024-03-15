@@ -479,7 +479,7 @@ if __name__ == "__main__":
     ## exe ##
     try:
         # select to use prod bot or dev bot
-        inp = input('\nSelect token type to use:\n  0 = prod (@BearSharesBot)\n  1 = dev \n  > ')
+        inp = input('\nSelect token type to use:\n  0 = prod \n  1 = dev \n  > ')
         USE_PROD_TG = True if inp == '0' else False
         print(f'  input = {inp} _ USE_PROD_TG = {USE_PROD_TG}')
 
