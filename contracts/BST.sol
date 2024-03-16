@@ -130,9 +130,9 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
         uint64 usdPayout = _usdAmnt - usdFee - usdBurn;
         uint64 bstBurn = _getBstValueForUsdAmnt(usdBurn);
         uint64 bstPayout = _getBstValueForUsdAmnt(usdPayout);
-        uint64 bstPayoutRem = 0;
-        uint64 bstBurnRem = 0;
-        uint64 thisBstBal = IERC20(address(this)).balanceOf(address(this));
+        // uint64 bstPayoutRem = 0;
+        // uint64 bstBurnRem = 0;
+        // uint64 thisBstBal = IERC20(address(this)).balanceOf(address(this));
 
         // log this payout
         ACCT_USD_PAYOUTS[msg.sender].push(ACCT_PAYOUT(_usdAmnt, usdFee, usdBurn, usdPayout, bstBurn, bstPayout));
@@ -148,83 +148,10 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
         //              buy BST from dexes to use for payout
         //          if buy&burn=OFF, 
         //              mint new BST to use for payout
-
-        // ALGORITHMIC INTEGRATION...
-        //  1) always pay w/ contract BST holdings first
-        //  2) after holdings runs out, 
-        //      if ENABLE_BUY_BURN, buy BST from dexes for bstPayoutRem
-        //      else, mint new BST for bstPayoutRem
-        //  3) if no BST holdings at all,
-        //      if ENABLE_BUY_BURN, buy BST from dexes for bstPayout
-        //      else, mint new BST for bstPayout
-        // execute payout requirements
-        if (thisBstBal >= bstPayout) {
-            // transfer all of bstPayout to '_payTo'
-            _transfer(address(this), _payTo, bstPayout);
-        } else if (thisBstBal > 0) {
-            // transfer all of thisBstBal to '_payTo'
-            _transfer(address(this), _payTo, thisBstBal);
-            bstPayoutRem = bstPayout - thisBstBal;
-
-            if (ENABLE_BUY_BURN) {
-                // LEFT OFF HERE ... 
-                //  buy 'bstPayoutRem' from dex
-                //  then, transfer 'bstPayoutRem' over to '_payTo'
-            } else {
-                // mint remaining bstPayout thats owed
-                _mint(_payTo, bstPayoutRem);
-            }
-
-        } else {
-            if (ENABLE_BUY_BURN) {
-                // LEFT OFF HERE ... 
-                //  buy 'bstPayout' from dex
-                //  then, transfer 'bstPayout' over to '_payTo'
-            } else {
-                // mint all of bstPayout owed
-                _mint(_payTo, bstPayout);
-            }
-        }
-
-        // ALGORITHMIC INTEGRATION...
-        //  1) always burn from contract BST holdings first
-        //  2) after holdings runs out, 
-        //      if ENABLE_BUY_BURN, buy BST from dexes for bstBurnRem
-        //      else, do nothing (don't mint bstBurnRem)
-        //  3) if no BST holdings at all,
-        //      if ENABLE_BUY_BURN, buy BST from dexes for bstBurn
-        //      else, do nothing (don't mint bstBurn)
-        // execute burn requirements
-        if (thisBstBal >= bstBurn) {
-            // burn all of bstBurn to 0x0
-            _transfer(address(this), 0x0, bstBurn);
-        } else if (thisBstBal > 0) {
-            // burn all of thisBstBal to 0x0
-            _transfer(address(this), 0x0, thisBstBal);
-            bstBurnRem = bstBurn - thisBstBal;
-
-            if (ENABLE_BUY_BURN) {
-                // LEFT OFF HERE ... 
-                //  buy 'bstBurnRem' from dex
-                //  then, burn 'bstBurnRem'
-            } else {
-                // mint remaining bstPayout thats owed
-                // _mint(_payTo, bstBurnRem);
-                // ... don't mint anything?
-            }
-        } else {
-            if (ENABLE_BUY_BURN) {
-                // LEFT OFF HERE ... 
-                //  buy 'bstPayout' from dex
-                //  then, burn 'bstPayout'
-            } else {
-                // mint all of bstPayout owed
-                // _mint(_payTo, bstPayout);
-                // ... do nothing?
-            }
-        }
+        _exeBstPayout(_payTo, bstPayout);
+        _exeBstBurn(address(0), bstBurn);
     }
-
+    
     // handle contract USD value deposits (convert PLS to USD stable)
     receive() external payable {
         // Handle Ether sent without any data
@@ -285,6 +212,87 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
     /* -------------------------------------------------------- */
     /* PRIVATE - SUPPORTING                                     */
     /* -------------------------------------------------------- */
+    function _exeBstPayout(address _payTo, _bstPayout) private {
+        uint64 bstPayoutRem = 0;
+        uint64 thisBstBal = IERC20(address(this)).balanceOf(address(this));
+        // ALGORITHMIC INTEGRATION...
+        //  1) always pay w/ contract BST holdings first
+        //  2) after holdings runs out, 
+        //      if ENABLE_BUY_BURN, buy BST from dexes for bstPayoutRem
+        //      else, mint new BST for bstPayoutRem
+        //  3) if no BST holdings at all,
+        //      if ENABLE_BUY_BURN, buy BST from dexes for bstPayout
+        //      else, mint new BST for bstPayout
+        // execute payout requirements
+        if (thisBstBal >= bstPayout) {
+            // transfer all of bstPayout to '_payTo'
+            _transfer(address(this), _payTo, bstPayout);
+        } else if (thisBstBal > 0) {
+            // transfer all of thisBstBal to '_payTo'
+            _transfer(address(this), _payTo, thisBstBal);
+            bstPayoutRem = bstPayout - thisBstBal;
+
+            if (ENABLE_BUY_BURN) {
+                // LEFT OFF HERE ... 
+                //  buy 'bstPayoutRem' from dex
+                //  then, transfer 'bstPayoutRem' over to '_payTo'
+            } else {
+                // mint remaining bstPayout thats owed
+                _mint(_payTo, bstPayoutRem);
+            }
+
+        } else {
+            if (ENABLE_BUY_BURN) {
+                // LEFT OFF HERE ... 
+                //  buy 'bstPayout' from dex
+                //  then, transfer 'bstPayout' over to '_payTo'
+            } else {
+                // mint all of bstPayout owed
+                _mint(_payTo, bstPayout);
+            }
+        }
+    }
+    function _exeBstBurn(address _payTo, uint64 _bstBurnAmnt) private {
+        uint64 bstBurnRem = 0;
+        uint64 thisBstBal = IERC20(address(this)).balanceOf(address(this));
+        // ALGORITHMIC INTEGRATION...
+        //  1) always burn from contract BST holdings first
+        //  2) after holdings runs out, 
+        //      if ENABLE_BUY_BURN, buy BST from dexes for bstBurnRem
+        //      else, do nothing (don't mint bstBurnRem)
+        //  3) if no BST holdings at all,
+        //      if ENABLE_BUY_BURN, buy BST from dexes for _bstBurnAmnt
+        //      else, do nothing (don't mint _bstBurnAmnt)
+        // execute burn requirements
+        if (thisBstBal >= _bstBurnAmnt) {
+            // burn all of _bstBurnAmnt to 0x0
+            _transfer(address(this), 0x0, _bstBurnAmnt);
+        } else if (thisBstBal > 0) {
+            // burn all of thisBstBal to 0x0
+            _transfer(address(this), 0x0, thisBstBal);
+            bstBurnRem = _bstBurnAmnt - thisBstBal;
+
+            if (ENABLE_BUY_BURN) {
+                // LEFT OFF HERE ... 
+                //  buy 'bstBurnRem' from dex
+                //  then, burn 'bstBurnRem'
+            } else {
+                // mint remaining bstPayout thats owed
+                // _mint(_payTo, bstBurnRem);
+                // ... don't mint anything?
+            }
+        } else {
+            if (ENABLE_BUY_BURN) {
+                // LEFT OFF HERE ... 
+                //  buy 'bstPayout' from dex
+                //  then, burn 'bstPayout'
+            } else {
+                // mint all of bstPayout owed
+                // _mint(_payTo, bstPayout);
+                // ... do nothing?
+            }
+        }
+    }
     function _addAddressToArraySafe(address _addr, address[] memory _arr, bool _safe) private pure returns (address[] memory) {
         if (_addr == address(0)) { return _arr; }
 
