@@ -168,17 +168,18 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     
     // handle contract USD value deposits (convert PLS to USD stable)
     receive() external payable {
-        // Handle Ether sent without any data
-        // This function will be called when Ether is sent without any data
-        // Extract sender's address and amount received
-        address sender = msg.sender;
-        uint256 amountReceived = msg.value;
+        // extract PLS value sent
+        uint256 amntIn = msg.value; 
 
-        // LEFT OFF HERE ... swap 'amountReceived' PLS for USD stable
-        //  then update ACCT_USD_BALANCES for msg.sender
-        //  NOTE: 'amountReceived' needs to have some min required
+        // get whitelisted stable with lowest market value (ie. receive most stable for swap)
+        address usdSable = _getStableTokenLowMarketValue(WHITELIST_USD_STABLES, USWAP_V2_ROUTERS);
 
-        // ACCT_USD_BALANCES[msg.sender] += <usd_stable_amnt>
+        // perform swap from PLS to stable
+        uint256 stableAmntOut = _exeSwapPlsForStable(amntIn, usdSable);
+
+        // convert and set/update balance for this sender
+        uint64 amntConvert = _uint256_to_uint64(stableAmntOut);
+        ACCT_USD_BALANCES[msg.sender] += amntConvert;
     }
 
     // handle contract BST buy-backs
@@ -226,14 +227,18 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     /* -------------------------------------------------------- */
     /* PRIVATE - SUPPORTING                                     */
     /* -------------------------------------------------------- */
-    // swap 'buyAndBurnUSD' amount of best market stable, for GTA (traverses 'uswapV2routers')
-    function _exeSwapPlsForStable(uint32 _plsAmnt, address _usdStable) private returns (uint256) {
+    function _uint256_to_uint64(uint256 value) private pure returns (uint64) {
+        require(value <= type(uint64).max, "Value exceeds uint64 range");
+        uint64 convertedValue = uint64(value);
+        return convertedValue;
+    }
+    function _exeSwapPlsForStable(uint256 _plsAmnt, address _usdStable) private returns (uint256) {
         address[] memory pls_stab_path = new address[](2);
         pls_stab_path[0] = TOK_WPLS;
         pls_stab_path[1] = _usdStable;
-        (uint8 rtrIdx, uint256 gta_amnt) = _best_swap_v2_router_idx_quote(pls_stab_path, _plsAmnt, USWAP_V2_ROUTERS);
-        uint256 gta_amnt_out = _swap_v2_wrap(pls_stab_path, USWAP_V2_ROUTERS[rtrIdx], _plsAmnt, address(this), true); // true = fromETH
-        return gta_amnt_out;
+        (uint8 rtrIdx, uint256 stab_amnt) = _best_swap_v2_router_idx_quote(pls_stab_path, _plsAmnt, USWAP_V2_ROUTERS);
+        uint256 stab_amnt_out = _swap_v2_wrap(pls_stab_path, USWAP_V2_ROUTERS[rtrIdx], _plsAmnt, address(this), true); // true = fromETH
+        return stab_amnt_out;
     }
     function _exeBstPayout(address _payTo, uint256 _bstPayout) private {
         uint256 bstPayoutRem = 0;
