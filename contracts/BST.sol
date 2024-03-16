@@ -130,9 +130,6 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
         uint64 usdPayout = _usdAmnt - usdFee - usdBurn;
         uint64 bstBurn = _getBstValueForUsdAmnt(usdBurn);
         uint64 bstPayout = _getBstValueForUsdAmnt(usdPayout);
-        // uint64 bstPayoutRem = 0;
-        // uint64 bstBurnRem = 0;
-        // uint64 thisBstBal = IERC20(address(this)).balanceOf(address(this));
 
         // log this payout
         ACCT_USD_PAYOUTS[msg.sender].push(ACCT_PAYOUT(_usdAmnt, usdFee, usdBurn, usdPayout, bstBurn, bstPayout));
@@ -141,15 +138,15 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
         ACCT_USD_BALANCES[msg.sender] = ACCT_USD_BALANCES[msg.sender] - _usdAmnt;
 
         // ALGORITHMIC INTEGRATION... (for BST buy&burn from dex = ON|OFF)
-        // When we decide to payout a shiller/tweeter
+        // When a payout occurs...
         //  1) always try to pay w/ contract BST holdings first
-        //      2) after BST holdings runs out, 
-        //          if buy&burn=ON, 
-        //              buy BST from dexes to use for payout
-        //          if buy&burn=OFF, 
-        //              mint new BST to use for payout
+        //  2) then, after BST holdings runs out, 
+        //      if buy&burn=ON, 
+        //          buy BST from dexes to use for payout
+        //      if buy&burn=OFF, 
+        //          mint new BST to use for payout
         _exeBstPayout(_payTo, bstPayout);
-        _exeBstBurn(address(0), bstBurn);
+        _exeBstBurn(bstBurn);
     }
     
     // handle contract USD value deposits (convert PLS to USD stable)
@@ -224,35 +221,29 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
         //      if ENABLE_BUY_BURN, buy BST from dexes for bstPayout
         //      else, mint new BST for bstPayout
         // execute payout requirements
-        if (thisBstBal >= bstPayout) {
-            // transfer all of bstPayout to '_payTo'
+        if (thisBstBal >= bstPayout) { // transfer all of bstPayout
             _transfer(address(this), _payTo, bstPayout);
-        } else if (thisBstBal > 0) {
-            // transfer all of thisBstBal to '_payTo'
+        } else if (thisBstBal > 0) { // transfer all of thisBstBal
             _transfer(address(this), _payTo, thisBstBal);
-            bstPayoutRem = bstPayout - thisBstBal;
+            bstPayoutRem = bstPayout - thisBstBal; // calc remaining bst owed
 
             if (ENABLE_BUY_BURN) {
-                // LEFT OFF HERE ... 
-                //  buy 'bstPayoutRem' from dex
+                // LEFT OFF HERE ... buy 'bstPayoutRem' from dex
                 //  then, transfer 'bstPayoutRem' over to '_payTo'
             } else {
-                // mint remaining bstPayout thats owed
-                _mint(_payTo, bstPayoutRem);
+                _mint(_payTo, bstPayoutRem); // mint remaining bst owed
             }
 
         } else {
             if (ENABLE_BUY_BURN) {
-                // LEFT OFF HERE ... 
-                //  buy 'bstPayout' from dex
+                // LEFT OFF HERE ... buy 'bstPayout' from dex
                 //  then, transfer 'bstPayout' over to '_payTo'
             } else {
-                // mint all of bstPayout owed
-                _mint(_payTo, bstPayout);
+                _mint(_payTo, bstPayout); // mint all of bstPayout owed
             }
         }
     }
-    function _exeBstBurn(address _payTo, uint64 _bstBurnAmnt) private {
+    function _exeBstBurn(uint64 _bstBurnAmnt) private {
         uint64 bstBurnRem = 0;
         uint64 thisBstBal = IERC20(address(this)).balanceOf(address(this));
         // ALGORITHMIC INTEGRATION...
@@ -264,17 +255,14 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
         //      if ENABLE_BUY_BURN, buy BST from dexes for _bstBurnAmnt
         //      else, do nothing (don't mint _bstBurnAmnt)
         // execute burn requirements
-        if (thisBstBal >= _bstBurnAmnt) {
-            // burn all of _bstBurnAmnt to 0x0
-            _transfer(address(this), 0x0, _bstBurnAmnt);
-        } else if (thisBstBal > 0) {
-            // burn all of thisBstBal to 0x0
+        if (thisBstBal >= _bstBurnAmnt) { // burn all of _bstBurnAmnt
+            _transfer(address(this), address(0x0), _bstBurnAmnt);
+        } else if (thisBstBal > 0) { // burn all of thisBstBal
             _transfer(address(this), 0x0, thisBstBal);
-            bstBurnRem = _bstBurnAmnt - thisBstBal;
+            bstBurnRem = _bstBurnAmnt - thisBstBal; // calc remaining burn
 
             if (ENABLE_BUY_BURN) {
-                // LEFT OFF HERE ... 
-                //  buy 'bstBurnRem' from dex
+                // LEFT OFF HERE ... buy 'bstBurnRem' from dex
                 //  then, burn 'bstBurnRem'
             } else {
                 // mint remaining bstPayout thats owed
@@ -283,8 +271,7 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
             }
         } else {
             if (ENABLE_BUY_BURN) {
-                // LEFT OFF HERE ... 
-                //  buy 'bstPayout' from dex
+                // LEFT OFF HERE ... buy 'bstPayout' from dex
                 //  then, burn 'bstPayout'
             } else {
                 // mint all of bstPayout owed
