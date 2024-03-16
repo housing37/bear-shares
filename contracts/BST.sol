@@ -87,8 +87,19 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
     // }
 
     /* -------------------------------------------------------- */
-    /* PUBLIC ACCESSORS - KEEPER SUPPORT                        */
+    /* PUBLIC ACCESSORS / MUTATORS- KEEPER SUPPORT              */
     /* -------------------------------------------------------- */
+    function addDexRouter(address _router) external onlyKeeper {
+        require(_router != address(0x0), "0 address");
+        uswapV2routers = GTAL.addAddressToArraySafe(_router, uswapV2routers, true); // true = no dups
+    }
+    function remDexRouter(address router) external onlyKeeper returns (bool) {
+        require(router != address(0x0), "0 address");
+
+        // NOTE: remove algorithm does NOT maintain order
+        uswapV2routers = GTAL.remAddressFromArray(router, uswapV2routers);
+        return true;
+    }
     function setBuyBurnEnabled(bool _enable) public onlyOwner() {
         ENABLE_BUY_BURN = _enable;
     }
@@ -123,6 +134,15 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
 
         // update account balance
         ACCT_USD_BALANCES[msg.sender] = ACCT_USD_BALANCES[msg.sender] - _usdAmnt;
+
+        // ALGORITHMIC INTEGRATION... (for BST buy&burn from dex = ON|OFF)
+        // When we decide to payout a shiller/tweeter
+        //  1) always try to pay w/ contract BST holdings first
+        //      2) after BST holdings runs out, 
+        //          if buy&burn=ON, 
+        //              buy BST from dexes to use for payout
+        //          if buy&burn=OFF, 
+        //              mint new BST to use for payout
 
         // ALGORITHMIC INTEGRATION...
         //  1) always pay w/ contract BST holdings first
@@ -217,7 +237,6 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
             // * min USD = 0.000000000000000001 (18 decimals) 
             // uint64 max USD: ~18 -> 18.446744073709551615 (18 decimals)
             // uint128 max USD: ~340T -> 340,282,366,920,938,463,463.374607431768211455 (18 decimals)
-
     }
 
     // handle deposits (convert PLS to USD stable)
@@ -252,7 +271,7 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
 
     function _getBestUsdStableAndBalance() private returns (address, uint64) {
         // LEFT OFF HERE ... 
-        //  loop through global stable use array addresses
+        //  loop through global stable usd array addresses
         //  pick one with the highest balance i guess
     }
     /* -------------------------------------------------------- */
@@ -273,6 +292,33 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
     /* -------------------------------------------------------- */
     /* PRIVATE - SUPPORTING                                     */
     /* -------------------------------------------------------- */
+    function _addAddressToArraySafe(address _addr, address[] memory _arr, bool _safe) private pure returns (address[] memory) {
+        if (_addr == address(0)) { return _arr; }
+
+        // safe = remove first (no duplicates)
+        if (_safe) { _arr = _remAddressFromArray(_addr, _arr); }
+
+        // perform add to memory array type w/ static size
+        address[] memory _ret = new address[](_arr.length+1);
+        for (uint i=0; i < _arr.length; i++) { _ret[i] = _arr[i]; }
+        _ret[_ret.length] = _addr;
+        return _ret;
+    }
+    function _remAddressFromArray(address _addr, address[] memory _arr) private pure returns (address[] memory) {
+        if (_addr == address(0) || _arr.length == 0) { return _arr; }
+        
+        // NOTE: remove algorithm does NOT maintain order & only removes first occurance
+        for (uint i = 0; i < _arr.length; i++) {
+            if (_addr == _arr[i]) {
+                _arr[i] = _arr[_arr.length - 1];
+                assembly { // reduce memory _arr length by 1 (simulate pop)
+                    mstore(_arr, sub(mload(_arr), 1))
+                }
+                return _arr;
+            }
+        }
+        return _arr;
+    }
 
     /* -------------------------------------------------------- */
     /* ERC20 - OVERRIDES                                        */
