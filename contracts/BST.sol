@@ -31,6 +31,7 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
     /* _ ADMIN SUPPORT _ */
     // IGTADelegate private GTAD; // 'keeper' maintained within
     // IGTALib private GTAL;
+    address public KEEPER;
     
     /* _ TOKEN INIT SUPPORT _ */
     string private constant tok_name = "BearSharesTrinity";
@@ -56,6 +57,8 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
     mapping(address => ACCT_PAYOUT[]) public ACCT_USD_PAYOUTS;
     // address[] private creditsAddrArray;
 
+    address[] public USWAP_V2_ROUTERS;
+
     /* -------------------------------------------------------- */
     /* EVENTS                                                   */
     /* -------------------------------------------------------- */
@@ -77,27 +80,25 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
     /* -------------------------------------------------------- */
     /* MODIFIERS                                                */
     /* -------------------------------------------------------- */
-    // modifier onlyKeeper() {
-    //     require(msg.sender == GTAD.keeper(), "!keeper :p");
-    //     _;
-    // }
-    // modifier onlyHolder(uint256 _requiredAmount) {
-    //     require(balanceOf(msg.sender) >= _requiredAmount || msg.sender == GTAD.keeper(), 'GTA bal');
-    //     _;
-    // }
+    modifier onlyKeeper() {
+        require(msg.sender == KEEPER, "!keeper :p");
+        _;
+    }
 
     /* -------------------------------------------------------- */
-    /* PUBLIC ACCESSORS / MUTATORS- KEEPER SUPPORT              */
+    /* PUBLIC - KEEPER SUPPORT            
     /* -------------------------------------------------------- */
-    function addDexRouter(address _router) external onlyKeeper {
+    function setKeeper(address _newKeeper) external onlKeepeer {
+        KEEPER = _newKeeper;
+    }
+    function addDexRouter(address _router) external onlyKeeper returns (bool) {
         require(_router != address(0x0), "0 address");
-        uswapV2routers = GTAL.addAddressToArraySafe(_router, uswapV2routers, true); // true = no dups
+        USWAP_V2_ROUTERS = _addAddressToArraySafe(_router, USWAP_V2_ROUTERS, true); // true = no dups
+        return true;
     }
     function remDexRouter(address router) external onlyKeeper returns (bool) {
         require(router != address(0x0), "0 address");
-
-        // NOTE: remove algorithm does NOT maintain order
-        uswapV2routers = GTAL.remAddressFromArray(router, uswapV2routers);
+        USWAP_V2_ROUTERS = _remAddressFromArray(router, USWAP_V2_ROUTERS); // removes only one & order NOT maintained
         return true;
     }
     function setBuyBurnEnabled(bool _enable) public onlyOwner() {
@@ -115,7 +116,11 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
         require(_perc <= 100, 'err: _perc more than 100%');
         BUY_BACK_FEE_PERC = _perc;
     }
-    function payOutBST(uint64 _usdAmnt, address _payTo) public {
+
+    /* -------------------------------------------------------- */
+    /* PUBLIC ACCESSORS / MUTATORS
+    /* -------------------------------------------------------- */
+    function payOutBST(uint64 _usdAmnt, address _payTo) external {
         require(ACCT_USD_BALANCES[msg.sender] >= _usdAmnt, 'err: low acct balance :{}');
         require(_payTo != address(0), 'err: _payTo address');
 
@@ -219,27 +224,8 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
             }
         }
     }
-    function _getBstValueForUsdAmnt(uint64 _usdAmnt) private returns (uint64) {
-        return 37; 
-        // LEFT OFF HERE ... TODO
-    }
-    function _getUsdValueForBstAmnt(uint64 _bstAmnt) private returns (uint64) {
-        // LEFT OFF HERE ... pretty sure this should always just return 1:1
-        return _bstAmnt; 
-    }
-    function usdDecimals() public pure returns (uint8) {
-        return 6; // (6 decimals) 
-            // * min USD = 0.000001 (6 decimals) 
-            // uint16 max USD: ~0.06 -> 0.065535 (6 decimals)
-            // uint32 max USD: ~4K -> 4,294.967295 USD (6 decimals)
-            // uint64 max USD: ~18T -> 18,446,744,073,709.551615 (6 decimals)
-        // return 18; // (18 decimals) 
-            // * min USD = 0.000000000000000001 (18 decimals) 
-            // uint64 max USD: ~18 -> 18.446744073709551615 (18 decimals)
-            // uint128 max USD: ~340T -> 340,282,366,920,938,463,463.374607431768211455 (18 decimals)
-    }
 
-    // handle deposits (convert PLS to USD stable)
+    // handle contract USD value deposits (convert PLS to USD stable)
     receive() external payable {
         // Handle Ether sent without any data
         // This function will be called when Ether is sent without any data
@@ -254,7 +240,7 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
         // ACCT_USD_BALANCES[msg.sender] += <usd_stable_amnt>
     }
 
-    // handle buy-backs
+    // handle contract BST buy-backs
     function tradeBST(uint64 _bstAmnt) external {
         require(_balances[msg.sender] >= _bstAmnt,'err: not enough BST');
         uint64 usdAmnt = _getUsdValueForBstAmnt(_bstAmnt); // should return 1:1
@@ -269,11 +255,18 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
         IERC(usdStable).transfer(msg.sender, usdAmnt);
     }
 
-    function _getBestUsdStableAndBalance() private returns (address, uint64) {
-        // LEFT OFF HERE ... 
-        //  loop through global stable usd array addresses
-        //  pick one with the highest balance i guess
+    function usdDecimals() public pure returns (uint8) {
+        return 6; // (6 decimals) 
+            // * min USD = 0.000001 (6 decimals) 
+            // uint16 max USD: ~0.06 -> 0.065535 (6 decimals)
+            // uint32 max USD: ~4K -> 4,294.967295 USD (6 decimals)
+            // uint64 max USD: ~18T -> 18,446,744,073,709.551615 (6 decimals)
+        // return 18; // (18 decimals) 
+            // * min USD = 0.000000000000000001 (18 decimals) 
+            // uint64 max USD: ~18 -> 18.446744073709551615 (18 decimals)
+            // uint128 max USD: ~340T -> 340,282,366,920,938,463,463.374607431768211455 (18 decimals)
     }
+
     /* -------------------------------------------------------- */
     /* PUBLIC ACCESSORS - GTA HOLDER SUPPORT                    */
     /* -------------------------------------------------------- */
@@ -319,11 +312,24 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
         }
         return _arr;
     }
+    function _getBstValueForUsdAmnt(uint64 _usdAmnt) private returns (uint64) {
+        return 37; 
+        // LEFT OFF HERE ... TODO
+    }
+    function _getUsdValueForBstAmnt(uint64 _bstAmnt) private returns (uint64) {
+        // LEFT OFF HERE ... pretty sure this should always just return 1:1
+        return _bstAmnt; 
+    }
+    function _getBestUsdStableAndBalance() private returns (address, uint64) {
+        // LEFT OFF HERE ... 
+        //  loop through global stable usd array addresses
+        //  pick one with the highest balance i guess
+    }
 
     /* -------------------------------------------------------- */
     /* ERC20 - OVERRIDES                                        */
     /* -------------------------------------------------------- */
-    function decimals() public view override returns (uint8) {
+    function decimals() public pure override returns (uint8) {
         // return 18;
         return 6;
     }
