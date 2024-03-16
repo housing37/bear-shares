@@ -5,11 +5,11 @@
 pragma solidity ^0.8.20;        
 
 // interfaces
-import "./IGTADelegate.sol";
-import "./IGTALib.sol";
+// import "./IGTADelegate.sol";
+// import "./IGTALib.sol";
 
 // inherited contracts
-import "./GTASwapTools.sol"; // deploy|local
+import "./BSTSwapTools.sol"; // deploy|local
 // import "@openzeppelin/contracts/token/ERC20/ERC20.sol"; // deploy
 // import "@openzeppelin/contracts/access/Ownable.sol"; // deploy
 import "./node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol"; // local _ $ npm install @openzeppelin/contracts
@@ -22,7 +22,7 @@ import "./node_modules/@openzeppelin/contracts/access/Ownable.sol";  // local _ 
 */
 // Import MyStruct from ContractB
 // using IGTALib for IGTALib.Event_0;
-contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
+contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     uint8 public VERSION = 0;
 
     /* -------------------------------------------------------- */
@@ -38,15 +38,20 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
     string private constant tok_symb = "BST";
     // string private tok_name = string(abi.encodePacked("tGTA ", VERSION));
     
+    struct USD_STABLE {
+        address tokAddr;
+        uint8 tokDecimals;
+    }
     struct ACCT_PAYOUT {
         address receiver;
         uint64 usdAmnt; // USD total ACCT deduction
-        uint46 usdFee; // USD service fee amount
-        uint46 usdBurn; // USD burn value
-        uint46 usdPayout; // USD payout value
+        uint64 usdFee; // USD service fee amount
+        uint64 usdBurn; // USD burn value
+        uint64 usdPayout; // USD payout value
         uint64 bstBurn; // BST burn amount
-        uint46 bstPayout; // BST payout amount
+        uint64 bstPayout; // BST payout amount
     }
+
     // uint64 max USD: ~18T -> 18,446,744,073,709.551615 (6 decimals)
     mapping(address => uint64) public ACCT_USD_BALANCES;
     uint8 public SERVICE_FEE_PERC = 0; // 0%
@@ -58,6 +63,8 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
     // address[] private creditsAddrArray;
 
     address[] public USWAP_V2_ROUTERS;
+    mapping(address => uint8) public USD_STABLE_DECS;
+    address[] public WHITELIST_USD_STABLES;
 
     /* -------------------------------------------------------- */
     /* EVENTS                                                   */
@@ -88,8 +95,18 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
     /* -------------------------------------------------------- */
     /* PUBLIC - KEEPER SUPPORT            
     /* -------------------------------------------------------- */
-    function setKeeper(address _newKeeper) external onlKeepeer {
+    function setKeeper(address _newKeeper) external onlyKeeper {
         KEEPER = _newKeeper;
+    }
+    function addWhitelistStable(address _usdStable, uint8 _decimals) external onlyKeeper { // allows duplicates
+        require(_usdStable != address(0), 'err: 0 address');
+        WHITELIST_USD_STABLES = _addAddressToArraySafe(_usdStable, WHITELIST_USD_STABLES, true); // true = no dups
+        USD_STABLE_DECS[_usdStable] = _decimals;
+    }
+    function remWhitelistStable(address _usdStable) external onlyKeeper { // allows duplicates
+        require(_usdStable != address(0), 'err: 0 address');
+        WHITELIST_USD_STABLES = _remAddressFromArray(_usdStable, WHITELIST_USD_STABLES);
+        USD_STABLE_DECS[_usdStable] = 0;
     }
     function addDexRouter(address _router) external onlyKeeper returns (bool) {
         require(_router != address(0x0), "0 address");
@@ -132,7 +149,7 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
         uint64 bstPayout = _getBstValueForUsdAmnt(usdPayout);
 
         // log this payout
-        ACCT_USD_PAYOUTS[msg.sender].push(ACCT_PAYOUT(_usdAmnt, usdFee, usdBurn, usdPayout, bstBurn, bstPayout));
+        ACCT_USD_PAYOUTS[msg.sender].push(ACCT_PAYOUT(_payTo, _usdAmnt, usdFee, usdBurn, usdPayout, bstBurn, bstPayout));
 
         // update account balance
         ACCT_USD_BALANCES[msg.sender] = ACCT_USD_BALANCES[msg.sender] - _usdAmnt;
@@ -154,8 +171,8 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
         // Handle Ether sent without any data
         // This function will be called when Ether is sent without any data
         // Extract sender's address and amount received
-        sender = msg.sender;
-        amountReceived = msg.value;
+        address sender = msg.sender;
+        uint256 amountReceived = msg.value;
 
         // LEFT OFF HERE ... swap 'amountReceived' PLS for USD stable
         //  then update ACCT_USD_BALANCES for msg.sender
@@ -166,7 +183,7 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
 
     // handle contract BST buy-backs
     function tradeBST(uint64 _bstAmnt) external {
-        require(_balances[msg.sender] >= _bstAmnt,'err: not enough BST');
+        require(balanceOf(msg.sender) >= _bstAmnt,'err: not enough BST');
         uint64 usdAmnt = _getUsdValueForBstAmnt(_bstAmnt); // should return 1:1
         (address usdStable, uint64 usdAvail) = _getBestUsdStableAndBalance();
 
@@ -176,7 +193,7 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
 
         // transfer BST in / USD stable out
         _transfer(address(this), msg.sender, _bstAmnt);
-        IERC(usdStable).transfer(msg.sender, usdAmnt);
+        IERC20(usdStable).transfer(msg.sender, usdAmnt);
     }
 
     function usdDecimals() public pure returns (uint8) {
@@ -209,23 +226,32 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
     /* -------------------------------------------------------- */
     /* PRIVATE - SUPPORTING                                     */
     /* -------------------------------------------------------- */
-    function _exeBstPayout(address _payTo, _bstPayout) private {
-        uint64 bstPayoutRem = 0;
-        uint64 thisBstBal = IERC20(address(this)).balanceOf(address(this));
+    // swap 'buyAndBurnUSD' amount of best market stable, for GTA (traverses 'uswapV2routers')
+    function _exeSwapPlsForStable(uint32 _plsAmnt, address _usdStable) private returns (uint256) {
+        address[] memory pls_stab_path = new address[](2);
+        pls_stab_path[0] = TOK_WPLS;
+        pls_stab_path[1] = _usdStable;
+        (uint8 rtrIdx, uint256 gta_amnt) = _best_swap_v2_router_idx_quote(pls_stab_path, _plsAmnt, USWAP_V2_ROUTERS);
+        uint256 gta_amnt_out = _swap_v2_wrap(pls_stab_path, USWAP_V2_ROUTERS[rtrIdx], _plsAmnt, address(this), true); // true = fromETH
+        return gta_amnt_out;
+    }
+    function _exeBstPayout(address _payTo, uint256 _bstPayout) private {
+        uint256 bstPayoutRem = 0;
+        uint256 thisBstBal = IERC20(address(this)).balanceOf(address(this));
         // ALGORITHMIC INTEGRATION...
         //  1) always pay w/ contract BST holdings first
         //  2) after holdings runs out, 
         //      if ENABLE_BUY_BURN, buy BST from dexes for bstPayoutRem
         //      else, mint new BST for bstPayoutRem
         //  3) if no BST holdings at all,
-        //      if ENABLE_BUY_BURN, buy BST from dexes for bstPayout
-        //      else, mint new BST for bstPayout
+        //      if ENABLE_BUY_BURN, buy BST from dexes for _bstPayout
+        //      else, mint new BST for _bstPayout
         // execute payout requirements
-        if (thisBstBal >= bstPayout) { // transfer all of bstPayout
-            _transfer(address(this), _payTo, bstPayout);
+        if (thisBstBal >= _bstPayout) { // transfer all of _bstPayout
+            _transfer(address(this), _payTo, _bstPayout);
         } else if (thisBstBal > 0) { // transfer all of thisBstBal
             _transfer(address(this), _payTo, thisBstBal);
-            bstPayoutRem = bstPayout - thisBstBal; // calc remaining bst owed
+            bstPayoutRem = _bstPayout - thisBstBal; // calc remaining bst owed
 
             if (ENABLE_BUY_BURN) {
                 // LEFT OFF HERE ... buy 'bstPayoutRem' from dex
@@ -236,16 +262,16 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
 
         } else {
             if (ENABLE_BUY_BURN) {
-                // LEFT OFF HERE ... buy 'bstPayout' from dex
-                //  then, transfer 'bstPayout' over to '_payTo'
+                // LEFT OFF HERE ... buy '_bstPayout' from dex
+                //  then, transfer '_bstPayout' over to '_payTo'
             } else {
-                _mint(_payTo, bstPayout); // mint all of bstPayout owed
+                _mint(_payTo, _bstPayout); // mint all of _bstPayout owed
             }
         }
     }
-    function _exeBstBurn(uint64 _bstBurnAmnt) private {
-        uint64 bstBurnRem = 0;
-        uint64 thisBstBal = IERC20(address(this)).balanceOf(address(this));
+    function _exeBstBurn(uint256 _bstBurnAmnt) private {
+        uint256 bstBurnRem = 0;
+        uint256 thisBstBal = IERC20(address(this)).balanceOf(address(this));
         // ALGORITHMIC INTEGRATION...
         //  1) always burn from contract BST holdings first
         //  2) after holdings runs out, 
@@ -258,7 +284,7 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
         if (thisBstBal >= _bstBurnAmnt) { // burn all of _bstBurnAmnt
             _transfer(address(this), address(0x0), _bstBurnAmnt);
         } else if (thisBstBal > 0) { // burn all of thisBstBal
-            _transfer(address(this), 0x0, thisBstBal);
+            _transfer(address(this), address(0x0), thisBstBal);
             bstBurnRem = _bstBurnAmnt - thisBstBal; // calc remaining burn
 
             if (ENABLE_BUY_BURN) {

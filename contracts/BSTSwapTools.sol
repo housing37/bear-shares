@@ -28,17 +28,17 @@ contract BSTSwapTools {
     /* KEEPER - ACCESSORS TO PRIVATES                           */
     /* -------------------------------------------------------- */
     // LEFT OFF HERE ... maybe this function just be a public tool, and not onlyKeeper
-    function swap_v2_wrap(address[] memory path, address router, uint256 amntIn) external returns (uint256) {
-        require(path.length > 1, 'err: bad path, need >= 2 addies :)');
-        require(router != address(0), 'err: zero address? :0');
-        require(amntIn > 0, 'err: no amount? :{}' );
-        return _swap_v2_wrap(path, router, amntIn, msg.sender);
-    }
-    function best_swap_v2_router_idx_quote(address[] memory path, uint256 amount, address[] memory _routers) external view returns (uint8, uint256) {
-        require(path.length > 1, 'err: bad path, need >= 2 addies :)');
-        require(amount > 0, 'err: no amount? :{}' );
-        return _best_swap_v2_router_idx_quote(path, amount, _routers);
-    }
+    // function swap_v2_wrap(address[] memory path, address router, uint256 amntIn) external returns (uint256) {
+    //     require(path.length > 1, 'err: bad path, need >= 2 addies :)');
+    //     require(router != address(0), 'err: zero address? :0');
+    //     require(amntIn > 0, 'err: no amount? :{}' );
+    //     return _swap_v2_wrap(path, router, amntIn, msg.sender);
+    // }
+    // function best_swap_v2_router_idx_quote(address[] memory path, uint256 amount, address[] memory _routers) external view returns (uint8, uint256) {
+    //     require(path.length > 1, 'err: bad path, need >= 2 addies :)');
+    //     require(amount > 0, 'err: no amount? :{}' );
+    //     return _best_swap_v2_router_idx_quote(path, amount, _routers);
+    // }
 
     /* -------------------------------------------------------- */
     /* PRIVATE - DEX SUPPORT                                    */
@@ -107,10 +107,10 @@ contract BSTSwapTools {
     }
 
     // uniwswap v2 protocol based: get quote and execute swap
-    function _swap_v2_wrap(address[] memory path, address router, uint256 amntIn, address outReceiver) internal returns (uint256) {
+    function _swap_v2_wrap(address[] memory path, address router, uint256 amntIn, address outReceiver, bool fromETH) internal returns (uint256) {
         require(path.length >= 2, 'err: path.length :/');
         uint256[] memory amountsOut = IUniswapV2Router02(router).getAmountsOut(amntIn, path); // quote swap
-        uint256 amntOut = _swap_v2(router, path, amntIn, amountsOut[amountsOut.length -1], outReceiver, false); // approve & execute swap
+        uint256 amntOut = _swap_v2(router, path, amntIn, amountsOut[amountsOut.length -1], outReceiver, fromETH); // approve & execute swap
                 
         // verifiy new balance of token received
         uint256 new_bal = IERC20(path[path.length -1]).balanceOf(address(this));
