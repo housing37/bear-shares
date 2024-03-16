@@ -50,6 +50,7 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
     mapping(address => uint64) public ACCT_USD_BALANCES;
     uint8 public SERVICE_FEE_PERC = 0; // 0%
     uint8 public SERVICE_BURN_PERC = 0; // 0%
+    uint8 public BUY_BACK_FEE_PERC = 0; // 0%
     bool public ENABLE_BUY_BURN = false;
 
     mapping(address => ACCT_PAYOUT[]) public ACCT_USD_PAYOUTS;
@@ -67,8 +68,9 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
     //      initializer w/ 'keeper' not required ('GTADelegate' maintained)
     //      sets msg.sender to '_owner' ('Ownable' maintained)
     constructor(uint256 _initSupply) ERC20(tok_name, tok_symb) Ownable(msg.sender) {
-        setServiceFeePerc(5);
-        setServiceBurnPerc(5);
+        setServiceFeePerc(5); // 5%
+        setServiceBurnPerc(5); // 5%
+        setBuyBackFeePerc(2); // 2%
         _mint(msg.sender, _initSupply * 10**uint8(decimals())); // 'emit Transfer'
     }
 
@@ -98,9 +100,13 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
         require(SERVICE_FEE_PERC + _perc <= 100, 'err: fee + burn percs > 100 :/');
         SERVICE_BURN_PERC = _perc;
     }
-    function payBSD(uint64 _usdAmnt, address _to) public {
+    function setBuyBackFeePerc(uint8 _perc) public onlyOwner() {
+        require(_perc <= 100, 'err: _perc more than 100%');
+        BUY_BACK_FEE_PERC = _perc;
+    }
+    function payOutBST(uint64 _usdAmnt, address _payTo) public {
         require(ACCT_USD_BALANCES[msg.sender] >= _usdAmnt, 'err: low acct balance :{}');
-        require(_to != address(0), 'err: _to address');
+        require(_payTo != address(0), 'err: _payTo address');
 
         // calc & remove service fee & burn amount
         uint64 usdFee = _usdAmnt * (SERVICE_FEE_PERC/100); 
@@ -128,30 +134,30 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
         //      else, mint new BST for bstPayout
         // execute payout requirements
         if (thisBstBal >= bstPayout) {
-            // transfer all of bstPayout to '_to'
-            _transfer(address(this), _to, bstPayout);
+            // transfer all of bstPayout to '_payTo'
+            _transfer(address(this), _payTo, bstPayout);
         } else if (thisBstBal > 0) {
-            // transfer all of thisBstBal to '_to'
-            _transfer(address(this), _to, thisBstBal);
+            // transfer all of thisBstBal to '_payTo'
+            _transfer(address(this), _payTo, thisBstBal);
             bstPayoutRem = bstPayout - thisBstBal;
 
             if (ENABLE_BUY_BURN) {
                 // LEFT OFF HERE ... 
                 //  buy 'bstPayoutRem' from dex
-                //  then, transfer 'bstPayoutRem' over to '_to'
+                //  then, transfer 'bstPayoutRem' over to '_payTo'
             } else {
                 // mint remaining bstPayout thats owed
-                _mint(_to, bstPayoutRem);
+                _mint(_payTo, bstPayoutRem);
             }
 
         } else {
             if (ENABLE_BUY_BURN) {
                 // LEFT OFF HERE ... 
                 //  buy 'bstPayout' from dex
-                //  then, transfer 'bstPayout' over to '_to'
+                //  then, transfer 'bstPayout' over to '_payTo'
             } else {
                 // mint all of bstPayout owed
-                _mint(_to, bstPayout);
+                _mint(_payTo, bstPayout);
             }
         }
 
@@ -178,7 +184,7 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
                 //  then, burn 'bstBurnRem'
             } else {
                 // mint remaining bstPayout thats owed
-                // _mint(_to, bstBurnRem);
+                // _mint(_payTo, bstBurnRem);
                 // ... don't mint anything?
             }
         } else {
@@ -188,7 +194,7 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
                 //  then, burn 'bstPayout'
             } else {
                 // mint all of bstPayout owed
-                // _mint(_to, bstPayout);
+                // _mint(_payTo, bstPayout);
                 // ... do nothing?
             }
         }
@@ -196,6 +202,10 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
     function _getBstValueForUsdAmnt(uint64 _usdAmnt) private returns (uint64) {
         return 37; 
         // LEFT OFF HERE ... TODO
+    }
+    function _getUsdValueForBstAmnt(uint64 _bstAmnt) private returns (uint64) {
+        // LEFT OFF HERE ... pretty sure this should always just return 1:1
+        return _bstAmnt; 
     }
     function usdDecimals() public pure returns (uint8) {
         return 6; // (6 decimals) 
@@ -209,6 +219,8 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
             // uint128 max USD: ~340T -> 340,282,366,920,938,463,463.374607431768211455 (18 decimals)
 
     }
+
+    // handle deposits (convert PLS to USD stable)
     receive() external payable {
         // Handle Ether sent without any data
         // This function will be called when Ether is sent without any data
@@ -221,6 +233,27 @@ contract BearSharesTrinity is ERC20, Ownable, GTASwapTools {
         //  NOTE: 'amountReceived' needs to have some min required
 
         // ACCT_USD_BALANCES[msg.sender] += <usd_stable_amnt>
+    }
+
+    // handle buy-backs
+    function tradeBST(uint64 _bstAmnt) external {
+        require(_balances[msg.sender] >= _bstAmnt,'err: not enough BST');
+        uint64 usdAmnt = _getUsdValueForBstAmnt(_bstAmnt); // should return 1:1
+        (address usdStable, uint64 usdAvail) = _getBestUsdStableAndBalance();
+
+        // calc usd trade in value & verify balance
+        uint64 usdTradeVal = usdAmnt - (usdAmnt * (BUY_BACK_FEE_PERC/100));
+        require(usdAvail >= usdTradeVal, 'err: not enough stable');
+
+        // transfer BST in / USD stable out
+        _transfer(address(this), msg.sender, _bstAmnt);
+        IERC(usdStable).transfer(msg.sender, usdAmnt);
+    }
+
+    function _getBestUsdStableAndBalance() private returns (address, uint64) {
+        // LEFT OFF HERE ... 
+        //  loop through global stable use array addresses
+        //  pick one with the highest balance i guess
     }
     /* -------------------------------------------------------- */
     /* PUBLIC ACCESSORS - GTA HOLDER SUPPORT                    */
