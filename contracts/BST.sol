@@ -147,7 +147,10 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         uint64 usdFee = _usdAmnt * (SERVICE_FEE_PERC/100); 
         uint64 usdBurn = _usdAmnt * (SERVICE_BURN_PERC/100); 
         uint64 usdPayout = _usdAmnt - usdFee - usdBurn;
-        uint64 bstBurn = _getBstValueForUsdAmnt(usdBurn);
+
+        // NOTE: returns 1:1 if ENABLE_BUY_BURN == false
+        //  else, returns BST value at high market whitelist stable
+        uint64 bstBurn = _getBstValueForUsdAmnt(usdBurn); 
         uint64 bstPayout = _getBstValueForUsdAmnt(usdPayout);
 
         // log this payout
@@ -187,7 +190,7 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     // handle contract BST buy-backs
     function tradeBST(uint64 _bstAmnt) external {
         require(balanceOf(msg.sender) >= _bstAmnt,'err: not enough BST');
-        uint64 usdAmnt = _getUsdValueForBstAmnt(_bstAmnt); // should return 1:1
+        uint64 usdAmnt = _getUsdValueForBstAmnt(_bstAmnt); // should return 1:1 (minus BUY_BACK_FEE_PERC)
         (address usdStable, uint64 usdAvail) = _getBestUsdStableAndBalance(usdAmnt);
         
         // calc usd trade in value & verify balance
@@ -229,6 +232,25 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     /* -------------------------------------------------------- */
     /* PRIVATE - SUPPORTING                                     */
     /* -------------------------------------------------------- */
+    function _getUsdValueForBstAmnt(uint64 _bstAmnt) private pure returns (uint64) {
+        // NOTE: only invoked from 'tradeBST'
+        //  hence, always return 1:1 since we always buy-back at 1:1
+        // LEFT OFF HERE ... need to calc & deduct buy-back fee
+        return _bstAmnt; 
+    }
+    function _getBstValueForUsdAmnt(uint64 _usdAmnt) private view returns (uint64) {
+        // returns 1:1 if ENABLE_BUY_BURN = false
+        if (!ENABLE_BUY_BURN) return _usdAmnt;
+
+        // NOTE: choose whitelist stable with highest market value
+        //  then get BST quote against that high market stable (results in least amnt of BST)
+        address highStable = _getStableTokenHighMarketValue(WHITELIST_USD_STABLES, USWAP_V2_ROUTERS);
+        address[] memory stab_bst_path = new address[](2);
+        stab_bst_path[0] = highStable;
+        stab_bst_path[1] = address(this);
+        (uint8 rtrIdx, uint256 bst_amnt) = _best_swap_v2_router_idx_quote(stab_bst_path, uint256(_usdAmnt), USWAP_V2_ROUTERS);
+        return _uint256_to_uint64(bst_amnt); 
+    }
     // NOTE: this function has an embedded loop (ie. '_addAddressToArraySafe')
     //  and then a 3rd loop inside '_getStableTokenHighMarketValue'
     function _getBestUsdStableAndBalance(uint64 _reqUsdBal) private returns (address, uint64) {
@@ -362,15 +384,6 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         }
         return _arr;
     }
-    function _getBstValueForUsdAmnt(uint64 _usdAmnt) private returns (uint64) {
-        return 37; 
-        // LEFT OFF HERE ... TODO
-    }
-    function _getUsdValueForBstAmnt(uint64 _bstAmnt) private returns (uint64) {
-        // LEFT OFF HERE ... pretty sure this should always just return 1:1
-        return _bstAmnt; 
-    }
-
 
     /* -------------------------------------------------------- */
     /* ERC20 - OVERRIDES                                        */
