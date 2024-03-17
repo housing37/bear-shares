@@ -126,7 +126,7 @@ async def generate_response(update: Update, context: CallbackContext) -> None:
             await context.bot.send_message(chat_id=update.message.chat_id, text="Apologies, i got lost in the matrix, and stopped paying attention. Please say again.")
 
     else:
-        await context.bot.send_message(chat_id=update.message.chat_id, text="I'm all ears, here in The Matrix! Simply type '/talk' followed by whatever you want.")
+        await context.bot.send_message(chat_id=update.message.chat_id, text="I'm all ears, here in The Matrix! Simply type '/neo' followed by whatever you want.")
 
     print('EXIT - generate_response()')
 
