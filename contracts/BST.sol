@@ -63,8 +63,10 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     // address[] private creditsAddrArray;
 
     address[] public USWAP_V2_ROUTERS;
-    mapping(address => uint8) public USD_STABLE_DECS;
+    
     address[] public WHITELIST_USD_STABLES;
+    mapping(address => uint64) public USD_STABLE_BALANCES;
+    mapping(address => uint8) public USD_STABLE_DECS;
 
     /* -------------------------------------------------------- */
     /* EVENTS                                                   */
@@ -186,8 +188,8 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     function tradeBST(uint64 _bstAmnt) external {
         require(balanceOf(msg.sender) >= _bstAmnt,'err: not enough BST');
         uint64 usdAmnt = _getUsdValueForBstAmnt(_bstAmnt); // should return 1:1
-        (address usdStable, uint64 usdAvail) = _getBestUsdStableAndBalance();
-
+        (address usdStable, uint64 usdAvail) = _getBestUsdStableAndBalance(usdAmnt);
+        
         // calc usd trade in value & verify balance
         uint64 usdTradeVal = usdAmnt - (usdAmnt * (BUY_BACK_FEE_PERC/100));
         require(usdAvail >= usdTradeVal, 'err: not enough stable');
@@ -227,6 +229,28 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     /* -------------------------------------------------------- */
     /* PRIVATE - SUPPORTING                                     */
     /* -------------------------------------------------------- */
+    // NOTE: this function has an embedded loop (ie. '_addAddressToArraySafe')
+    //  and then a 3rd loop inside '_getStableTokenHighMarketValue'
+    function _getBestUsdStableAndBalance(uint64 _reqUsdBal) private returns (address, uint64) {
+
+        // loop through WHITELIST_USD_STABLES to find the highest market value
+        //  that can cover a transfer of '_reqUsdBal'
+        address[] memory availStables;
+        for (uint i=0; i < WHITELIST_USD_STABLES.length;) {
+            address stable_ = WHITELIST_USD_STABLES[i];
+            uint256 stableBal = IERC20(stable_).balanceOf(address(this));
+            if (_uint256_to_uint64(stableBal) >= _reqUsdBal) {
+                availStables = _addAddressToArraySafe(stable_, availStables, true); // true = no dups
+                USD_STABLE_BALANCES[stable_] = _uint256_to_uint64(stableBal);
+            }
+            
+            unchecked {
+                i++;
+            }
+        }
+        address highStable = _getStableTokenHighMarketValue(availStables, USWAP_V2_ROUTERS);
+        return (highStable, USD_STABLE_BALANCES[highStable]);
+    }
     function _uint256_to_uint64(uint256 value) private pure returns (uint64) {
         require(value <= type(uint64).max, "Value exceeds uint64 range");
         uint64 convertedValue = uint64(value);
@@ -346,11 +370,7 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         // LEFT OFF HERE ... pretty sure this should always just return 1:1
         return _bstAmnt; 
     }
-    function _getBestUsdStableAndBalance() private returns (address, uint64) {
-        // LEFT OFF HERE ... 
-        //  loop through global stable usd array addresses
-        //  pick one with the highest balance i guess
-    }
+
 
     /* -------------------------------------------------------- */
     /* ERC20 - OVERRIDES                                        */
