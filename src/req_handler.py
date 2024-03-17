@@ -326,7 +326,7 @@ def parse_request(request, req_handler_key, tg_cmd=None): # (1)
                 # add 'tweet_id' & 'twitter_at' to keyVals
                 keyVals, success = parse_twitter_url(keyVals, 'trinity_tw_url') 
                 if not success:
-                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=VERBOSE_LOG, errMsg='invalid twitter url, please try again') # False = force fail
+                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=VERBOSE_LOG, errMsg='invalid tweet url, please try again') # False = force fail
                     return bErr, jsonResp, None # JSONResponse(...)
 
                 # check if tweet url contains text list
@@ -339,7 +339,7 @@ def parse_request(request, req_handler_key, tg_cmd=None): # (1)
                 # add 'tweet_id' & 'twitter_at' to keyVals
                 keyVals, success = parse_twitter_url(keyVals, 'post_url')
                 if not success:
-                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=VERBOSE_LOG, errMsg='invalid twitter shill url, please try again') # False = force fail
+                    bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=VERBOSE_LOG, errMsg='invalid tweet shill url, please try again') # False = force fail
                     return bErr, jsonResp, None # JSONResponse(...)
 
                 # check if tweet url contains text list
@@ -511,7 +511,8 @@ def parse_twitter_url(_keyVals, _key):
     # parse twitter @username & tweet id (note: 'https' required, else fails)
     #   ex: https://x.com/SolAudits/status/1765925225844089300?s=20
     tw_url = _keyVals[_key]
-    if not tw_url.startswith('https://'): return _keyVals, False # check for no slash ('/') in url
+    valid_uri = '?' in tw_url and tw_url.startswith('https://')
+    if not valid_uri: return _keyVals, False # check for no slash ('/') in url
     lst_items = tw_url.split('/')
     valid_dom = 'x.com' in lst_items[2] or 'twitter.com' in lst_items[2]
     if not valid_dom: return _keyVals, False
