@@ -43,6 +43,8 @@ TRINITY_INFO = '''
 HELLO! I am Trinity!
 I am a bot that pays you to tweet.. simple as that 🤷️️️️
 
+NOTE: you can indeed use DM to talk to me privately (@bs_trinity_bot)
+
 Here is how it works...
 1) register ...
     - tweet '@BearSharesNFT trinity'
