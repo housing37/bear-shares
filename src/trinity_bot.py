@@ -178,23 +178,23 @@ async def cmd_handler(update: Update, context):
                 inp_split[2] = 'laycpirates'
 
         # handle cmds that need more data
-        if tg_cmd == 'register_as_shiller':
+        if tg_cmd == req_handler.kSHILLER_REG: # ['<wallet_address>', '<tweet_url>']
             if USE_ALT_ACCT: 
                 inp_split.insert(3, 'LAO Pirates')
             else:
                 inp_split.insert(3, uname_handle)
         
-        if tg_cmd == 'request_cashout': # ['user_id','user_at']
+        if tg_cmd == req_handler.kREQUEST_CASHOUT: # ['user_id','user_at']
             # NOTE: inp_split[1] should be 'uid'
             # NOTE: inp_split[2] should be 'uname_at'
             pass
 
-        if tg_cmd == 'show_my_rates': # ['user_id','user_at','platform']
+        if tg_cmd == req_handler.kSHOW_USR_RATES: # ['user_id','user_at','platform']
             # NOTE: inp_split[1] should be 'uid'
             # NOTE: inp_split[2] should be 'uname_at'
             inp_split.insert(3, 'twitter') # const: unknown, twitter, tiktok, reddit
 
-        # if tg_cmd == 'show_my_earnings': # ['user_id','user_at']
+        # if tg_cmd == req_handler.kSHOW_USR_EARNS: # ['user_id','user_at']
         #     # NOTE: inp_split[1] should be 'uid'
         #     # NOTE: inp_split[2] should be 'uname_at'
         #     pass
@@ -210,12 +210,12 @@ async def cmd_handler(update: Update, context):
         if len(inp_split) >= 3 and inp_split[2][0] == '@': # remove '@' if there
             inp_split[2] = inp_split[2][1:]
 
-        if tg_cmd == 'admin_show_user_rates': # ['admin_id','user_id','platform']
+        if tg_cmd == req_handler.kADMIN_SHOW_USR_RATES: # ['admin_id','user_id','platform']
             # NOTE: inp_split[1] should be 'uid'
             # NOTE: inp_split[2] should be '<tg_user_at>'
             inp_split.insert(3, 'twitter') # const: unknown, twitter, tiktok, reddit
 
-        # if tg_cmd == 'admin_show_user_earnings': # ['admin_id','user_id']
+        # if tg_cmd == req_handler.kADMIN_SHOW_USR_EARNS:  # ['admin_id','user_id']
         #     # NOTE: inp_split[1] should be 'uid'
         #     # NOTE: inp_split[2] should be '<tg_user_at>'
         #     pass
