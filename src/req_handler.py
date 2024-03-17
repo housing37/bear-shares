@@ -49,12 +49,14 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 #-----------------------------------------------------#
 # TRINITY _  'Edit Commands' (TG: @BotFather)
 #-----------------------------------------------------#
-# register_as_shiller - DONE
-# confirm_twitter - DONE
-# submit_shill_link - DONE
-# request_cashout - DONE
-# show_my_rates - DONE
-# show_my_earnings - DONE
+# trinity - show help info
+# trinity_help - show help info
+# trinity_register_as_shiller - <wallet_address> <tweet_url>
+# trinity_confirm_twitter - <tweet_url>
+# trinity_submit_shill_link - <tweet_url>
+# trinity_request_cashout - no_params
+# trinity_show_my_rates - no_params
+# trinity_show_my_earnings - no_params
 # admin_show_user_rates - DONE
 # admin_show_user_earnings - DONE
 # admin_show_user_shills - DONE
@@ -73,8 +75,8 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 #-----------------------------------------------------#
 #   TRINITY
 #-----------------------------------------------------#
-# '/register_as_shiller'
-kSHILLER_REG = "register_as_shiller"
+# '/trinity_register_as_shiller'
+kSHILLER_REG = "trinity_register_as_shiller"
 LST_CMD_REG_USER = ['<wallet_address>', '<tweet_url>']
 STR_ERR_REG_USER = f'Please tweet "@BearSharesNFT trinity" 👍️️️️️️\n Then use that link to register with cmd:\n /{kSHILLER_REG} {" ".join(LST_CMD_REG_USER)}'
 LST_KEYS_REG_USER_RESP = env.LST_KEYS_PLACEHOLDER
@@ -83,8 +85,8 @@ LST_KEYS_REG_USER = ['user_id','user_at','user_handle','wallet_address','trinity
 # LST_KEYS_REG_USER = ['user_id','user_at','user_handle','wallet_address','trinity_tw_url','trinity_tw_id','tw_user_at']
     # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
 
-# '/confirm_twitter'
-kTWITTER_CONF = "confirm_twitter"
+# '/trinity_confirm_twitter'
+kTWITTER_CONF = "trinity_confirm_twitter"
 LST_CMD_TW_CONF = ['<tweet_url>']
 STR_ERR_TW_CONF = f'To keep your registration up-to-date, please tweet "@BearSharesNFT trinity" once a week 👍️️️️️️\n Then use that link to confirm your twitter with cmd:\n /{kTWITTER_CONF} {" ".join(LST_CMD_TW_CONF)}'
 LST_KEYS_TW_CONF_RESP = env.LST_KEYS_PLACEHOLDER
@@ -93,8 +95,8 @@ LST_KEYS_TW_CONF = ['user_id','user_at','trinity_tw_url']
 # LST_KEYS_TW_CONF = ['user_id','user_at','trinity_tw_url','trinity_tw_id','tw_user_at']
     # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
 
-# '/submit_shill_link'
-kSUBMIT_SHILL = "submit_shill_link"
+# '/trinity_submit_shill_link'
+kSUBMIT_SHILL = "trinity_submit_shill_link"
 LST_CMD_SUBMIT_SHILL = ['<tweet_url>']
 STR_ERR_SUBMIT_SHILL = f'Please submit your shill using the cmd:\n /{kSUBMIT_SHILL} {" ".join(LST_CMD_SUBMIT_SHILL)}\n tweets must at least contain "@BearSharesNFT" to be credited'
 LST_KEYS_SUBMIT_SHILL_RESP = env.LST_KEYS_PLACEHOLDER
@@ -102,8 +104,8 @@ DB_PROC_ADD_SHILL = 'ADD_USER_SHILL_TW'
 LST_KEYS_SUBMIT_SHILL = ['user_id','user_at','post_url']
 # LST_KEYS_SUBMIT_SHILL = ['user_id','user_at','post_url','post_id']
 
-# '/request_cashout'
-kREQUEST_CASHOUT = "request_cashout"
+# '/trinity_request_cashout'
+kREQUEST_CASHOUT = "trinity_request_cashout"
 LST_CMD_REQUEST_CASHOUT = [] # ['<tg_user_at>']
 STR_ERR_REQUEST_CASHOUT = f'nil_err_response_tg'
 LST_KEYS_REQUEST_CASHOUT_RESP = env.LST_KEYS_PLACEHOLDER
@@ -112,16 +114,16 @@ LST_KEYS_REQUEST_CASHOUT = ['user_id','user_at']
     # POST-DB: python TG notify admin_pay to process
 	# POST-DB: python TG notify p_tg_user_id that request has been submit (w/ user_earns.usd_owed)
 
-# '/show_my_rates'
-kSHOW_USR_RATES = "show_my_rates" # '/show_my_rates'
+# '/trinity_show_my_rates'
+kSHOW_USR_RATES = "trinity_show_my_rates" # '/show_my_rates'
 LST_CMD_SHOW_RATES = [] # ['<tg_user_at>','<twitter|tiktok|reddit>']
 STR_ERR_SHOW_RATES = f'''please use cmd format:\n /{kSHOW_USR_RATES} {" ".join(LST_CMD_SHOW_RATES)}'''
 LST_KEYS_SHOW_RATES_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_GET_USR_RATES = 'GET_USER_PAY_RATES'
 LST_KEYS_SHOW_RATES = ['user_id','user_at','platform'] # const: unknown, twitter, tiktok, reddit
 
-# '/show_my_earnings'
-kSHOW_USR_EARNS = "show_my_earnings" # '/show_my_earnings'
+# '/trinity_show_my_earnings'
+kSHOW_USR_EARNS = "trinity_show_my_earnings" # '/show_my_earnings'
 LST_CMD_SHOW_EARNS = [] # ['<tg_user_at>']
 STR_ERR_SHOW_EARNS = f'''please use cmd format :\n /{kSHOW_USR_EARNS} {" ".join(LST_CMD_SHOW_EARNS)}'''
 LST_KEYS_SHOW_EARNS_RESP = env.LST_KEYS_PLACEHOLDER

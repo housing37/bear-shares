@@ -39,6 +39,40 @@ USE_PROD_TG = False
 TOKEN = 'nil_tg_token'
 USE_ALT_ACCT = False # True = alt user 'LAO Pirates'
 
+TRINITY_INFO = '''
+HELLO! I am Trinity!
+I am a bot that pays you to tweet.. simple as that 🤷️️️️
+
+Here is how it works...
+1) register ...
+    - tweet '@BearSharesNFT trinity'
+    - then register using your wallet address and that tweet link
+        CMD: /trinity_register_as_shiller <wallet_address> <tweet_link>
+
+2) tweet anything with '@BearSharesNFT'
+    - then sumbit your tweet link for approval
+        CMD: /trinity_submit_shill_link <tweet_link>
+
+3) view your earnings & request cashout
+    CMD: /trinity_show_my_earnings
+    CMD: /trinity_request_cashout
+
+NOTE: better tweets pay more (earn more for memes, videos, etc.)
+    - your pay rates increase as your tweets get better
+        CMD:  /trinity_show_my_rates
+
+Here are all the commands you may use to get started...
+    /trinity_register_as_shiller - <wallet_address> <tweet_url>
+    /trinity_confirm_twitter - <tweet_url>
+    /trinity_submit_shill_link - <tweet_url>
+    /trinity_request_cashout - no_params
+    /trinity_show_my_rates - no_params
+    /trinity_show_my_earnings - no_params
+
+Questions: @WhiteRabbit0x0 or @Housing37
+
+GLHF!
+'''
 #------------------------------------------------------------#
 #   FUNCTIONS                                                #
 #------------------------------------------------------------#
@@ -422,6 +456,11 @@ async def test(update, context):
     print(f'\nENTER - {funcname}\n')
     await context.bot.send_message(chat_id=update.message.chat_id, text="test successful trinity")
 
+async def trinity_help(update, context):
+    funcname = 'trinity_help'
+    print(f'\nENTER - {funcname}\n')
+    await update.message.reply_text(TRINITY_INFO)
+
 def main():
     # global TOKEN
     # create dispatcher with TG bot token
@@ -431,6 +470,8 @@ def main():
     # dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("test", test))
     dp.add_handler(CallbackQueryHandler(btn_option_selects))
+    dp.add_handler(CommandHandler("trinity", trinity_help))
+    dp.add_handler(CommandHandler("trinity_help", trinity_help))
 
     # register all commands -> from req_handler.DICT_CMD_EXE.keys()
     for str_cmd in LST_TG_CMDS:
