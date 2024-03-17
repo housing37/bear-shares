@@ -126,6 +126,8 @@ async def cmd_handler(update: Update, context):
     funcname = 'cmd_handler'
     print(cStrDivider_1, f'ENTER - {funcname} _ {get_time_now()}', sep='\n')
     
+    chat_type = update.message.chat.type
+    is_dm = chat_type == 'private'
     group_name = update.message.chat.title if update.message.chat.type == 'supergroup' else None
     _chat_id = update.message.chat_id
 
@@ -139,10 +141,13 @@ async def cmd_handler(update: Update, context):
     # check if TG group is whitelisted to use (prints group info and deny)
     #   NOTE: at this point, inp_split[0] is indeed a valid command
     print(f'handling cmd: '+inp_split[0])
+    print(f"chat_type: {chat_type}")
     tg_cmd = inp_split[0][1::] # parses out the '/'
+
+    # fail: if not in WHITELIST_CHAT_IDS and not a DM
     valid_chat, str_deny = is_valid_chat_id(str(_chat_id), group_name, uname_at, uname_handle)
-    # print(valid_cmd, valid_chat, str_deny, sep='\n')
-    if not valid_chat:
+    # print(valid_cmd, valid_chat, chat_type, str_deny, sep='\n')
+    if not valid_chat and not is_dm:
         await context.bot.send_message(chat_id=update.message.chat_id, text=str_deny+' '+inp_split[0])    
         print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
         return
@@ -447,13 +452,16 @@ async def log_activity(update: Update, context):
         print(f'{get_time_now()} _ activity : found .message == None; returning')
         return
 
+    chat_type = str(update.message.chat.type)
+    chat_id = update.message.chat_id
     user = update.message.from_user
     uid = str(user.id)
     usr_at_name = f'@{user.username}'
     usr_handle = user.first_name
     inp = update.message.text
     lst_user_data = [uid, usr_at_name, usr_handle]
-    print(f'{get_time_now()} _ activity : {lst_user_data}')
+    lst_chat_data = [chat_id, chat_type]
+    print(f'{get_time_now()} _ activity : {lst_user_data} _ {lst_chat_data}')
 
 async def test(update, context):
     funcname = 'test'
