@@ -461,7 +461,7 @@ async def log_activity(update: Update, context):
     inp = update.message.text
     lst_user_data = [uid, usr_at_name, usr_handle]
     lst_chat_data = [chat_id, chat_type]
-    print(f'{get_time_now()} _ activity : {lst_user_data} _ {lst_chat_data}')
+    print(f'{get_time_now()} _ activity: {lst_user_data}, {lst_chat_data}')
 
 async def test(update, context):
     funcname = 'test'
