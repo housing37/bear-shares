@@ -138,6 +138,9 @@ async def cmd_handler(update: Update, context):
     # uname_handle = user.first_name + ' ' + user.last_name
     inp_split = list(update.message.text.split())
 
+    # parse about @user (if user simply hit enter from cmd description list in TG chat)
+    if '@' in inp_split[0]: inp_split[0] = inp_split[0].split('@')[0]
+
     # check if TG group is whitelisted to use (prints group info and deny)
     #   NOTE: at this point, inp_split[0] is indeed a valid command
     print(f'handling cmd: '+inp_split[0])
@@ -340,7 +343,15 @@ async def cmd_exe(update: Update, context):
         if not update.message:
             await update.callback_query.message.reply_text(f"err_{err_num}: {err_msg}")
         else:
-            await update.message.reply_text(f"err_{err_num}: {err_msg}")
+            str_resp = f"err_{err_num}: {err_msg}"
+            if tg_cmd == req_handler.kREQUEST_CASHOUT:
+                lst_resp_arr = response_dict['PAYLOAD']['dbProcResult'] if response_dict['PAYLOAD']['dbProcResult'] else [{}]
+                usd_owed = lst_resp_arr[0]['usd_owed'] if 'usd_owed' in lst_resp_arr[0] else 'err'
+                cashout_min = lst_resp_arr[0]['usd_withdraw_min'] if 'usd_withdraw_min' in lst_resp_arr[0] else 'err'
+                str_resp = str_resp + f'\n usd_owed: {usd_owed}\n usd_cashout_min: {cashout_min}'
+                await update.message.reply_text(str_resp)
+            else:
+                await update.message.reply_text(str_resp)
     else:
         d_resp = response_dict['PAYLOAD']['result_arr'][0]
         # [print(k, d_resp[k]) for k in d_resp.keys()]
