@@ -188,18 +188,22 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     }
 
     // handle contract BST buy-backs
-    function tradeBST(uint64 _bstAmnt) external {
+    function tradeInBST(uint64 _bstAmnt) external {
         require(balanceOf(msg.sender) >= _bstAmnt,'err: not enough BST');
-        uint64 usdAmnt = _getUsdValueForBstAmnt(_bstAmnt); // should return 1:1 (minus BUY_BACK_FEE_PERC)
-        (address usdStable, uint64 usdAvail) = _getBestUsdStableAndBalance(usdAmnt);
+
+        // buy-back value is always 1:1        
+        uint64 usdBuyBackVal = _bstAmnt; 
         
-        // calc usd trade in value & verify balance
-        uint64 usdTradeVal = usdAmnt - (usdAmnt * (BUY_BACK_FEE_PERC/100));
+        // calc usd trade in value (1:1, minus buy back fee)
+        uint64 usdTradeVal = usdBuyBackVal - (usdBuyBackVal * (BUY_BACK_FEE_PERC/100));
+
+        // Verify we have an available whitelist stable to cover it
+        (address usdStable, uint64 usdAvail) = _getBestUsdStableAndBalance(usdTradeVal);
         require(usdAvail >= usdTradeVal, 'err: not enough stable');
 
         // transfer BST in / USD stable out
-        _transfer(address(this), msg.sender, _bstAmnt);
-        IERC20(usdStable).transfer(msg.sender, usdAmnt);
+        _transfer(msg.sender, address(this), _bstAmnt);
+        IERC20(usdStable).transfer(msg.sender, usdTradeVal);
     }
 
     function usdDecimals() public pure returns (uint8) {
@@ -232,12 +236,6 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     /* -------------------------------------------------------- */
     /* PRIVATE - SUPPORTING                                     */
     /* -------------------------------------------------------- */
-    function _getUsdValueForBstAmnt(uint64 _bstAmnt) private pure returns (uint64) {
-        // NOTE: only invoked from 'tradeBST'
-        //  hence, always return 1:1 since we always buy-back at 1:1
-        // LEFT OFF HERE ... need to calc & deduct buy-back fee
-        return _bstAmnt; 
-    }
     function _getBstValueForUsdAmnt(uint64 _usdAmnt) private view returns (uint64) {
         // returns 1:1 if ENABLE_BUY_BURN = false
         if (!ENABLE_BUY_BURN) return _usdAmnt;
