@@ -45,31 +45,33 @@ I am a bot that pays you to tweet.. simple as that 🤷️️️️
 
 NOTE: you can indeed use DM to talk to me privately (@bs_trinity_bot)
 
-Here is how it works...
+Here is how it works ...
 1) register ...
-    - tweet '@BearSharesNFT trinity'
-    - then register using your wallet address and that tweet link
+    - tweet "@BearSharesNFT trinity"
+    - then register using your wallet address and the link to that tweet
         CMD: /trinity_register_as_shiller <wallet_address> <tweet_link>
 
-2) tweet anything with '@BearSharesNFT'
-    - then sumbit your tweet link for approval
+2) tweet anything you want and include "@BearSharesNFT"
+    - then sumbit that tweet link for approval
         CMD: /trinity_submit_shill_link <tweet_link>
 
 3) view your earnings & request cashout
-    CMD: /trinity_show_my_earnings
-    CMD: /trinity_request_cashout
+    - you will be paid in our new $BST token
+    - $BST is pegged 1:1 to USD stables
+        CMD: /trinity_show_my_earnings
+        CMD: /trinity_request_cashout
 
-NOTE: better tweets pay more (earn more for memes, videos, etc.)
+NOTE: Better-Pays-More (earn more for memes, videos, etc.)
     - your pay rates increase as your tweets get better
         CMD:  /trinity_show_my_rates
 
-Here are all the commands you may use to get started...
-    /trinity_register_as_shiller - <wallet_address> <tweet_url>
-    /trinity_confirm_twitter - <tweet_url>
-    /trinity_submit_shill_link - <tweet_url>
-    /trinity_request_cashout - no_params
-    /trinity_show_my_rates - no_params
-    /trinity_show_my_earnings - no_params
+Here are all the commands you may use to get started ...
+    /trinity_register_as_shiller <wallet_address> <tweet_url>
+    /trinity_confirm_twitter <tweet_url>
+    /trinity_submit_shill_link <tweet_url>
+    /trinity_request_cashout
+    /trinity_show_my_rates
+    /trinity_show_my_earnings
 
 Questions: @WhiteRabbit0x0 or @Housing37
 
