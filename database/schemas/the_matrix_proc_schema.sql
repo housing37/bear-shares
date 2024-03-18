@@ -186,7 +186,7 @@ CREATE FUNCTION `valid_tg_user_tw_conf`(
     READS SQL DATA
     DETERMINISTIC
 BEGIN
-	-- fail: if tg_user_id is indeed taken (updates 'users.tg_user_at' if needed)
+	-- fail: if tg_user_id is not taken (updates 'users.tg_user_at' if needed)
 	IF NOT valid_tg_user(p_tg_user_id, p_tg_user_at) THEN
 		RETURN 'user not found';
 	END IF;
@@ -720,7 +720,7 @@ BEGIN
 	SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
 	SELECT tw_user_at FROM users WHERE id = @v_user_id INTO @v_tw_user_at;
 
-	-- fail: if tg_user_id is indeed taken (updates 'users.tg_user_at' if needed)
+	-- fail: if tg_user_id is not taken (updates 'users.tg_user_at' if needed)
 	IF NOT valid_tg_user(p_tg_user_id, p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
@@ -775,7 +775,35 @@ BEGIN
 END
 $$ DELIMITER ;
 
--- # '/submit_shill_link'
+-- # '/submit_shill_web'
+-- LST_KEYS_SUBMIT_SHILL_WEB = ['user_at','post_url']
+-- DB_PROC_ADD_SHILL_WEB = 'ADD_USER_SHILL_TW_WEB'
+DELIMITER $$
+DROP PROCEDURE IF EXISTS ADD_USER_SHILL_TW_WEB;
+CREATE PROCEDURE `ADD_USER_SHILL_TW_WEB`(
+    -- IN p_tg_user_id VARCHAR(40),
+	IN p_tg_user_at VARCHAR(40),
+    IN p_post_url VARCHAR(1024),
+	IN p_post_id VARCHAR(255),
+	IN p_post_uname VARCHAR(255))
+BEGIN
+	-- fail: if tg_user_at doesn't exist
+	IF NOT valid_tg_user_at(p_tg_user_at) THEN
+		SELECT 'failed' as `status`, 
+				'user does not exists' as info, 
+				p_tg_user_at as tg_user_at_inp;
+	ELSE
+		-- get support requirements
+		SELECT id FROM users WHERE tg_user_at = p_tg_user_at INTO @v_user_id;
+		SELECT tg_user_id FROM users WHERE id = @v_user_id INTO @v_tg_user_id;
+
+		-- invoke 'ADD_USER_SHILL_TW' normally with retreived '@v_tg_user_id'
+		CALL ADD_USER_SHILL_TW(@v_tg_user_id, p_tg_user_at, p_post_url, p_post_id, p_post_uname);
+	END IF;
+END 
+$$ DELIMITER ;
+
+-- # '/submit_shill'
 -- LST_KEYS_SUBMIT_SHILL = ['user_id','user_at','post_url']
 -- DB_PROC_ADD_SHILL = 'ADD_USER_SHILL_TW'
 DELIMITER $$
@@ -792,7 +820,7 @@ BEGIN
 	SELECT tw_user_at FROM users WHERE id = @v_user_id INTO @v_tw_user_at;
 
 	-- vaidate user exists & tw conf not expired
-	-- fail: if tg_user_id is indeed taken (updates 'users.tg_user_at' if needed)
+	-- fail: if tg_user_id is not taken (updates 'users.tg_user_at' if needed)
 	set @v_valid = valid_tg_user_tw_conf(p_tg_user_id, p_tg_user_at); -- invokes 'valid_tg_user'
 	IF NOT @v_valid = 'valid user' THEN
 		SELECT 'failed' as `status`, 
@@ -849,6 +877,31 @@ BEGIN
 END 
 $$ DELIMITER ;
 
+-- # '/request_cashout_web'
+-- LST_KEYS_REQUEST_CASHOUT_WEB = ['user_at']
+-- DB_PROC_REQUEST_CASHOUT_WEB = 'SET_USER_WITHDRAW_REQUESTED_WEB'
+DELIMITER $$
+DROP PROCEDURE IF EXISTS SET_USER_WITHDRAW_REQUESTED_WEB;
+CREATE PROCEDURE `SET_USER_WITHDRAW_REQUESTED_WEB`(
+    -- IN p_tg_user_id VARCHAR(40),
+	IN p_tg_user_at VARCHAR(40))
+BEGIN
+	-- fail: if tg_user_at doesn't exist
+	IF NOT valid_tg_user_at(p_tg_user_at) THEN
+		SELECT 'failed' as `status`, 
+				'user does not exists' as info, 
+				p_tg_user_at as tg_user_at_inp;
+	ELSE
+		-- get support requirements
+		SELECT id FROM users WHERE tg_user_at = p_tg_user_at INTO @v_user_id;
+		SELECT tg_user_id FROM users WHERE id = @v_user_id INTO @v_tg_user_id;
+
+		-- invoke 'SET_USER_WITHDRAW_REQUESTED' normally with retreived '@v_tg_user_id'
+		CALL SET_USER_WITHDRAW_REQUESTED(@v_tg_user_id, p_tg_user_at);
+	END IF;
+END 
+$$ DELIMITER ;
+
 -- # '/request_cashout'
 -- LST_KEYS_REQUEST_CASHOUT = ['user_id','user_at']
 -- DB_PROC_REQUEST_CASHOUT = 'SET_USER_WITHDRAW_REQUESTED'
@@ -861,7 +914,7 @@ CREATE PROCEDURE `SET_USER_WITHDRAW_REQUESTED`(
 	IN p_tg_user_at VARCHAR(40))
 BEGIN
 	-- vaidate user exists & tw conf not expired
-	-- fail: if tg_user_id is indeed taken (updates 'users.tg_user_at' if needed)
+	-- fail: if tg_user_id is not taken (updates 'users.tg_user_at' if needed)
 	set @v_valid = valid_tg_user_tw_conf(p_tg_user_id, p_tg_user_at); -- invokes 'valid_tg_user'
 	IF NOT @v_valid = 'valid user' THEN
 		SELECT 'failed' as `status`, 
@@ -944,7 +997,7 @@ CREATE PROCEDURE `GET_USER_PAY_RATES`(
 	IN p_tg_user_at VARCHAR(40),
 	IN p_platform VARCHAR(40)) -- const: unknown, twitter, tiktok, reddit
 BEGIN
-	-- fail: if tg_user_id is indeed taken (updates 'users.tg_user_at' if needed)
+	-- fail: if tg_user_id is not taken (updates 'users.tg_user_at' if needed)
 	IF NOT valid_tg_user(p_tg_user_id, p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
@@ -983,7 +1036,7 @@ CREATE PROCEDURE `GET_USER_EARNINGS`(
     IN p_tg_user_id VARCHAR(40),
 	IN p_tg_user_at VARCHAR(40))
 BEGIN
-	-- fail: if tg_user_id is indeed taken (updates 'users.tg_user_at' if needed)
+	-- fail: if tg_user_id is not taken (updates 'users.tg_user_at' if needed)
 	IF NOT valid_tg_user(p_tg_user_id, p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'user not found' as info, 
