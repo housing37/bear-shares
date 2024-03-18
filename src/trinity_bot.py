@@ -39,6 +39,8 @@ USE_PROD_TG = False
 TOKEN = 'nil_tg_token'
 USE_ALT_ACCT = False # True = alt user 'LAO Pirates'
 
+# disable parsing '.from_user.first_name' (note_031824: db encoding errors)
+DISABLE_TG_HANDLES = True 
 
 TRINITY_INFO = '''
 (DM @bs_trinity_bot for more privacy 👍️️️️️️)
@@ -161,6 +163,13 @@ async def cmd_handler(update: Update, context):
         print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
         return
 
+    # validate that TG @username is setup (required to participate)
+    if uname_at == None:
+        str_r = f'invalid TG user. You must have a TG @username setup for your account. Please add an @username to your TG account and try to register again.'
+        print(str_r)
+        print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
+        await update.message.reply_text(str_r)
+        
     # @BearSharesNFT ...
     # ex tweet_conf (fails): https://x.com/SolAudits/status/1765925371851972744?s=20 # only '@BearSharesNFT'
     # ex tweet_conf (valid): https://x.com/SolAudits/status/1765925225844089300?s=20
@@ -183,13 +192,18 @@ async def cmd_handler(update: Update, context):
         inp_split.insert(1, uid)
         inp_split.insert(2, uname_at)
         if USE_ALT_ACCT: 
-                inp_split[1] = '1058890141'
-                inp_split[2] = 'laycpirates'
+                # inp_split[1] = '1058890141'
+                # inp_split[2] = 'laycpirates'
+                inp_split[1] = '6919802491'
+                inp_split[2] = 'fricardooo'
 
         # handle cmds that need more data
         if tg_cmd == req_handler.kSHILLER_REG: # ['<wallet_address>', '<tweet_url>']
-            if USE_ALT_ACCT: 
-                inp_split.insert(3, 'LAO Pirates')
+            if DISABLE_TG_HANDLES:
+                inp_split.insert(3, 'nil_handle_disabled')
+            elif USE_ALT_ACCT: 
+                # inp_split.insert(3, 'LAO Pirates')
+                inp_split.insert(3, 'ʀɨƈօʄʀɨƈօ👑🐉🐲')
             else:
                 inp_split.insert(3, uname_handle)
         
@@ -583,7 +597,7 @@ if __name__ == "__main__":
         USE_PROD_TG = True if inp == '0' else False
         print(f'  input = {inp} _ USE_PROD_TG = {USE_PROD_TG}')
 
-        inp = input('\nUse alt tg_user_id (@laycpirates "LAO Pirates")? [y/n]:\n  > ')
+        inp = input('\nUse alt tg_user_id for testing (USE_ALT_ACCT)? [y/n]:\n  > ')
         USE_ALT_ACCT = True if inp.lower() == 'y' or inp.lower() == '1' else False
         print(f'  input = {inp} _ USE_ALT_ACCT = {USE_ALT_ACCT}')
 
