@@ -74,6 +74,7 @@ TOKEN_prod = os.environ['TG_TOKEN_PROD'] # (prod)
 TOKEN_neo = os.environ['TG_TOKEN_NEO'] # (neo) @bs_neo_bot
 TOKEN_trin = os.environ['TG_TOKEN_TRIN'] # (trinity) @bs_trinity_bot
 TOKEN_morph = os.environ['TG_TOKEN_MORPH'] # @bs_morpheus_bot
+TOKEN_oracle = os.environ['TG_TOKEN_ORACLE'] # @bs_oracle_bot
 
 # LST_TG_TOKENS = [{'@TeddySharesBot':TOKEN_dev},
 #                  {'@BearSharesBot':TOKEN_prod},

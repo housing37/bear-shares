@@ -25,6 +25,20 @@
 -- #===============================================#
 -- # create tables
 -- #===============================================#
+drop table if exists ai_contexts;
+CREATE TABLE `ai_contexts` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `dt_created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `dt_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `dt_deleted` timestamp NULL DEFAULT NULL,
+  `fk_user_id_created` INT(11) NOT NULL,
+  `fk_user_id_updated` INT(11) NOT NULL,
+  `context_name` varchar(40) DEFAULT '', -- ex: 'Trinity Bot'  
+  `context_text` LONGTEXT DEFAULT '', -- ex: 'You are trinity from the matrix, act like her...'
+
+  UNIQUE KEY `ID` (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
 drop table if exists users;
 CREATE TABLE `users` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
