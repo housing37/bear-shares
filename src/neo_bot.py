@@ -42,25 +42,26 @@ OPENAI_API_KEY = env.OPENAI_KEY
 NEO_BS_WELCOME = '''
 WELCOME to BearShares!
 
+Time to claim your free air-drops!
+For more info, use command: "/trinity"
+
 We are actively launching our first product!
 $BST - BearSharesTrinity
-
-You may now begin the claim process for your free air-drop!
-For more info, simply use command: "/trinity"
 
 What is BearShares?
  - Get paid to Tweet!
  - Claim memes as NFTs!
  - PulseChain ERC404 integration!
 
-Twitter: @BearSharesNFT
-Web: bearshares.vercel.app
-TG: t.me/BearShares
+Test out our new AI bots ...
+    /trinity - get paid to tweet
+    /morpheus - learn about claiming memes
+    /neo - talk to 'the one'
 
-Test out our AI bots ...
-/trinity - get paid to tweet
-/morpheus - learn about claiming memes
-/neo - talk to 'the one'
+Contact ... 
+    TG: t.me/BearShares
+    Web: bearshares.vercel.app
+    Twitter: @BearSharesNFT
 '''
 
 print('TOKEN: '+TOKEN)
