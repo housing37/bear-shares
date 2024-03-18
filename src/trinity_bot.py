@@ -39,13 +39,19 @@ USE_PROD_TG = False
 TOKEN = 'nil_tg_token'
 USE_ALT_ACCT = False # True = alt user 'LAO Pirates'
 
+
 TRINITY_INFO = '''
-HELLO! I am Trinity!
-I am a bot that pays you to tweet.. simple as that 🤷️️️️
+(DM @bs_trinity_bot for more privacy 👍️️️️️️)
 
-NOTE: you can indeed use DM to talk to me privately (@bs_trinity_bot)
+HELLO! I am Trinity! 
+It's time to start claiming your free air-drop!
 
-Here is how it works ...
+$BST is a PRC20 token that pays you to tweet.. it's as simple as that 🤷️️️️
+$BST is pegged 1:1 to USD stables
+$BST can be easily exchanged for USD stable in our web dapp
+
+* CLAIM AIR-DROP *
+Please follow these 3 steps to claim your free air-drop ...
 1) register ...
     - tweet "@BearSharesNFT trinity"
     - then register using your wallet address and the link to that tweet
@@ -474,7 +480,7 @@ async def log_activity(update: Update, context):
     lst_chat_data = [chat_id, chat_type]
     print(f'{get_time_now()} _ action: {lst_user_data}, {lst_chat_data}')
 
-async def test(update, context):
+async def test(update: Update, context):
     funcname = 'test'
     print(f'\nENTER - {funcname}\n')
     await context.bot.send_message(chat_id=update.message.chat_id, text="test successful trinity")
