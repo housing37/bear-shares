@@ -39,6 +39,29 @@ TOKEN = env.TOKEN_neo # neo_bs_bot (neo)
 OPENAI_API_KEY = env.OPENAI_KEY
 # GROUP_ID = '-1002049491115', # $BearShares - testing
 
+NEO_BS_WELCOME = '''
+WELCOME to BearShares!
+
+We are actively launching our first product!
+$BST - BearSharesTrinity
+
+You may now begin the claim process for your free air-drop!
+For more info, simply use command: "/trinity"
+
+What is BearShares?
+ - Get paid to Tweet!
+ - Claim memes as NFTs!
+ - PulseChain ERC404 integration!
+
+Twitter: @BearSharesNFT
+Web: bearshares.vercel.app
+
+Test out our AI bots ...
+/trinity - get paid to tweet
+/morpheus - learn about claiming memes
+/neo - talk to 'the one'
+'''
+
 print('TOKEN: '+TOKEN)
 print('OPENAI_API_KEY: '+str(OPENAI_API_KEY))
 print('WHITELIST_TG_CHAT_IDS: '+str(WHITELIST_TG_CHAT_IDS))
@@ -183,14 +206,20 @@ async def check_scammer(update: Update, context):
         print(f'FOUND scammer: {lst_user_data}')
         await update.message.reply_text(f"inside The Matrix, {usr_at_name} is known as a scammer 👆️️️️️️")
 
+async def new_member(update: Update, context):
+    user = update.message.new_chat_members[0]
+    await context.bot.send_message(update.message.chat_id, f"@{user.username} {NEO_BS_WELCOME}")
+
 def main():
     print('ENTER - main()')
     # Initialize and run the Telegram bot
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
-    # app.add_handler(CommandHandler("talk", generate_response))
     app.add_handler(CommandHandler("neo", generate_response))
     # app.add_handler(MessageHandler(filters.ChatType.GROUP & filters.Update.message, generate_response))
+
+    # Handler to respond to new members joining the channel
+    app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, new_member))
 
     # Add message handler for ALL messages
     #   ref: https://docs.python-telegram-bot.org/en/stable/telegram.ext.filters.html#filters-module
