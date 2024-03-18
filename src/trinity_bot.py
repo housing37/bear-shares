@@ -169,7 +169,7 @@ async def cmd_handler(update: Update, context):
         print(str_r)
         print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
         await update.message.reply_text(str_r)
-        
+
     # @BearSharesNFT ...
     # ex tweet_conf (fails): https://x.com/SolAudits/status/1765925371851972744?s=20 # only '@BearSharesNFT'
     # ex tweet_conf (valid): https://x.com/SolAudits/status/1765925225844089300?s=20
@@ -378,7 +378,7 @@ async def cmd_exe(update: Update, context):
 
         # if tg_cmd == 'register_as_shiller':
         if tg_cmd == req_handler.kSHILLER_REG:
-            str_r = f"user: {d_resp['tg_user_at']}\n wallet: {d_resp['wallet_address_inp']}\n twitter: {d_resp['tw_user_at']}\n twitter_conf: {d_resp['tw_conf_url']}"
+            str_r = f"user: @{d_resp['tg_user_at']}\n wallet: {d_resp['wallet_address_inp']}\n twitter: @{d_resp['tw_user_at']}\n twitter_conf: {d_resp['tw_conf_url']}"
             lst_d_resp = response_dict['PAYLOAD']['result_arr']
             for d in lst_d_resp:
                 str_r = str_r + f"\n {d['platform']} pay_usd_{d['type_descr']}: {d['pay_usd']}"
@@ -455,6 +455,7 @@ async def cmd_exe(update: Update, context):
         elif tg_cmd == req_handler.kADMIN_APPROVE_SHILL:
             d_resp = response_dict['PAYLOAD']['result_arr'][0]
             inc_ = ['tg_user_at_inp','shill_id_inp','pay_usd','usd_owed','usd_paid','usd_total','shill_url','shill_type_inp']
+            d_resp['tg_user_at_inp'] = '@'+str(d_resp['tg_user_at_inp'])
             str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
             await update.callback_query.message.reply_text(f"Shill has been approved for payment ...\n {str_r}")
 
@@ -462,6 +463,7 @@ async def cmd_exe(update: Update, context):
             d_resp = response_dict['PAYLOAD']['result_arr'][0]
             shill_id = d_resp['shill_id']
             inc_ = ['post_url','shill_id','pay_usd','is_approved','tg_user_at_inp','is_paid','shill_plat','shill_type']
+            d_resp['tg_user_at_inp'] = '@'+str(d_resp['tg_user_at_inp'])
             str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
             await update.message.reply_text(f"Info for shill id: {shill_id} ...\n {str_r}")
 
@@ -469,6 +471,7 @@ async def cmd_exe(update: Update, context):
             d_resp = response_dict['PAYLOAD']['result_arr'][0]
             shill_id = d_resp['shill_id_inp']
             inc_ = ['post_url','pay_usd','is_approved','tg_user_at_inp','is_removed','post_url']
+            d_resp['tg_user_at_inp'] = '@'+str(d_resp['tg_user_at_inp'])
             str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
             await update.callback_query.message.reply_text(f"Remove set for shill id: {shill_id} ...\n {str_r}")
             
