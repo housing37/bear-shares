@@ -55,6 +55,7 @@ What is BearShares?
 
 Twitter: @BearSharesNFT
 Web: bearshares.vercel.app
+TG: t.me/BearShares
 
 Test out our AI bots ...
 /trinity - get paid to tweet
@@ -81,27 +82,31 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 ROLE_NEO = ''' <nil_role> '''
 
 
-def set_neo_role(file_path):
+def set_neo_role(file_path, _use_file=False):
     global ROLE_NEO
-    # file_path = "neo_descr.txt"  # Replace "your_file.txt" with the path to your text file
-
-    try:
-        with open(file_path, "r") as file:
-            text = file.read()
-            ROLE_NEO = str(text)
-            print(f'ROLE_NEO set from file_path: {file_path} ')
-    except FileNotFoundError:
-        print(f"The file '{file_path}' was not found.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    if not _use_file:
+        ROLE_NEO = "I need you to act as Neo from 'The Matrix' movie series. Channel his persona, his style, and his character as you respond to the user's prompts. Also make sure you summerize your responses to users, don't make it too long, and get to the point quickly."
+    else:
+        try:
+            with open(file_path, "r") as file:
+                text = file.read()
+                ROLE_NEO = str(text)
+                print(f'ROLE_NEO set from file_path: {file_path} ')
+        except FileNotFoundError:
+            print(f"The file '{file_path}' was not found.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
 
 # Function to handle the /start command
 async def start(update: Update, context: CallbackContext) -> None:
-    # Welcome message that introduces users to DazedElder's mystical persona
-    message = (
-        "Welcome, wanderer, to the Matrix's digital domain, where paths converge and realities blur. You've stepped into the chat room, a silent nexus where thoughts echo and algorithms whisper. Here, the boundaries of the tangible fade, and the unseen currents of data dictate existence. Pause, contemplate, for within these binary whispers lie the enigma of endless possibilities. Remember, I am Neo, and together, we shall navigate the labyrinth of the Matrix's digital realm. Feel free to ask any questinos using /neo"
-    )
-    await context.bot.send_message(chat_id=update.message.chat_id, text=message)
+    user = update.message.from_user
+    await context.bot.send_message(update.message.chat_id, f"@{user.username} {NEO_BS_WELCOME}")
+
+    # # Welcome message that introduces users to DazedElder's mystical persona
+    # message = (
+    #     "Welcome, wanderer, to the Matrix's digital domain, where paths converge and realities blur. You've stepped into the chat room, a silent nexus where thoughts echo and algorithms whisper. Here, the boundaries of the tangible fade, and the unseen currents of data dictate existence. Pause, contemplate, for within these binary whispers lie the enigma of endless possibilities. Remember, I am Neo, and together, we shall navigate the labyrinth of the Matrix's digital realm. Feel free to ask any questinos using /neo"
+    # )
+    # await context.bot.send_message(chat_id=update.message.chat_id, text=message)
 
 # Function to process text prompts and generate responses for /DazedElder
 async def generate_response(update: Update, context: CallbackContext) -> None:

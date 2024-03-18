@@ -43,12 +43,12 @@ def set_morpheus_role(file_path):
         print(f"An error occurred: {e}")
 
 # Function to handle the /start command
-async def start(update: Update, context: CallbackContext) -> None:
-    # Welcome message that introduces users to DazedElder's mystical persona
-    message = (
-        "Welcome to the Matrix's digital domain inside the world of BearShares. This is where paths converge and realities blur. I am Morpheus, and together, we shall navigate the labyrinth of the BearShares digital realm. Feel free to ask any questions about BearShares using /morpheus"
-    )
-    await context.bot.send_message(chat_id=update.message.chat_id, text=message)
+# async def start(update: Update, context: CallbackContext) -> None:
+#     # Welcome message that introduces users to DazedElder's mystical persona
+#     message = (
+#         "Welcome to the Matrix's digital domain inside the world of BearShares. This is where paths converge and realities blur. I am Morpheus, and together, we shall navigate the labyrinth of the BearShares digital realm. Feel free to ask any questions about BearShares using /morpheus"
+#     )
+#     await context.bot.send_message(chat_id=update.message.chat_id, text=message)
 
 # Function to process text prompts and generate responses for /DazedElder
 async def generate_response(update: Update, context: CallbackContext) -> None:
@@ -96,7 +96,11 @@ async def generate_response(update: Update, context: CallbackContext) -> None:
             await context.bot.send_message(chat_id=update.message.chat_id, text="Apologies, i got lost in the matrix, and stopped paying attention. Please say again.")
 
     else:
-        await context.bot.send_message(chat_id=update.message.chat_id, text="I'm all ears, here in The Matrix! Simply type '/morpheus' followed by whatever you want.")
+        # message="I'm all ears, here in The Matrix! Simply type '/morpheus' followed by whatever you want."
+        message = (
+            "Welcome to the Matrix's digital domain inside the world of BearShares. This is where paths converge and realities blur. I am Morpheus, and together, we shall navigate the labyrinth of the BearShares digital realm.\n\nFeel free to ask any questions about BearShares using /morpheus"
+        )
+        await context.bot.send_message(chat_id=update.message.chat_id, text=message)
 
     print('EXIT - generate_response()')
 
@@ -104,7 +108,7 @@ def main():
     print('ENTER - main()')
     # Initialize and run the Telegram bot
     app = Application.builder().token(TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
+    # app.add_handler(CommandHandler("start", start))
     # app.add_handler(CommandHandler("talk", generate_response))
     app.add_handler(CommandHandler("Morpheus", generate_response))
     # app.add_handler(MessageHandler(filters.ChatType.GROUP & filters.Update.message, generate_response))
