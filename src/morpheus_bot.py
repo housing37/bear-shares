@@ -5,7 +5,7 @@ import os
 from _env import env
 
 WHITELIST_TG_CHAT_IDS = [
-    '-1002041092613', # $BearShares
+    '-1002041092613', # BearShares - trinity
     '-1002049491115', # bear shares - testing
     '-4139183080', # bear shares - testing - priv
     ]
@@ -41,14 +41,6 @@ def set_morpheus_role(file_path):
         print(f"The file '{file_path}' was not found.")
     except Exception as e:
         print(f"An error occurred: {e}")
-
-# Function to handle the /start command
-# async def start(update: Update, context: CallbackContext) -> None:
-#     # Welcome message that introduces users to DazedElder's mystical persona
-#     message = (
-#         "Welcome to the Matrix's digital domain inside the world of BearShares. This is where paths converge and realities blur. I am Morpheus, and together, we shall navigate the labyrinth of the BearShares digital realm. Feel free to ask any questions about BearShares using /morpheus"
-#     )
-#     await context.bot.send_message(chat_id=update.message.chat_id, text=message)
 
 # Function to process text prompts and generate responses for /DazedElder
 async def generate_response(update: Update, context: CallbackContext) -> None:
