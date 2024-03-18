@@ -61,7 +61,7 @@ Please follow these 3 steps to claim your free air-drop ...
 
 2) tweet anything you want and include "@BearSharesNFT"
     - then sumbit that tweet link for approval
-        CMD: /trinity_submit_shill_link <tweet_link>
+        CMD: /trinity_submit_shill <tweet_link>
 
 3) view your earnings & request cashout
     - you will be paid in our new $BST token
@@ -76,7 +76,7 @@ NOTE: Better-Pays-More (earn more for memes, videos, etc.)
 Here are all the commands you may use to get started ...
     /trinity_register_as_shiller <wallet_address> <tweet_url>
     /trinity_confirm_twitter <tweet_url>
-    /trinity_submit_shill_link <tweet_url>
+    /trinity_submit_shill <tweet_url>
     /trinity_request_cashout
     /trinity_show_my_rates
     /trinity_show_my_earnings

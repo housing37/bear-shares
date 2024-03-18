@@ -53,18 +53,18 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 # trinity_help - show help info
 # trinity_register_as_shiller - <wallet_address> <tweet_url>
 # trinity_confirm_twitter - <tweet_url>
-# trinity_submit_shill_link - <tweet_url>
+# trinity_submit_shill - <tweet_url>
 # trinity_request_cashout - no_params
 # trinity_show_my_rates - no_params
 # trinity_show_my_earnings - no_params
-# admin_show_user_rates - DONE
-# admin_show_user_earnings - DONE
-# admin_show_user_shills - DONE
-# admin_list_all_pend_shills - DONE
-# admin_approve_pend_shill - DONE
-# admin_view_shill_status - DONE
+# admin_show_user_rates - <tg_user_at>
+# admin_show_user_earnings - <tg_user_at>
+# admin_show_user_shills - <tg_user_at>
+# admin_list_all_pend_shills - no_params
+# admin_approve_pend_shill - <tg_user_at> <shill_id>
+# admin_view_shill_status - <tg_user_at> <shill_id> <shill_url>
 # admin_pay_shill_rewards - WORKING
-# admin_log_removed_shill - DONE
+# admin_log_removed_shill - <tg_user_at> <shill_id>
 # admin_scan_web_for_dead_shills - pending
 # admin_set_shiller_rates - pending
 
@@ -95,8 +95,8 @@ LST_KEYS_TW_CONF = ['user_id','user_at','trinity_tw_url']
 # LST_KEYS_TW_CONF = ['user_id','user_at','trinity_tw_url','trinity_tw_id','tw_user_at']
     # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
 
-# '/trinity_submit_shill_link'
-kSUBMIT_SHILL = "trinity_submit_shill_link"
+# '/trinity_submit_shill'
+kSUBMIT_SHILL = "trinity_submit_shill"
 LST_CMD_SUBMIT_SHILL = ['<tweet_url>']
 STR_ERR_SUBMIT_SHILL = f'Please submit your shill using the cmd:\n /{kSUBMIT_SHILL} {" ".join(LST_CMD_SUBMIT_SHILL)}\n tweets must at least contain "@BearSharesNFT" to be credited'
 LST_KEYS_SUBMIT_SHILL_RESP = env.LST_KEYS_PLACEHOLDER
