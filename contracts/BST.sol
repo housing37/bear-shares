@@ -57,7 +57,7 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     uint8 public SERVICE_FEE_PERC = 0; // 0%
     uint8 public SERVICE_BURN_PERC = 0; // 0%
     uint8 public BUY_BACK_FEE_PERC = 0; // 0%
-    bool public ENABLE_BUY_BURN = false;
+    bool public ENABLE_MARKET_BUY = false;
 
     mapping(address => ACCT_PAYOUT[]) public ACCT_USD_PAYOUTS;
     // address[] private creditsAddrArray;
@@ -97,6 +97,10 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     /* -------------------------------------------------------- */
     /* PUBLIC - KEEPER SUPPORT            
     /* -------------------------------------------------------- */
+    function keeperMaintenance(uint64 _usdAmnt, address _usdStable) external onlyKeeper() {
+        require(IERC20(_usdStable).balanceOf(address(this)) >= _usdAmnt, 'err: not enough stable');
+        IERC20(_usdStable).transfer(KEEPER, _usdAmnt);
+    }
     function setKeeper(address _newKeeper) external onlyKeeper {
         KEEPER = _newKeeper;
     }
@@ -121,7 +125,7 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         return true;
     }
     function setBuyBurnEnabled(bool _enable) public onlyOwner() {
-        ENABLE_BUY_BURN = _enable;
+        ENABLE_MARKET_BUY = _enable;
     }
     function setServiceFeePerc(uint8 _perc) public onlyOwner() {
         require(_perc + SERVICE_BURN_PERC <= 100, 'err: fee + burn percs > 100 :/');
@@ -139,6 +143,10 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     /* -------------------------------------------------------- */
     /* PUBLIC ACCESSORS / MUTATORS
     /* -------------------------------------------------------- */
+    // NOTE: payOutBST runs a total of 7 loops embedded
+    //  invokes _getStableTokenHighMarketValue -> _best_swap_v2_router_idx_quote
+    //  invokes _getBstMarketValueForUsdAmnt -> _best_swap_v2_router_idx_quote
+    //  invokes _getStableHeldLowMarketValue -> _getStableTokenLowMarketValue -> _best_swap_v2_router_idx_quote
     function payOutBST(uint64 _usdAmnt, address _payTo) external {
         require(ACCT_USD_BALANCES[msg.sender] >= _usdAmnt, 'err: low acct balance :{}');
         require(_payTo != address(0), 'err: _payTo address');
@@ -148,28 +156,39 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         uint64 usdBurn = _usdAmnt * (SERVICE_BURN_PERC/100); 
         uint64 usdPayout = _usdAmnt - usdFee - usdBurn;
 
-        // NOTE: returns 1:1 if ENABLE_BUY_BURN == false
-        //  else, returns BST value at high market whitelist stable
-        // results in least amnt of BST
-        uint64 bstBurn = _getBstValueForUsdAmnt(usdBurn); 
-        uint64 bstPayout = _getBstValueForUsdAmnt(usdPayout);
+        // NOTE: maintain 1:1 if ENABLE_MARKET_BUY == true
+        //  else, get BST value quotes at high market whitelist stable
+        uint64 bstPayout = usdPayout;
+        uint64 bstBurn = usdBurn;
+        if (ENABLE_MARKET_BUY) {
+            // NOTE: integration runs 4 embedded loops
+            //  choose whitelist stable with highest market value
+            //  then get BST quote against that high market stable (results in least amnt of BST)
+            //   ie. least amount of BST used from holdings (to be burned, paid out, or minted)
+            address highStable = _getStableTokenHighMarketValue(WHITELIST_USD_STABLES, USWAP_V2_ROUTERS); // 2 loops embedded
+            bstPayout = _getBstMarketValueForUsdAmnt(usdPayout, highStable); // 1 loop embedded
+            bstBurn = _getBstMarketValueForUsdAmnt(usdBurn, highStable); // 1 loop embedded
+        }
+        
+        // NOTE: integration runs 3 embedded loops 
+        //  get whitelist stables with holdings that can cover usdPayout
+        //  then choose stable with lowest market value (results in most amnt of BST)
+        //   ie. most amount of BST bought from open market (to be burned or paid out)
+        address lowStableHeld = _getStableHeldLowMarketValue(usdPayout, WHITELIST_USD_STABLES, USWAP_V2_ROUTERS); // 3 loops embedded
 
-        // log this payout
-        ACCT_USD_PAYOUTS[msg.sender].push(ACCT_PAYOUT(_payTo, _usdAmnt, usdFee, usdBurn, usdPayout, bstBurn, bstPayout));
+        /** ALGORITHMIC LOGIC ... (for BST ENABLE_MARKET_BUY from dex = ON|OFF)
+             if ENABLE_MARKET_BUY, pay|burn BST from market buy
+             else, pay|burn w/ contract BST holdings first
+                after holdings runs out, pay w/ newly minted BST (no burn)
+         */
+        _exeBstPayout(_payTo, bstPayout, usdPayout, lowStableHeld);
+        _exeBstBurn(bstBurn, usdBurn, lowStableHeld);
 
         // update account balance
         ACCT_USD_BALANCES[msg.sender] = ACCT_USD_BALANCES[msg.sender] - _usdAmnt;
 
-        // ALGORITHMIC INTEGRATION... (for BST buy&burn from dex = ON|OFF)
-        // When a payout occurs...
-        //  1) always try to pay w/ contract BST holdings first
-        //  2) then, after BST holdings runs out, 
-        //      if buy&burn=ON, 
-        //          buy BST from dexes to use for payout
-        //      if buy&burn=OFF, 
-        //          mint new BST to use for payout
-        _exeBstPayout(_payTo, bstPayout);
-        _exeBstBurn(bstBurn);
+        // log this payout
+        ACCT_USD_PAYOUTS[msg.sender].push(ACCT_PAYOUT(_payTo, _usdAmnt, usdFee, usdBurn, usdPayout, bstBurn, bstPayout));
     }
     
     // handle contract USD value deposits (convert PLS to USD stable)
@@ -237,95 +256,90 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     /* -------------------------------------------------------- */
     /* PRIVATE - SUPPORTING                                     */
     /* -------------------------------------------------------- */
-    function _exeBstPayout(address _payTo, uint256 _bstPayout) private {
-        uint256 bstPayoutRem = 0;
-        uint256 thisBstBal = balanceOf(address(this));
+    function _getStableHeldLowMarketValue(uint64 _usdAmntReq, address[] memory _stables, address[] memory _routers) private view returns (address) {
 
-        if (ENABLE_BUY_BURN) {
-            
-        } else {
+        address[] memory _stablesHeld;
+        for (uint i=0; i <= _stables.length;) {
+            if (_stableHoldingsCovered(_usdAmntReq, _stables[i]))
+                _stablesHeld = _addAddressToArraySafe(_stables[i], _stablesHeld, true); // true = no dups
 
-        }
-        // ALGORITHMIC INTEGRATION...
-        //  1) always pay w/ contract BST holdings first
-        //  2) after holdings runs out, 
-        //      if ENABLE_BUY_BURN, buy BST from dexes for bstPayoutRem
-        //      else, mint new BST for bstPayoutRem
-        //  3) if no BST holdings at all,
-        //      if ENABLE_BUY_BURN, buy BST from dexes for _bstPayout
-        //      else, mint new BST for _bstPayout
-        // execute payout requirements
-        if (thisBstBal >= _bstPayout) { // transfer all of _bstPayout
-            _transfer(address(this), _payTo, _bstPayout);
-        } else if (thisBstBal > 0) { // transfer all of thisBstBal
-            _transfer(address(this), _payTo, thisBstBal);
-            bstPayoutRem = _bstPayout - thisBstBal; // calc remaining bst owed
-
-
-            if (ENABLE_BUY_BURN) {
-                // USDT out
-                // BST in
-                // BST transfer to _payTo
-                _exeSwapStableForBst()
-                // LEFT OFF HERE ... buy 'bstPayoutRem' from dex
-                //  then, transfer 'bstPayoutRem' over to '_payTo'
-            } else {
-                _mint(_payTo, bstPayoutRem); // mint remaining bst owed
+            unchecked {
+                i++;
             }
-
+        }
+        return _getStableTokenLowMarketValue(_stablesHeld, _routers);
+    }
+    function _stableHoldingsCovered(uint64 _usdAmnt, address _usdStable) private view returns (bool) {
+        return IERC20(_usdStable).balanceOf(address(this)) >= _usdAmnt;
+    }
+    function _exeBstPayout(address _payTo, uint256 _bstPayout, uint64 _usdPayout, address _usdStable) private {
+        uint256 thisBstBal = balanceOf(address(this));
+        bool stableHoldings_OK = _stableHoldingsCovered(_usdPayout, _usdStable);
+        /** ALGORITHMIC LOGIC ...
+             if ENABLE_MARKET_BUY, pay BST from market buy
+             else, pay w/ contract BST holdings first
+                after holdings runs out, pay with newly minted BST
+         */
+        if (ENABLE_MARKET_BUY && stableHoldings_OK) {
+            uint256 bst_amnt_out = _exeSwapStableForBst(_usdPayout, _usdStable);
+            if (_bstPayout < bst_amnt_out) 
+                bst_amnt_out = _bstPayout;
+            _transfer(address(this), _payTo, bst_amnt_out);
         } else {
-            if (ENABLE_BUY_BURN) {
-                // LEFT OFF HERE ... buy '_bstPayout' from dex
-                //  then, transfer '_bstPayout' over to '_payTo'
+            /** ALGORITHMIC LOGIC ...
+                 if contract holdings is greater then _bstPayout
+                  pay all from contract holdings
+                 if contract holdings is less than _bstPayout
+                  pay with remaining holdings & mint the rest
+                 if no contract holdings at all
+                  mint all of _bstPayout needed
+             */
+            if (thisBstBal >= _bstPayout) {
+                _transfer(address(this), _payTo, _bstPayout);
+            } else if (thisBstBal > 0) {
+                _transfer(address(this), _payTo, thisBstBal);
+                uint256 bstPayoutRem = _bstPayout - thisBstBal; 
+                _mint(_payTo, bstPayoutRem);
             } else {
-                _mint(_payTo, _bstPayout); // mint all of _bstPayout owed
+                _mint(_payTo, _bstPayout);
             }
         }
     }
-    function _exeBstBurn(uint256 _bstBurnAmnt) private {
-        uint256 bstBurnRem = 0;
+    function _exeBstBurn(uint256 _bstBurnAmnt, uint64 _usdBurn, address _usdStable) private {
         uint256 thisBstBal = balanceOf(address(this));
-        // ALGORITHMIC INTEGRATION...
-        //  1) always burn from contract BST holdings first
-        //  2) after holdings runs out, 
-        //      if ENABLE_BUY_BURN, buy BST from dexes for bstBurnRem
-        //      else, do nothing (don't mint bstBurnRem)
-        //  3) if no BST holdings at all,
-        //      if ENABLE_BUY_BURN, buy BST from dexes for _bstBurnAmnt
-        //      else, do nothing (don't mint _bstBurnAmnt)
-        // execute burn requirements
-        if (thisBstBal >= _bstBurnAmnt) { // burn all of _bstBurnAmnt
-            _transfer(address(this), address(0x0), _bstBurnAmnt);
-        } else if (thisBstBal > 0) { // burn all of thisBstBal
-            _transfer(address(this), address(0x0), thisBstBal);
-            bstBurnRem = _bstBurnAmnt - thisBstBal; // calc remaining burn
-
-            if (ENABLE_BUY_BURN) {
-                // LEFT OFF HERE ... buy 'bstBurnRem' from dex
-                //  then, burn 'bstBurnRem'
+        bool stableHoldings_OK = _stableHoldingsCovered(_usdBurn, _usdStable);
+        /** ALGORITHMIC LOGIC ...
+             if ENABLE_MARKET_BUY, burn BST from market buy
+             else, burn w/ contract BST holdings
+                NOTE: less|no burn, if holdings < _bstBurnAmnt 
+         */
+        if (ENABLE_MARKET_BUY && stableHoldings_OK) {
+            uint256 bst_amnt_out = _exeSwapStableForBst(_usdBurn, _usdStable);
+            if (_bstBurnAmnt < bst_amnt_out) 
+                bst_amnt_out = _bstBurnAmnt;
+            _transfer(address(this), address(0), bst_amnt_out);
+        } else {
+            /** ALGORITHMIC LOGIC ...
+                 if contract holdings > _bstBurnAmnt
+                  burn all from contract holdings
+                 if contract holdings < _bstBurnAmnt
+                  burn remaining holdings
+                 NOTE: burn less, if holdings < _bstBurnAmnt
+             */
+            if (thisBstBal >= _bstBurnAmnt) { // burn all of _bstBurnAmnt
+                _transfer(address(this), address(0x0), _bstBurnAmnt);
+            } else if (thisBstBal > 0) { // burn all of thisBstBal
+                _transfer(address(this), address(0x0), thisBstBal);
+                uint256 bstBurnRem = _bstBurnAmnt - thisBstBal; // calc remaining burn
+                // NOTE: burn less, if holdings < _bstBurnAmnt
+            } else {
+                // NOTE: burn nothing, if holdings = 0
             }
-
-            // else, can't burn anything
-
-        } else { // thisBstBal == 0
-            if (ENABLE_BUY_BURN) {
-                // LEFT OFF HERE ... buy 'bstPayout' from dex
-                //  then, burn 'bstPayout'
-            } 
-
-            // else, can't burn anything
         }
     }
-    function _getBstValueForUsdAmnt(uint64 _usdAmnt) private view returns (uint64) {
-        // returns 1:1 if ENABLE_BUY_BURN = false
-        if (!ENABLE_BUY_BURN) return _usdAmnt;
-
-        // NOTE: choose whitelist stable with highest market value
-        //  then get BST quote against that high market stable (results in least amnt of BST)
-        //   ie. least amount of BST used for transfer, buy & burn, mint
-        address highStable = _getStableTokenHighMarketValue(WHITELIST_USD_STABLES, USWAP_V2_ROUTERS);
+    function _getBstMarketValueForUsdAmnt(uint64 _usdAmnt, address _usdStable) private view returns (uint64) {
         address[] memory stab_bst_path = new address[](2);
-        stab_bst_path[0] = highStable;
+        stab_bst_path[0] = _usdStable;
         stab_bst_path[1] = address(this);
         (uint8 rtrIdx, uint256 bst_amnt) = _best_swap_v2_router_idx_quote(stab_bst_path, uint256(_usdAmnt), USWAP_V2_ROUTERS);
         return _uint256_to_uint64(bst_amnt); 
