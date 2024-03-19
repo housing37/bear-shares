@@ -577,6 +577,46 @@ $$ DELIMITER ;
 -- #================================================================# --
 -- #STORED PROCEDURES
 -- #================================================================# --
+DELIMITER $$
+DROP PROCEDURE IF EXISTS ADD_NEW_QUIZ_LOG;
+CREATE PROCEDURE `ADD_NEW_QUIZ_LOG`(
+	IN p_user_id INT(11),
+    IN p_tg_bot_id VARCHAR(40), -- '581475171'
+	IN p_tg_bot_at VARCHAR(1024), -- '@bs_trinity_bot'
+    IN p_question TEXT)
+BEGIN
+	-- add to users table
+	INSERT INTO log_bot_quiz (
+			p_user_id,
+			p_tg_bot_id,
+			p_tg_bot_at,
+			p_question
+		) VALUES (
+			fk_user_id_created,
+			tg_bot_id,
+			tg_bot_at,
+			question
+		);
+
+	-- get new user id
+	SELECT LAST_INSERT_ID() into @new_usr_id;
+END 
+$$ DELIMITER ;
+
+DELIMITER $$
+DROP PROCEDURE IF EXISTS ADD_NEW_DATA_LOG;
+CREATE PROCEDURE `ADD_NEW_DATA_LOG`(
+    IN p_tg_user_id VARCHAR(40), -- '581475171'
+	IN p_tg_user_at VARCHAR(1024), -- '@whatever'
+	IN p_tg_user_handle VARCHAR(1024), -- 'my handle'
+    IN p_wallet_address VARCHAR(255),
+    IN p_tw_conf_url VARCHAR(1024),
+	IN p_tw_conf_id VARCHAR(40),
+	IN p_tw_user_at VARCHAR(255))
+BEGIN
+END 
+$$ DELIMITER ;
+
 -- # '/register_as_shiller'
 -- LST_KEYS_REG_SHILLER = ['user_id','user_at','user_handle','wallet_address','trinity_tw_url']
 -- DB_PROC_ADD_NEW_USER = 'ADD_NEW_TG_USER'

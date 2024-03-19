@@ -25,16 +25,32 @@
 -- #===============================================#
 -- # create tables
 -- #===============================================#
-drop table if exists ai_contexts;
-CREATE TABLE `ai_contexts` (
+drop table if exists log_bot_quiz;
+CREATE TABLE `log_bot_quiz` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `dt_created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `dt_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `dt_deleted` timestamp NULL DEFAULT NULL,
   `fk_user_id_created` INT(11) NOT NULL,
-  `fk_user_id_updated` INT(11) NOT NULL,
-  `context_name` varchar(40) DEFAULT '', -- ex: 'Trinity Bot'  
-  `context_text` LONGTEXT DEFAULT '', -- ex: 'You are trinity from the matrix, act like her...'
+  `tg_bot_id` varchar(40) NOT NULL, -- ex: '581475171'
+  `tg_bot_at` varchar(255) default 'nil_at', -- ex: '@bs_trinity_bot'
+  `question` TEXT NOT NULL,
+  `answer` TEXT,
+
+  UNIQUE KEY `ID` (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+drop table if exists log_bot_data;
+CREATE TABLE `log_bot_data` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `dt_created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `dt_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `dt_deleted` timestamp NULL DEFAULT NULL,
+  `fk_user_id_created` INT(11) NOT NULL,
+  `tg_bot_id` varchar(40) NOT NULL, -- ex: '581475171'
+  `tg_bot_at` varchar(1024) default 'nil_at', -- ex: '@bs_trinity_bot'
+  `text_type` varchar(40) NOT NULL, -- const: ai_role, bot_descr
+  `text_data` LONGTEXT, -- ex: 'You are trinity from the matrix, act like her...'
 
   UNIQUE KEY `ID` (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
