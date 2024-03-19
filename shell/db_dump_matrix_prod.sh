@@ -8,7 +8,7 @@ ssh_pem_key="~/.ssh/t2-micro-bear001.pem"
 
 # Define the local file path for the dump
 backup_dir="../database/_backups"
-dt=$(date +'%m%d%H_%H%M')
+dt=$(date +'%m%d%y_%H%M%S')
 backup_file="$backup_dir/the_matrix_db_${dt}ET.sql"
 
 # SSH into the server and run the mysqldump command
