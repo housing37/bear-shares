@@ -48,7 +48,7 @@ contract BSTSwapTools {
         // traverse _stables & select stable w/ the lowest market value
         uint256 curr_high_tok_val = 0;
         address curr_low_val_stable = address(0x0);
-        for (uint i=0; i < _stables.length; i++) {
+        for (uint8 i=0; i < _stables.length;) {
             address stable_addr = _stables[i];
             if (stable_addr == address(0)) { continue; }
 
@@ -63,6 +63,11 @@ contract BSTSwapTools {
                 curr_high_tok_val = tok_val;
                 curr_low_val_stable = stable_addr;
             }
+
+            // NOTE: unchecked, never more than 255 (_stables)
+            unchecked {
+                i++;
+            }
         }
         return curr_low_val_stable;
     }
@@ -72,7 +77,7 @@ contract BSTSwapTools {
         // traverse _stables & select stable w/ the highest market value
         uint256 curr_low_tok_val = 0;
         address curr_high_val_stable = address(0x0);
-        for (uint i=0; i < _stables.length; i++) {
+        for (uint8 i=0; i < _stables.length; i++) {
             address stable_addr = _stables[i];
             if (stable_addr == address(0)) { continue; }
 
@@ -87,6 +92,11 @@ contract BSTSwapTools {
                 curr_low_tok_val = tok_val;
                 curr_high_val_stable = stable_addr;
             }
+
+            // NOTE: unchecked, never more than 255 (_stables)
+            unchecked {
+                i++;
+            }
         }
         return curr_high_val_stable;
     }
@@ -95,11 +105,16 @@ contract BSTSwapTools {
     function _best_swap_v2_router_idx_quote(address[] memory path, uint256 amount, address[] memory _routers) internal view returns (uint8, uint256) {
         uint8 currHighIdx = 37;
         uint256 currHigh = 0;
-        for (uint8 i = 0; i < _routers.length; i++) {
+        for (uint8 i = 0; i < _routers.length;) {
             uint256[] memory amountsOut = IUniswapV2Router02(_routers[i]).getAmountsOut(amount, path); // quote swap
             if (amountsOut[amountsOut.length-1] > currHigh) {
                 currHigh = amountsOut[amountsOut.length-1];
                 currHighIdx = i;
+            }
+
+            // NOTE: unchecked, never more than 255 (_routers)
+            unchecked {
+                i++;
             }
         }
 

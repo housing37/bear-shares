@@ -65,7 +65,7 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     address[] public USWAP_V2_ROUTERS;
     
     address[] public WHITELIST_USD_STABLES;
-    mapping(address => uint64) public USD_STABLE_BALANCES;
+    // mapping(address => uint64) public USD_STABLE_BALANCES;
     mapping(address => uint8) public USD_STABLE_DECS;
 
     /* -------------------------------------------------------- */
@@ -84,6 +84,7 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         setServiceBurnPerc(5); // 5%
         setBuyBackFeePerc(2); // 2%
         _mint(msg.sender, _initSupply * 10**uint8(decimals())); // 'emit Transfer'
+        KEEPER = msg.sender;
     }
 
     /* -------------------------------------------------------- */
@@ -106,8 +107,10 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     }
     function addWhitelistStable(address _usdStable, uint8 _decimals) external onlyKeeper { // allows duplicates
         require(_usdStable != address(0), 'err: 0 address');
+        
         WHITELIST_USD_STABLES = _addAddressToArraySafe(_usdStable, WHITELIST_USD_STABLES, true); // true = no dups
         USD_STABLE_DECS[_usdStable] = _decimals;
+        // USD_STABLE_DECS[_usdStable] = IERC20(_usdStable).decimals();
     }
     function remWhitelistStable(address _usdStable) external onlyKeeper { // allows duplicates
         require(_usdStable != address(0), 'err: 0 address');
@@ -147,13 +150,19 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     //  invokes _getStableTokenHighMarketValue -> _best_swap_v2_router_idx_quote
     //  invokes _getBstMarketValueForUsdAmnt -> _best_swap_v2_router_idx_quote
     //  invokes _getStableHeldLowMarketValue -> _getStableTokenLowMarketValue -> _best_swap_v2_router_idx_quote
+    function _perc_of_uint64(uint8 _perc, uint64 _num) private pure returns (uint64) {
+        require(_perc <= 100, 'err: invalid percent');
+        uint32 aux_perc = _perc * 100;
+        uint64 result = (_num * aux_perc) / 10000; // chatGPT equation
+        return result;
+    }
     function payOutBST(uint64 _usdAmnt, address _payTo) external {
         require(ACCT_USD_BALANCES[msg.sender] >= _usdAmnt, 'err: low acct balance :{}');
         require(_payTo != address(0), 'err: _payTo address');
 
         // calc & remove service fee & burn amount
-        uint64 usdFee = _usdAmnt * (SERVICE_FEE_PERC/100); 
-        uint64 usdBurn = _usdAmnt * (SERVICE_BURN_PERC/100); 
+        uint64 usdFee = _perc_of_uint64(SERVICE_FEE_PERC, _usdAmnt);
+        uint64 usdBurn = _perc_of_uint64(SERVICE_BURN_PERC, _usdAmnt);
         uint64 usdPayout = _usdAmnt - usdFee - usdBurn;
 
         // NOTE: maintain 1:1 if ENABLE_MARKET_BUY == true
@@ -174,6 +183,8 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         //  get whitelist stables with holdings that can cover usdPayout
         //  then choose stable with lowest market value (results in most amnt of BST)
         //   ie. most amount of BST bought from open market (to be burned or paid out)
+        // NOTE: if no stables held can cover 'usdPayout', then lowStableHeld = address(0x0)
+        //  this is indeed ok as '_exeBstPayout' and '_exeBstBurn' checks for this case
         address lowStableHeld = _getStableHeldLowMarketValue(usdPayout, WHITELIST_USD_STABLES, USWAP_V2_ROUTERS); // 3 loops embedded
 
         /** ALGORITHMIC LOGIC ... (for BST ENABLE_MARKET_BUY from dex = ON|OFF)
@@ -215,11 +226,13 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         uint64 usdBuyBackVal = _bstAmnt; 
         
         // calc usd trade in value (1:1, minus buy back fee)
-        uint64 usdTradeVal = usdBuyBackVal - (usdBuyBackVal * (BUY_BACK_FEE_PERC/100));
+        uint64 usdBuyBackFee = _perc_of_uint64(BUY_BACK_FEE_PERC, usdBuyBackVal);
+        uint64 usdTradeVal = usdBuyBackVal - usdBuyBackFee;
 
-        // Verify we have an available whitelist stable to cover it
-        (address usdStable, uint64 usdAvail) = _getBestUsdStableAndBalance(usdTradeVal);
-        require(usdAvail >= usdTradeVal, 'err: not enough stable');
+        // get / verify available whitelist stable that covers trade in value
+        //  want to use lowest market value stable possible (ie. contract maintains high market stables)
+        address usdStable = _getStableHeldLowMarketValue(usdTradeVal, WHITELIST_USD_STABLES, USWAP_V2_ROUTERS);
+        require(usdStable != address(0x0), 'err: not enough stable to cover tradeIn');
 
         // transfer BST in / USD stable out
         _transfer(msg.sender, address(this), _bstAmnt);
@@ -256,6 +269,19 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     /* -------------------------------------------------------- */
     /* PRIVATE - SUPPORTING                                     */
     /* -------------------------------------------------------- */
+    function _getStableHeldHighMarketValue(uint64 _usdAmntReq, address[] memory _stables, address[] memory _routers) private view returns (address) {
+
+        address[] memory _stablesHeld;
+        for (uint i=0; i <= _stables.length;) {
+            if (_stableHoldingsCovered(_usdAmntReq, _stables[i]))
+                _stablesHeld = _addAddressToArraySafe(_stables[i], _stablesHeld, true); // true = no dups
+
+            unchecked {
+                i++;
+            }
+        }
+        return _getStableTokenHighMarketValue(_stablesHeld, _routers); // returns 0x0 if empty _stablesHeld
+    }
     function _getStableHeldLowMarketValue(uint64 _usdAmntReq, address[] memory _stables, address[] memory _routers) private view returns (address) {
 
         address[] memory _stablesHeld;
@@ -267,9 +293,11 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
                 i++;
             }
         }
-        return _getStableTokenLowMarketValue(_stablesHeld, _routers);
+        return _getStableTokenLowMarketValue(_stablesHeld, _routers); // returns 0x0 if empty _stablesHeld
     }
     function _stableHoldingsCovered(uint64 _usdAmnt, address _usdStable) private view returns (bool) {
+        if (_usdStable == address(0x0)) 
+            return false;
         return IERC20(_usdStable).balanceOf(address(this)) >= _usdAmnt;
     }
     function _exeBstPayout(address _payTo, uint256 _bstPayout, uint64 _usdPayout, address _usdStable) private {
@@ -344,28 +372,32 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         (uint8 rtrIdx, uint256 bst_amnt) = _best_swap_v2_router_idx_quote(stab_bst_path, uint256(_usdAmnt), USWAP_V2_ROUTERS);
         return _uint256_to_uint64(bst_amnt); 
     }
-    // NOTE: this function has an embedded loop (ie. '_addAddressToArraySafe')
-    //  and then a 3rd loop inside '_getStableTokenHighMarketValue'
-    function _getBestUsdStableAndBalance(uint64 _reqUsdBal) private returns (address, uint64) {
 
-        // loop through WHITELIST_USD_STABLES to find the highest market value
-        //  that can cover a transfer of '_reqUsdBal'
-        address[] memory availStables;
-        for (uint i=0; i < WHITELIST_USD_STABLES.length;) {
-            address stable_ = WHITELIST_USD_STABLES[i];
-            uint256 stableBal = IERC20(stable_).balanceOf(address(this));
-            if (_uint256_to_uint64(stableBal) >= _reqUsdBal) {
-                availStables = _addAddressToArraySafe(stable_, availStables, true); // true = no dups
-                USD_STABLE_BALANCES[stable_] = _uint256_to_uint64(stableBal);
-            }
+    // house_032024: commented out / disabled, replaced single use case with '_getStableHeldLowMarketValue'
+    //  HOWEVER, not sure if we had a reason for setting USD_STABLE_BALANCES (not used anywhere else)
+    // // NOTE: this function has an embedded loop (ie. '_addAddressToArraySafe')
+    // //  and then a 3rd loop inside '_getStableTokenHighMarketValue'
+    // function _getBestUsdStableAndBalance(uint64 _reqUsdBal) private returns (address, uint64) {
+
+    //     // loop through WHITELIST_USD_STABLES to find the highest market value
+    //     //  that can cover a transfer of '_reqUsdBal'
+    //     address[] memory availStables;
+    //     for (uint i=0; i < WHITELIST_USD_STABLES.length;) {
+    //         address stable_ = WHITELIST_USD_STABLES[i];
+    //         // uint256 stableBal = IERC20(stable_).balanceOf(address(this));
+    //         // if (_uint256_to_uint64(stableBal) >= _reqUsdBal) {
+    //         if (_stableHoldingsCovered(_reqUsdBal, stable_)) {
+    //             availStables = _addAddressToArraySafe(stable_, availStables, true); // true = no dups
+    //             USD_STABLE_BALANCES[stable_] = _uint256_to_uint64(stableBal);
+    //         }
             
-            unchecked {
-                i++;
-            }
-        }
-        address highStable = _getStableTokenHighMarketValue(availStables, USWAP_V2_ROUTERS);
-        return (highStable, USD_STABLE_BALANCES[highStable]);
-    }
+    //         unchecked {
+    //             i++;
+    //         }
+    //     }
+    //     address highStable = _getStableTokenHighMarketValue(availStables, USWAP_V2_ROUTERS);
+    //     return (highStable, USD_STABLE_BALANCES[highStable]);
+    // }
     function _uint256_to_uint64(uint256 value) private pure returns (uint64) {
         require(value <= type(uint64).max, "Value exceeds uint64 range");
         uint64 convertedValue = uint64(value);
