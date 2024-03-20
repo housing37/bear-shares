@@ -91,25 +91,25 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         require(_newKeeper != address(0), 'err: 0 address');
         KEEPER = _newKeeper;
     }
-    function KEEPER_setServiceFeePerc(uint8 _perc) public onlyKeeper() {
+    function KEEPER_setServiceFeePerc(uint8 _perc) external onlyKeeper() {
         require(_perc + SERVICE_BURN_PERC <= 100, 'err: fee + burn percs > 100 :/');
         SERVICE_FEE_PERC = _perc;
     }
-    function KEEPER_setServiceBurnPerc(uint8 _perc) public onlyKeeper() {
+    function KEEPER_setServiceBurnPerc(uint8 _perc) external onlyKeeper() {
         require(SERVICE_FEE_PERC + _perc <= 100, 'err: fee + burn percs > 100 :/');
         SERVICE_BURN_PERC = _perc;
     }
-    function KEEPER_setBuyBackFeePerc(uint8 _perc) public onlyKeeper() {
+    function KEEPER_setBuyBackFeePerc(uint8 _perc) external onlyKeeper() {
         require(_perc <= 100, 'err: _perc > 100%');
         BUY_BACK_FEE_PERC = _perc;
     }
-    function KEEPER_enableMarketBuy(bool _enable) public onlyKeeper() {
+    function KEEPER_enableMarketBuy(bool _enable) external onlyKeeper() {
         ENABLE_MARKET_BUY = _enable;
     }
-    function KEEPER_enableMarketQuote(bool _enable) public onlyKeeper() {
+    function KEEPER_enableMarketQuote(bool _enable) external onlyKeeper() {
         ENABLE_MARKET_QUOTE = _enable;
     }
-    function KEEPER_editWhitelistStable(address _usdStable, uint8 _decimals, bool _remove) external onlyKeeper { // allows duplicates
+    function KEEPER_editWhitelistStables(address _usdStable, uint8 _decimals, bool _remove) external onlyKeeper { // allows duplicates
         require(_usdStable != address(0), 'err: 0 address');
         if (!_remove) {
             WHITELIST_USD_STABLES = _addAddressToArraySafe(_usdStable, WHITELIST_USD_STABLES, true); // true = no dups
@@ -120,7 +120,7 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
             USD_STABLE_DECS[_usdStable] = 0;
         }
     }
-    function KEEPER_editDexRouter(address _router, bool _remove) external onlyKeeper returns (bool) {
+    function KEEPER_editDexRouters(address _router, bool _remove) external onlyKeeper returns (bool) {
         require(_router != address(0x0), "0 address");
         if (!_remove) {
             USWAP_V2_ROUTERS = _addAddressToArraySafe(_router, USWAP_V2_ROUTERS, true); // true = no dups
@@ -132,7 +132,7 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     }
 
     /* -------------------------------------------------------- */
-    /* PUBLIC ACCESSORS / MUTATORS
+    /* PUBLIC - USER INTERFACE
     /* -------------------------------------------------------- */
     // handle contract USD value deposits (convert PLS to USD stable)
     receive() external payable {
