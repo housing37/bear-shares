@@ -43,7 +43,7 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     mapping(address => uint8) public USD_STABLE_DECS;
 
     /* -------------------------------------------------------- */
-    /* EVENTS & STRUCTS                                         */
+    /* STRUCTS                                        
     /* -------------------------------------------------------- */
     struct ACCT_PAYOUT {
         address receiver;
@@ -55,11 +55,19 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         uint64 bstPayout; // BST payout amount
     }
 
-    // LEFT OFF HERE ... probably need some events for stuff
-    //  on receive() deposits
-    //  on payOutBST
-    //  on tradeInBST
-    
+    /* -------------------------------------------------------- */
+    /* EVENTS                                        
+    /* -------------------------------------------------------- */
+    event KeeperTransfer(address _prev, address _new);
+    event ServiceFeeUpdate(uint8 _prev, uint8 _new);
+    event ServiceBurnUpdate(uint8 _prev, uint8 _new);
+    event TradeInFeeUpdate(uint8 _prev, uint8 _new);
+    event MarketBuyEnabled(bool _prev, bool _new);
+    event MarketQuoteEnabled(bool _prev, bool _new);
+    event DepositReceived(address _account, uint256 _plsDeposit, uint64 _stableConvert);
+    event PayOutProcessed(address _from, address _to, uint64 _usdAmnt);
+    event TradeInProcessed(address _trader, uint64 _bstAmnt, uint64 _usdTradeVal);
+
     /* -------------------------------------------------------- */
     /* CONSTRUCTOR                                              */
     /* -------------------------------------------------------- */
@@ -89,25 +97,37 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     }
     function KEEPER_setKeeper(address _newKeeper) external onlyKeeper {
         require(_newKeeper != address(0), 'err: 0 address');
+        address prev = address(KEEPER);
         KEEPER = _newKeeper;
+        emit KeeperTransfer(prev, KEEPER);
     }
     function KEEPER_setServiceFeePerc(uint8 _perc) external onlyKeeper() {
         require(_perc + SERVICE_BURN_PERC <= 100, 'err: fee + burn percs > 100 :/');
+        uint8 prev = SERVICE_FEE_PERC;
         SERVICE_FEE_PERC = _perc;
+        emit ServiceFeeUpdate(prev, SERVICE_FEE_PERC);
     }
     function KEEPER_setServiceBurnPerc(uint8 _perc) external onlyKeeper() {
         require(SERVICE_FEE_PERC + _perc <= 100, 'err: fee + burn percs > 100 :/');
+        uint8 prev = SERVICE_BURN_PERC;
         SERVICE_BURN_PERC = _perc;
+        emit ServiceBurnUpdate(prev, SERVICE_BURN_PERC);
     }
     function KEEPER_setBuyBackFeePerc(uint8 _perc) external onlyKeeper() {
         require(_perc <= 100, 'err: _perc > 100%');
+        uint8 prev = BUY_BACK_FEE_PERC;
         BUY_BACK_FEE_PERC = _perc;
+        emit TradeInFeeUpdate(prev, BUY_BACK_FEE_PERC);
     }
     function KEEPER_enableMarketBuy(bool _enable) external onlyKeeper() {
+        bool prev = ENABLE_MARKET_BUY;
         ENABLE_MARKET_BUY = _enable;
+        emit MarketBuyEnabled(prev, ENABLE_MARKET_BUY);
     }
     function KEEPER_enableMarketQuote(bool _enable) external onlyKeeper() {
+        bool prev = ENABLE_MARKET_QUOTE;
         ENABLE_MARKET_QUOTE = _enable;
+        emit MarketQuoteEnabled(prev, ENABLE_MARKET_QUOTE);
     }
     function KEEPER_editWhitelistStables(address _usdStable, uint8 _decimals, bool _remove) external onlyKeeper { // allows duplicates
         require(_usdStable != address(0), 'err: 0 address');
@@ -148,17 +168,19 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         // convert and set/update balance for this sender
         uint64 amntConvert = _uint256_to_uint64(stableAmntOut);
         ACCT_USD_BALANCES[msg.sender] += amntConvert;
+
+        emit DepositReceived(msg.sender, amntIn, amntConvert);
     }
 
     // handle account payouts
     function payOutBST(uint64 _usdAmnt, address _payTo) external {
-        require(ACCT_USD_BALANCES[msg.sender] >= _usdAmnt, 'err: low acct balance :{}');
-        require(_payTo != address(0), 'err: _payTo address');
-
         // NOTE: payOutBST runs a total of 7 loops embedded
         //  invokes _getStableTokenHighMarketValue -> _best_swap_v2_router_idx_quote
         //  invokes _getBstMarketValueForUsdAmnt -> _best_swap_v2_router_idx_quote
         //  invokes _getStableHeldLowMarketValue -> _getStableTokenLowMarketValue -> _best_swap_v2_router_idx_quote
+        
+        require(ACCT_USD_BALANCES[msg.sender] >= _usdAmnt, 'err: low acct balance :{}');
+        require(_payTo != address(0), 'err: _payTo address');
 
         // calc & remove service fee & burn amount
         uint64 usdFee = _perc_of_uint64(SERVICE_FEE_PERC, _usdAmnt);
@@ -200,6 +222,8 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
 
         // log this payout
         ACCT_USD_PAYOUTS[msg.sender].push(ACCT_PAYOUT(_payTo, _usdAmnt, usdFee, usdBurn, usdPayout, bstBurn, bstPayout));
+
+        emit PayOutProcessed(msg.sender, _payTo, _usdAmnt);
     }
     
     // handle contract BST buy-backs
@@ -221,6 +245,8 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         // transfer BST in / USD stable out
         _transfer(msg.sender, address(this), _bstAmnt);
         IERC20(usdStable).transfer(msg.sender, usdTradeVal);
+
+        emit TradeInProcessed(msg.sender, _bstAmnt, usdTradeVal);
     }
 
     /* -------------------------------------------------------- */
