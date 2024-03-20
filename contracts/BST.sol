@@ -65,9 +65,9 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     /* -------------------------------------------------------- */
     // NOTE: sets msg.sender to '_owner' ('Ownable' maintained)
     constructor(uint256 _initSupply) ERC20(tok_name, tok_symb) Ownable(msg.sender) {
-        setServiceFeePerc(5); // 5%
-        setServiceBurnPerc(5); // 5%
-        setBuyBackFeePerc(2); // 2%
+        SERVICE_FEE_PERC = 5;  // 5%
+        SERVICE_BURN_PERC = 5; // 5%
+        BUY_BACK_FEE_PERC = 2; // 2%
         _mint(msg.sender, _initSupply * 10**uint8(decimals())); // 'emit Transfer'
         KEEPER = msg.sender;
     }
