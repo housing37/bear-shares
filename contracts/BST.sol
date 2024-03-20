@@ -4,10 +4,6 @@
 //  code size limit = 49152 bytes (a limit introduced in Shanghai _ 2023)
 pragma solidity ^0.8.20;        
 
-// interfaces
-// import "./IGTADelegate.sol";
-// import "./IGTALib.sol";
-
 // inherited contracts
 import "./BSTSwapTools.sol"; // deploy|local
 // import "@openzeppelin/contracts/token/ERC20/ERC20.sol"; // deploy
@@ -15,33 +11,40 @@ import "./BSTSwapTools.sol"; // deploy|local
 import "./node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol"; // local _ $ npm install @openzeppelin/contracts
 import "./node_modules/@openzeppelin/contracts/access/Ownable.sol";  // local _ $ npm install @openzeppelin/contracts
 
-/* terminology...
-                 join -> room, game, event, activity
-             register -> seat, guest, delegates, users, participants, entrants
-    payout/distribute -> rewards, winnings, earnings, recipients 
+/* TERMS...
+    BST = BearSharesTrinity
 */
-// Import MyStruct from ContractB
-// using IGTALib for IGTALib.Event_0;
 contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     uint8 public VERSION = 0;
 
     /* -------------------------------------------------------- */
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
-    /* _ ADMIN SUPPORT _ */
-    // IGTADelegate private GTAD; // 'keeper' maintained within
-    // IGTALib private GTAL;
-    address public KEEPER;
-    
     /* _ TOKEN INIT SUPPORT _ */
-    string private constant tok_name = "BearSharesTrinity";
-    string private constant tok_symb = "BST";
-    // string private tok_name = string(abi.encodePacked("tGTA ", VERSION));
+    string private constant tok_symb = "tBST";
+    // string private constant tok_name = "Trinity";
+    string private tok_name = string(abi.encodePacked("tTrinity_", VERSION));
+
+    /* _ ADMIN SUPPORT _ */
+    address public KEEPER;
+    bool public ENABLE_MARKET_QUOTE = false; // set BST pay & burn val w/ market quote (else 1:1)
+    bool public ENABLE_MARKET_BUY = false; // cover BST pay & burn val w/ market buy (else use holdings & mint)
+    uint8 public SERVICE_FEE_PERC = 0; // 0%
+    uint8 public SERVICE_BURN_PERC = 0; // 0%
+    uint8 public BUY_BACK_FEE_PERC = 0; // 0%
     
-    struct USD_STABLE {
-        address tokAddr;
-        uint8 tokDecimals;
-    }
+    /* _ ACCOUNT SUPPORT _ */
+    // uint64 max USD: ~18T -> 18,446,744,073,709.551615 (6 decimals)
+    mapping(address => uint64) public ACCT_USD_BALANCES;
+    mapping(address => ACCT_PAYOUT[]) public ACCT_USD_PAYOUTS;
+
+    address[] public USWAP_V2_ROUTERS;
+    address[] public WHITELIST_USD_STABLES;
+    mapping(address => uint8) public USD_STABLE_DECS;
+
+    /* -------------------------------------------------------- */
+    /* EVENTS & STRUCTS                                         */
+    /* -------------------------------------------------------- */
     struct ACCT_PAYOUT {
         address receiver;
         uint64 usdAmnt; // USD total ACCT deduction
@@ -52,33 +55,15 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         uint64 bstPayout; // BST payout amount
     }
 
-    // uint64 max USD: ~18T -> 18,446,744,073,709.551615 (6 decimals)
-    mapping(address => uint64) public ACCT_USD_BALANCES;
-    uint8 public SERVICE_FEE_PERC = 0; // 0%
-    uint8 public SERVICE_BURN_PERC = 0; // 0%
-    uint8 public BUY_BACK_FEE_PERC = 0; // 0%
-    bool public ENABLE_MARKET_BUY = false;
-
-    mapping(address => ACCT_PAYOUT[]) public ACCT_USD_PAYOUTS;
-    // address[] private creditsAddrArray;
-
-    address[] public USWAP_V2_ROUTERS;
+    // LEFT OFF HERE ... probably need some events for stuff
+    //  on receive() deposits
+    //  on payOutBST
+    //  on tradeInBST
     
-    address[] public WHITELIST_USD_STABLES;
-    // mapping(address => uint64) public USD_STABLE_BALANCES;
-    mapping(address => uint8) public USD_STABLE_DECS;
-
-    /* -------------------------------------------------------- */
-    /* EVENTS                                                   */
-    /* -------------------------------------------------------- */
-
-
     /* -------------------------------------------------------- */
     /* CONSTRUCTOR                                              */
     /* -------------------------------------------------------- */
-    // NOTE: pre-initialized 'GTADelegate' address required
-    //      initializer w/ 'keeper' not required ('GTADelegate' maintained)
-    //      sets msg.sender to '_owner' ('Ownable' maintained)
+    // NOTE: sets msg.sender to '_owner' ('Ownable' maintained)
     constructor(uint256 _initSupply) ERC20(tok_name, tok_symb) Ownable(msg.sender) {
         setServiceFeePerc(5); // 5%
         setServiceBurnPerc(5); // 5%
@@ -88,7 +73,7 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     }
 
     /* -------------------------------------------------------- */
-    /* MODIFIERS                                                */
+    /* MODIFIERS                                                
     /* -------------------------------------------------------- */
     modifier onlyKeeper() {
         require(msg.sender == KEEPER, "!keeper :p");
@@ -107,7 +92,6 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     }
     function addWhitelistStable(address _usdStable, uint8 _decimals) external onlyKeeper { // allows duplicates
         require(_usdStable != address(0), 'err: 0 address');
-        
         WHITELIST_USD_STABLES = _addAddressToArraySafe(_usdStable, WHITELIST_USD_STABLES, true); // true = no dups
         USD_STABLE_DECS[_usdStable] = _decimals;
         // USD_STABLE_DECS[_usdStable] = IERC20(_usdStable).decimals();
@@ -127,18 +111,21 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         USWAP_V2_ROUTERS = _remAddressFromArray(router, USWAP_V2_ROUTERS); // removes only one & order NOT maintained
         return true;
     }
-    function setBuyBurnEnabled(bool _enable) public onlyOwner() {
+    function enableMarketBuy(bool _enable) public onlyKeeper() {
         ENABLE_MARKET_BUY = _enable;
     }
-    function setServiceFeePerc(uint8 _perc) public onlyOwner() {
+    function enableMarketQuote(bool _enable) public onlyKeeper() {
+        ENABLE_MARKET_QUOTE = _enable;
+    }
+    function setServiceFeePerc(uint8 _perc) public onlyKeeper() {
         require(_perc + SERVICE_BURN_PERC <= 100, 'err: fee + burn percs > 100 :/');
         SERVICE_FEE_PERC = _perc;
     }
-    function setServiceBurnPerc(uint8 _perc) public onlyOwner() {
+    function setServiceBurnPerc(uint8 _perc) public onlyKeeper() {
         require(SERVICE_FEE_PERC + _perc <= 100, 'err: fee + burn percs > 100 :/');
         SERVICE_BURN_PERC = _perc;
     }
-    function setBuyBackFeePerc(uint8 _perc) public onlyOwner() {
+    function setBuyBackFeePerc(uint8 _perc) public onlyKeeper() {
         require(_perc <= 100, 'err: _perc more than 100%');
         BUY_BACK_FEE_PERC = _perc;
     }
@@ -146,30 +133,42 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     /* -------------------------------------------------------- */
     /* PUBLIC ACCESSORS / MUTATORS
     /* -------------------------------------------------------- */
-    // NOTE: payOutBST runs a total of 7 loops embedded
-    //  invokes _getStableTokenHighMarketValue -> _best_swap_v2_router_idx_quote
-    //  invokes _getBstMarketValueForUsdAmnt -> _best_swap_v2_router_idx_quote
-    //  invokes _getStableHeldLowMarketValue -> _getStableTokenLowMarketValue -> _best_swap_v2_router_idx_quote
-    function _perc_of_uint64(uint8 _perc, uint64 _num) private pure returns (uint64) {
-        require(_perc <= 100, 'err: invalid percent');
-        uint32 aux_perc = _perc * 100;
-        uint64 result = (_num * aux_perc) / 10000; // chatGPT equation
-        return result;
+    // handle contract USD value deposits (convert PLS to USD stable)
+    receive() external payable {
+        // extract PLS value sent
+        uint256 amntIn = msg.value; 
+
+        // get whitelisted stable with lowest market value (ie. receive most stable for swap)
+        address usdSable = _getStableTokenLowMarketValue(WHITELIST_USD_STABLES, USWAP_V2_ROUTERS);
+
+        // perform swap from PLS to stable
+        uint256 stableAmntOut = _exeSwapPlsForStable(amntIn, usdSable);
+
+        // convert and set/update balance for this sender
+        uint64 amntConvert = _uint256_to_uint64(stableAmntOut);
+        ACCT_USD_BALANCES[msg.sender] += amntConvert;
     }
+
+    // handle account payouts
     function payOutBST(uint64 _usdAmnt, address _payTo) external {
         require(ACCT_USD_BALANCES[msg.sender] >= _usdAmnt, 'err: low acct balance :{}');
         require(_payTo != address(0), 'err: _payTo address');
+
+        // NOTE: payOutBST runs a total of 7 loops embedded
+        //  invokes _getStableTokenHighMarketValue -> _best_swap_v2_router_idx_quote
+        //  invokes _getBstMarketValueForUsdAmnt -> _best_swap_v2_router_idx_quote
+        //  invokes _getStableHeldLowMarketValue -> _getStableTokenLowMarketValue -> _best_swap_v2_router_idx_quote
 
         // calc & remove service fee & burn amount
         uint64 usdFee = _perc_of_uint64(SERVICE_FEE_PERC, _usdAmnt);
         uint64 usdBurn = _perc_of_uint64(SERVICE_BURN_PERC, _usdAmnt);
         uint64 usdPayout = _usdAmnt - usdFee - usdBurn;
 
-        // NOTE: maintain 1:1 if ENABLE_MARKET_BUY == true
+        // NOTE: maintain 1:1 if ENABLE_MARKET_QUOTE == false
         //  else, get BST value quotes at high market whitelist stable
         uint64 bstPayout = usdPayout;
         uint64 bstBurn = usdBurn;
-        if (ENABLE_MARKET_BUY) {
+        if (ENABLE_MARKET_QUOTE) {
             // NOTE: integration runs 4 embedded loops
             //  choose whitelist stable with highest market value
             //  then get BST quote against that high market stable (results in least amnt of BST)
@@ -202,22 +201,6 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         ACCT_USD_PAYOUTS[msg.sender].push(ACCT_PAYOUT(_payTo, _usdAmnt, usdFee, usdBurn, usdPayout, bstBurn, bstPayout));
     }
     
-    // handle contract USD value deposits (convert PLS to USD stable)
-    receive() external payable {
-        // extract PLS value sent
-        uint256 amntIn = msg.value; 
-
-        // get whitelisted stable with lowest market value (ie. receive most stable for swap)
-        address usdSable = _getStableTokenLowMarketValue(WHITELIST_USD_STABLES, USWAP_V2_ROUTERS);
-
-        // perform swap from PLS to stable
-        uint256 stableAmntOut = _exeSwapPlsForStable(amntIn, usdSable);
-
-        // convert and set/update balance for this sender
-        uint64 amntConvert = _uint256_to_uint64(stableAmntOut);
-        ACCT_USD_BALANCES[msg.sender] += amntConvert;
-    }
-
     // handle contract BST buy-backs
     function tradeInBST(uint64 _bstAmnt) external {
         require(balanceOf(msg.sender) >= _bstAmnt,'err: not enough BST');
@@ -238,33 +221,6 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         _transfer(msg.sender, address(this), _bstAmnt);
         IERC20(usdStable).transfer(msg.sender, usdTradeVal);
     }
-
-    function usdDecimals() public pure returns (uint8) {
-        return 6; // (6 decimals) 
-            // * min USD = 0.000001 (6 decimals) 
-            // uint16 max USD: ~0.06 -> 0.065535 (6 decimals)
-            // uint32 max USD: ~4K -> 4,294.967295 USD (6 decimals)
-            // uint64 max USD: ~18T -> 18,446,744,073,709.551615 (6 decimals)
-        // return 18; // (18 decimals) 
-            // * min USD = 0.000000000000000001 (18 decimals) 
-            // uint64 max USD: ~18 -> 18.446744073709551615 (18 decimals)
-            // uint128 max USD: ~340T -> 340,282,366,920,938,463,463.374607431768211455 (18 decimals)
-    }
-
-    /* -------------------------------------------------------- */
-    /* PUBLIC ACCESSORS - GTA HOLDER SUPPORT                    */
-    /* -------------------------------------------------------- */
-
-
-    /* -------------------------------------------------------- */
-    /* PUBLIC - HOST / PLAYER SUPPORT                           */
-    /* -------------------------------------------------------- */
-
-
-    /* -------------------------------------------------------- */
-    /* KEEPER CALL-BACK                                         */
-    /* -------------------------------------------------------- */
-
 
     /* -------------------------------------------------------- */
     /* PRIVATE - SUPPORTING                                     */
@@ -372,32 +328,12 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         (uint8 rtrIdx, uint256 bst_amnt) = _best_swap_v2_router_idx_quote(stab_bst_path, uint256(_usdAmnt), USWAP_V2_ROUTERS);
         return _uint256_to_uint64(bst_amnt); 
     }
-
-    // house_032024: commented out / disabled, replaced single use case with '_getStableHeldLowMarketValue'
-    //  HOWEVER, not sure if we had a reason for setting USD_STABLE_BALANCES (not used anywhere else)
-    // // NOTE: this function has an embedded loop (ie. '_addAddressToArraySafe')
-    // //  and then a 3rd loop inside '_getStableTokenHighMarketValue'
-    // function _getBestUsdStableAndBalance(uint64 _reqUsdBal) private returns (address, uint64) {
-
-    //     // loop through WHITELIST_USD_STABLES to find the highest market value
-    //     //  that can cover a transfer of '_reqUsdBal'
-    //     address[] memory availStables;
-    //     for (uint i=0; i < WHITELIST_USD_STABLES.length;) {
-    //         address stable_ = WHITELIST_USD_STABLES[i];
-    //         // uint256 stableBal = IERC20(stable_).balanceOf(address(this));
-    //         // if (_uint256_to_uint64(stableBal) >= _reqUsdBal) {
-    //         if (_stableHoldingsCovered(_reqUsdBal, stable_)) {
-    //             availStables = _addAddressToArraySafe(stable_, availStables, true); // true = no dups
-    //             USD_STABLE_BALANCES[stable_] = _uint256_to_uint64(stableBal);
-    //         }
-            
-    //         unchecked {
-    //             i++;
-    //         }
-    //     }
-    //     address highStable = _getStableTokenHighMarketValue(availStables, USWAP_V2_ROUTERS);
-    //     return (highStable, USD_STABLE_BALANCES[highStable]);
-    // }
+    function _perc_of_uint64(uint8 _perc, uint64 _num) private pure returns (uint64) {
+        require(_perc <= 100, 'err: invalid percent');
+        uint32 aux_perc = _perc * 100;
+        uint64 result = (_num * aux_perc) / 10000; // chatGPT equation
+        return result;
+    }
     function _uint256_to_uint64(uint256 value) private pure returns (uint64) {
         require(value <= type(uint64).max, "Value exceeds uint64 range");
         uint64 convertedValue = uint64(value);
@@ -451,8 +387,15 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     /* ERC20 - OVERRIDES                                        */
     /* -------------------------------------------------------- */
     function decimals() public pure override returns (uint8) {
-        // return 18;
-        return 6;
+        return 6; // (6 decimals) 
+            // * min USD = 0.000001 (6 decimals) 
+            // uint16 max USD: ~0.06 -> 0.065535 (6 decimals)
+            // uint32 max USD: ~4K -> 4,294.967295 USD (6 decimals)
+            // uint64 max USD: ~18T -> 18,446,744,073,709.551615 (6 decimals)
+        // return 18; // (18 decimals) 
+            // * min USD = 0.000000000000000001 (18 decimals) 
+            // uint64 max USD: ~18 -> 18.446744073709551615 (18 decimals)
+            // uint128 max USD: ~340T -> 340,282,366,920,938,463,463.374607431768211455 (18 decimals)
     }
     function transferFrom(address from, address to, uint256 value) public override returns (bool) {
         if (from != address(this)) {
