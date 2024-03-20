@@ -88,34 +88,8 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         IERC20(_usdStable).transfer(KEEPER, _usdAmnt);
     }
     function KEEPER_setKeeper(address _newKeeper) external onlyKeeper {
+        require(_newKeeper != address(0), 'err: 0 address');
         KEEPER = _newKeeper;
-    }
-    function KEEPER_addWhitelistStable(address _usdStable, uint8 _decimals) external onlyKeeper { // allows duplicates
-        require(_usdStable != address(0), 'err: 0 address');
-        WHITELIST_USD_STABLES = _addAddressToArraySafe(_usdStable, WHITELIST_USD_STABLES, true); // true = no dups
-        USD_STABLE_DECS[_usdStable] = _decimals;
-        // USD_STABLE_DECS[_usdStable] = IERC20(_usdStable).decimals();
-    }
-    function KEEPER_remWhitelistStable(address _usdStable) external onlyKeeper { // allows duplicates
-        require(_usdStable != address(0), 'err: 0 address');
-        WHITELIST_USD_STABLES = _remAddressFromArray(_usdStable, WHITELIST_USD_STABLES);
-        USD_STABLE_DECS[_usdStable] = 0;
-    }
-    function KEEPER_addDexRouter(address _router) external onlyKeeper returns (bool) {
-        require(_router != address(0x0), "0 address");
-        USWAP_V2_ROUTERS = _addAddressToArraySafe(_router, USWAP_V2_ROUTERS, true); // true = no dups
-        return true;
-    }
-    function KEEPER_remDexRouter(address router) external onlyKeeper returns (bool) {
-        require(router != address(0x0), "0 address");
-        USWAP_V2_ROUTERS = _remAddressFromArray(router, USWAP_V2_ROUTERS); // removes only one & order NOT maintained
-        return true;
-    }
-    function KEEPER_enableMarketBuy(bool _enable) public onlyKeeper() {
-        ENABLE_MARKET_BUY = _enable;
-    }
-    function KEEPER_enableMarketQuote(bool _enable) public onlyKeeper() {
-        ENABLE_MARKET_QUOTE = _enable;
     }
     function KEEPER_setServiceFeePerc(uint8 _perc) public onlyKeeper() {
         require(_perc + SERVICE_BURN_PERC <= 100, 'err: fee + burn percs > 100 :/');
@@ -126,8 +100,35 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         SERVICE_BURN_PERC = _perc;
     }
     function KEEPER_setBuyBackFeePerc(uint8 _perc) public onlyKeeper() {
-        require(_perc <= 100, 'err: _perc more than 100%');
+        require(_perc <= 100, 'err: _perc > 100%');
         BUY_BACK_FEE_PERC = _perc;
+    }
+    function KEEPER_enableMarketBuy(bool _enable) public onlyKeeper() {
+        ENABLE_MARKET_BUY = _enable;
+    }
+    function KEEPER_enableMarketQuote(bool _enable) public onlyKeeper() {
+        ENABLE_MARKET_QUOTE = _enable;
+    }
+    function KEEPER_editWhitelistStable(address _usdStable, uint8 _decimals, bool _remove) external onlyKeeper { // allows duplicates
+        require(_usdStable != address(0), 'err: 0 address');
+        if (!_remove) {
+            WHITELIST_USD_STABLES = _addAddressToArraySafe(_usdStable, WHITELIST_USD_STABLES, true); // true = no dups
+            USD_STABLE_DECS[_usdStable] = _decimals;
+            // USD_STABLE_DECS[_usdStable] = IERC20(_usdStable).decimals();
+        } else {
+            WHITELIST_USD_STABLES = _remAddressFromArray(_usdStable, WHITELIST_USD_STABLES);
+            USD_STABLE_DECS[_usdStable] = 0;
+        }
+    }
+    function KEEPER_editDexRouter(address _router, bool _remove) external onlyKeeper returns (bool) {
+        require(_router != address(0x0), "0 address");
+        if (!_remove) {
+            USWAP_V2_ROUTERS = _addAddressToArraySafe(_router, USWAP_V2_ROUTERS, true); // true = no dups
+            return true;
+        } else {
+            USWAP_V2_ROUTERS = _remAddressFromArray(_router, USWAP_V2_ROUTERS); // removes only one & order NOT maintained
+            return true;
+        }
     }
 
     /* -------------------------------------------------------- */
