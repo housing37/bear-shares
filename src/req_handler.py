@@ -39,6 +39,7 @@ VERBOSE_LOG = False
 WEB_DRIVER_WAIT_SEC = 30 # num sec to wait for html render
 WEB_DRIVER_WAIT_CNT = 6 # num of tries to wait and find 'X:' in each html rendered
 WEB_DRIVE_WAIT_SLEEP_SEC = 0.1 # sleep sec before next web driver wait attempt
+LST_IGNORE_TWITTER_AT = ['BearSharesNFT']
 
 # twitter access globals
 CONSUMER_KEY = 'nil_tw_key'
@@ -540,6 +541,12 @@ def parse_twitter_url(_keyVals, _key):
     if not valid_dom: return _keyVals, False
     _keyVals['tweet_id'] = lst_items[5].split('?')[0] if '?' in lst_items[5] else lst_items[5]
     _keyVals['twitter_at'] = lst_items[3]
+
+    # fail: if twitter_at is in ignore list
+    if _keyVals['twitter_at'].lower() in [v.lower() for v in LST_IGNORE_TWITTER_AT]: 
+        print(f" found attempt to use '@{_keyVals['twitter_at']}' in twitter ignore list, returning False")
+        return _keyVals, False
+
     return _keyVals, True
 
 def search_tweet_for_text(tweet_url, _lst_text=[], _headless=True):

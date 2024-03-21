@@ -626,3 +626,23 @@ if __name__ == "__main__":
     print(f'\n\nRUN_TIME_START: {RUN_TIME_START}\nRUN_TIME_END:   {get_time_now()}\n')
 
 print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
+
+
+
+# @BearSharesNFT ...
+# https://twitter.com/BearSharesNFT/status/1769436246084919550?s=19 # only '@BearSharesNFT'
+
+# @SolAudits ...
+# ex tweet_conf (fails): https://x.com/SolAudits/status/1765925371851972744?s=20 # only '@BearSharesNFT'
+# ex tweet_conf (valid): https://x.com/SolAudits/status/1765925225844089300?s=20
+# ex tweet_conf (valid): https://x.com/SolAudits/status/1766554515094778118?s=20
+# ex tweet_conf (valid): https://x.com/SolAudits/status/1766580860604571739?s=20
+# ex tweet_conf (valid): https://x.com/SolAudits/status/1766584748527247440?s=20
+# ex tweet_conf (valid): https://x.com/SolAudits/status/1766586177438564670?s=20
+
+# ex tweet_shill (fails): https://x.com/TopGunHexadian/status/1766339571342553408?s=20
+# ex tweet_shill (valid): https://x.com/SolAudits/status/1766663759961940205?s=20
+
+# @TeddyShares ...
+# ex tweet_conf (valid): https://x.com/TeddyShares/status/1767453126896881733?s=20
+# ex tweet_shill (valid): https://x.com/teddyshares/status/1768088560433787068?s=46&t=nEQblYL5Q2q_AqjDvXnRZg
