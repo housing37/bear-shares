@@ -440,6 +440,13 @@ BEGIN
 		SELECT 'failed' as `status`, 
 				@v_valid as info, 
 				p_tg_user_id as tg_user_id_inp;
+
+	ELSEIF NOT valid_wallet_set(p_tg_user_id, p_tg_user_at) THEN
+		SELECT 'failed' as `status`, 
+				'no wallet address set' as info, 
+				p_tg_user_id as tg_user_id_inp,
+				p_tg_user_at as tg_user_at_inp;
+				
 	ELSE
 		SET @v_usd_min = 1.00;
 		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;

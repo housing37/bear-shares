@@ -155,21 +155,6 @@ async def cmd_handler(update: Update, context):
         print(str_r)
         print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
         await update.message.reply_text(str_r)
-
-    # @BearSharesNFT ...
-    # ex tweet_conf (fails): https://x.com/SolAudits/status/1765925371851972744?s=20 # only '@BearSharesNFT'
-    # ex tweet_conf (valid): https://x.com/SolAudits/status/1765925225844089300?s=20
-    # ex tweet_conf (valid): https://x.com/SolAudits/status/1766554515094778118?s=20
-    # ex tweet_conf (valid): https://x.com/SolAudits/status/1766580860604571739?s=20
-    # ex tweet_conf (valid): https://x.com/SolAudits/status/1766584748527247440?s=20
-    # ex tweet_conf (valid): https://x.com/SolAudits/status/1766586177438564670?s=20
-
-    # ex tweet_shill (fails): https://x.com/TopGunHexadian/status/1766339571342553408?s=20
-    # ex tweet_shill (valid): https://x.com/SolAudits/status/1766663759961940205?s=20
-
-    # @TeddyShares ...
-    # ex tweet_conf (valid): https://x.com/TeddyShares/status/1767453126896881733?s=20
-    # ex tweet_shill (valid): https://x.com/teddyshares/status/1768088560433787068?s=46&t=nEQblYL5Q2q_AqjDvXnRZg
     
     # NOTE: all non-admin db procs require 'tg_user_id' & 'tg_user_at' (ie. uid & uname_at)
     if 'admin' not in tg_cmd:

@@ -51,6 +51,28 @@ END
 $$ DELIMITER ;
 
 DELIMITER $$
+drop FUNCTION if exists valid_wallet_set; -- setup
+CREATE FUNCTION `valid_wallet_set`(
+		p_tg_user_id VARCHAR(40),
+		p_tg_user_at VARCHAR(40)) RETURNS BOOLEAN
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+	SELECT COUNT(*) FROM users WHERE tg_user_id = p_tg_user_id INTO @v_cnt;
+	IF @v_cnt = 0 THEN
+		RETURN FALSE;
+	ELSE
+		SELECT wallet_address FROM users WHERE tg_user_id = p_tg_user_id INTO @v_wa; 
+		IF @v_wa = '0x0' THEN
+			RETURN FALSE;
+		ELSE
+			RETURN TRUE;
+		END IF;
+	END IF;
+END 
+$$ DELIMITER ;
+
+DELIMITER $$
 drop FUNCTION if exists valid_tg_user; -- setup
 CREATE FUNCTION `valid_tg_user`(
 		p_tg_user_id VARCHAR(40),
