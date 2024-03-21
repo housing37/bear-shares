@@ -402,6 +402,16 @@ def parse_request(request, req_handler_key, tg_cmd=None): # (1)
 #=====================================================#
 #         DYNAMIC request handler support             #
 #=====================================================#
+def execute_db_proc(keyVals, stored_proc):
+    funcname = f'{__filename} execute_db_call_simple'
+    print(funcname + ' - ENTER')
+    dbProcResult = exe_stored_proc(-1, stored_proc, keyVals)
+    bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=VERBOSE_LOG)
+    if bErr: return False, 'db error occurred', dbProcResult
+    return True, jsonResp, dbProcResult
+
+    # LEFT OFF HERE ...
+
 # append req_handler_key, parse keyVals params, invoke database function
 def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
     funcname = f'{__filename} execute_db_calls'

@@ -49,37 +49,23 @@ HELLO! I am Trinity!
 It's time to start claiming your free air-drop!
 
 $BST is a PRC20 token that pays you to tweet.. it's as simple as that 🤷️️️️
-$BST is pegged 1:1 to USD stables
-$BST can be easily exchanged for USD stable in our web dapp
+$BST is redeambale 1:1 for USD stable on our web dapp
 
 * CLAIM AIR-DROP *
 Please follow these 3 steps to claim your free air-drop ...
-1) register ...
-    - tweet "@BearSharesNFT trinity"
-    - then register using your wallet address and the link to that tweet
-        CMD: /trinity_register_as_shiller <wallet_address> <tweet_link>
+1) register by tweeting "@BearSharesNFT trinity"
+    - then post that tweet url into this TG chat
 
 2) tweet anything you want and include "@BearSharesNFT"
-    - then sumbit that tweet link for approval
-        CMD: /trinity_submit_shill <tweet_link>
+    - then post that tweet url into this TG chat
 
-3) view your earnings & request cashout
-    - you will be paid in our new $BST token
-    - $BST is pegged 1:1 to USD stables
-        CMD: /trinity_show_my_earnings
-        CMD: /trinity_request_cashout
+3) view your earnings & request $BST cashout
+    CMD: /trinity_show_my_earnings
+    CMD: /trinity_request_cashout
 
 NOTE: Better-Pays-More (earn more for memes, videos, etc.)
     - your pay rates increase as your tweets get better
         CMD:  /trinity_show_my_rates
-
-Here are all the commands you may use to get started ...
-    /trinity_register_as_shiller <wallet_address> <tweet_url>
-    /trinity_confirm_twitter <tweet_url>
-    /trinity_submit_shill <tweet_url>
-    /trinity_request_cashout
-    /trinity_show_my_rates
-    /trinity_show_my_earnings
 
 Questions: @WhiteRabbit0x0 or @Housing37
 
@@ -338,7 +324,7 @@ async def btn_option_selects(update: Update, context):
     context.user_data['inp_split'] = list(inp_split)
     await cmd_exe(update, context)
 
-async def cmd_exe(update: Update, context):
+async def cmd_exe(update: Update, context, aux_cmd=False):
     funcname = 'cmd_exe'
     print(cStrDivider_1, f'ENTER - {funcname} _ {get_time_now()}', sep='\n')
     
@@ -361,7 +347,8 @@ async def cmd_exe(update: Update, context):
         err_msg = response_dict['MSG']
 
         if not update.message:
-            await update.callback_query.message.reply_text(f"err_{err_num}: {err_msg}")
+            # await update.callback_query.message.reply_text(f"err_{err_num}: {err_msg}")
+            if not aux_cmd: await update.callback_query.message.reply_text(f"err_{err_num}: {err_msg}")
         else:
             str_resp = f"err_{err_num}: {err_msg}"
             if tg_cmd == req_handler.kREQUEST_CASHOUT:
@@ -369,9 +356,11 @@ async def cmd_exe(update: Update, context):
                 usd_owed = lst_resp_arr[0]['usd_owed'] if 'usd_owed' in lst_resp_arr[0] else 'err'
                 cashout_min = lst_resp_arr[0]['usd_withdraw_min'] if 'usd_withdraw_min' in lst_resp_arr[0] else 'err'
                 str_resp = str_resp + f'\n usd_owed: {usd_owed}\n usd_cashout_min: {cashout_min}'
-                await update.message.reply_text(str_resp)
+                # await update.message.reply_text(str_resp)
+                if not aux_cmd: await update.message.reply_text(str_resp)
             else:
-                await update.message.reply_text(str_resp)
+                # await update.message.reply_text(str_resp)
+                if not aux_cmd: await update.message.reply_text(str_resp)
     else:
         d_resp = response_dict['PAYLOAD']['result_arr'][0]
         # [print(k, d_resp[k]) for k in d_resp.keys()]
@@ -478,7 +467,62 @@ async def cmd_exe(update: Update, context):
         else:
             await update.message.reply_text(f"'/{tg_cmd}' Executed Successfully! _ ")
         
-        
+    print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
+
+def valid_tweet_url(_tw_url):
+    # check for validate tweet url
+    keyVals = {'_tw_url':_tw_url}
+    keyVals, success = req_handler.parse_twitter_url(keyVals, '_tw_url')
+    return keyVals, success
+
+def used_bs_tweet_url(_keyVals):
+    success, jsonResp, dbProcResult = req_handler.execute_db_proc(_keyVals, 'TW_URL_IS_USED')
+    if success: return bool(dbProcResult[0]['is_used'])
+    else: True # db proc failes, return True (act shill already used)
+
+async def attempt_aux_cmd_exe(update: Update, context):
+    funcname = 'attempt_aux_cmd_exe'
+    user = update.message.from_user
+    uid = user.id
+    uname_at = user.username
+    uname_handle = 'nil_handle_disabled'
+    if USE_ALT_ACCT: 
+        # uid = '1058890141'
+        # uname_at = 'laycpirates'
+        uid = '6919802491'
+        uname_at = 'fricardooo'
+
+    # check if message text 'could' contain a tweet url
+    inp = update.message.text
+    if 'x.com' not in inp and 'twitter.com' not in inp: return
+
+    print(f'{get_time_now()} __ action : found potential tweet url')
+    print(cStrDivider_1, f'ENTER - {funcname} _ {get_time_now()}', sep='\n')
+
+    # traverse through string, check for valid tweet url, 
+    #   if valid tweet, check db to see if its been used yet
+    #   if not used yet, generate aux_inp_split & attempt /register & /submit
+    inp_split = list(update.message.text.split())
+    for str_ in inp_split:
+        keyVals, valid_tweet = valid_tweet_url(str_)
+        if valid_tweet:
+            tweet_is_used = used_bs_tweet_url(keyVals) # db check for used reg or shill
+            print(f'tweet_is_used: {tweet_is_used}')
+            if not tweet_is_used:
+                valid_shill, msg = req_handler.valid_trinity_tweet(str_, ['@BearSharesNFT']) # net request
+                valid_reg, msg = req_handler.valid_trinity_tweet(str_, ['@BearSharesNFT', 'Trinity']) # net request
+                print(f'valid_shill: {valid_shill}')
+                if valid_shill:
+                    aux_inp_split = ['/'+req_handler.kSUBMIT_SHILL, uid, uname_at, str_]
+                    context.user_data['inp_split'] = list(aux_inp_split)
+                    await cmd_exe(update, context, aux_cmd=True)
+                
+                print(f'valid_reg: {valid_reg}')
+                if valid_reg:
+                    aux_inp_split = ['/'+req_handler.kSHILLER_REG, uid, uname_at, uname_handle, '0x0', str_]
+                    context.user_data['inp_split'] = list(aux_inp_split)
+                    await cmd_exe(update, context, aux_cmd=True)
+
     print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
 
 async def log_activity(update: Update, context):
@@ -496,6 +540,8 @@ async def log_activity(update: Update, context):
     lst_user_data = [uid, usr_at_name, usr_handle]
     lst_chat_data = [chat_id, chat_type]
     print(f'{get_time_now()} _ action: {lst_user_data}, {lst_chat_data}')
+    
+    if update.message.text: await attempt_aux_cmd_exe(update, context)
 
 async def test(update: Update, context):
     funcname = 'test'

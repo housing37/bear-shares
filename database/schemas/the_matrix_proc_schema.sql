@@ -208,7 +208,8 @@ CREATE FUNCTION `valid_new_tw_conf`(
     DETERMINISTIC
 BEGIN
 	SELECT COUNT(*) FROM shills
-		WHERE post_url = p_post_url
+		-- WHERE post_url = p_post_url
+		WHERE post_id = p_post_id
 		INTO @v_cnt;
 	SELECT tw_conf_exists(p_post_url, p_post_id) INTO @v_exists;
 	IF @v_cnt > 0 THEN
@@ -615,6 +616,24 @@ CREATE PROCEDURE `ADD_NEW_DATA_LOG`(
 	IN p_tw_user_at VARCHAR(255))
 BEGIN
 END 
+$$ DELIMITER ;
+
+DELIMITER $$
+DROP PROCEDURE IF EXISTS TW_URL_IS_USED;
+CREATE PROCEDURE `TW_URL_IS_USED`(
+    IN p_tweet_url VARCHAR(1024),
+	IN p_tweet_id VARCHAR(40),
+	IN p_tw_user_at VARCHAR(255))
+BEGIN
+	-- checks url used for shill | conf
+	SELECT valid_new_tw_conf(p_tweet_url, p_tweet_id) INTO @v_new_tweet;
+	SET @v_is_used = NOT @v_new_tweet;
+	SELECT 'success' as `status`, 
+			'tweet url used' as info, 
+			@v_is_used as is_used,
+			p_tweet_url as tweet_url_inp,
+			p_tweet_id as tweet_id_inp;
+END
 $$ DELIMITER ;
 
 -- # '/register_as_shiller'
