@@ -166,7 +166,7 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         uint256 stableAmntOut = _exeSwapPlsForStable(amntIn, usdSable);
 
         // convert and set/update balance for this sender
-        uint64 amntConvert = _uint256_to_uint64(stableAmntOut);
+        uint64 amntConvert = _uint64_from_uint256(stableAmntOut);
         ACCT_USD_BALANCES[msg.sender] += amntConvert;
 
         emit DepositReceived(msg.sender, amntIn, amntConvert);
@@ -178,7 +178,7 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         //  invokes _getStableTokenHighMarketValue -> _best_swap_v2_router_idx_quote
         //  invokes _getBstMarketValueForUsdAmnt -> _best_swap_v2_router_idx_quote
         //  invokes _getStableHeldLowMarketValue -> _getStableTokenLowMarketValue -> _best_swap_v2_router_idx_quote
-        
+
         require(ACCT_USD_BALANCES[msg.sender] >= _usdAmnt, 'err: low acct balance :{}');
         require(_payTo != address(0), 'err: _payTo address');
 
@@ -353,7 +353,7 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         stab_bst_path[0] = _usdStable;
         stab_bst_path[1] = address(this);
         (uint8 rtrIdx, uint256 bst_amnt) = _best_swap_v2_router_idx_quote(stab_bst_path, uint256(_usdAmnt), USWAP_V2_ROUTERS);
-        return _uint256_to_uint64(bst_amnt); 
+        return _uint64_from_uint256(bst_amnt); 
     }
     function _perc_of_uint64(uint8 _perc, uint64 _num) private pure returns (uint64) {
         require(_perc <= 100, 'err: invalid percent');
@@ -361,7 +361,7 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         uint64 result = (_num * aux_perc) / 10000; // chatGPT equation
         return result;
     }
-    function _uint256_to_uint64(uint256 value) private pure returns (uint64) {
+    function _uint64_from_uint256(uint256 value) private pure returns (uint64) {
         require(value <= type(uint64).max, "Value exceeds uint64 range");
         uint64 convertedValue = uint64(value);
         return convertedValue;
