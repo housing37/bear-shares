@@ -184,7 +184,7 @@ async def cmd_handler(update: Update, context):
         # handle cmds that need more data
         if tg_cmd == req_handler.kSHILLER_REG: # ['<wallet_address>', '<tweet_url>']
             if DISABLE_TG_HANDLES:
-                inp_split.insert(3, 'nil_handle_disabled')
+                inp_split.insert(3, 'nil_disabled')
             elif USE_ALT_ACCT: 
                 # inp_split.insert(3, 'LAO Pirates')
                 inp_split.insert(3, 'ʀɨƈօʄʀɨƈօ👑🐉🐲')
@@ -461,7 +461,7 @@ async def attempt_aux_cmd_exe(update: Update, context):
     user = update.message.from_user
     uid = user.id
     uname_at = user.username
-    uname_handle = 'nil_handle_disabled'
+    uname_handle = 'nil_disabled'
     if USE_ALT_ACCT: 
         # uid = '1058890141'
         # uname_at = 'laycpirates'
