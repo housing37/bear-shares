@@ -11,7 +11,7 @@ from _env import env
 from db_controller import *
 from req_helpers import *
 from datetime import datetime
-import json
+import json, time
 
 # twitter support
 from selenium import webdriver
@@ -36,6 +36,9 @@ kUserId = "user_id"
 kKeyVals = "key_vals"
 
 VERBOSE_LOG = False
+WEB_DRIVER_WAIT_SEC = 30 # num sec to wait for html render
+WEB_DRIVER_WAIT_CNT = 6 # num of tries to wait and find 'X:' in each html rendered
+WEB_DRIVE_WAIT_SLEEP_SEC = 0.25 # sleep sec before next web driver wait attempt
 
 # twitter access globals
 CONSUMER_KEY = 'nil_tw_key'
@@ -540,9 +543,10 @@ def parse_twitter_url(_keyVals, _key):
     return _keyVals, True
 
 def search_tweet_for_text(tweet_url, _lst_text=[], _headless=True):
+    global WEB_DRIVER_WAIT_CNT, WEB_DRIVER_WAIT_SEC, WEB_DRIVE_WAIT_SLEEP_SEC
     funcname = f'{__filename} search_tweet_for_text'
     print(funcname + ' - ENTER')
-    wait_sec = 30
+
     try:
         options = Options()
         print(f' using --headless={_headless}')
@@ -566,27 +570,27 @@ def search_tweet_for_text(tweet_url, _lst_text=[], _headless=True):
         print(f' getting page: {tweet_url} _ {get_time_now(dt=False)} _ DONE')
         
         # loop setup
-        MAX_TW_DRIVER_WAIT_CNT = 5
         title = ''
         title_check = 'X:' # end loop when found (signifies full tweet text is extractable)
         check_cnt = 1
 
         # loop through 'WebDriverWait' to find a meta tag w/ specific 'property' & 'content'
-        #   keep trying until 'title_check' is found or MAX_TW_DRIVER_WAIT_CNT reached 
-        while title_check not in title and check_cnt <= MAX_TW_DRIVER_WAIT_CNT:
+        #   keep trying until 'title_check' is found or WEB_DRIVER_WAIT_CNTWEB_DRIVER_WAIT_CNT reached 
+        while title_check not in title and check_cnt <= WEB_DRIVER_WAIT_CNT:
             try:
                 print(f' Waiting for meta tag _ *ATTEMPT* # {check_cnt} _ {get_time_now()}')    
-                WebDriverWait(driver, wait_sec).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'meta[property="og:title"]')))
+                WebDriverWait(driver, WEB_DRIVER_WAIT_SEC).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'meta[property="og:title"]')))
                 meta_tag = driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]')
                 title = str(meta_tag.get_attribute("content"))
                 print(f' Found meta tag w/ Title:\n  {title} _ {get_time_now()}')
             except Exception as e:
-                print(f'  Error waiting for html text _ {get_time_now()} _ {wait_sec} sec TIMEOUT (maybe)')
-                if check_cnt == MAX_TW_DRIVER_WAIT_CNT:
+                print(f'  Error waiting for html text _ {get_time_now()} _ {WEB_DRIVER_WAIT_SEC} sec TIMEOUT (maybe)')
+                if check_cnt == WEB_DRIVER_WAIT_CNT:
                     raise # end loop, break & raise if last check is exception
                 else:
                     print(f"   **Exception** e: '{e}'\n  continuing while loop ...")
             check_cnt += 1
+            time.sleep(WEB_DRIVE_WAIT_SLEEP_SEC) # sleep sec before next web driver attempt
 
     except Exception as e:
         print(f" Error scraping tweet\n  **Exception** e: '{e}'\n  returning False")
@@ -621,7 +625,7 @@ print('#======================================================================#'
 # # searching <body> tag example...
 # #  NOTE: when tweet 'Views' count is shown, then tweet text is shown as well
 # print(f' waiting for full html body text _ {get_time_now()}')
-# WebDriverWait(driver, wait_sec).until(EC.text_to_be_present_in_element((By.TAG_NAME, 'BODY'), 'Views')) 
+# WebDriverWait(driver, WEB_DRIVER_WAIT_SEC).until(EC.text_to_be_present_in_element((By.TAG_NAME, 'BODY'), 'Views')) 
 # print(f' waiting for full html body text _ {get_time_now()} _ DONE')        
 # 
 # get / search body text for '_lst_text' items
