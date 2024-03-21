@@ -644,7 +644,7 @@ BEGIN
 			WHERE id = @v_user_id;
 		SELECT wallet_address, dt_updated,
 				'success' as `status`,
-				'set new exp' as info,
+				'set new wallet address' as info,
 				@v_user_id as user_id,
 				p_tg_user_id as tg_user_id_inp,
 				p_tg_user_at as tg_user_at_inp,

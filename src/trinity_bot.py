@@ -43,29 +43,29 @@ USE_ALT_ACCT = False # True = alt user 'LAO Pirates'
 DISABLE_TG_HANDLES = True 
 
 TRINITY_INFO = '''
-(DM @bs_trinity_bot for more privacy 👍️️️️️️)
-
-HELLO! I am Trinity! 
+Hello! I am Trinity! 
 It's time to start claiming your free air-drop!
 
 $BST is a PRC20 token that pays you to tweet.. it's as simple as that 🤷️️️️
 $BST is redeambale 1:1 for USD stable on our web dapp
 
 * CLAIM AIR-DROP *
-Please follow these 3 steps to claim your free air-drop ...
+Follow these 2 simple steps to start claiming ...
 1) register by tweeting "@BearSharesNFT trinity"
-    - then post that tweet url into this TG chat
+    - then simply paste that tweet's link into this TG chat
 
-2) tweet anything you want and include "@BearSharesNFT"
-    - then post that tweet url into this TG chat
+2) earn $BST by tweeting anything you want w/ "@BearSharesNFT" included
+    - then simply paste that tweet's link into this TG chat
 
-3) view your earnings & request $BST cashout
+Then to view your earnings & request $BST cashout ...
     CMD: /trinity_show_my_earnings
     CMD: /trinity_request_cashout
+    CMD: /trinity_set_wallet
+    DM: @bs_trinity_bot for more privacy 👍️️️️️️
 
 NOTE: Better-Pays-More (earn more for memes, videos, etc.)
     - your pay rates increase as your tweets get better
-        CMD:  /trinity_show_my_rates
+        CMD: /trinity_show_my_rates
 
 Questions: @WhiteRabbit0x0 or @Housing37
 
@@ -434,7 +434,12 @@ async def cmd_exe(update: Update, context, aux_cmd=False):
             d_resp['tg_user_at_inp'] = '@'+str(d_resp['tg_user_at_inp'])
             str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
             await update.callback_query.message.reply_text(f"Remove set for shill id: {shill_id} ...\n {str_r}")
-            
+
+        elif tg_cmd == req_handler.kSET_WALLET:
+            inc_ = ['wallet_address','info']
+            str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
+            await update.message.reply_text(f"Set cashout wallet ...\n {str_r}")
+
         else:
             await update.message.reply_text(f"'/{tg_cmd}' Executed Successfully! _ ")
         
