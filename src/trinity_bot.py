@@ -170,18 +170,16 @@ async def cmd_handler(update: Update, context):
     # @TeddyShares ...
     # ex tweet_conf (valid): https://x.com/TeddyShares/status/1767453126896881733?s=20
     # ex tweet_shill (valid): https://x.com/teddyshares/status/1768088560433787068?s=46&t=nEQblYL5Q2q_AqjDvXnRZg
-
-    
     
     # NOTE: all non-admin db procs require 'tg_user_id' & 'tg_user_at' (ie. uid & uname_at)
     if 'admin' not in tg_cmd:
         inp_split.insert(1, uid)
         inp_split.insert(2, uname_at)
         if USE_ALT_ACCT: 
-                # inp_split[1] = '1058890141'
-                # inp_split[2] = 'laycpirates'
-                inp_split[1] = '6919802491'
-                inp_split[2] = 'fricardooo'
+            # inp_split[1] = '1058890141'
+            # inp_split[2] = 'laycpirates'
+            inp_split[1] = '6919802491'
+            inp_split[2] = 'fricardooo'
 
         # handle cmds that need more data
         if tg_cmd == req_handler.kSHILLER_REG: # ['<wallet_address>', '<tweet_url>']
@@ -192,42 +190,23 @@ async def cmd_handler(update: Update, context):
                 inp_split.insert(3, 'ʀɨƈօʄʀɨƈօ👑🐉🐲')
             else:
                 inp_split.insert(3, uname_handle)
-        
-        if tg_cmd == req_handler.kREQUEST_CASHOUT: # ['user_id','user_at']
-            # NOTE: inp_split[1] should be 'uid'
-            # NOTE: inp_split[2] should be 'uname_at'
-            pass
 
         if tg_cmd == req_handler.kSHOW_USR_RATES: # ['user_id','user_at','platform']
-            # NOTE: inp_split[1] should be 'uid'
-            # NOTE: inp_split[2] should be 'uname_at'
             inp_split.insert(3, 'twitter') # const: unknown, twitter, tiktok, reddit
-
-        # if tg_cmd == req_handler.kSHOW_USR_EARNS: # ['user_id','user_at']
-        #     # NOTE: inp_split[1] should be 'uid'
-        #     # NOTE: inp_split[2] should be 'uname_at'
-        #     pass
 
     # NOTE: all admin db procs require 'tg_admin_id' & 'tg_user_at' (ie. uid & <tg_user_at>)    
     else: # if 'admin' in tg_cmd
         inp_split.insert(1, uid)
         if USE_ALT_ACCT: 
-                inp_split[1] = '1058890141'
-                # inp_split[2] = 'laycpirates'
+            inp_split[1] = '1058890141'
+            # inp_split[2] = 'laycpirates'
 
         # compensate for users using '@' or not
         if len(inp_split) >= 3 and inp_split[2][0] == '@': # remove '@' if there
             inp_split[2] = inp_split[2][1:]
 
-        if tg_cmd == req_handler.kADMIN_SHOW_USR_RATES: # ['admin_id','user_id','platform']
-            # NOTE: inp_split[1] should be 'uid'
-            # NOTE: inp_split[2] should be '<tg_user_at>'
+        if tg_cmd == req_handler.kADMIN_SHOW_USR_RATES: # ['admin_id','tg_user_at','platform']
             inp_split.insert(3, 'twitter') # const: unknown, twitter, tiktok, reddit
-
-        # if tg_cmd == req_handler.kADMIN_SHOW_USR_EARNS:  # ['admin_id','user_id']
-        #     # NOTE: inp_split[1] should be 'uid'
-        #     # NOTE: inp_split[2] should be '<tg_user_at>'
-        #     pass
         
         if tg_cmd == req_handler.kADMIN_SHOW_USR_SHILLS:
             # if user gave 1 param, auto add 'approved' & 'removed'
@@ -294,15 +273,7 @@ async def cmd_handler(update: Update, context):
                 print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
                 await update.message.reply_text(f'Mark this shill as removed or not-removed?', reply_markup=InlineKeyboardMarkup(keyboard))
             return # invokes 'cmd_exe'
-            
-            # if user gave 2 or less params
-            if len(inp_split) <= 4:
-                inp_split.append('1') # force 'is_reomved=TRUE'
-            else:
-                inp_split.append('<nil_insert>') # force fail
 
-                
-        
     context.user_data['inp_split'] = list(inp_split)
     await cmd_exe(update, context)
     print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')

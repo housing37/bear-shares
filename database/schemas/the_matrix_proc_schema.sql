@@ -618,6 +618,44 @@ BEGIN
 END 
 $$ DELIMITER ;
 
+-- # '/set_wallet'
+-- LST_KEYS_SET_WALLET = ['user_id','user_at','wallet_address']
+-- DB_PROC_SET_WALLET = 'SET_WALLET_ADDR'
+DELIMITER $$
+DROP PROCEDURE IF EXISTS SET_WALLET_ADDR;
+CREATE PROCEDURE `SET_WALLET_ADDR`(
+    IN p_tg_user_id VARCHAR(40), -- ex: '-1000342'
+	IN p_tg_user_at VARCHAR(40),
+    IN p_wallet_address VARCHAR(255))
+BEGIN
+	-- get support requirements
+	SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
+
+	-- fail: if tg_user_id is not taken (updates 'users.tg_user_at' if needed)
+	IF NOT valid_tg_user(p_tg_user_id, p_tg_user_at) THEN
+		SELECT 'failed' as `status`, 
+				'user not found' as info, 
+				p_tg_user_id as tg_user_id_inp,
+				p_tg_user_at as tg_user_at_inp;
+	ELSE
+		UPDATE users 
+			SET wallet_address = p_wallet_address,
+				dt_updated = NOW()
+			WHERE id = @v_user_id;
+		SELECT wallet_address, dt_updated,
+				'success' as `status`,
+				'set new exp' as info,
+				@v_user_id as user_id,
+				p_tg_user_id as tg_user_id_inp,
+				p_tg_user_at as tg_user_at_inp,
+				p_wallet_address as wallet_address_inp
+			FROM users
+			WHERE tg_user_id = p_tg_user_id;
+	END IF;
+END 
+$$ DELIMITER ;
+
+-- aux cmd: /register & /submit
 DELIMITER $$
 DROP PROCEDURE IF EXISTS TW_URL_IS_USED;
 CREATE PROCEDURE `TW_URL_IS_USED`(
