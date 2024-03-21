@@ -38,7 +38,7 @@ kKeyVals = "key_vals"
 VERBOSE_LOG = False
 WEB_DRIVER_WAIT_SEC = 30 # num sec to wait for html render
 WEB_DRIVER_WAIT_CNT = 6 # num of tries to wait and find 'X:' in each html rendered
-WEB_DRIVE_WAIT_SLEEP_SEC = 0.25 # sleep sec before next web driver wait attempt
+WEB_DRIVE_WAIT_SLEEP_SEC = 0.1 # sleep sec before next web driver wait attempt
 
 # twitter access globals
 CONSUMER_KEY = 'nil_tw_key'
