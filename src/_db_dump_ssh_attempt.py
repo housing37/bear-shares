@@ -18,9 +18,9 @@ from db_controller import *
 # ssh_host = '18.226.17.71' # db server to ssh into
 ssh_host = env.dbHost_prod
 ssh_user = 'ubuntu' # server user name to login with
-# ssh_pem_path = '/Users/greenhouse/.ssh/t2-micro-fivem-rebirth-test1.pem'  # path to .pem key file
+# ssh_pem_path = '/Users/<project>/.ssh/t2-micro-fivem-rebirth-test1.pem'  # path to .pem key file
 # ssh_pem_path = '~/.ssh/t2-micro-bear001.pem'  # path to .pem key file
-ssh_pem_path = '/Users/greenhouse/.ssh/t2-micro-bear001.pem'  # path to .pem key file
+ssh_pem_path = '/Users/<project>/.ssh/t2-micro-bear001.pem'  # path to .pem key file
 
 _ssh = {'host':ssh_host, 'user':ssh_user, 'path':ssh_pem_path}
 
