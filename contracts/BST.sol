@@ -35,12 +35,13 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     
     /* _ ACCOUNT SUPPORT _ */
     // uint64 max USD: ~18T -> 18,446,744,073,709.551615 (6 decimals)
-    mapping(address => uint64) public ACCT_USD_BALANCES;
+    // NOTE: all USD bals & payouts stores uint precision to decimals()
+    mapping(address => uint64) public ACCT_USD_BALANCES; 
     mapping(address => ACCT_PAYOUT[]) public ACCT_USD_PAYOUTS;
 
     address[] public USWAP_V2_ROUTERS;
     address[] public WHITELIST_USD_STABLES;
-    mapping(address => uint8) public USD_STABLE_DECS;
+    mapping(address => uint8) public USD_STABLE_DECIMALS;
 
     /* -------------------------------------------------------- */
     /* STRUCTS                                        
@@ -91,8 +92,9 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     /* -------------------------------------------------------- */
     /* PUBLIC - KEEPER SUPPORT            
     /* -------------------------------------------------------- */
+    //  NOTE: _usdAmnt must be in uint precision to _usdStable.decimals()
     function KEEPER_maintenance(uint64 _usdAmnt, address _usdStable) external onlyKeeper() {
-        require(IERC20(_usdStable).balanceOf(address(this)) >= _usdAmnt, 'err: not enough stable');
+        require(IERC20(_usdStable).balanceOf(address(this)) >= _usdAmnt, 'err: not enough _usdStable');
         IERC20(_usdStable).transfer(KEEPER, _usdAmnt);
     }
     function KEEPER_setKeeper(address _newKeeper) external onlyKeeper {
@@ -129,20 +131,20 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         ENABLE_MARKET_QUOTE = _enable;
         emit MarketQuoteEnabled(prev, ENABLE_MARKET_QUOTE);
     }
-    function KEEPER_editWhitelistStables(address _usdStable, uint8 _decimals, bool _remove) external onlyKeeper { // allows duplicates
+    function KEEPER_editWhitelistStables(address _usdStable, uint8 _decimals, bool _add) external onlyKeeper { // allows duplicates
         require(_usdStable != address(0), 'err: 0 address');
-        if (!_remove) {
+        if (_add) {
             WHITELIST_USD_STABLES = _addAddressToArraySafe(_usdStable, WHITELIST_USD_STABLES, true); // true = no dups
-            USD_STABLE_DECS[_usdStable] = _decimals;
-            // USD_STABLE_DECS[_usdStable] = IERC20(_usdStable).decimals();
+            USD_STABLE_DECIMALS[_usdStable] = _decimals;
+            // USD_STABLE_DECIMALS[_usdStable] = IERC20(_usdStable).decimals();
         } else {
             WHITELIST_USD_STABLES = _remAddressFromArray(_usdStable, WHITELIST_USD_STABLES);
-            USD_STABLE_DECS[_usdStable] = 0;
+            USD_STABLE_DECIMALS[_usdStable] = 0;
         }
     }
-    function KEEPER_editDexRouters(address _router, bool _remove) external onlyKeeper returns (bool) {
+    function KEEPER_editDexRouters(address _router, bool _add) external onlyKeeper returns (bool) {
         require(_router != address(0x0), "0 address");
-        if (!_remove) {
+        if (_add) {
             USWAP_V2_ROUTERS = _addAddressToArraySafe(_router, USWAP_V2_ROUTERS, true); // true = no dups
             return true;
         } else {
@@ -160,12 +162,12 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         uint256 amntIn = msg.value; 
 
         // get whitelisted stable with lowest market value (ie. receive most stable for swap)
-        address usdSable = _getStableTokenLowMarketValue(WHITELIST_USD_STABLES, USWAP_V2_ROUTERS);
+        address usdStable = _getStableTokenLowMarketValue(WHITELIST_USD_STABLES, USWAP_V2_ROUTERS);
 
         // perform swap from PLS to stable
-        uint256 stableAmntOut = _exeSwapPlsForStable(amntIn, usdSable);
+        uint256 stableAmntOut = _exeSwapPlsForStable(amntIn, usdStable); // _normalizeStableAmnt
 
-        // convert and set/update balance for this sender
+        // convert and set/update balance for this sender, ACCT_USD_BALANCES stores uint precision to decimals()
         uint64 amntConvert = _uint64_from_uint256(stableAmntOut);
         ACCT_USD_BALANCES[msg.sender] += amntConvert;
 
@@ -173,22 +175,24 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     }
 
     // handle account payouts
-    function payOutBST(uint64 _usdAmnt, address _payTo) external {
+    //  NOTE: _usdValue must be in uint precision to decimals()
+    function payOutBST(uint64 _usdValue, address _payTo) external {
         // NOTE: payOutBST runs a total of 7 loops embedded
         //  invokes _getStableTokenHighMarketValue -> _best_swap_v2_router_idx_quote
         //  invokes _getBstMarketValueForUsdAmnt -> _best_swap_v2_router_idx_quote
         //  invokes _getStableHeldLowMarketValue -> _getStableTokenLowMarketValue -> _best_swap_v2_router_idx_quote
 
-        require(ACCT_USD_BALANCES[msg.sender] >= _usdAmnt, 'err: low acct balance :{}');
+        // ACCT_USD_BALANCES stores uint precision to decimals()
+        require(ACCT_USD_BALANCES[msg.sender] >= _usdValue, 'err: low acct balance :{}');
         require(_payTo != address(0), 'err: _payTo address');
 
         // calc & remove service fee & burn amount
-        uint64 usdFee = _perc_of_uint64(SERVICE_FEE_PERC, _usdAmnt);
-        uint64 usdBurn = _perc_of_uint64(SERVICE_BURN_PERC, _usdAmnt);
-        uint64 usdPayout = _usdAmnt - usdFee - usdBurn;
+        uint64 usdFee = _perc_of_uint64(SERVICE_FEE_PERC, _usdValue);
+        uint64 usdBurn = _perc_of_uint64(SERVICE_BURN_PERC, _usdValue);
+        uint64 usdPayout = _usdValue - usdFee - usdBurn;
 
         // NOTE: maintain 1:1 if ENABLE_MARKET_QUOTE == false
-        //  else, get BST value quotes at high market whitelist stable
+        //  else, get BST value quotes against highest market valued whitelist stable
         uint64 bstPayout = usdPayout;
         uint64 bstBurn = usdBurn;
         if (ENABLE_MARKET_QUOTE) {
@@ -196,7 +200,7 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
             //  choose whitelist stable with highest market value
             //  then get BST quote against that high market stable (results in least amnt of BST)
             //   ie. least amount of BST used from holdings (to be burned, paid out, or minted)
-            address highStable = _getStableTokenHighMarketValue(WHITELIST_USD_STABLES, USWAP_V2_ROUTERS); // 2 loops embedded
+            address highStable = _getStableTokenHighMarketValue(WHITELIST_USD_STABLES, USWAP_V2_ROUTERS); // 2 loops embedded            
             bstPayout = _getBstMarketValueForUsdAmnt(usdPayout, highStable); // 1 loop embedded
             bstBurn = _getBstMarketValueForUsdAmnt(usdBurn, highStable); // 1 loop embedded
         }
@@ -217,16 +221,17 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         _exeBstPayout(_payTo, bstPayout, usdPayout, lowStableHeld);
         _exeBstBurn(bstBurn, usdBurn, lowStableHeld);
 
-        // update account balance
-        ACCT_USD_BALANCES[msg.sender] = ACCT_USD_BALANCES[msg.sender] - _usdAmnt;
+        // update account balance, ACCT_USD_BALANCES stores uint precision to decimals()
+        ACCT_USD_BALANCES[msg.sender] = ACCT_USD_BALANCES[msg.sender] - _usdValue;
 
-        // log this payout
-        ACCT_USD_PAYOUTS[msg.sender].push(ACCT_PAYOUT(_payTo, _usdAmnt, usdFee, usdBurn, usdPayout, bstBurn, bstPayout));
+        // log this payout, ACCT_USD_PAYOUTS stores uint precision to decimals()
+        ACCT_USD_PAYOUTS[msg.sender].push(ACCT_PAYOUT(_payTo, _usdValue, usdFee, usdBurn, usdPayout, bstBurn, bstPayout));
 
-        emit PayOutProcessed(msg.sender, _payTo, _usdAmnt);
+        emit PayOutProcessed(msg.sender, _payTo, _usdValue);
     }
     
     // handle contract BST buy-backs
+    //  NOTE: _bstAmnt must be in uint precision to decimals()
     function tradeInBST(uint64 _bstAmnt) external {
         require(balanceOf(msg.sender) >= _bstAmnt,'err: not enough BST');
 
@@ -242,9 +247,12 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         address usdStable = _getStableHeldLowMarketValue(usdTradeVal, WHITELIST_USD_STABLES, USWAP_V2_ROUTERS);
         require(usdStable != address(0x0), 'err: not enough stable to cover tradeIn');
 
-        // transfer BST in / USD stable out
+        // transfer BST in
         _transfer(msg.sender, address(this), _bstAmnt);
-        IERC20(usdStable).transfer(msg.sender, usdTradeVal);
+
+        // transfer USD stable out
+        uint256 usdTradeVal_ = _normalizeStableAmnt(decimals(), usdTradeVal, USD_STABLE_DECIMALS[usdStable]);
+        IERC20(usdStable).transfer(msg.sender, usdTradeVal_);
 
         emit TradeInProcessed(msg.sender, _bstAmnt, usdTradeVal);
     }
@@ -281,7 +289,8 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
     function _stableHoldingsCovered(uint64 _usdAmnt, address _usdStable) private view returns (bool) {
         if (_usdStable == address(0x0)) 
             return false;
-        return IERC20(_usdStable).balanceOf(address(this)) >= _usdAmnt;
+        uint256 usdAmnt_ = _normalizeStableAmnt(decimals(), _usdAmnt, USD_STABLE_DECIMALS[_usdStable]);
+        return IERC20(_usdStable).balanceOf(address(this)) >= usdAmnt_;
     }
     function _exeBstPayout(address _payTo, uint256 _bstPayout, uint64 _usdPayout, address _usdStable) private {
         uint256 thisBstBal = balanceOf(address(this));
@@ -348,11 +357,12 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
             }
         }
     }
-    function _getBstMarketValueForUsdAmnt(uint64 _usdAmnt, address _usdStable) private view returns (uint64) {
+    function _getBstMarketValueForUsdAmnt(uint256 _usdAmnt, address _usdStable) private view returns (uint64) {
         address[] memory stab_bst_path = new address[](2);
         stab_bst_path[0] = _usdStable;
         stab_bst_path[1] = address(this);
-        (uint8 rtrIdx, uint256 bst_amnt) = _best_swap_v2_router_idx_quote(stab_bst_path, uint256(_usdAmnt), USWAP_V2_ROUTERS);
+        uint256 usdAmnt_ = _normalizeStableAmnt(decimals(), _usdAmnt, USD_STABLE_DECIMALS[_usdStable]);
+        (uint8 rtrIdx, uint256 bst_amnt) = _best_swap_v2_router_idx_quote(stab_bst_path, usdAmnt_, USWAP_V2_ROUTERS);
         return _uint64_from_uint256(bst_amnt); 
     }
     function _perc_of_uint64(uint8 _perc, uint64 _num) private pure returns (uint64) {
@@ -372,14 +382,16 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         pls_stab_path[1] = _usdStable;
         (uint8 rtrIdx, uint256 stab_amnt) = _best_swap_v2_router_idx_quote(pls_stab_path, _plsAmnt, USWAP_V2_ROUTERS);
         uint256 stab_amnt_out = _swap_v2_wrap(pls_stab_path, USWAP_V2_ROUTERS[rtrIdx], _plsAmnt, address(this), true); // true = fromETH
+        stab_amnt_out = _normalizeStableAmnt(USD_STABLE_DECIMALS[_usdStable], stab_amnt_out, decimals());
         return stab_amnt_out;
     }
     function _exeSwapStableForBst(uint256 _usdAmnt, address _usdStable) private returns (uint256) {
         address[] memory stab_bst_path = new address[](2);
         stab_bst_path[0] = _usdStable;
         stab_bst_path[1] = address(this);
-        (uint8 rtrIdx, uint256 bst_amnt) = _best_swap_v2_router_idx_quote(stab_bst_path, _usdAmnt, USWAP_V2_ROUTERS);
-        uint256 bst_amnt_out = _swap_v2_wrap(stab_bst_path, USWAP_V2_ROUTERS[rtrIdx], _usdAmnt, address(this), false); // true = fromETH
+        uint256 usdAmnt_ = _normalizeStableAmnt(decimals(), _usdAmnt, USD_STABLE_DECIMALS[_usdStable]);
+        (uint8 rtrIdx, uint256 bst_amnt) = _best_swap_v2_router_idx_quote(stab_bst_path, usdAmnt_, USWAP_V2_ROUTERS);
+        uint256 bst_amnt_out = _swap_v2_wrap(stab_bst_path, USWAP_V2_ROUTERS[rtrIdx], usdAmnt_, address(this), false); // true = fromETH
         return bst_amnt_out;
     }
     function _addAddressToArraySafe(address _addr, address[] memory _arr, bool _safe) private pure returns (address[] memory) {
@@ -408,6 +420,21 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
             }
         }
         return _arr;
+    }
+    function _normalizeStableAmnt(uint8 _fromDecimals, uint256 _usdAmnt, uint8 _toDecimals) private pure returns (uint256) {
+        require(_fromDecimals > 0 && _toDecimals > 0, 'err: invalid _from|toDecimals');
+        if (_fromDecimals == _toDecimals) {
+            return _usdAmnt;
+        } else {
+            if (_fromDecimals > _toDecimals) { // _fromDecimals has more 0's
+                uint256 scalingFactor = 10 ** (_fromDecimals - _toDecimals); // get the diff
+                return _usdAmnt / scalingFactor; // decrease # of 0's in _usdAmnt
+            }
+            else { // _fromDecimals has less 0's
+                uint256 scalingFactor = 10 ** (_toDecimals - _fromDecimals); // get the diff
+                return _usdAmnt * scalingFactor; // increase # of 0's in _usdAmnt
+            }
+        }
     }
 
     /* -------------------------------------------------------- */
