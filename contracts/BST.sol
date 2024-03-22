@@ -15,7 +15,7 @@ import "./node_modules/@openzeppelin/contracts/access/Ownable.sol";  // local _ 
     BST = BearSharesTrinity
 */
 contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
-    uint8 public VERSION = 0;
+    string public VERSION = '1';
 
     /* -------------------------------------------------------- */
     /* GLOBALS                                                  */
@@ -81,6 +81,22 @@ contract BearSharesTrinity is ERC20, Ownable, BSTSwapTools {
         BUY_BACK_FEE_PERC = 2; // 2%
         KEEPER = msg.sender;
         _mint(msg.sender, _initSupply * 10**uint8(decimals())); // 'emit Transfer'
+
+        // weUSDT
+        address usdStable = address(0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f); 
+        uint8 decimals_ = 6;
+
+        // WHITELIST_USD_STABLES = _addAddressToArraySafe(usdStable, WHITELIST_USD_STABLES, true); // true = no dups
+        WHITELIST_USD_STABLES.push(usdStable);
+        USD_STABLE_DECIMALS[usdStable] = decimals_;
+
+        // add pulsex routers
+        address router_0 = address(0x98bf93ebf5c380C0e6Ae8e192A7e2AE08edAcc02);
+        address router_1 = address(0x165C3410fC91EF562C50559f7d2289fEbed552d9);
+        USWAP_V2_ROUTERS.push(router_0);
+        USWAP_V2_ROUTERS.push(router_1);
+        // USWAP_V2_ROUTERS = _addAddressToArraySafe(router_0, USWAP_V2_ROUTERS, true); // true = no dups
+        // USWAP_V2_ROUTERS = _addAddressToArraySafe(router_1, USWAP_V2_ROUTERS, true); // true = no dups
     }
 
     /* -------------------------------------------------------- */
