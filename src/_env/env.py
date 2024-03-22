@@ -82,6 +82,28 @@ TOKEN_oracle = os.environ['TG_TOKEN_ORACLE'] # @bs_oracle_bot
 #                  {'@bs_trinity_bot':TOKEN_trin},
 #                  ]
 
-
 #============================================================================#
 
+# infura support
+#ETH_MAIN_RPC_KEY = os.environ['ETH_MAIN_INFURA_KEY_0']
+ETH_MAIN_RPC_KEY = os.environ['ETH_MAIN_INFURA_KEY_1']
+
+# wallet support
+sender_address_0 = os.environ['PUBLIC_KEY_3']
+sender_secret_0 = os.environ['PRIVATE_KEY_3']
+sender_address_1 = os.environ['PUBLIC_KEY_4']
+sender_secret_1 = os.environ['PRIVATE_KEY_4']
+sender_address_2 = os.environ['PUBLIC_KEY_5']
+sender_secret_2 = os.environ['PRIVATE_KEY_5']
+sender_address_3 = os.environ['PUBLIC_KEY_6']
+sender_secret_3 = os.environ['PRIVATE_KEY_6']
+
+#============================================================================#
+## web3 constants
+#============================================================================#
+local_test = 'http://localhost:8545'
+eth_main = f'https://mainnet.infura.io/v3/{ETH_MAIN_RPC_KEY}'
+eth_test = f'https://goerli.infura.io/v3/'
+pc_main = f'https://rpc.pulsechain.com'
+eth_main_cid=1
+pc_main_cid=369
