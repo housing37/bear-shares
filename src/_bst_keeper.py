@@ -18,6 +18,7 @@ import pprint
 from attributedict.collections import AttributeDict # tx_receipt requirement
 import _web3 # from web3 import Account, Web3, HTTPProvider
 import _abi
+from ethereum.abi import encode_abi, decode_abi # pip install ethereum
 
 LST_CONTR_ABI_BIN = [
     "../bin/contracts/BearSharesTrinity",
@@ -221,105 +222,86 @@ def main(_contr_addr, _contr_abi):
     # print(cStrDivider_1, f"\n\n Contract deployed at address: {tx_receipt['contractAddress']}\n\n", sep='\n')
     print("Transaction mined!")
 
+def write_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_ret_types):
+    global W3_
 
+    print('preparing function signature w/ func hash & params lists ...')
+    func_sign = _func_hash
+    if len(_lst_param_types) > 0:
+        func_sign = _func_hash + encode_abi(_lst_param_types, _lst_params).hex()
 
+    print('building tx_data w/ _contr_addr & func_sign ...')
+    tx_data = {
+        "to": _contr_addr,
+        "data": func_sign,
+    }
 
+    print('setting tx_params ...')
+    tx_nonce = W3_.W3.eth.get_transaction_count(W3_.SENDER_ADDRESS)
+    tx_params = {
+        'chainId': W3_.CHAIN_ID,
+        'nonce': tx_nonce,
+    }
+    print(' setting gas params in tx_params ...')
+    lst_gas_params = get_gas_params_lst(W3_.RPC_URL, min_params=False, max_params=True, def_params=True)
+    for d in lst_gas_params: tx_params.update(d) # append gas params
 
-    
-    # # Send transaction
-    # tx_hash = W3_.W3.eth.sendTransaction(transaction_data)
+    print('update tx_data w/ tx_params')
+    tx_data.update(tx_params)
 
-    # # Wait for the transaction to be mined
-    # W3_.W3.eth.waitForTransactionReceipt(tx_hash)
+    print(f'signing and sending tx w/ NONCE: {tx_nonce} ... {get_time_now()}')
+    tx_signed = W3_.W3.eth.account.sign_transaction(tx_data, private_key=W3_.SENDER_SECRET)
+    tx_hash = W3_.W3.eth.send_raw_transaction(tx_signed.rawTransaction)
 
-    # print("Transaction mined!")
+    print(cStrDivider_1, f'waiting for receipt ... {get_time_now()}', sep='\n')
+    print(f'    tx_hash: {tx_hash.hex()}')
 
-    # # Create contract instance
-    # # contract = W3_.W3.eth.contract(address=contract_address, abi=contract_abi)
-    # # contr_abi, contr_bytes  = self.read_abi_bytecode(_abi_file, _bin_file)
-    
-    # # contract, contract_addr = W3_.init_contract(_contr_addr, CONTRACT_ABI, W3_)
+    # Wait for the transaction to be mined
+    wait_time = 300 # sec
+    try:
+        tx_receipt = W3_.W3.eth.wait_for_transaction_receipt(tx_hash, timeout=wait_time)
+        print("Transaction confirmed in block:", tx_receipt.blockNumber, f' ... {get_time_now()}')
+    except Exception as e:
+        print(f"\n{get_time_now()}\n Transaction not confirmed within the specified timeout... wait_time: {wait_time}")
+        print_except(e)
+        exit(1)
 
-    # # Parameters for the function call
-    # param1 = 123
-    # param2 = "0x456def..."
+    # print incoming tx receipt (requires pprint & AttributeDict)
+    tx_receipt = AttributeDict(tx_receipt) # import required
+    tx_rc_print = pprint.PrettyPrinter().pformat(tx_receipt)
+    print(cStrDivider_1, f'RECEIPT:\n {tx_rc_print}', sep='\n')
+    print("\nTransaction mined!")
 
-    # # Function hash
-    # function_hash = "3015d747" # "KEEPER_maintenance(uint64,address)": "3015d747",
+    return_value = decode_abi(['address'], bytes.fromhex(tx_receipt['output'][2:]))[0]
+    print(f'function call return_value: {return_value}')
 
-    # # Encode function call data
-    # function_signature = function_hash + W3_.W3.toHex(W3_.W3.toBytes(text="uint64"))[2:] + W3_.W3.toHex(W3_.W3.toBytes(hexstr=param1))[2:] + W3_.W3.toHex(W3_.W3.toBytes(text="address"))[2:] + W3_.W3.toHex(W3_.W3.toBytes(hexstr=param2))[2:]
+def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_ret_types):
+    global W3_
 
-    # # Construct transaction data
-    # transaction_data = {
-    #     'to': contract_address,
-    #     'data': function_signature,
-    #     'gas': 2000000,  # Adjust gas limit accordingly
-    # }
+    print('preparing function signature params ...')
+    func_sign = _func_hash
+    if len(_lst_param_types) > 0:
+        func_sign = _func_hash + encode_abi(_lst_param_types, _lst_params).hex()
 
-    # # Send transaction
-    # tx_hash = web3.eth.sendTransaction(transaction_data)
+    print('building tx_data w/ _contr_addr & _func_hash ...')
+    tx_data = {
+        "to": _contr_addr,
+        "data": func_sign,
+    }
 
-    # # Wait for the transaction to be mined
-    # web3.eth.waitForTransactionReceipt(tx_hash)
+    # Call contract function to retrieve the value of the KEEPER state variable
+    return_val = W3_.W3.eth.call(tx_data)
+    print(f'return_val: {return_val}')
+    print(f'return_val.hex(): {return_val.hex()}')
+    decoded_value_return = decode_abi(_lst_ret_types, return_val)
+    print(f'decoded_value_return: {decoded_value_return}')
 
-    # print("Transaction mined!")
-
-
-    # constr_args = generate_contructor() # 0x78b48b71C8BaBd02589e3bAe82238EC78966290c
-    # print(f'  using "constructor({", ".join(map(str, constr_args))})"')
-    # assert input('\n (2) procced? [y/n]\n  > ') == 'y', "aborted...\n"
-
-    # # proceed = estimate_gas(CONTRACT, constr_args) # (3) proceed? [y/n]
-    # # assert proceed, "\ndeployment canceled after gas estimate\n"
-
-    # print('\ncalculating gas ...')
-    # tx_nonce = W3_.W3.eth.get_transaction_count(W3_.SENDER_ADDRESS)
-    # tx_params = {
-    #     'chainId': W3_.CHAIN_ID,
-    #     'nonce': tx_nonce,
-    # }
-    # lst_gas_params = get_gas_params_lst(W3_.RPC_URL, min_params=False, max_params=True, def_params=True)
-    # for d in lst_gas_params: tx_params.update(d) # append gas params
-
-    # print(f'building tx w/ NONCE: {tx_nonce} ...')
-    # # constructor_tx = CONTRACT.constructor().build_transaction(tx_params)
-    # constructor_tx = CONTRACT.constructor(*constr_args).build_transaction(tx_params)
-
-    # print(f'signing and sending tx ... {get_time_now()}')
-    # # Sign and send the transaction # Deploy the contract
-    # tx_signed = W3_.W3.eth.account.sign_transaction(constructor_tx, private_key=W3_.SENDER_SECRET)
-    # tx_hash = W3_.W3.eth.send_raw_transaction(tx_signed.rawTransaction)
-
-    # print(cStrDivider_1, f'waiting for receipt ... {get_time_now()}', sep='\n')
-    # print(f'    tx_hash: {tx_hash.hex()}')
-
-    # # Wait for the transaction to be mined
-    # wait_time = 300 # sec
-    # try:
-    #     tx_receipt = W3_.W3.eth.wait_for_transaction_receipt(tx_hash, timeout=wait_time)
-    #     print("Transaction confirmed in block:", tx_receipt.blockNumber, f' ... {get_time_now()}')
-    # # except W3_.W3.exceptions.TransactionNotFound:    
-    # #     print(f"Transaction not found within the specified timeout... wait_time: {wait_time}", f' ... {get_time_now()}')
-    # # except W3_.W3.exceptions.TimeExhausted:
-    # #     print(f"Transaction not confirmed within the specified timeout... wait_time: {wait_time}", f' ... {get_time_now()}')
-    # except Exception as e:
-    #     print(f"\n{get_time_now()}\n Transaction not confirmed within the specified timeout... wait_time: {wait_time}")
-    #     print_except(e)
-    #     exit(1)
-
-    # # print incoming tx receipt (requires pprint & AttributeDict)
-    # tx_receipt = AttributeDict(tx_receipt) # import required
-    # tx_rc_print = pprint.PrettyPrinter().pformat(tx_receipt)
-    # print(cStrDivider_1, f'RECEIPT:\n {tx_rc_print}', sep='\n')
-    # print(cStrDivider_1, f"\n\n Contract deployed at address: {tx_receipt['contractAddress']}\n\n", sep='\n')
-
-def go_user_inputs():
+def go_user_inputs(_set_gas=True):
     global BST_ADDRESS, W3_, CONTRACT_ABI # REQUIRED (using assignment)
     # rpc_url, chain_id, chain_sel    = _web3.myWEB3().inp_sel_chain()
     # w3, account = _web3.myWEB3().init_web3(empty=True)
     # init_web3()
-    W3_ = _web3.myWEB3().init_inp()
+    W3_ = _web3.myWEB3().init_inp(_set_gas)
     # ABI_FILE, BIN_FILE = W3_.inp_sel_abi_bin(LST_CONTR_ABI_BIN) # returns .abi|bin
     # CONTRACT_ABI = W3_.read_abi_file(ABI_FILE)
     
@@ -398,8 +380,36 @@ if __name__ == "__main__":
     
     ## exe ##
     try:
-        go_user_inputs()
-        main(BST_ADDRESS, CONTRACT_ABI)
+        # go_user_inputs()
+        # main(BST_ADDRESS, CONTRACT_ABI)
+        
+        # read requests: _set_gas=False
+        go_user_inputs(_set_gas=False)
+        read_with_hash(BST_ADDRESS, "862a179e", [], [], ['address']) # "KEEPER()": "862a179e",)
+        # read_with_hash(BST_ADDRESS, "aa21f232", [], [], ['uint8']) # "BUY_BACK_FEE_PERC()": "aa21f232",
+        # read_with_hash(BST_ADDRESS, "c364daa4", [], [], ['uint8']) # "SERVICE_BURN_PERC()": "c364daa4",
+        # read_with_hash(BST_ADDRESS, "a004d00d", [], [], ['uint8']) # "SERVICE_FEE_PERC()": "a004d00d",
+        # read_with_hash(BST_ADDRESS, "c67483dc", ['address'], [W3_.SENDER_ADDRESS], ['uint64']) # "ACCT_USD_BALANCES(address)": "c67483dc",
+        # read_with_hash(BST_ADDRESS, "593d1bf7", ['uint256'], [0], ['address']) # "WHITELIST_USD_STABLES(uint256)": "593d1bf7",
+
+        # LEFT OFF HERE ... can't get return working...
+        #   for 'mapping(address => ACCT_PAYOUT[]) public ACCT_USD_PAYOUTS;'
+        # tuple_ = 'tuple(address,uint64,uint64,uint64,uint64,uint64,uint64)[]'
+        # read_with_hash(BST_ADDRESS, "8b47da26", ['address'], [W3_.SENDER_ADDRESS], ['address',tuple_]) # "ACCT_USD_PAYOUTS(address,uint256)": "8b47da26",
+
+
+        # write requests: _set_gas=True
+        # go_user_inputs(_set_gas=True)
+        # # # // weUSDT
+        # usdStable = '0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f' 
+        # amnt = int(0.012155 * 10**6)
+        # write_with_hash(BST_ADDRESS, "3015d747", ['uint64','address'], [amnt,usdStable], []) # "KEEPER_maintenance(uint64,address)": "3015d747",
+
+        
+# 0xc679C6FeDc13Aae0CEC1754a9688768Ade3f0443
+            
+    
+        
     except Exception as e:
         print_except(e, debugLvl=0)
     

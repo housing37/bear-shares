@@ -45,11 +45,11 @@ class myWEB3:
         return tx_pool
         # return json.dumps(tx_pool, indent=4)
     
-    def init_inp(self):
+    def init_inp(self, _set_gas=True):
         rpc_url, chain_id, chain_sel    = self.inp_sel_chain()
         sender_address, sender_secret   = self.inp_sel_sender()
         w3, account                     = self.init_web3()
-        gas_tup                         = self.get_gas_settings(w3)
+        if _set_gas: gas_tup            = self.get_gas_settings(w3)
         return self
 
     def inp_sel_abi_bin(self, _lst_abi_bin=[], str_input='Select abi|bin file path:'):

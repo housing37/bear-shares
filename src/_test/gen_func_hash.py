@@ -20,18 +20,18 @@ def main(_function_signatures):
 
 # Example function signatures and corresponding hashes
 function_signatures = {
-    "KEEPER_setKeeper(address)": "11851737", # gas used: 62,434
-    "ACCT_USD_BALANCES(address)": "c67483dc",
+    "KEEPER_setKeeper(address)": "11851737",
+    "ACCT_USD_BALANCES(address)": "c67483dc", 
     "ACCT_USD_PAYOUTS(address,uint256)": "8b47da26",
     "BUY_BACK_FEE_PERC()": "aa21f232",
     "ENABLE_MARKET_BUY()": "405d2a83",
     "ENABLE_MARKET_QUOTE()": "46538f8c",
-    "KEEPER()": "862a179e",
-    "KEEPER_editDexRouters(address,bool)": "bceeba33",
+    "KEEPER()": "862a179e", 
+    "KEEPER_editDexRouters(address,bool)": "bceeba33", 
     "KEEPER_editWhitelistStables(address,uint8,bool)": "b290b9bf",
     "KEEPER_enableMarketBuy(bool)": "bc47b906",
     "KEEPER_enableMarketQuote(bool)": "624b3abe",
-    "KEEPER_maintenance(uint64,address)": "3015d747",
+    "KEEPER_maintenance(uint64,address)": "3015d747", # gas used: 62,434
     "KEEPER_setBuyBackFeePerc(uint8)": "dd8645c2",
     "KEEPER_setServiceBurnPerc(uint8)": "66eff5cf",
     "KEEPER_setServiceFeePerc(uint8)": "61cad1db",
