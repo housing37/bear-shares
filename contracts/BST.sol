@@ -2,20 +2,19 @@
 // ref: https://ethereum.org/en/history
 //  code size limit = 24576 bytes (a limit introduced in Spurious Dragon _ 2016)
 //  code size limit = 49152 bytes (a limit introduced in Shanghai _ 2023)
-pragma solidity ^0.8.20;        
+pragma solidity ^0.8.24;        
 
 // inherited contracts
-// import "./BSTSwapTools.sol"; // deploy|local
-// import "@openzeppelin/contracts/token/ERC20/ERC20.sol"; // deploy
-// import "@openzeppelin/contracts/access/Ownable.sol"; // deploy
-import "./node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol"; // local _ $ npm install @openzeppelin/contracts
-import "./node_modules/@openzeppelin/contracts/access/Ownable.sol";  // local _ $ npm install @openzeppelin/contracts
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol"; // deploy
+import "@openzeppelin/contracts/access/Ownable.sol"; // deploy
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol"; // deploy
+import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol"; // deploy
 
-
-// import "@openzeppelin/contracts/token/ERC20/IERC20.sol"; // deploy
-// import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol"; // deploy
-import "./node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol"; // local
-import "./node_modules/@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol"; // local
+// local _ $ npm install @openzeppelin/contracts
+// import "./node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol"; 
+// import "./node_modules/@openzeppelin/contracts/access/Ownable.sol";
+// import "./node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
+// import "./node_modules/@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 
 
 // contract BearSharesTrinity is ERC20, Ownable, BSTSwapToolsX2 {
@@ -26,10 +25,12 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string private constant tok_symb = "tBST";
-    // string private constant tok_name = "Trinity";
-    string public tVERSION = '7';
+    string public tVERSION = '9';
+    string private tok_symb = string(abi.encodePacked("tBST", tVERSION));
     string private tok_name = string(abi.encodePacked("tTrinity_", tVERSION));
+    // string private constant tok_symb = "BST";
+    // string private constant tok_name = "Trinity";
+
 
     /* _ ADMIN SUPPORT _ */
     address public KEEPER;

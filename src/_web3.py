@@ -123,8 +123,7 @@ class myWEB3:
             self.MAX_PRIOR_FEE = int(w3.eth.max_priority_fee * self.MAX_PRIOR_FEE_RATIO)
         else:
             self.GAS_PRICE = w3.to_wei('0.0005', 'ether') # 'gasPrice' param fails on PC
-            self.GAS_LIMIT = 1_000_000
-            # self.MAX_FEE = w3.to_wei('0.001', 'ether')
+            self.GAS_LIMIT = 4_000_000
             self.MAX_FEE = w3.to_wei('300_000', 'gwei')
             self.MAX_PRIOR_FEE_RATIO = 1.0
             self.MAX_PRIOR_FEE = int(w3.eth.max_priority_fee * self.MAX_PRIOR_FEE_RATIO)
