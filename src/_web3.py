@@ -11,6 +11,8 @@ from _env import env
 
 class myWEB3:
     def __init__(self):
+        self.Web3 = Web3
+        # self.geth_poa_middleware = geth_poa_middleware
         self.rpc_req_timeout = 60 # *tested_111523: 10=50s,30=150s,45=225s,60=300s
         self.RPC_URL = None
         self.CHAIN_ID = None
@@ -171,6 +173,11 @@ class myWEB3:
         print(f'  selected {contr_addr}')
         return contr_addr
     
+    def read_abi_file(self, abi_file):
+        print(f'\nreading contract abi file ...\n   {abi_file}')
+        with open(abi_file, "r") as file: contr_abi = file.read()
+        return contr_abi
+        
     def read_abi_bytecode(self, abi_file, bin_file):
         print(f'\nreading contract abi & bytecode files ...\n   {abi_file, bin_file}')
         with open(bin_file, "r") as file: contr_bytes = '0x'+file.read()
