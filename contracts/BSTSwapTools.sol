@@ -4,14 +4,11 @@ pragma solidity ^0.8.20;
 // import interfaces
 // local _ $ npm install @openzeppelin/contracts @uniswap/v2-core @uniswap/v2-periphery
 import "./node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol"; // local
-// import "./node_modules/@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol"; // local
 import "./node_modules/@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol"; // local
 // import "@openzeppelin/contracts/token/ERC20/IERC20.sol"; // deploy
 // import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol"; // deploy
 
-
-
-contract BSTSwapTools {
+library BSTSwapTools {
     /* -------------------------------------------------------- */
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
@@ -20,9 +17,9 @@ contract BSTSwapTools {
     /* -------------------------------------------------------- */
     /* CONSTRUCTOR                                              */
     /* -------------------------------------------------------- */
-    constructor() {
-        // nil
-    }
+    // constructor() {
+    //     // nil
+    // }
 
     /* -------------------------------------------------------- */
     /* KEEPER - ACCESSORS TO PRIVATES                           */
