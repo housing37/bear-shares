@@ -31,7 +31,9 @@ CONTRACT = None
 CONTRACT_ABI = None
 BST_ADDRESS = None
 FUNC_SIGN_SEL = None
-LST_FUNC_SIGN_PARAMS = None
+LST_FUNC_SIGN_PARAMS = []
+BST_FUNC_MAP = {}
+IS_WRITE = False
 
 # def init_web3():
 #     global W3_, ABI_FILE, BIN_FILE, CONTRACT
@@ -307,6 +309,7 @@ def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_
         bytes_value = bytes(hex_bytes) # Convert hex bytes to bytes
         decoded_string = bytes_value.decode('utf-8') # Decode bytes to string
     print(f'decoded_string: {decoded_string}')
+    return decoded_string
 
 def go_user_inputs(_set_gas=True):
     global W3_, CONTRACT_ABI # REQUIRED (using assignment)
@@ -323,22 +326,26 @@ def go_enter_bst_addr():
     print(f'  using BST_ADDRESS: {BST_ADDRESS}')
 
 def go_select_func():
-    global FUNC_SIGN_SEL
-    print('\n Select function to invoke ...')
-    lst_keys = list(_abi.BST_FUNC_MAP.keys())
+    global FUNC_SIGN_SEL, BST_FUNC_MAP, IS_WRITE
+    print(f'\n Select function to invoke ... (IS_WRITE={IS_WRITE})')
+    lst_keys = list(BST_FUNC_MAP.keys())
     for i,k in enumerate(lst_keys):
         print(f'  {i} = {k}')
     ans_idx = input('  > ')
     assert ans_idx.isdigit() and int(ans_idx) >= 0 and int(ans_idx) < len(lst_keys), f'failed ... invalid input {ans_idx}'
-    FUNC_SIGN_SEL = list(_abi.BST_FUNC_MAP.keys())[int(ans_idx)]
+    FUNC_SIGN_SEL = list(BST_FUNC_MAP.keys())[int(ans_idx)]
     ans = input(f'\n  Confirm func [y/n]: {FUNC_SIGN_SEL}\n  > ')
     if str(ans).lower() != 'y' and str(ans).lower() != 'yes': go_select_func()
 
 def go_enter_func_params():
     global FUNC_SIGN_SEL, LST_FUNC_SIGN_PARAMS
     ans = input(f'\n  Enter params for: "{FUNC_SIGN_SEL}"\n  > ')
-    LST_FUNC_SIGN_PARAMS = ans.split()
-    LST_FUNC_SIGN_PARAMS = [int(v) if v.isdigit() else v for v in LST_FUNC_SIGN_PARAMS]
+    for v in list(ans.split()):
+        if v.lower() == 'true': LST_FUNC_SIGN_PARAMS.append(True)
+        elif v.lower() == 'false': LST_FUNC_SIGN_PARAMS.append(False)
+        elif v.isdigit(): LST_FUNC_SIGN_PARAMS.append(int(v))
+        else: LST_FUNC_SIGN_PARAMS.append(v)
+
     print(f'  executing "{FUNC_SIGN_SEL}" w/ params: {LST_FUNC_SIGN_PARAMS} ...\n')
 
 #------------------------------------------------------------#
@@ -401,23 +408,51 @@ if __name__ == "__main__":
     try:        
         # read requests: _set_gas=False
         ans = input("Start 'write' or 'read' request?\n 0 = write\n 1 = read\n > ")
-        b_write = ans=='0'
-        print(f' ans: "{ans}"; b_write = {b_write}')
-        go_user_inputs(_set_gas=b_write)
+        IS_WRITE = ans=='0'
+        BST_FUNC_MAP = _abi.BST_FUNC_MAP_WRITE if IS_WRITE else _abi.BST_FUNC_MAP_READ
+        print(f' ans: "{ans}"; IS_WRITE={IS_WRITE}')
+        go_user_inputs(_set_gas=IS_WRITE)
         go_enter_bst_addr()
-        go_select_func()
-        go_enter_func_params()
+        
+        ans = input(f'\n Run Mode...(for IS_WRITE={IS_WRITE})\n  0 = traverse all functions\n  1 = function select loop\n  > ')
+        func_sel = ans == '1'
+        if func_sel:
+            # continue function selection progression until killed
+            while func_sel:
+                print('', cStrDivider_1, "here we go!", sep='\n')
+                go_select_func()
+                go_enter_func_params()
 
-        assert input('\n (^) proceed? [y/n]\n  > ') == 'y', f"aborted... _ {get_time_now()}\n"
-        print('\n')
+                assert input('\n (^) proceed? [y/n]\n  > ') == 'y', f"aborted... _ {get_time_now()}\n"
+                print('\n')
 
-        lst_params = _abi.BST_FUNC_MAP[FUNC_SIGN_SEL]
-        lst_params.insert(2, LST_FUNC_SIGN_PARAMS)
-        tup_params = (BST_ADDRESS,lst_params[0],lst_params[1],lst_params[2],lst_params[3])
-        if not b_write:
-            read_with_hash(*tup_params)
+                lst_params = BST_FUNC_MAP[FUNC_SIGN_SEL]
+                lst_params.insert(2, LST_FUNC_SIGN_PARAMS)
+                tup_params = (BST_ADDRESS,lst_params[0],lst_params[1],lst_params[2],lst_params[3])
+                if not IS_WRITE:
+                    read_with_hash(*tup_params)
+                else:
+                    write_with_hash(*tup_params)
+                print(f'\nBST_ADDRESS: {BST_ADDRESS}\nFUNC_SIGN_SEL: {FUNC_SIGN_SEL}')
         else:
-            write_with_hash(*tup_params)
+            # loop through all functions in BST_FUNC_MAP
+            dict_returns = {}
+            for key in list(BST_FUNC_MAP.keys()):
+                FUNC_SIGN_SEL = key
+                print('', cStrDivider_1, f"time for {FUNC_SIGN_SEL}", sep='\n')
+                go_enter_func_params()
+                lst_params = BST_FUNC_MAP[FUNC_SIGN_SEL]
+                lst_params.insert(2, LST_FUNC_SIGN_PARAMS)
+                tup_params = (BST_ADDRESS,lst_params[0],lst_params[1],lst_params[2],lst_params[3])
+                if not IS_WRITE:
+                    decoded_string = read_with_hash(*tup_params)
+                    dict_returns[FUNC_SIGN_SEL] = decoded_string
+                else:
+                    write_with_hash(*tup_params)
+                print(f'\nBST_ADDRESS: {BST_ADDRESS}\nFUNC_SIGN_SEL: {FUNC_SIGN_SEL}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}')
+            return_print = pprint.PrettyPrinter().pformat(dict_returns)
+            print('all returns...')
+            print(return_print)
 
         # LEFT OFF HERE ... can't get return working...
         #   for 'mapping(address => ACCT_PAYOUT[]) public ACCT_USD_PAYOUTS;'

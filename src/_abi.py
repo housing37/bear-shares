@@ -1,4 +1,10 @@
-BST_FUNC_MAP = {
+__fname = '_abi'
+__filename = __fname + '.py'
+cStrDivider = '#================================================================#'
+print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globals', cStrDivider, sep='\n')
+cStrDivider_1 = '#----------------------------------------------------------------#'
+
+BST_FUNC_MAP_READ = {
     # read functions
     "KEEPER()": ["862a179e", [], ['address']],
     "ACCT_USD_BALANCES(address)": ["c67483dc", ["address"], ['uint64']],
@@ -20,16 +26,17 @@ BST_FUNC_MAP = {
     "symbol()": ["95d89b41", [], ['string']],
     "tVERSION()": ["9a60f330", [], ['string']],
     "totalSupply()": ["18160ddd", [], ['uint256']],
-    "ACCT_USD_PAYOUTS(address,uint256)": ["8b47da26", ["address","uint256"], []],
-
+    # "ACCT_USD_PAYOUTS(address,uint256)": ["8b47da26", ["address","uint256"], []],
+}
+BST_FUNC_MAP_WRITE = {
     # write functions
-    "KEEPER_setKeeper(address)": ["11851737", ["address"], []],
-    "KEEPER_editDexRouters(address,bool)": ["bceeba33", ["address","bool"], []],
+    # "KEEPER_setKeeper(address)": ["11851737", ["address"], []], 
+    "KEEPER_editDexRouters(address,bool)": ["bceeba33", ["address","bool"], []], # gas used: 36,601
     "KEEPER_editWhitelistStables(address,uint8,bool)": ["b290b9bf", ["address","uint8","bool"], []],
     "KEEPER_enableMarketBuy(bool)": ["bc47b906", ["bool"], []],
     "KEEPER_enableMarketQuote(bool)": ["624b3abe", ["bool"], []],
-    "KEEPER_maintenance(uint64,address)": ["3015d747", ["uint64","address"], []],
-    "KEEPER_setBuyBackFeePerc(uint8)": ["dd8645c2", ["uint8"], []],
+    "KEEPER_maintenance(uint64,address)": ["3015d747", ["uint64","address"], []], # gas used: 62,434
+    "KEEPER_setBuyBackFeePerc(uint8)": ["dd8645c2", ["uint8"], []], # gas used: 28,887
     "KEEPER_setServiceBurnPerc(uint8)": ["66eff5cf", ["uint8"], []],
     "KEEPER_setServiceFeePerc(uint8)": ["61cad1db", ["uint8"], []],
 
