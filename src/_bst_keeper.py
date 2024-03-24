@@ -30,14 +30,16 @@ BIN_FILE = None
 CONTRACT = None
 CONTRACT_ABI = None
 BST_ADDRESS = None
+FUNC_SIGN_SEL = None
+LST_FUNC_SIGN_PARAMS = None
 
-def init_web3():
-    global W3_, ABI_FILE, BIN_FILE, CONTRACT
-    # init W3_, user select abi to deploy, generate contract & deploy
-    W3_ = _web3.myWEB3().init_inp()
-    # ABI_FILE, BIN_FILE = W3_.inp_sel_abi_bin(LST_CONTR_ABI_BIN) # returns .abi|bin
-    # CONTRACT_ABI = W3_.read_abi_file(ABI_FILE)
-    # CONTRACT = W3_.add_contract_deploy(ABI_FILE, BIN_FILE)
+# def init_web3():
+#     global W3_, ABI_FILE, BIN_FILE, CONTRACT
+#     # init W3_, user select abi to deploy, generate contract & deploy
+#     W3_ = _web3.myWEB3().init_inp()
+#     # ABI_FILE, BIN_FILE = W3_.inp_sel_abi_bin(LST_CONTR_ABI_BIN) # returns .abi|bin
+#     # CONTRACT_ABI = W3_.read_abi_file(ABI_FILE)
+#     # CONTRACT = W3_.add_contract_deploy(ABI_FILE, BIN_FILE)
 
 def estimate_gas(contract, contract_args=[]):
     global W3_, ABI_FILE, BIN_FILE, CONTRACT
@@ -283,52 +285,69 @@ def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_
     if len(_lst_param_types) > 0:
         func_sign = _func_hash + encode_abi(_lst_param_types, _lst_params).hex()
 
-    print('building tx_data w/ _contr_addr & _func_hash ...')
+    print(f'building tx_data w/ ...\n _contr_addr: {_contr_addr}\n _func_hash: {_func_hash}')
     tx_data = {
         "to": _contr_addr,
         "data": func_sign,
     }
 
     # Call contract function to retrieve the value of the KEEPER state variable
+    print(f'calling contract function _ {get_time_now()}')
     return_val = W3_.W3.eth.call(tx_data)
+    print(f'calling contract function _ {get_time_now()} ... DONE')
+    print('\nparsing & printing response ...')
     print(f'return_val: {return_val}')
     print(f'return_val.hex(): {return_val.hex()}')
     decoded_value_return = decode_abi(_lst_ret_types, return_val)
     print(f'decoded_value_return: {decoded_value_return}')
+    # hex_bytes = HexBytes('0x745472696e6974795f39')
+    hex_bytes = decoded_value_return[0]
+    decoded_string = hex_bytes
+    if isinstance(hex_bytes, bytes):
+        bytes_value = bytes(hex_bytes) # Convert hex bytes to bytes
+        decoded_string = bytes_value.decode('utf-8') # Decode bytes to string
+    print(f'decoded_string: {decoded_string}')
 
 def go_user_inputs(_set_gas=True):
-    global BST_ADDRESS, W3_, CONTRACT_ABI # REQUIRED (using assignment)
-    # rpc_url, chain_id, chain_sel    = _web3.myWEB3().inp_sel_chain()
-    # w3, account = _web3.myWEB3().init_web3(empty=True)
-    # init_web3()
+    global W3_, CONTRACT_ABI # REQUIRED (using assignment)
     W3_ = _web3.myWEB3().init_inp(_set_gas)
     # ABI_FILE, BIN_FILE = W3_.inp_sel_abi_bin(LST_CONTR_ABI_BIN) # returns .abi|bin
     # CONTRACT_ABI = W3_.read_abi_file(ABI_FILE)
-    
+    # CONTRACT_ABI = _abi.BST_ABI
+    # print(' using CONTRACT_ABI = _abi.BST_ABI')
 
-    # print(f'\nUSING bytecode: {BIN_FILE}')
-    # print(f'USING abi: {ABI_FILE}')
-    
-
-    # ans = input('\n Search address? [y/n]\n  > ')
-    # b_ans = ans == 'y' or ans == '1'
-    # if b_ans:
+def go_enter_bst_addr():
+    global BST_ADDRESS
     while BST_ADDRESS == None or BST_ADDRESS == '':
         BST_ADDRESS = input('\n Enter BST contract address:\n  > ')
-    print(f'\n using BST_ADDRESS: {BST_ADDRESS}')
-    CONTRACT_ABI = _abi.BST_ABI
-    print(' set CONTRACT_ABI = _abi.BST_ABI')
-    assert input('\n (1) proceed? [y/n]\n  > ') == 'y', "aborted...\n"
-    print('\n\n')
-    # return rpc_url, w3, b_ans
+    print(f'  using BST_ADDRESS: {BST_ADDRESS}')
+
+def go_select_func():
+    global FUNC_SIGN_SEL
+    print('\n Select function to invoke ...')
+    lst_keys = list(_abi.BST_FUNC_MAP.keys())
+    for i,k in enumerate(lst_keys):
+        print(f'  {i} = {k}')
+    ans_idx = input('  > ')
+    assert ans_idx.isdigit() and int(ans_idx) >= 0 and int(ans_idx) < len(lst_keys), f'failed ... invalid input {ans_idx}'
+    FUNC_SIGN_SEL = list(_abi.BST_FUNC_MAP.keys())[int(ans_idx)]
+    ans = input(f'\n  Confirm func [y/n]: {FUNC_SIGN_SEL}\n  > ')
+    if str(ans).lower() != 'y' and str(ans).lower() != 'yes': go_select_func()
+
+def go_enter_func_params():
+    global FUNC_SIGN_SEL, LST_FUNC_SIGN_PARAMS
+    ans = input(f'\n  Enter params for: "{FUNC_SIGN_SEL}"\n  > ')
+    LST_FUNC_SIGN_PARAMS = ans.split()
+    LST_FUNC_SIGN_PARAMS = [int(v) if v.isdigit() else v for v in LST_FUNC_SIGN_PARAMS]
+    print(f'  executing "{FUNC_SIGN_SEL}" w/ params: {LST_FUNC_SIGN_PARAMS} ...\n')
 
 #------------------------------------------------------------#
 #   DEFAULT SUPPORT                                          #
 #------------------------------------------------------------#
 READ_ME = f'''
     *DESCRIPTION*
-        deploy contract to chain
-         selects .abi & .bin from ../bin/contracts/
+        invoke BST contract functions
+         utilizes function hashes instead of contract ABI
 
     *NOTE* INPUT PARAMS...
         nil
@@ -379,18 +398,26 @@ if __name__ == "__main__":
     lst_argv_OG, argv_cnt = read_cli_args()
     
     ## exe ##
-    try:
-        # go_user_inputs()
-        # main(BST_ADDRESS, CONTRACT_ABI)
-        
+    try:        
         # read requests: _set_gas=False
-        go_user_inputs(_set_gas=False)
-        read_with_hash(BST_ADDRESS, "862a179e", [], [], ['address']) # "KEEPER()": "862a179e",)
-        # read_with_hash(BST_ADDRESS, "aa21f232", [], [], ['uint8']) # "BUY_BACK_FEE_PERC()": "aa21f232",
-        # read_with_hash(BST_ADDRESS, "c364daa4", [], [], ['uint8']) # "SERVICE_BURN_PERC()": "c364daa4",
-        # read_with_hash(BST_ADDRESS, "a004d00d", [], [], ['uint8']) # "SERVICE_FEE_PERC()": "a004d00d",
-        # read_with_hash(BST_ADDRESS, "c67483dc", ['address'], [W3_.SENDER_ADDRESS], ['uint64']) # "ACCT_USD_BALANCES(address)": "c67483dc",
-        # read_with_hash(BST_ADDRESS, "593d1bf7", ['uint256'], [0], ['address']) # "WHITELIST_USD_STABLES(uint256)": "593d1bf7",
+        ans = input("Start 'write' or 'read' request?\n 0 = write\n 1 = read\n > ")
+        b_write = ans=='0'
+        print(f' ans: "{ans}"; b_write = {b_write}')
+        go_user_inputs(_set_gas=b_write)
+        go_enter_bst_addr()
+        go_select_func()
+        go_enter_func_params()
+
+        assert input('\n (^) proceed? [y/n]\n  > ') == 'y', f"aborted... _ {get_time_now()}\n"
+        print('\n')
+
+        lst_params = _abi.BST_FUNC_MAP[FUNC_SIGN_SEL]
+        lst_params.insert(2, LST_FUNC_SIGN_PARAMS)
+        tup_params = (BST_ADDRESS,lst_params[0],lst_params[1],lst_params[2],lst_params[3])
+        if not b_write:
+            read_with_hash(*tup_params)
+        else:
+            write_with_hash(*tup_params)
 
         # LEFT OFF HERE ... can't get return working...
         #   for 'mapping(address => ACCT_PAYOUT[]) public ACCT_USD_PAYOUTS;'
@@ -405,11 +432,6 @@ if __name__ == "__main__":
         # amnt = int(0.012155 * 10**6)
         # write_with_hash(BST_ADDRESS, "3015d747", ['uint64','address'], [amnt,usdStable], []) # "KEEPER_maintenance(uint64,address)": "3015d747",
 
-        
-# 0xc679C6FeDc13Aae0CEC1754a9688768Ade3f0443
-            
-    
-        
     except Exception as e:
         print_except(e, debugLvl=0)
     
@@ -417,3 +439,7 @@ if __name__ == "__main__":
     print(f'\n\nRUN_TIME_START: {RUN_TIME_START}\nRUN_TIME_END:   {get_time_now()}\n')
 
 print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
+
+
+# tBST9: 0x528F9F50Ea0179aF66D0AC99cdc4E45E55120D92
+# tBST1: 0xc679C6FeDc13Aae0CEC1754a9688768Ade3f0443
