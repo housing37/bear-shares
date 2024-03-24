@@ -31,7 +31,7 @@ BST_FUNC_MAP_READ = {
 BST_FUNC_MAP_WRITE = {
     # write functions
     # "KEEPER_setKeeper(address)": ["11851737", ["address"], []], 
-    "KEEPER_editDexRouters(address,bool)": ["bceeba33", ["address","bool"], []], # gas used: 36,601
+    "KEEPER_editDexRouters(address,bool)": ["bceeba33", ["address","bool"], []], # gas used: 36,601 (rem), 55,723 (add)
     "KEEPER_editWhitelistStables(address,uint8,bool)": ["b290b9bf", ["address","uint8","bool"], []],
     "KEEPER_enableMarketBuy(bool)": ["bc47b906", ["bool"], []],
     "KEEPER_enableMarketQuote(bool)": ["624b3abe", ["bool"], []],

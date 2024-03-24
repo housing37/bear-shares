@@ -420,11 +420,10 @@ if __name__ == "__main__":
             # continue function selection progression until killed
             while func_sel:
                 print('', cStrDivider_1, "here we go!", sep='\n')
+                LST_FUNC_SIGN_PARAMS = []
                 go_select_func()
                 go_enter_func_params()
-
-                assert input('\n (^) proceed? [y/n]\n  > ') == 'y', f"aborted... _ {get_time_now()}\n"
-                print('\n')
+                assert input('\n (^) proceed? [y/n]\n  > ') == 'y', f"aborted... _ {get_time_now()}\n\n"
 
                 lst_params = BST_FUNC_MAP[FUNC_SIGN_SEL]
                 lst_params.insert(2, LST_FUNC_SIGN_PARAMS)
@@ -438,8 +437,9 @@ if __name__ == "__main__":
             # loop through all functions in BST_FUNC_MAP
             dict_returns = {}
             for key in list(BST_FUNC_MAP.keys()):
+                print('', cStrDivider_1, f"time for {key}", sep='\n')
                 FUNC_SIGN_SEL = key
-                print('', cStrDivider_1, f"time for {FUNC_SIGN_SEL}", sep='\n')
+                LST_FUNC_SIGN_PARAMS = []
                 go_enter_func_params()
                 lst_params = BST_FUNC_MAP[FUNC_SIGN_SEL]
                 lst_params.insert(2, LST_FUNC_SIGN_PARAMS)
@@ -478,3 +478,5 @@ print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
 
 # tBST9: 0x528F9F50Ea0179aF66D0AC99cdc4E45E55120D92
 # tBST1: 0xc679C6FeDc13Aae0CEC1754a9688768Ade3f0443
+
+# weUSDT: 0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f

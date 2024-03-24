@@ -5,16 +5,16 @@
 pragma solidity ^0.8.24;        
 
 // inherited contracts
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol"; // deploy
-import "@openzeppelin/contracts/access/Ownable.sol"; // deploy
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol"; // deploy
-import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol"; // deploy
+// import "@openzeppelin/contracts/token/ERC20/ERC20.sol"; // deploy
+// import "@openzeppelin/contracts/access/Ownable.sol"; // deploy
+// import "@openzeppelin/contracts/token/ERC20/IERC20.sol"; // deploy
+// import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol"; // deploy
 
 // local _ $ npm install @openzeppelin/contracts
-// import "./node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol"; 
-// import "./node_modules/@openzeppelin/contracts/access/Ownable.sol";
-// import "./node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
-// import "./node_modules/@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
+import "./node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol"; 
+import "./node_modules/@openzeppelin/contracts/access/Ownable.sol";
+import "./node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./node_modules/@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 
 
 // contract BearSharesTrinity is ERC20, Ownable, BSTSwapToolsX2 {
@@ -25,7 +25,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '9';
+    string public tVERSION = '10';
     string private tok_symb = string(abi.encodePacked("tBST", tVERSION));
     string private tok_name = string(abi.encodePacked("tTrinity_", tVERSION));
     // string private constant tok_symb = "BST";
@@ -100,10 +100,10 @@ contract BearSharesTrinity is ERC20, Ownable {
         // add pulsex routers
         address router_0 = address(0x98bf93ebf5c380C0e6Ae8e192A7e2AE08edAcc02);
         address router_1 = address(0x165C3410fC91EF562C50559f7d2289fEbed552d9);
-        USWAP_V2_ROUTERS.push(router_0);
-        USWAP_V2_ROUTERS.push(router_1);
-        // USWAP_V2_ROUTERS = _addAddressToArraySafe(router_0, USWAP_V2_ROUTERS, true); // true = no dups
-        // USWAP_V2_ROUTERS = _addAddressToArraySafe(router_1, USWAP_V2_ROUTERS, true); // true = no dups
+        // USWAP_V2_ROUTERS.push(router_0);
+        // USWAP_V2_ROUTERS.push(router_1);
+        USWAP_V2_ROUTERS = _addAddressToArraySafe(router_0, USWAP_V2_ROUTERS, true); // true = no dups
+        USWAP_V2_ROUTERS = _addAddressToArraySafe(router_1, USWAP_V2_ROUTERS, true); // true = no dups
     }
 
     /* -------------------------------------------------------- */
@@ -437,7 +437,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         // perform add to memory array type w/ static size
         address[] memory _ret = new address[](_arr.length+1);
         for (uint i=0; i < _arr.length; i++) { _ret[i] = _arr[i]; }
-        _ret[_ret.length] = _addr;
+        _ret[_ret.length-1] = _addr;
         return _ret;
     }
     function _remAddressFromArray(address _addr, address[] memory _arr) private pure returns (address[] memory) {
