@@ -30,8 +30,6 @@ BIN_FILE = None
 CONTRACT = None
 CONTRACT_ABI = None
 BST_ADDRESS = None
-FUNC_SIGN_SEL = None
-LST_FUNC_SIGN_PARAMS = []
 BST_FUNC_MAP = {}
 IS_WRITE = False
 
@@ -326,27 +324,29 @@ def go_enter_bst_addr():
     print(f'  using BST_ADDRESS: {BST_ADDRESS}')
 
 def go_select_func():
-    global FUNC_SIGN_SEL, BST_FUNC_MAP, IS_WRITE
+    global BST_FUNC_MAP, IS_WRITE
     print(f'\n Select function to invoke ... (IS_WRITE={IS_WRITE})')
     lst_keys = list(BST_FUNC_MAP.keys())
     for i,k in enumerate(lst_keys):
         print(f'  {i} = {k}')
     ans_idx = input('  > ')
     assert ans_idx.isdigit() and int(ans_idx) >= 0 and int(ans_idx) < len(lst_keys), f'failed ... invalid input {ans_idx}'
-    FUNC_SIGN_SEL = list(BST_FUNC_MAP.keys())[int(ans_idx)]
-    ans = input(f'\n  Confirm func [y/n]: {FUNC_SIGN_SEL}\n  > ')
+    func_select = list(BST_FUNC_MAP.keys())[int(ans_idx)]
+    ans = input(f'\n  Confirm func [y/n]: {func_select}\n  > ')
     if str(ans).lower() != 'y' and str(ans).lower() != 'yes': go_select_func()
+    return func_select
 
-def go_enter_func_params():
-    global FUNC_SIGN_SEL, LST_FUNC_SIGN_PARAMS
-    ans = input(f'\n  Enter params for: "{FUNC_SIGN_SEL}"\n  > ')
+def go_enter_func_params(_func_select):
+    lst_func_params = []
+    ans = input(f'\n  Enter params for: "{_func_select}"\n  > ')
     for v in list(ans.split()):
-        if v.lower() == 'true': LST_FUNC_SIGN_PARAMS.append(True)
-        elif v.lower() == 'false': LST_FUNC_SIGN_PARAMS.append(False)
-        elif v.isdigit(): LST_FUNC_SIGN_PARAMS.append(int(v))
-        else: LST_FUNC_SIGN_PARAMS.append(v)
+        if v.lower() == 'true': lst_func_params.append(True)
+        elif v.lower() == 'false': lst_func_params.append(False)
+        elif v.isdigit(): lst_func_params.append(int(v))
+        else: lst_func_params.append(v)
 
-    print(f'  executing "{FUNC_SIGN_SEL}" w/ params: {LST_FUNC_SIGN_PARAMS} ...\n')
+    print(f'  executing "{_func_select}" w/ params: {lst_func_params} ...\n')
+    return lst_func_params
 
 #------------------------------------------------------------#
 #   DEFAULT SUPPORT                                          #
@@ -420,36 +420,39 @@ if __name__ == "__main__":
             # continue function selection progression until killed
             while func_sel:
                 print('', cStrDivider_1, "here we go!", sep='\n')
-                LST_FUNC_SIGN_PARAMS = []
-                go_select_func()
-                go_enter_func_params()
-                assert input('\n (^) proceed? [y/n]\n  > ') == 'y', f"aborted... _ {get_time_now()}\n\n"
-
-                lst_params = BST_FUNC_MAP[FUNC_SIGN_SEL]
-                lst_params.insert(2, LST_FUNC_SIGN_PARAMS)
+                func_select = go_select_func()
+                lst_func_params = go_enter_func_params(func_select)
+                lst_params = list(BST_FUNC_MAP[func_select])
+                lst_params.insert(2, lst_func_params)
                 tup_params = (BST_ADDRESS,lst_params[0],lst_params[1],lst_params[2],lst_params[3])
-                if not IS_WRITE:
-                    read_with_hash(*tup_params)
-                else:
-                    write_with_hash(*tup_params)
-                print(f'\nBST_ADDRESS: {BST_ADDRESS}\nFUNC_SIGN_SEL: {FUNC_SIGN_SEL}')
+                try:
+                    if not IS_WRITE:
+                        read_with_hash(*tup_params)
+                    else:
+                        write_with_hash(*tup_params)
+                except Exception as e:
+                    print_except(e, debugLvl=0)
+                print(f'\nBST_ADDRESS: {BST_ADDRESS}\nfunc_select: {func_select}')
+                # assert input('\n (^) proceed? [y/n]\n  > ') == 'y', f"aborted... _ {get_time_now()}\n\n"
         else:
             # loop through all functions in BST_FUNC_MAP
             dict_returns = {}
             for key in list(BST_FUNC_MAP.keys()):
                 print('', cStrDivider_1, f"time for {key}", sep='\n')
-                FUNC_SIGN_SEL = key
-                LST_FUNC_SIGN_PARAMS = []
-                go_enter_func_params()
-                lst_params = BST_FUNC_MAP[FUNC_SIGN_SEL]
-                lst_params.insert(2, LST_FUNC_SIGN_PARAMS)
+                func_select = key
+                lst_func_params = go_enter_func_params(func_select)
+                lst_params = list(BST_FUNC_MAP[func_select])
+                lst_params.insert(2, lst_func_params)
                 tup_params = (BST_ADDRESS,lst_params[0],lst_params[1],lst_params[2],lst_params[3])
-                if not IS_WRITE:
-                    decoded_string = read_with_hash(*tup_params)
-                    dict_returns[FUNC_SIGN_SEL] = decoded_string
-                else:
-                    write_with_hash(*tup_params)
-                print(f'\nBST_ADDRESS: {BST_ADDRESS}\nFUNC_SIGN_SEL: {FUNC_SIGN_SEL}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}')
+                try:
+                    if not IS_WRITE:
+                        decoded_string = read_with_hash(*tup_params)
+                        dict_returns[func_select] = decoded_string
+                    else:
+                        write_with_hash(*tup_params)
+                except Exception as e:
+                    print_except(e, debugLvl=0)
+                print(f'\nBST_ADDRESS: {BST_ADDRESS}\nfunc_select: {func_select}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}')
             return_print = pprint.PrettyPrinter().pformat(dict_returns)
             print('all returns...')
             print(return_print)
@@ -468,14 +471,14 @@ if __name__ == "__main__":
         # write_with_hash(BST_ADDRESS, "3015d747", ['uint64','address'], [amnt,usdStable], []) # "KEEPER_maintenance(uint64,address)": "3015d747",
 
     except Exception as e:
-        print_except(e, debugLvl=0)
+        print_except(e, debugLvl=3)
     
     ## end ##
     print(f'\n\nRUN_TIME_START: {RUN_TIME_START}\nRUN_TIME_END:   {get_time_now()}\n')
 
 print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
 
-
+# tBST10: 0x94580232e744f044A5719C4204d4de0ee5B07f16
 # tBST9: 0x528F9F50Ea0179aF66D0AC99cdc4E45E55120D92
 # tBST1: 0xc679C6FeDc13Aae0CEC1754a9688768Ade3f0443
 
