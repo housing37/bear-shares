@@ -7,7 +7,7 @@ cStrDivider_1 = '#--------------------------------------------------------------
 BST_FUNC_MAP_READ = {
     # read functions
     "KEEPER()": ["862a179e", [], ['address']],
-    "KEEPER_contractStableBalances()": ["973357b6", [], ['uint64','uint64']],
+    "KEEPER_contractStableBalances()": ["973357b6", [], ['uint64','uint64','int64']],
     "KEEPER_getAccounts()": ["e677a70a", [], ['address[]']],
     "ACCOUNTS(uint256)": ["9032bcc8", ["uint256"], ['address']],
     "ACCT_USD_BALANCES(address)": ["c67483dc", ["address"], ['uint64']],

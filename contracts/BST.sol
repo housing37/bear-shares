@@ -179,25 +179,8 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* -------------------------------------------------------- */
     /* PUBLIC - KEEPER - ACCESSORS
     /* -------------------------------------------------------- */
-    function KEEPER_contractStableBalances() external view onlyKeeper() returns (uint64, uint64) {
-        uint64 gross_bal = 0;
-        for (uint8 i = 0; i < USD_STABLES_HISTORY.length;) {
-            address stable = USD_STABLES_HISTORY[i];
-            uint8 decimals_ = USD_STABLE_DECIMALS[stable];
-            uint256 bal = IERC20(stable).balanceOf(address(this));
-            uint256 norm_bal = _normalizeStableAmnt(decimals_, bal, decimals());
-            gross_bal += _uint64_from_uint256(norm_bal);
-            unchecked {i++;}
-        }
-
-        uint64 owed_bal = 0;
-        for (uint256 i = 0; i < ACCOUNTS.length;) {
-            owed_bal += ACCT_USD_BALANCES[ACCOUNTS[i]];
-            unchecked {i++;}
-        }
-
-        uint64 net_bal = gross_bal - owed_bal;
-        return (gross_bal, net_bal);
+    function KEEPER_contractStableBalances() external view onlyKeeper() returns (uint64, uint64, int64) {
+        return _contractStableBalances(USD_STABLES_HISTORY);
     }
     function KEEPER_getAccounts() external view onlyKeeper returns (address[] memory) {
         return ACCOUNTS;
@@ -258,6 +241,12 @@ contract BearSharesTrinity is ERC20, Ownable {
         uint64 usdFee = _perc_of_uint64(SERVICE_FEE_PERC, _usdValue);
         uint64 usdBurn = _perc_of_uint64(SERVICE_BURN_PERC, _usdValue);
         uint64 usdPayout = _usdValue - usdFee - usdBurn;
+
+        // NOTE: validate collective contract stable balances can cover usdPayout
+        //  if yes, let it go through ... else, revert
+        //   NOTE: if lowStableHeld = 0x0: _exeBstPayout|Burn will fallback to contract holdings / minting
+        (uint64 stab_gross_bal, uint64 stab_owed_bal, int64 stab_net_bal) = _contractStableBalances(WHITELIST_USD_STABLES);
+        require(stab_gross_bal >= usdPayout, 'err: cannot cover usdPayout');
 
         // NOTE: maintain 1:1 if ENABLE_MARKET_QUOTE == false
         //  else, get BST value quotes against highest market valued whitelist stable
@@ -328,6 +317,27 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* -------------------------------------------------------- */
     /* PRIVATE - SUPPORTING                                     */
     /* -------------------------------------------------------- */
+    function _contractStableBalances(address[] memory _stables) private view returns (uint64, uint64, int64) {
+        uint64 gross_bal = 0;
+        for (uint8 i = 0; i < _stables.length;) {
+            address stable = _stables[i];
+            uint8 decimals_ = USD_STABLE_DECIMALS[stable];
+            require(decimals_ > 0, 'err: invalid stables decimals :/');
+            uint256 bal = IERC20(stable).balanceOf(address(this));
+            uint256 norm_bal = _normalizeStableAmnt(decimals_, bal, decimals());
+            gross_bal += _uint64_from_uint256(norm_bal);
+            unchecked {i++;}
+        }
+
+        uint64 owed_bal = 0;
+        for (uint256 i = 0; i < ACCOUNTS.length;) {
+            owed_bal += ACCT_USD_BALANCES[ACCOUNTS[i]];
+            unchecked {i++;}
+        }
+
+        int64 net_bal = int64(gross_bal) - int64(owed_bal);
+        return (gross_bal, owed_bal, net_bal);
+    }
     function _editWhitelistStables(address _usdStable, uint8 _decimals, bool _add) private { // allows duplicates
         if (_add) {
             WHITELIST_USD_STABLES = _addAddressToArraySafe(_usdStable, WHITELIST_USD_STABLES, true); // true = no dups
@@ -359,7 +369,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         return _getStableTokenHighMarketValue(_stablesHeld, _routers); // returns 0x0 if empty _stablesHeld
     }
     function _getStableHeldLowMarketValue(uint64 _usdAmntReq, address[] memory _stables, address[] memory _routers) private view returns (address) {
-
+        // NOTE: if nothing in _stables can cover _usdAmntReq, then returns address(0x0)
         address[] memory _stablesHeld;
         for (uint8 i=0; i < _stables.length;) {
             if (_stableHoldingsCovered(_usdAmntReq, _stables[i]))
