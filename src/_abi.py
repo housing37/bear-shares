@@ -18,7 +18,7 @@ BST_FUNC_MAP_READ = {
     "SERVICE_FEE_PERC()": ["a004d00d", [], ['uint8']],
     "TOK_WPLS()": ["fa4a9870", [], ['address']],
     "WHITELIST_USD_STABLES(uint256)": ["593d1bf7", ["uint256"], ['address']],
-    "USD_STABLES_HISTORY(uint256)": ["cd196d89", ["uint256"], ['uint8']],
+    "USD_STABLES_HISTORY(uint256)": ["cd196d89", ["uint256"], ['address']],
     "USD_STABLE_DECIMALS(address)": ["7f8754f4", ["address"], ['uint8']],
     "USWAP_V2_ROUTERS(uint256)": ["ee80b054", ["uint256"], ['address']],
     "balanceOf(address)": ["70a08231", ["address"], ['uint256']],
@@ -45,14 +45,15 @@ BST_FUNC_MAP_WRITE = {
     "KEEPER_setServiceBurnPerc(uint8)": ["66eff5cf", ["uint8"], []],
     "KEEPER_setServiceFeePerc(uint8)": ["61cad1db", ["uint8"], []],
 
+    "payOutBST(uint64,address)": ["031cc420", ["uint64","address"], []], # gas used: 212,143
+    "tradeInBST(uint64)": ["d8785767", ["uint64"], []], # gas used: 139,998
+
     "allowance(address,address)": ["dd62ed3e", ["address","address"], []],
     "approve(address,uint256)": ["095ea7b3", ["address","uint256"], []],
-    "payOutBST(uint64,address)": ["031cc420", ["uint64","address"], []], # gas used: 212,143
-    "renounceOwnership()": ["715018a6", [], []],
-    "tradeInBST(uint64)": ["d8785767", ["uint64"], []],
     "transfer(address,uint256)": ["a9059cbb", ["address","uint256"], []],
     "transferFrom(address,address,uint256)": ["23b872dd", ["address","address","uint256"], []],
-    "transferOwnership(address)": ["f2fde38b", ["address"], []]
+    "renounceOwnership()": ["715018a6", [], []],
+    "transferOwnership(address)": ["f2fde38b", ["address"], []],
 }
 
 # BST_FUNC_MAP = {

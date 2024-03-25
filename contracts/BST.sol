@@ -25,7 +25,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '18';
+    string public tVERSION = '20';
     string private tok_symb = string(abi.encodePacked("tBST", tVERSION));
     string private tok_name = string(abi.encodePacked("tTrinity_", tVERSION));
     // string private constant tok_symb = "BST";
@@ -315,7 +315,6 @@ contract BearSharesTrinity is ERC20, Ownable {
             USD_STABLE_DECIMALS[_usdStable] = _decimals;
         } else {
             WHITELIST_USD_STABLES = _remAddressFromArray(_usdStable, WHITELIST_USD_STABLES);
-            USD_STABLE_DECIMALS[_usdStable] = 0;
         }
     }
     function _editDexRouters(address _router, bool _add) private returns (bool) {
