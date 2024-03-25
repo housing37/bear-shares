@@ -25,7 +25,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '17';
+    string public tVERSION = '18';
     string private tok_symb = string(abi.encodePacked("tBST", tVERSION));
     string private tok_name = string(abi.encodePacked("tTrinity_", tVERSION));
     // string private constant tok_symb = "BST";
@@ -43,11 +43,13 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* _ ACCOUNT SUPPORT _ */
     // uint64 max USD: ~18T -> 18,446,744,073,709.551615 (6 decimals)
     // NOTE: all USD bals & payouts stores uint precision to decimals()
+    address[] public ACCOUNTS;
     mapping(address => uint64) public ACCT_USD_BALANCES; 
     mapping(address => ACCT_PAYOUT[]) public ACCT_USD_PAYOUTS;
 
     address[] public USWAP_V2_ROUTERS;
     address[] public WHITELIST_USD_STABLES;
+    address[] public USD_STABLES_HISTORY;
     mapping(address => uint8) public USD_STABLE_DECIMALS;
 
     /* -------------------------------------------------------- */
@@ -156,8 +158,8 @@ contract BearSharesTrinity is ERC20, Ownable {
         require(_usdStable != address(0), 'err: 0 address');
         if (_add) {
             WHITELIST_USD_STABLES = _addAddressToArraySafe(_usdStable, WHITELIST_USD_STABLES, true); // true = no dups
+            USD_STABLES_HISTORY = _addAddressToArraySafe(_usdStable, USD_STABLES_HISTORY, true); // true = no dups
             USD_STABLE_DECIMALS[_usdStable] = _decimals;
-            // USD_STABLE_DECIMALS[_usdStable] = IERC20(_usdStable).decimals();
         } else {
             WHITELIST_USD_STABLES = _remAddressFromArray(_usdStable, WHITELIST_USD_STABLES);
             USD_STABLE_DECIMALS[_usdStable] = 0;
@@ -173,9 +175,36 @@ contract BearSharesTrinity is ERC20, Ownable {
             return true;
         }
     }
+    function KEEPER_contractStableBalances() external view onlyKeeper() returns (uint64, uint64) {
+        uint64 gross_bal = 0;
+        for (uint8 i = 0; i < USD_STABLES_HISTORY.length;) {
+            address stable = USD_STABLES_HISTORY[i];
+            uint8 decimals_ = USD_STABLE_DECIMALS[stable];
+            uint256 bal = IERC20(stable).balanceOf(address(this));
+            uint256 norm_bal = _normalizeStableAmnt(decimals_, bal, decimals());
+            gross_bal += _uint64_from_uint256(norm_bal);
+            unchecked {i++;}
+        }
+
+        uint64 owed_bal = 0;
+        for (uint256 i = 0; i < ACCOUNTS.length;) {
+            owed_bal += ACCT_USD_BALANCES[ACCOUNTS[i]];
+            unchecked {i++;}
+        }
+
+        uint64 net_bal = gross_bal - owed_bal;
+        return (gross_bal, net_bal);
+    }
+    function KEEPER_getAccounts() external view onlyKeeper returns (address[] memory) {
+        return ACCOUNTS;
+    }
+
     /* -------------------------------------------------------- */
     /* PUBLIC - ACCESSORS
     /* -------------------------------------------------------- */
+    function getUsdStablesHistory() external view returns (address[] memory) {
+        return USD_STABLES_HISTORY;
+    }    
     function getWhitelistStables() external view returns (address[] memory) {
         return WHITELIST_USD_STABLES;
     }
@@ -200,6 +229,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         // convert and set/update balance for this sender, ACCT_USD_BALANCES stores uint precision to decimals()
         uint64 amntConvert = _uint64_from_uint256(stableAmntOut);
         ACCT_USD_BALANCES[msg.sender] += amntConvert;
+        ACCOUNTS = _addAddressToArraySafe(msg.sender, ACCOUNTS, true); // true = no dups
 
         emit DepositReceived(msg.sender, amntIn, amntConvert);
     }
