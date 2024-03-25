@@ -26,12 +26,14 @@ BST_FUNC_MAP_READ = {
     "getSwapRouters()": ["c85ec1e0", [], ['address[]']],
     "getWhitelistStables()": ["00f403e8", [], ['address[]']],
     "getUsdStablesHistory()": ["d4155f07", [], ['address[]']],
+    "getUsdBstPath(address)": ["260e5df9", ['address'], ['address[]']],
     "name()": ["06fdde03", [], ['string']],
     "owner()": ["8da5cb5b", [], ['address']],
     "symbol()": ["95d89b41", [], ['string']],
     "tVERSION()": ["9a60f330", [], ['string']],
     "totalSupply()": ["18160ddd", [], ['uint256']],
     # "ACCT_USD_PAYOUTS(address,uint256)": ["8b47da26", ["address","uint256"], []],
+    # "USD_BST_PATHS(address,uint256)": ["85783459", ["address","uint256"], []],
 }
 BST_FUNC_MAP_WRITE = {
     # write functions
@@ -44,6 +46,8 @@ BST_FUNC_MAP_WRITE = {
     "KEEPER_setBuyBackFeePerc(uint8)": ["dd8645c2", ["uint8"], []], # gas used: 28,887
     "KEEPER_setServiceBurnPerc(uint8)": ["66eff5cf", ["uint8"], []],
     "KEEPER_setServiceFeePerc(uint8)": ["61cad1db", ["uint8"], []],
+    "KEEPER_setUsdBstPath(address,address[])": ["4f51d029", ['address','address[]'], []],
+    
 
     "payOutBST(uint64,address)": ["031cc420", ["uint64","address"], []], # gas used: 212,143
     "tradeInBST(uint64)": ["d8785767", ["uint64"], []], # gas used: 139,998

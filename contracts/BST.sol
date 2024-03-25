@@ -51,6 +51,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     address[] public WHITELIST_USD_STABLES;
     address[] public USD_STABLES_HISTORY;
     mapping(address => uint8) public USD_STABLE_DECIMALS;
+    mapping(address => address[]) public USD_BST_PATHS;
 
     /* -------------------------------------------------------- */
     /* STRUCTS                                        
@@ -77,6 +78,9 @@ contract BearSharesTrinity is ERC20, Ownable {
     event DepositReceived(address _account, uint256 _plsDeposit, uint64 _stableConvert);
     event PayOutProcessed(address _from, address _to, uint64 _usdAmnt);
     event TradeInProcessed(address _trader, uint64 _bstAmnt, uint64 _usdTradeVal);
+    event WhitelistStableUpdated(address _usdStable, uint8 _decimals, bool _add);
+    event DexRouterUpdated(address _router, bool _add);
+    event DexUsdBstPathUpdated(address _usdStable, address[] _path);
 
     /* -------------------------------------------------------- */
     /* CONSTRUCTOR                                              */
@@ -157,11 +161,24 @@ contract BearSharesTrinity is ERC20, Ownable {
     function KEEPER_editWhitelistStables(address _usdStable, uint8 _decimals, bool _add) external onlyKeeper {
         require(_usdStable != address(0), 'err: 0 address');
         _editWhitelistStables(_usdStable, _decimals, _add);
+        emit WhitelistStableUpdated(_usdStable, _decimals, _add);
     }
-    function KEEPER_editDexRouters(address _router, bool _add) external onlyKeeper returns (bool) {
+    function KEEPER_editDexRouters(address _router, bool _add) external onlyKeeper {
         require(_router != address(0x0), "0 address");
-        return _editDexRouters(_router, _add);
+        _editDexRouters(_router, _add);
+        emit DexRouterUpdated(_router, _add);
     }
+    function KEEPER_setUsdBstPath(address _usdStable, address[] memory _path) external onlyKeeper() {
+        require(_usdStable != address(0) && _path.length > 1, 'err: invalid input :{=}');
+        require(_usdStable == _path[0], 'err: stable / path mismatch =)');
+        USD_BST_PATHS[_usdStable] = _path;
+        emit DexUsdBstPathUpdated(_usdStable, _path);
+        // NOTE: '_path' must be valid within all 'USWAP_V2_ROUTERS' addresses
+    }
+
+    /* -------------------------------------------------------- */
+    /* PUBLIC - KEEPER - ACCESSORS
+    /* -------------------------------------------------------- */
     function KEEPER_contractStableBalances() external view onlyKeeper() returns (uint64, uint64) {
         uint64 gross_bal = 0;
         for (uint8 i = 0; i < USD_STABLES_HISTORY.length;) {
@@ -189,6 +206,9 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* -------------------------------------------------------- */
     /* PUBLIC - ACCESSORS
     /* -------------------------------------------------------- */
+    function getUsdBstPath(address _usdStable) external view returns (address[] memory) {
+        return USD_BST_PATHS[_usdStable];
+    }    
     function getUsdStablesHistory() external view returns (address[] memory) {
         return USD_STABLES_HISTORY;
     }    
@@ -317,14 +337,12 @@ contract BearSharesTrinity is ERC20, Ownable {
             WHITELIST_USD_STABLES = _remAddressFromArray(_usdStable, WHITELIST_USD_STABLES);
         }
     }
-    function _editDexRouters(address _router, bool _add) private returns (bool) {
+    function _editDexRouters(address _router, bool _add) private {
         require(_router != address(0x0), "0 address");
         if (_add) {
             USWAP_V2_ROUTERS = _addAddressToArraySafe(_router, USWAP_V2_ROUTERS, true); // true = no dups
-            return true;
         } else {
             USWAP_V2_ROUTERS = _remAddressFromArray(_router, USWAP_V2_ROUTERS); // removes only one & order NOT maintained
-            return true;
         }
     }
     function _getStableHeldHighMarketValue(uint64 _usdAmntReq, address[] memory _stables, address[] memory _routers) private view returns (address) {
@@ -362,13 +380,15 @@ contract BearSharesTrinity is ERC20, Ownable {
     function _exeBstPayout(address _payTo, uint256 _bstPayout, uint64 _usdPayout, address _usdStable) private {
         uint256 thisBstBal = balanceOf(address(this));
         bool stableHoldings_OK = _stableHoldingsCovered(_usdPayout, _usdStable);
+        bool usdBstPath_OK = USD_BST_PATHS[_usdStable].length > 0;
+
         /** ALGORITHMIC LOGIC ...
              if ENABLE_MARKET_BUY, pay BST from market buy
              else, pay w/ contract BST holdings first
                 after holdings runs out, pay with newly minted BST
          */
-        if (ENABLE_MARKET_BUY && stableHoldings_OK) {
-            uint256 bst_amnt_out = _exeSwapStableForBst(_usdPayout, _usdStable);
+        if (ENABLE_MARKET_BUY && stableHoldings_OK && usdBstPath_OK) {
+            uint256 bst_amnt_out = _exeSwapStableForBst(_usdPayout, _usdStable, USD_BST_PATHS[_usdStable]);
             if (_bstPayout < bst_amnt_out) 
                 bst_amnt_out = _bstPayout;
             _transfer(address(this), _payTo, bst_amnt_out);
@@ -395,13 +415,15 @@ contract BearSharesTrinity is ERC20, Ownable {
     function _exeBstBurn(uint256 _bstBurnAmnt, uint64 _usdBurn, address _usdStable) private {
         uint256 thisBstBal = balanceOf(address(this));
         bool stableHoldings_OK = _stableHoldingsCovered(_usdBurn, _usdStable);
+        bool usdBstPath_OK = USD_BST_PATHS[_usdStable].length > 0;
+
         /** ALGORITHMIC LOGIC ...
              if ENABLE_MARKET_BUY, burn BST from market buy
              else, burn w/ contract BST holdings
                 NOTE: less|no burn, if holdings < _bstBurnAmnt 
          */
-        if (ENABLE_MARKET_BUY && stableHoldings_OK) {
-            uint256 bst_amnt_out = _exeSwapStableForBst(_usdBurn, _usdStable);
+        if (ENABLE_MARKET_BUY && stableHoldings_OK && usdBstPath_OK) {
+            uint256 bst_amnt_out = _exeSwapStableForBst(_usdBurn, _usdStable, USD_BST_PATHS[_usdStable]);
             if (_bstBurnAmnt < bst_amnt_out) 
                 bst_amnt_out = _bstBurnAmnt;
             _transfer(address(this), address(0), bst_amnt_out);
@@ -452,13 +474,10 @@ contract BearSharesTrinity is ERC20, Ownable {
         stab_amnt_out = _normalizeStableAmnt(USD_STABLE_DECIMALS[_usdStable], stab_amnt_out, decimals());
         return stab_amnt_out;
     }
-    function _exeSwapStableForBst(uint256 _usdAmnt, address _usdStable) private returns (uint256) {
-        address[] memory stab_bst_path = new address[](2);
-        stab_bst_path[0] = _usdStable;
-        stab_bst_path[1] = address(this);
+    function _exeSwapStableForBst(uint256 _usdAmnt, address _usdStable, address[] memory _stab_bst_path) private returns (uint256) {
         uint256 usdAmnt_ = _normalizeStableAmnt(decimals(), _usdAmnt, USD_STABLE_DECIMALS[_usdStable]);
-        (uint8 rtrIdx, uint256 bst_amnt) = _best_swap_v2_router_idx_quote(stab_bst_path, usdAmnt_, USWAP_V2_ROUTERS);
-        uint256 bst_amnt_out = _swap_v2_wrap(stab_bst_path, USWAP_V2_ROUTERS[rtrIdx], usdAmnt_, address(this), false); // true = fromETH
+        (uint8 rtrIdx, uint256 bst_amnt) = _best_swap_v2_router_idx_quote(_stab_bst_path, usdAmnt_, USWAP_V2_ROUTERS);
+        uint256 bst_amnt_out = _swap_v2_wrap(_stab_bst_path, USWAP_V2_ROUTERS[rtrIdx], usdAmnt_, address(this), false); // true = fromETH
         return bst_amnt_out;
     }
     function _addAddressToArraySafe(address _addr, address[] memory _arr, bool _safe) private pure returns (address[] memory) {
