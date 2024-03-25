@@ -83,6 +83,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* -------------------------------------------------------- */
     // NOTE: sets msg.sender to '_owner' ('Ownable' maintained)
     constructor(uint256 _initSupply) ERC20(tok_name, tok_symb) Ownable(msg.sender) {
+        // set default globals
         ENABLE_MARKET_QUOTE = false;
         ENABLE_MARKET_BUY = false;
         SERVICE_FEE_PERC = 5;  // 5%
@@ -91,17 +92,16 @@ contract BearSharesTrinity is ERC20, Ownable {
         KEEPER = msg.sender;
         _mint(msg.sender, _initSupply * 10**uint8(decimals())); // 'emit Transfer'
 
-        // weUSDT
+        // add default stables: weUSDT
         address usdStable = address(0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f); 
         uint8 decimals_ = 6;
-        WHITELIST_USD_STABLES = _addAddressToArraySafe(usdStable, WHITELIST_USD_STABLES, true); // true = no dups
-        USD_STABLE_DECIMALS[usdStable] = decimals_;
+        _editWhitelistStables(usdStable, decimals_, true); // true = add
 
-        // add pulsex routers
+        // add default routers: pulsex x2 
         address router_0 = address(0x98bf93ebf5c380C0e6Ae8e192A7e2AE08edAcc02);
         address router_1 = address(0x165C3410fC91EF562C50559f7d2289fEbed552d9);
-        USWAP_V2_ROUTERS = _addAddressToArraySafe(router_0, USWAP_V2_ROUTERS, true); // true = no dups
-        USWAP_V2_ROUTERS = _addAddressToArraySafe(router_1, USWAP_V2_ROUTERS, true); // true = no dups
+        _editDexRouters(router_0, true); // true = add
+        _editDexRouters(router_1, true); // true = add
     }
 
     /* -------------------------------------------------------- */
@@ -154,26 +154,13 @@ contract BearSharesTrinity is ERC20, Ownable {
         ENABLE_MARKET_QUOTE = _enable;
         emit MarketQuoteEnabled(prev, ENABLE_MARKET_QUOTE);
     }
-    function KEEPER_editWhitelistStables(address _usdStable, uint8 _decimals, bool _add) external onlyKeeper { // allows duplicates
+    function KEEPER_editWhitelistStables(address _usdStable, uint8 _decimals, bool _add) external onlyKeeper {
         require(_usdStable != address(0), 'err: 0 address');
-        if (_add) {
-            WHITELIST_USD_STABLES = _addAddressToArraySafe(_usdStable, WHITELIST_USD_STABLES, true); // true = no dups
-            USD_STABLES_HISTORY = _addAddressToArraySafe(_usdStable, USD_STABLES_HISTORY, true); // true = no dups
-            USD_STABLE_DECIMALS[_usdStable] = _decimals;
-        } else {
-            WHITELIST_USD_STABLES = _remAddressFromArray(_usdStable, WHITELIST_USD_STABLES);
-            USD_STABLE_DECIMALS[_usdStable] = 0;
-        }
+        _editWhitelistStables(_usdStable, _decimals, _add);
     }
     function KEEPER_editDexRouters(address _router, bool _add) external onlyKeeper returns (bool) {
         require(_router != address(0x0), "0 address");
-        if (_add) {
-            USWAP_V2_ROUTERS = _addAddressToArraySafe(_router, USWAP_V2_ROUTERS, true); // true = no dups
-            return true;
-        } else {
-            USWAP_V2_ROUTERS = _remAddressFromArray(_router, USWAP_V2_ROUTERS); // removes only one & order NOT maintained
-            return true;
-        }
+        return _editDexRouters(_router, _add);
     }
     function KEEPER_contractStableBalances() external view onlyKeeper() returns (uint64, uint64) {
         uint64 gross_bal = 0;
@@ -321,6 +308,26 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* -------------------------------------------------------- */
     /* PRIVATE - SUPPORTING                                     */
     /* -------------------------------------------------------- */
+    function _editWhitelistStables(address _usdStable, uint8 _decimals, bool _add) private { // allows duplicates
+        if (_add) {
+            WHITELIST_USD_STABLES = _addAddressToArraySafe(_usdStable, WHITELIST_USD_STABLES, true); // true = no dups
+            USD_STABLES_HISTORY = _addAddressToArraySafe(_usdStable, USD_STABLES_HISTORY, true); // true = no dups
+            USD_STABLE_DECIMALS[_usdStable] = _decimals;
+        } else {
+            WHITELIST_USD_STABLES = _remAddressFromArray(_usdStable, WHITELIST_USD_STABLES);
+            USD_STABLE_DECIMALS[_usdStable] = 0;
+        }
+    }
+    function _editDexRouters(address _router, bool _add) private returns (bool) {
+        require(_router != address(0x0), "0 address");
+        if (_add) {
+            USWAP_V2_ROUTERS = _addAddressToArraySafe(_router, USWAP_V2_ROUTERS, true); // true = no dups
+            return true;
+        } else {
+            USWAP_V2_ROUTERS = _remAddressFromArray(_router, USWAP_V2_ROUTERS); // removes only one & order NOT maintained
+            return true;
+        }
+    }
     function _getStableHeldHighMarketValue(uint64 _usdAmntReq, address[] memory _stables, address[] memory _routers) private view returns (address) {
 
         address[] memory _stablesHeld;
