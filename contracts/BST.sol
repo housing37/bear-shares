@@ -25,7 +25,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '10';
+    string public tVERSION = '17';
     string private tok_symb = string(abi.encodePacked("tBST", tVERSION));
     string private tok_name = string(abi.encodePacked("tTrinity_", tVERSION));
     // string private constant tok_symb = "BST";
@@ -92,16 +92,12 @@ contract BearSharesTrinity is ERC20, Ownable {
         // weUSDT
         address usdStable = address(0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f); 
         uint8 decimals_ = 6;
-
-        // WHITELIST_USD_STABLES = _addAddressToArraySafe(usdStable, WHITELIST_USD_STABLES, true); // true = no dups
-        WHITELIST_USD_STABLES.push(usdStable);
+        WHITELIST_USD_STABLES = _addAddressToArraySafe(usdStable, WHITELIST_USD_STABLES, true); // true = no dups
         USD_STABLE_DECIMALS[usdStable] = decimals_;
 
         // add pulsex routers
         address router_0 = address(0x98bf93ebf5c380C0e6Ae8e192A7e2AE08edAcc02);
         address router_1 = address(0x165C3410fC91EF562C50559f7d2289fEbed552d9);
-        // USWAP_V2_ROUTERS.push(router_0);
-        // USWAP_V2_ROUTERS.push(router_1);
         USWAP_V2_ROUTERS = _addAddressToArraySafe(router_0, USWAP_V2_ROUTERS, true); // true = no dups
         USWAP_V2_ROUTERS = _addAddressToArraySafe(router_1, USWAP_V2_ROUTERS, true); // true = no dups
     }
@@ -217,6 +213,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         //  invokes _getStableHeldLowMarketValue -> _getStableTokenLowMarketValue -> _best_swap_v2_router_idx_quote
 
         // ACCT_USD_BALANCES stores uint precision to decimals()
+        require(_usdValue > 0, 'err: 0 _usdValue :[]');
         require(ACCT_USD_BALANCES[msg.sender] >= _usdValue, 'err: low acct balance :{}');
         require(_payTo != address(0), 'err: _payTo address');
 
@@ -297,7 +294,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     function _getStableHeldHighMarketValue(uint64 _usdAmntReq, address[] memory _stables, address[] memory _routers) private view returns (address) {
 
         address[] memory _stablesHeld;
-        for (uint i=0; i <= _stables.length;) {
+        for (uint8 i=0; i < _stables.length;) {
             if (_stableHoldingsCovered(_usdAmntReq, _stables[i]))
                 _stablesHeld = _addAddressToArraySafe(_stables[i], _stablesHeld, true); // true = no dups
 
@@ -310,7 +307,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     function _getStableHeldLowMarketValue(uint64 _usdAmntReq, address[] memory _stables, address[] memory _routers) private view returns (address) {
 
         address[] memory _stablesHeld;
-        for (uint i=0; i <= _stables.length;) {
+        for (uint8 i=0; i < _stables.length;) {
             if (_stableHoldingsCovered(_usdAmntReq, _stables[i]))
                 _stablesHeld = _addAddressToArraySafe(_stables[i], _stablesHeld, true); // true = no dups
 
@@ -401,8 +398,8 @@ contract BearSharesTrinity is ERC20, Ownable {
     }
     function _perc_of_uint64(uint8 _perc, uint64 _num) private pure returns (uint64) {
         require(_perc <= 100, 'err: invalid percent');
-        uint32 aux_perc = _perc * 100;
-        uint64 result = (_num * aux_perc) / 10000; // chatGPT equation
+        uint32 aux_perc = uint32(_perc) * 100;
+        uint64 result = (_num * uint64(aux_perc)) / 10000; // chatGPT equation
         return result;
     }
     function _uint64_from_uint256(uint256 value) private pure returns (uint64) {
@@ -436,7 +433,7 @@ contract BearSharesTrinity is ERC20, Ownable {
 
         // perform add to memory array type w/ static size
         address[] memory _ret = new address[](_arr.length+1);
-        for (uint i=0; i < _arr.length; i++) { _ret[i] = _arr[i]; }
+        for (uint i=0; i < _arr.length;) { _ret[i] = _arr[i]; unchecked {i++;}}
         _ret[_ret.length-1] = _addr;
         return _ret;
     }
@@ -444,7 +441,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         if (_addr == address(0) || _arr.length == 0) { return _arr; }
         
         // NOTE: remove algorithm does NOT maintain order & only removes first occurance
-        for (uint i = 0; i < _arr.length; i++) {
+        for (uint i = 0; i < _arr.length;) {
             if (_addr == _arr[i]) {
                 _arr[i] = _arr[_arr.length - 1];
                 assembly { // reduce memory _arr length by 1 (simulate pop)
@@ -452,6 +449,8 @@ contract BearSharesTrinity is ERC20, Ownable {
                 }
                 return _arr;
             }
+
+            unchecked {i++;}
         }
         return _arr;
     }
@@ -531,7 +530,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         // traverse _stables & select stable w/ the highest market value
         uint256 curr_low_tok_val = 0;
         address curr_high_val_stable = address(0x0);
-        for (uint8 i=0; i < _stables.length; i++) {
+        for (uint8 i=0; i < _stables.length;) {
             address stable_addr = _stables[i];
             if (stable_addr == address(0)) { continue; }
 

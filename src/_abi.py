@@ -42,7 +42,7 @@ BST_FUNC_MAP_WRITE = {
 
     "allowance(address,address)": ["dd62ed3e", ["address","address"], []],
     "approve(address,uint256)": ["095ea7b3", ["address","uint256"], []],
-    "payOutBST(uint64,address)": ["031cc420", ["uint64","address"], []],
+    "payOutBST(uint64,address)": ["031cc420", ["uint64","address"], []], # gas used: 212,143
     "renounceOwnership()": ["715018a6", [], []],
     "tradeInBST(uint64)": ["d8785767", ["uint64"], []],
     "transfer(address,uint256)": ["a9059cbb", ["address","uint256"], []],

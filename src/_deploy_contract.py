@@ -4,6 +4,8 @@ cStrDivider = '#================================================================
 print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globals', cStrDivider, sep='\n')
 cStrDivider_1 = '#----------------------------------------------------------------#'
 
+# CLI:
+#   $ python3.10 _deploy_contract.py | tee ../bin/receipts/deploy_tBST_17_032424_2109.txt 
 #------------------------------------------------------------#
 #   IMPORTS                                                  #
 #------------------------------------------------------------#
