@@ -242,11 +242,11 @@ contract BearSharesTrinity is ERC20, Ownable {
         uint64 usdBurn = _perc_of_uint64(SERVICE_BURN_PERC, _usdValue);
         uint64 usdPayout = _usdValue - usdFee - usdBurn;
 
-        // NOTE: validate collective contract stable balances can cover usdPayout
+        // NOTE: validate collective contract stable balances can cover usdPayout market buy
         //  if yes, let it go through ... else, revert
         //   NOTE: if lowStableHeld = 0x0: _exeBstPayout|Burn will fallback to contract holdings / minting
         (uint64 stab_gross_bal, uint64 stab_owed_bal, int64 stab_net_bal) = _contractStableBalances(WHITELIST_USD_STABLES);
-        require(stab_gross_bal >= usdPayout, 'err: cannot cover usdPayout');
+        require(stab_gross_bal >= usdPayout, 'cannot cover usdPayout market buy :/');
 
         // NOTE: maintain 1:1 if ENABLE_MARKET_QUOTE == false
         //  else, get BST value quotes against highest market valued whitelist stable
@@ -290,7 +290,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     // handle contract BST buy-backs
     //  NOTE: _bstAmnt must be in uint precision to decimals()
     function tradeInBST(uint64 _bstAmnt) external {
-        require(balanceOf(msg.sender) >= _bstAmnt,'err: not enough BST');
+        require(balanceOf(msg.sender) >= _bstAmnt,'not enough BST :/');
 
         // buy-back value is always 1:1        
         uint64 usdBuyBackVal = _bstAmnt; 
@@ -299,10 +299,14 @@ contract BearSharesTrinity is ERC20, Ownable {
         uint64 usdBuyBackFee = _perc_of_uint64(BUY_BACK_FEE_PERC, usdBuyBackVal);
         uint64 usdTradeVal = usdBuyBackVal - usdBuyBackFee;
 
+        // NOTE: validate collective contract stable balances can cover usdTradeVal
+        (uint64 stab_gross_bal, uint64 stab_owed_bal, int64 stab_net_bal) = _contractStableBalances(WHITELIST_USD_STABLES);
+        require(stab_gross_bal >= usdTradeVal, 'cannot cover usdTradeVal :/');
+
         // get / verify available whitelist stable that covers trade in value
         //  want to use lowest market value stable possible (ie. contract maintains high market stables)
         address usdStable = _getStableHeldLowMarketValue(usdTradeVal, WHITELIST_USD_STABLES, USWAP_V2_ROUTERS);
-        require(usdStable != address(0x0), 'err: not enough stable to cover tradeIn');
+        require(usdStable != address(0x0), 'not enough single usdStable to cover tradeIn :/');
 
         // transfer BST in
         _transfer(msg.sender, address(this), _bstAmnt);
