@@ -25,7 +25,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '23';
+    string public tVERSION = '24';
     string private tok_symb = string(abi.encodePacked("tBST", tVERSION));
     string private tok_name = string(abi.encodePacked("tTrinity_", tVERSION));
     // string private constant tok_symb = "BST";
@@ -184,8 +184,10 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* -------------------------------------------------------- */
     /* PUBLIC - KEEPER - ACCESSORS
     /* -------------------------------------------------------- */
-    function KEEPER_contractStableBalances() external view onlyKeeper() returns (uint64, uint64, int64) {
-        return _contractStableBalances(USD_STABLES_HISTORY);
+    function KEEPER_collectiveStableBalances(bool _history) external view onlyKeeper() returns (uint64, uint64, int64) {
+        if (_history)
+            return _collectiveStableBalances(USD_STABLES_HISTORY);
+        return _collectiveStableBalances(WHITELIST_USD_STABLES);
     }
 
     /* -------------------------------------------------------- */
@@ -250,7 +252,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         // NOTE: validate contract's collective stable balances can cover usdPayout
         //  if yes, let it go through ... else, revert (ie. contract can't cover a tradeInBST for usdPayout amount)
         //   NOTE: if lowStableHeld = 0x0 (below): _exeBstPayout|Burn will fallback to contract holdings / minting
-        (uint64 stab_gross_bal, uint64 stab_owed_bal, int64 stab_net_bal) = _contractStableBalances(WHITELIST_USD_STABLES);
+        (uint64 stab_gross_bal, uint64 stab_owed_bal, int64 stab_net_bal) = _collectiveStableBalances(WHITELIST_USD_STABLES);
         require(stab_gross_bal >= usdPayout, ' gross bal will not cover usdPayout buy-back :/ ');
 
         // NOTE: maintain 1:1 if ENABLE_MARKET_QUOTE == false
@@ -305,7 +307,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         uint64 usdTradeVal = usdBuyBackVal - usdBuyBackFee;
 
         // NOTE: validate contract's collective stable balances can cover usdTradeVal
-        (uint64 stab_gross_bal, uint64 stab_owed_bal, int64 stab_net_bal) = _contractStableBalances(WHITELIST_USD_STABLES);
+        (uint64 stab_gross_bal, uint64 stab_owed_bal, int64 stab_net_bal) = _collectiveStableBalances(WHITELIST_USD_STABLES);
         if (stab_gross_bal < usdTradeVal) {
             emit TradeInFailed(msg.sender, _bstAmnt, usdTradeVal); // notify keeper maintenance needed
             revert(' failed: cannot cover usdTradeVal :/ ');
@@ -334,7 +336,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* -------------------------------------------------------- */
     /* PRIVATE - SUPPORTING                                     */
     /* -------------------------------------------------------- */
-    function _contractStableBalances(address[] memory _stables) private view returns (uint64, uint64, int64) {
+    function _collectiveStableBalances(address[] memory _stables) private view returns (uint64, uint64, int64) {
         uint64 gross_bal = 0;
         for (uint8 i = 0; i < _stables.length;) {
             address stable = _stables[i];
