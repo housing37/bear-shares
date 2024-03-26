@@ -333,7 +333,8 @@ def go_select_func():
     assert ans_idx.isdigit() and int(ans_idx) >= 0 and int(ans_idx) < len(lst_keys), f'failed ... invalid input {ans_idx}'
     func_select = list(BST_FUNC_MAP.keys())[int(ans_idx)]
     ans = input(f'\n  Confirm func [y/n]: {func_select}\n  > ')
-    if str(ans).lower() != 'y' and str(ans).lower() != 'yes': go_select_func()
+    lst_ans_go = ['y','yes','']
+    if str(ans).lower() not in lst_ans_go: go_select_func()
     return func_select
 
 def go_enter_func_params(_func_select):
@@ -419,7 +420,7 @@ if __name__ == "__main__":
         if func_sel:
             # continue function selection progression until killed
             while func_sel:
-                print('', cStrDivider_1, "here we go!", sep='\n')
+                print('', cStrDivider_1, f"here we go! _ IS_WRITE={IS_WRITE}", sep='\n')
                 func_select = go_select_func()
                 lst_func_params = go_enter_func_params(func_select)
                 lst_params = list(BST_FUNC_MAP[func_select])
