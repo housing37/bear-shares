@@ -25,7 +25,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '21';
+    string public tVERSION = '23';
     string private tok_symb = string(abi.encodePacked("tBST", tVERSION));
     string private tok_name = string(abi.encodePacked("tTrinity_", tVERSION));
     // string private constant tok_symb = "BST";
@@ -182,13 +182,13 @@ contract BearSharesTrinity is ERC20, Ownable {
     function KEEPER_contractStableBalances() external view onlyKeeper() returns (uint64, uint64, int64) {
         return _contractStableBalances(USD_STABLES_HISTORY);
     }
-    function KEEPER_getAccounts() external view onlyKeeper returns (address[] memory) {
-        return ACCOUNTS;
-    }
 
     /* -------------------------------------------------------- */
     /* PUBLIC - ACCESSORS
     /* -------------------------------------------------------- */
+    function getAccounts() external view returns (address[] memory) {
+        return ACCOUNTS;
+    }
     function getUsdBstPath(address _usdStable) external view returns (address[] memory) {
         return USD_BST_PATHS[_usdStable];
     }    
