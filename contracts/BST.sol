@@ -233,20 +233,21 @@ contract BearSharesTrinity is ERC20, Ownable {
         //  invokes _getStableHeldLowMarketValue -> _getStableTokenLowMarketValue -> _best_swap_v2_router_idx_quote
 
         // ACCT_USD_BALANCES stores uint precision to decimals()
-        require(_usdValue > 0, 'err: 0 _usdValue :[]');
-        require(ACCT_USD_BALANCES[msg.sender] >= _usdValue, 'err: low acct balance :{}');
-        require(_payTo != address(0), 'err: _payTo address');
+        require(_usdValue > 0, ' 0 _usdValue :[] ');
+        require(ACCT_USD_BALANCES[msg.sender] >= _usdValue, ' low acct balance :{} ');
+        require(_payTo != address(0), ' _payTo 0 address :( ');
 
         // calc & remove service fee & burn amount
         uint64 usdFee = _perc_of_uint64(SERVICE_FEE_PERC, _usdValue);
         uint64 usdBurn = _perc_of_uint64(SERVICE_BURN_PERC, _usdValue);
         uint64 usdPayout = _usdValue - usdFee - usdBurn;
 
-        // NOTE: validate collective contract stable balances can cover usdPayout market buy
-        //  if yes, let it go through ... else, revert
-        //   NOTE: if lowStableHeld = 0x0: _exeBstPayout|Burn will fallback to contract holdings / minting
+
+        // NOTE: validate contract's collective stable balances can cover usdPayout
+        //  if yes, let it go through ... else, revert (ie. contract can't cover a tradeInBST for usdPayout amount)
+        //   NOTE: if lowStableHeld = 0x0 (below): _exeBstPayout|Burn will fallback to contract holdings / minting
         (uint64 stab_gross_bal, uint64 stab_owed_bal, int64 stab_net_bal) = _contractStableBalances(WHITELIST_USD_STABLES);
-        require(stab_gross_bal >= usdPayout, 'cannot cover usdPayout market buy :/');
+        require(stab_gross_bal >= usdPayout, ' cannot cover trade-in for usdPayout amount :/ ');
 
         // NOTE: maintain 1:1 if ENABLE_MARKET_QUOTE == false
         //  else, get BST value quotes against highest market valued whitelist stable
@@ -267,7 +268,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         //  then choose stable with lowest market value (results in most amnt of BST)
         //   ie. most amount of BST bought from open market (to be burned or paid out)
         // NOTE: if no stables held can cover 'usdPayout', then lowStableHeld = address(0x0)
-        //  this is indeed ok as '_exeBstPayout' and '_exeBstBurn' checks for this case
+        //  this is indeed ok as '_exeBstPayout' & '_exeBstBurn' checks for this, and falls back to holdings / minting
         address lowStableHeld = _getStableHeldLowMarketValue(usdPayout, WHITELIST_USD_STABLES, USWAP_V2_ROUTERS); // 3 loops embedded
 
         /** ALGORITHMIC LOGIC ... (for BST ENABLE_MARKET_BUY from dex = ON|OFF)
@@ -279,7 +280,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         _exeBstBurn(bstBurn, usdBurn, lowStableHeld);
 
         // update account balance, ACCT_USD_BALANCES stores uint precision to decimals()
-        ACCT_USD_BALANCES[msg.sender] = ACCT_USD_BALANCES[msg.sender] - _usdValue;
+        ACCT_USD_BALANCES[msg.sender] -= _usdValue; // _usdValue 'require' check above
 
         // log this payout, ACCT_USD_PAYOUTS stores uint precision to decimals()
         ACCT_USD_PAYOUTS[msg.sender].push(ACCT_PAYOUT(_payTo, _usdValue, usdFee, usdBurn, usdPayout, bstBurn, bstPayout));
@@ -290,7 +291,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     // handle contract BST buy-backs
     //  NOTE: _bstAmnt must be in uint precision to decimals()
     function tradeInBST(uint64 _bstAmnt) external {
-        require(balanceOf(msg.sender) >= _bstAmnt,'not enough BST :/');
+        require(balanceOf(msg.sender) >= _bstAmnt,' not enough BST :/ ');
 
         // buy-back value is always 1:1        
         uint64 usdBuyBackVal = _bstAmnt; 
@@ -299,14 +300,14 @@ contract BearSharesTrinity is ERC20, Ownable {
         uint64 usdBuyBackFee = _perc_of_uint64(BUY_BACK_FEE_PERC, usdBuyBackVal);
         uint64 usdTradeVal = usdBuyBackVal - usdBuyBackFee;
 
-        // NOTE: validate collective contract stable balances can cover usdTradeVal
+        // NOTE: validate contract's collective stable balances can cover usdTradeVal
         (uint64 stab_gross_bal, uint64 stab_owed_bal, int64 stab_net_bal) = _contractStableBalances(WHITELIST_USD_STABLES);
-        require(stab_gross_bal >= usdTradeVal, 'cannot cover usdTradeVal :/');
+        require(stab_gross_bal >= usdTradeVal, ' cannot cover usdTradeVal :/ ');
 
         // get / verify available whitelist stable that covers trade in value
         //  want to use lowest market value stable possible (ie. contract maintains high market stables)
         address usdStable = _getStableHeldLowMarketValue(usdTradeVal, WHITELIST_USD_STABLES, USWAP_V2_ROUTERS);
-        require(usdStable != address(0x0), 'not enough single usdStable to cover tradeIn :/');
+        require(usdStable != address(0x0), ' no single usdStable found to cover tradeIn :/ ');
 
         // transfer BST in
         _transfer(msg.sender, address(this), _bstAmnt);
