@@ -77,6 +77,8 @@ contract BearSharesTrinity is ERC20, Ownable {
     event MarketQuoteEnabled(bool _prev, bool _new);
     event DepositReceived(address _account, uint256 _plsDeposit, uint64 _stableConvert);
     event PayOutProcessed(address _from, address _to, uint64 _usdAmnt);
+    event TradeInFailed(address _trader, uint64 _bstAmnt, uint64 _usdTradeVal);
+    event TradeInDenied(address _trader, uint64 _bstAmnt, uint64 _usdTradeVal);
     event TradeInProcessed(address _trader, uint64 _bstAmnt, uint64 _usdTradeVal);
     event WhitelistStableUpdated(address _usdStable, uint8 _decimals, bool _add);
     event DexRouterUpdated(address _router, bool _add);
@@ -242,12 +244,11 @@ contract BearSharesTrinity is ERC20, Ownable {
         uint64 usdBurn = _perc_of_uint64(SERVICE_BURN_PERC, _usdValue);
         uint64 usdPayout = _usdValue - usdFee - usdBurn;
 
-
         // NOTE: validate contract's collective stable balances can cover usdPayout
         //  if yes, let it go through ... else, revert (ie. contract can't cover a tradeInBST for usdPayout amount)
         //   NOTE: if lowStableHeld = 0x0 (below): _exeBstPayout|Burn will fallback to contract holdings / minting
         (uint64 stab_gross_bal, uint64 stab_owed_bal, int64 stab_net_bal) = _contractStableBalances(WHITELIST_USD_STABLES);
-        require(stab_gross_bal >= usdPayout, ' cannot cover trade-in for usdPayout amount :/ ');
+        require(stab_gross_bal >= usdPayout, ' gross bal will not cover usdPayout buy-back :/ ');
 
         // NOTE: maintain 1:1 if ENABLE_MARKET_QUOTE == false
         //  else, get BST value quotes against highest market valued whitelist stable
@@ -302,13 +303,21 @@ contract BearSharesTrinity is ERC20, Ownable {
 
         // NOTE: validate contract's collective stable balances can cover usdTradeVal
         (uint64 stab_gross_bal, uint64 stab_owed_bal, int64 stab_net_bal) = _contractStableBalances(WHITELIST_USD_STABLES);
-        require(stab_gross_bal >= usdTradeVal, ' cannot cover usdTradeVal :/ ');
+        if (stab_gross_bal < usdTradeVal) {
+            emit TradeInFailed(msg.sender, _bstAmnt, usdTradeVal); // notify keeper maintenance needed
+            revert(' failed: cannot cover usdTradeVal :/ ');
+            // require(stab_gross_bal >= usdTradeVal, ' cannot cover usdTradeVal :/ ');
+        }
 
         // get / verify available whitelist stable that covers trade in value
         //  want to use lowest market value stable possible (ie. contract maintains high market stables)
         address usdStable = _getStableHeldLowMarketValue(usdTradeVal, WHITELIST_USD_STABLES, USWAP_V2_ROUTERS);
-        require(usdStable != address(0x0), ' no single usdStable found to cover tradeIn :/ ');
-
+        if (usdStable == address(0x0)) {
+            emit TradeInDenied(msg.sender, _bstAmnt, usdTradeVal); // notify keeper maintenance needed
+            revert(' denied: no single stable found to cover tradeIn :/ ');
+            // require(usdStable != address(0x0), ' denied: no single stable found to cover tradeIn :/ ');
+        }
+        
         // transfer BST in
         _transfer(msg.sender, address(this), _bstAmnt);
 
