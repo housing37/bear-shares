@@ -98,10 +98,13 @@ contract BearSharesTrinity is ERC20, Ownable {
         KEEPER = msg.sender;
         _mint(msg.sender, _initSupply * 10**uint8(decimals())); // 'emit Transfer'
 
-        // add default stables: weUSDT
-        address usdStable = address(0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f); 
-        uint8 decimals_ = 6;
-        _editWhitelistStables(usdStable, decimals_, true); // true = add
+        // add default stables
+        address usdStable_0 = address(0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f); // weUSDT
+        address usdStable_1 = address(0xefD766cCb38EaF1dfd701853BFCe31359239F305); // weDAI
+        uint8 decimals_0 = 6;
+        uint8 decimals_1 = 18;
+        _editWhitelistStables(usdStable_0, decimals_0, true); // true = add
+        _editWhitelistStables(usdStable_1, decimals_1, true); // true = add
 
         // add default routers: pulsex x2 
         address router_0 = address(0x98bf93ebf5c380C0e6Ae8e192A7e2AE08edAcc02);
