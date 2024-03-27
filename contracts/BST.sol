@@ -25,7 +25,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '24';
+    string public tVERSION = '25';
     string private tok_symb = string(abi.encodePacked("tBST", tVERSION));
     string private tok_name = string(abi.encodePacked("tTrinity_", tVERSION));
     // string private constant tok_symb = "BST";
@@ -73,11 +73,10 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* -------------------------------------------------------- */
     event KeeperTransfer(address _prev, address _new);
     event ServiceFeeUpdate(uint8 _prev, uint8 _new);
-    event BstBurnUpdate(uint8 _prev, uint8 _new);
-    event AuxBurnUpdate(uint8 _prev, uint8 _new);
+    event BstBurnPercUpdate(uint8 _prev, uint8 _new);
+    event AuxBurnPercUpdate(uint8 _prev, uint8 _new);
     event TradeInFeeUpdate(uint8 _prev, uint8 _new);
-    event MarketBuyEnabled(bool _prev, bool _new);
-    event MarketQuoteEnabled(bool _prev, bool _new);
+    event DexExecutionsUpdated(bool _prev_0, bool _prev_1, bool _prev_2, bool _new_0, bool _new_1, bool _new_2);
     event DepositReceived(address _account, uint256 _plsDeposit, uint64 _stableConvert);
     event PayOutProcessed(address _from, address _to, uint64 _usdAmnt);
     event TradeInFailed(address _trader, uint64 _bstAmnt, uint64 _usdTradeVal);
@@ -151,13 +150,13 @@ contract BearSharesTrinity is ERC20, Ownable {
         require(SERVICE_FEE_PERC + AUX_BURN_PERC + _perc <= 100, ' total percs > 100 :/ ');
         uint8 prev = BST_BURN_PERC;
         BST_BURN_PERC = _perc;
-        emit BstBurnUpdate(prev, BST_BURN_PERC);
+        emit BstBurnPercUpdate(prev, BST_BURN_PERC);
     }
     function KEEPER_setAuxBurnPerc(uint8 _perc) external onlyKeeper() {
         require(SERVICE_FEE_PERC + BST_BURN_PERC + _perc <= 100, ' total percs > 100 :/ ');
         uint8 prev = AUX_BURN_PERC;
         AUX_BURN_PERC = _perc;
-        emit AuxBurnUpdate(prev, AUX_BURN_PERC);
+        emit AuxBurnPercUpdate(prev, AUX_BURN_PERC);
     }
     function KEEPER_setBuyBackFeePerc(uint8 _perc) external onlyKeeper() {
         require(_perc <= 100, 'err: _perc > 100%');
@@ -165,15 +164,18 @@ contract BearSharesTrinity is ERC20, Ownable {
         BUY_BACK_FEE_PERC = _perc;
         emit TradeInFeeUpdate(prev, BUY_BACK_FEE_PERC);
     }
-    function KEEPER_enableMarketBuy(bool _enable) external onlyKeeper() {
-        bool prev = ENABLE_MARKET_BUY;
-        ENABLE_MARKET_BUY = _enable;
-        emit MarketBuyEnabled(prev, ENABLE_MARKET_BUY);
-    }
-    function KEEPER_enableMarketQuote(bool _enable) external onlyKeeper() {
-        bool prev = ENABLE_MARKET_QUOTE;
-        ENABLE_MARKET_QUOTE = _enable;
-        emit MarketQuoteEnabled(prev, ENABLE_MARKET_QUOTE);
+    function KEEPER_enableDexPayouts(bool _marketQuote, bool _marketBuy, bool _auxTokenBurn) external onlyKeeper() {
+        // NOTE: some function still indeed get quotes from dexes without this being enabled
+        require(_marketQuote || (!_marketBuy && !_auxTokenBurn), ' invalid input combo :{=} ');
+        bool prev_0 = ENABLE_MARKET_QUOTE;
+        bool prev_1 = ENABLE_MARKET_BUY;
+        bool prev_2 = ENABLE_AUX_BURN;
+
+        ENABLE_MARKET_QUOTE = _marketQuote;    
+        ENABLE_MARKET_BUY = _marketBuy;
+        ENABLE_AUX_BURN = _auxTokenBurn;
+        
+        emit DexExecutionsUpdated(prev_0, prev_1, prev_2, ENABLE_MARKET_QUOTE, ENABLE_MARKET_BUY, ENABLE_AUX_BURN);
     }
     function KEEPER_editWhitelistStables(address _usdStable, uint8 _decimals, bool _add) external onlyKeeper {
         require(_usdStable != address(0), 'err: 0 address');
@@ -244,7 +246,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     }
 
     // handle account payouts
-    //  NOTE: _usdValue must be in uint precision to decimals()
+    //  NOTE: _usdValue must be in uint precision to address(this) 'decimals()'
     function payOutBST(uint64 _usdValue, address _payTo, address _auxToken) external {
         // NOTE: payOutBST runs a total of 7 loops embedded
         //  invokes _getStableTokenHighMarketValue -> _best_swap_v2_router_idx_quote
@@ -263,10 +265,9 @@ contract BearSharesTrinity is ERC20, Ownable {
         uint64 usdPayout = _usdValue - usdFee - usdBurn - usdAuxBurn;
 
         // NOTE: validate contract's collective stable balances can cover usdPayout
-        //  if yes, let it go through ... else, revert (ie. contract can't cover a tradeInBST for usdPayout amount)
+        //  if yes, let it go through ... else, revert (ie. contract can't cover a tradeInBST for this usdPayout amount)
         //   NOTE: if lowStableHeld = 0x0 (below): _exeBstPayout|Burn will fallback to contract holdings / minting
-        (uint64 stab_gross_bal, uint64 stab_owed_bal, int64 stab_net_bal) = _collectiveStableBalances(WHITELIST_USD_STABLES);
-        require(stab_gross_bal >= usdPayout, ' gross bal will not cover usdPayout buy-back :/ ');
+        require(_grossStableBalance(WHITELIST_USD_STABLES) >= usdPayout, ' gross bal will not cover usdPayout buy-back :/ ');
 
         // NOTE: maintain 1:1 if !ENABLE_MARKET_QUOTE
         //  else, get BST value quotes against highest market valued whitelist stable
@@ -286,13 +287,9 @@ contract BearSharesTrinity is ERC20, Ownable {
             // calc / set auxBurn for either _auxToken address or BST address(this)
             //  NOTE: setting 'auxToken_' here, effects how '_exeTokBurn' is used below
             //      ie. we are now syncing auxBurn amount & auxToken_ address
-            if (ENABLE_AUX_BURN) auxToken_ = _auxToken; // auxToken_ 'was' BST address(this)  
+            if (ENABLE_AUX_BURN && _auxToken != address(0)) auxToken_ = _auxToken; // auxToken_ 'was' BST address(this)  
             auxBurn = _getTokMarketValueForUsdAmnt(usdAuxBurn, highStable, auxToken_); // 1 loop embedded
         }
-
-        // LEFT OFF HERE ... can we ENABLE_MARKET_BUY w/o ENABLE_MARKET_QUOTE
-        // LEFT OFF HERE ... can we ENABLE_AUX_BURN w/o ENABLE_MARKET_QUOTE
-        // LEFT OFF HERE ... can we ENABLE_AUX_BURN w/o ENABLE_MARKET_BUY
 
         // NOTE: integration runs 3 embedded loops 
         //  get whitelist stables with holdings that can cover usdPayout
@@ -310,13 +307,18 @@ contract BearSharesTrinity is ERC20, Ownable {
          */
         _exeBstPayout(_payTo, bstPayout, usdPayout, lowStableHeld);
 
-        // exe burn w/ USD->BST swap path (go through WPLS requird)
-        _exeTokBurn(bstBurn, usdBurn, lowStableHeld, [lowStableHeld, TOK_WPLS, address(this)]);
+        // exe burn w/ USD->BST swap path (go through WPLS required)
+        address[] memory usd_tok_burn_path = new address[](3);
+        usd_tok_burn_path[0] = lowStableHeld;
+        usd_tok_burn_path[1] = TOK_WPLS;
+        usd_tok_burn_path[2] = address(this);
+        _exeTokBurn(bstBurn, usdBurn, usd_tok_burn_path);
 
         // exe burn w/ USD->auxToken swap path (go through WPLS required)
-        //  NOTE: auxToken_ 'may be' BST address(this) and auxBurn 'may be' calc to burn more BST
-        _exeTokBurn(auxBurn, usdAuxBurn, lowStableHeld, [lowStableHeld, TOK_WPLS, auxToken_]);       
-
+        //  NOTE: auxToken_ 'may be' BST address(this) and auxBurn 'may be' calc for burning more BST
+        usd_tok_burn_path[2] = auxToken_;
+        _exeTokBurn(auxBurn, usdAuxBurn, usd_tok_burn_path);
+    
         // update account balance, ACCT_USD_BALANCES stores uint precision to decimals()
         ACCT_USD_BALANCES[msg.sender] -= _usdValue; // _usdValue 'require' check above
 
@@ -339,7 +341,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         uint64 usdTradeVal = usdBuyBackVal - usdBuyBackFee;
 
         // NOTE: validate contract's collective stable balances can cover usdTradeVal
-        (uint64 stab_gross_bal, uint64 stab_owed_bal, int64 stab_net_bal) = _collectiveStableBalances(WHITELIST_USD_STABLES);
+        uint64 stab_gross_bal = _grossStableBalance(WHITELIST_USD_STABLES);
         if (stab_gross_bal < usdTradeVal) {
             emit TradeInFailed(msg.sender, _bstAmnt, usdTradeVal); // notify keeper maintenance needed
             revert(' failed: cannot cover usdTradeVal :/ ');
@@ -368,24 +370,34 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* -------------------------------------------------------- */
     /* PRIVATE - SUPPORTING                                     */
     /* -------------------------------------------------------- */
-    function _collectiveStableBalances(address[] memory _stables) private view returns (uint64, uint64, int64) {
+    function _grossStableBalance(address[] memory _stables) private view returns (uint64) {
         uint64 gross_bal = 0;
         for (uint8 i = 0; i < _stables.length;) {
-            address stable = _stables[i];
-            uint8 decimals_ = USD_STABLE_DECIMALS[stable];
-            require(decimals_ > 0, 'err: invalid stables decimals :/');
-            uint256 bal = IERC20(stable).balanceOf(address(this));
-            uint256 norm_bal = _normalizeStableAmnt(decimals_, bal, decimals());
-            gross_bal += _uint64_from_uint256(norm_bal);
+            // address stable = _stables[i];
+            // uint8 decimals_ = USD_STABLE_DECIMALS[stable];
+            // require(decimals_ > 0, 'err: invalid stables decimals :/');
+            // uint256 bal = IERC20(stable).balanceOf(address(this));
+            // uint256 norm_bal = _normalizeStableAmnt(decimals_, bal, decimals());
+            // gross_bal += _uint64_from_uint256(norm_bal);
+
+            // NOTE: more efficient algorithm taking up less stack space with local vars
+            require(USD_STABLE_DECIMALS[_stables[i]] > 0, ' found stable with invalid decimals :/ ');
+            gross_bal += _uint64_from_uint256(_normalizeStableAmnt(USD_STABLE_DECIMALS[_stables[i]], IERC20(_stables[i]).balanceOf(address(this)), decimals()));
             unchecked {i++;}
         }
-
+        return gross_bal;
+    }
+    function _owedStableBalance() private view returns (uint64) {
         uint64 owed_bal = 0;
         for (uint256 i = 0; i < ACCOUNTS.length;) {
             owed_bal += ACCT_USD_BALANCES[ACCOUNTS[i]];
             unchecked {i++;}
         }
-
+        return owed_bal;
+    }
+    function _collectiveStableBalances(address[] memory _stables) private view returns (uint64, uint64, int64) {
+        uint64 gross_bal = _grossStableBalance(_stables);
+        uint64 owed_bal = _owedStableBalance();
         int64 net_bal = int64(gross_bal) - int64(owed_bal);
         return (gross_bal, owed_bal, net_bal);
     }
@@ -441,7 +453,8 @@ contract BearSharesTrinity is ERC20, Ownable {
     function _exeBstPayout(address _payTo, uint256 _bstPayout, uint64 _usdPayout, address _usdStable) private {
         bool stableHoldings_OK = _stableHoldingsCovered(_usdPayout, _usdStable);
         bool usdBstPath_OK = USD_BST_PATHS[_usdStable].length > 0;
-        
+        bool marketBuy_GO = ENABLE_MARKET_QUOTE && ENABLE_MARKET_BUY;
+
         /** ALGORITHMIC LOGIC ...
              if ENABLE_MARKET_BUY, pay BST from market buy
              else, pay w/ contract BST holdings first
@@ -451,8 +464,10 @@ contract BearSharesTrinity is ERC20, Ownable {
                  then need to edit 'USWAP_V2_ROUTERS' &| 'USD_BST_PATHS' to debug
                  and hopefully not need to disable ENABLE_MARKET_BUY
          */
-        if (ENABLE_MARKET_BUY && stableHoldings_OK && usdBstPath_OK) {
+        if (marketBuy_GO && stableHoldings_OK && usdBstPath_OK) {
             uint256 bst_amnt_out = _exeSwapStableForTok(_usdPayout, USD_BST_PATHS[_usdStable]);
+            // address[] memory usd_bst_path = USD_BST_PATHS[_usdStable];
+            // uint256 bst_amnt_out = _exeSwapStableForTok(_usdPayout, _usdStable, usd_bst_path[usd_bst_path.length-1]);
             if (_bstPayout < bst_amnt_out) 
                 bst_amnt_out = _bstPayout;
             _transfer(address(this), _payTo, bst_amnt_out);
@@ -477,14 +492,14 @@ contract BearSharesTrinity is ERC20, Ownable {
             }
         }
     }
-    function _exeTokBurn(uint256 _auxBurnAmnt, uint64 _usdBurn, address[] _usdSwapPath) private {
+    function _exeTokBurn(uint256 _auxBurnAmnt, uint64 _usdBurn, address[] memory _usdSwapPath) private {
         address usdStable = _usdSwapPath[0];
         address burnToken = _usdSwapPath[_usdSwapPath.length-1];
         bool stableHoldings_OK = _stableHoldingsCovered(_usdBurn, usdStable);
         bool usdSwapPath_OK = usdStable != address(0) && burnToken != address(0);
         bool isBstBurn = burnToken == address(this);
-        bool bstBurn_GO = ENABLE_MARKET_BUY && isBstBurn;
-        bool auxBurn_GO = ENABLE_AUX_BURN && !isBstBurn;
+        bool bstBurn_GO = ENABLE_MARKET_QUOTE && ENABLE_MARKET_BUY && isBstBurn;
+        bool auxBurn_GO = ENABLE_MARKET_QUOTE && ENABLE_AUX_BURN && !isBstBurn;
 
         // NOTE: invoked from 'payOutBST', which sets _auxBurnAmnt
         //  if auxBurn_GO, then _auxBurnAmnt is relative aux token address (burnToken)
@@ -498,7 +513,7 @@ contract BearSharesTrinity is ERC20, Ownable {
             *WARNING*:
                 if '_exeSwapStableForTok' keeps failing w/ tx reverting
                  then need to edit 'USWAP_V2_ROUTERS' to debug
-                 or invoke payOutBST w/ _auxToken=0x0 (if isolated to a specific aux token)
+                  or invoke payOutBST w/ _auxToken=0x0 (if isolated to a specific aux token)
                  and hopefully not need to disable ENABLE_MARKET_BUY &| ENABLE_AUX_BURN 
          */
         if ((bstBurn_GO || auxBurn_GO) && stableHoldings_OK && usdSwapPath_OK) {
@@ -537,17 +552,19 @@ contract BearSharesTrinity is ERC20, Ownable {
     function _getTokMarketValueForUsdAmnt(uint256 _usdAmnt, address _usdStable, address _tokAddr) private view returns (uint64) {
         address[] memory stab_bst_path = new address[](2);
         stab_bst_path[0] = _usdStable;
-        // stab_bst_path[1] = address(this);
         stab_bst_path[1] = _tokAddr;
         uint256 usdAmnt_ = _normalizeStableAmnt(decimals(), _usdAmnt, USD_STABLE_DECIMALS[_usdStable]);
-        (uint8 rtrIdx, uint256 bst_amnt) = _best_swap_v2_router_idx_quote(stab_bst_path, usdAmnt_, USWAP_V2_ROUTERS);
-        return _uint64_from_uint256(bst_amnt); 
+        (uint8 rtrIdx, uint256 tok_amnt) = _best_swap_v2_router_idx_quote(stab_bst_path, usdAmnt_, USWAP_V2_ROUTERS);
+        return _uint64_from_uint256(tok_amnt); 
     }
     function _perc_of_uint64(uint8 _perc, uint64 _num) private pure returns (uint64) {
         require(_perc <= 100, 'err: invalid percent');
         uint32 aux_perc = uint32(_perc) * 100;
         uint64 result = (_num * uint64(aux_perc)) / 10000; // chatGPT equation
         return result;
+
+        // NOTE: more efficient with no local vars allocated
+        // return (_num * uint64(uint32(_perc) * 100)) / 10000; // chatGPT equation
     }
     function _uint64_from_uint256(uint256 value) private pure returns (uint64) {
         require(value <= type(uint64).max, "Value exceeds uint64 range");
@@ -566,9 +583,9 @@ contract BearSharesTrinity is ERC20, Ownable {
     function _exeSwapStableForTok(uint256 _usdAmnt, address[] memory _stab_tok_path) private returns (uint256) {
         address usdStable = _stab_tok_path[0]; // required: _stab_tok_path[0] must be a stable
         uint256 usdAmnt_ = _normalizeStableAmnt(decimals(), _usdAmnt, USD_STABLE_DECIMALS[usdStable]);
-        (uint8 rtrIdx, uint256 bst_amnt) = _best_swap_v2_router_idx_quote(_stab_tok_path, usdAmnt_, USWAP_V2_ROUTERS);
-        uint256 bst_amnt_out = _swap_v2_wrap(_stab_tok_path, USWAP_V2_ROUTERS[rtrIdx], usdAmnt_, address(this), false); // true = fromETH
-        return bst_amnt_out;
+        (uint8 rtrIdx, uint256 tok_amnt) = _best_swap_v2_router_idx_quote(_stab_tok_path, usdAmnt_, USWAP_V2_ROUTERS);
+        uint256 tok_amnt_out = _swap_v2_wrap(_stab_tok_path, USWAP_V2_ROUTERS[rtrIdx], usdAmnt_, address(this), false); // true = fromETH
+        return tok_amnt_out;
     }
     function _addAddressToArraySafe(address _addr, address[] memory _arr, bool _safe) private pure returns (address[] memory) {
         if (_addr == address(0)) { return _arr; }
@@ -669,7 +686,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         }
         return curr_low_val_stable;
     }
-
+    
     // NOTE: *WARNING* _stables could have duplicates (from 'whitelistStables' set by keeper)
     function _getStableTokenHighMarketValue(address[] memory _stables, address[] memory _routers) internal view returns (address) {
         // traverse _stables & select stable w/ the highest market value

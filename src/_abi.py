@@ -11,10 +11,12 @@ BST_FUNC_MAP_READ = {
     "ACCOUNTS(uint256)": ["9032bcc8", ["uint256"], ['address']],
     "ACCT_USD_BALANCES(address)": ["c67483dc", ["address"], ['uint64']],
     "BUY_BACK_FEE_PERC()": ["aa21f232", [], ['uint8']],
-    "ENABLE_MARKET_BUY()": ["405d2a83", [], ['bool']],
     "ENABLE_MARKET_QUOTE()": ["46538f8c", [], ['bool']],
-    "SERVICE_BURN_PERC()": ["c364daa4", [], ['uint8']],
+    "ENABLE_MARKET_BUY()": ["405d2a83", [], ['bool']],
+    "ENABLE_AUX_BURN()": ["59fbb128", [], ['bool']],
     "SERVICE_FEE_PERC()": ["a004d00d", [], ['uint8']],
+    "BST_BURN_PERC()": ["96f355b0", [], ['uint8']],
+    "AUX_BURN_PERC()": ["abccfeb0", [], ['uint8']],
     "TOK_WPLS()": ["fa4a9870", [], ['address']],
     "WHITELIST_USD_STABLES(uint256)": ["593d1bf7", ["uint256"], ['address']],
     "USD_STABLES_HISTORY(uint256)": ["cd196d89", ["uint256"], ['address']],
@@ -40,12 +42,12 @@ BST_FUNC_MAP_WRITE = {
     # "KEEPER_setKeeper(address)": ["11851737", ["address"], []], 
     "KEEPER_editDexRouters(address,bool)": ["bceeba33", ["address","bool"], []], # gas used: 36,601 (rem), 55,723 (add)
     "KEEPER_editWhitelistStables(address,uint8,bool)": ["b290b9bf", ["address","uint8","bool"], []],
-    "KEEPER_enableMarketBuy(bool)": ["bc47b906", ["bool"], []],
-    "KEEPER_enableMarketQuote(bool)": ["624b3abe", ["bool"], []],
+    "KEEPER_enableDexPayouts(bool,bool,bool)": ["3730cf3c", ["bool","bool","bool"], []],
     "KEEPER_maintenance(uint64,address)": ["3015d747", ["uint64","address"], []], # gas used: 62,434
     "KEEPER_setBuyBackFeePerc(uint8)": ["dd8645c2", ["uint8"], []], # gas used: 28,887
-    "KEEPER_setServiceBurnPerc(uint8)": ["66eff5cf", ["uint8"], []],
     "KEEPER_setServiceFeePerc(uint8)": ["61cad1db", ["uint8"], []],
+    "KEEPER_setBstBurnPerc(uint8)": ["f5e867fa", ["uint8"], []],
+    "KEEPER_setAuxBurnPerc(uint8)": ["02c0bee0", ["uint8"], []],
     "KEEPER_setUsdBstPath(address,address[])": ["4f51d029", ['address','address[]'], []],
 
     "payOutBST(uint64,address)": ["031cc420", ["uint64","address"], []], # gas used: 212,143
