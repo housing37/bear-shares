@@ -283,8 +283,10 @@ contract BearSharesTrinity is ERC20, Ownable {
             bstPayout = _getTokMarketValueForUsdAmnt(usdPayout, highStable, address(this)); // 1 loop embedded
             bstBurn = _getTokMarketValueForUsdAmnt(usdBurn, highStable, address(this)); // 1 loop embedded
             
-            // calc / set auxBurn for either _auxToken address or BST token address
-            if (ENABLE_AUX_BURN) auxToken_ = _auxToken; // auxToken_ 'was' address(this)  
+            // calc / set auxBurn for either _auxToken address or BST address(this)
+            //  NOTE: setting 'auxToken_' here, effects how '_exeTokBurn' is used below
+            //      ie. we are now syncing auxBurn amount & auxToken_ address
+            if (ENABLE_AUX_BURN) auxToken_ = _auxToken; // auxToken_ 'was' BST address(this)  
             auxBurn = _getTokMarketValueForUsdAmnt(usdAuxBurn, highStable, auxToken_); // 1 loop embedded
         }
 
