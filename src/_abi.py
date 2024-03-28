@@ -48,12 +48,13 @@ BST_FUNC_MAP_WRITE = {
     "KEEPER_setServiceFeePerc(uint8)": ["61cad1db", ["uint8"], []],
     "KEEPER_setBstBurnPerc(uint8)": ["f5e867fa", ["uint8"], []],
     "KEEPER_setAuxBurnPerc(uint8)": ["02c0bee0", ["uint8"], []],
+    "KEEPER_setPayoutPercs(uint8,uint8,uint8)": ["9939b76f", ["uint8","uint8","uint8"], []],
     "KEEPER_setBuyBackFeePerc(uint8)": ["dd8645c2", ["uint8"], []], # gas used: 28,887
     "KEEPER_setUsdBstPath(address,address[])": ["4f51d029", ['address','address[]'], []],
 
-    "payOutBST(uint64,address,address)": ["09f5c380", ["uint64","address","address"], []], # gas used: 453,750
+    "payOutBST(uint64,address,address)": ["09f5c380", ["uint64","address","address"], []], # gas used: 453,750+
     "tradeInBST(uint64)": ["d8785767", ["uint64"], []], # gas used: 144,195
-    
+
     "burn(uint64)": ["9dbead42", ["uint64"], []], 
     "allowance(address,address)": ["dd62ed3e", ["address","address"], []],
     "approve(address,uint256)": ["095ea7b3", ["address","uint256"], []],

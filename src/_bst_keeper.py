@@ -334,7 +334,7 @@ def go_select_func():
     func_select = list(BST_FUNC_MAP.keys())[int(ans_idx)]
     ans = input(f'\n  Confirm func [y/n]: {func_select}\n  > ')
     lst_ans_go = ['y','yes','']
-    if str(ans).lower() not in lst_ans_go: go_select_func()
+    if str(ans).lower() not in lst_ans_go: func_select = go_select_func()
     return func_select
 
 def go_enter_func_params(_func_select):
@@ -479,6 +479,8 @@ if __name__ == "__main__":
 
 print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
 
+# tBST27.1: 0x2f46aa29fd9EA1a49C0dAFa2377aca9865EEfF03
+# tBST26.5: 0x0dba88670fE5413Fbe3f04BA805B31338E0B86D9
 # tBST26.2: 0xB0d4f33D79Bf008a32206207E8B2678b38404C5F
 # tBST26: 0x11A9C32346E1aB8E146D26b59317eF678488E723
 # tBST25: 0x62F52fe89BB1585A7E95B9f03f06cCda6a95f752
