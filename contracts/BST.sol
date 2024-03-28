@@ -271,7 +271,6 @@ contract BearSharesTrinity is ERC20, Ownable {
         //  if yes, let it go through ... else, revert (ie. contract can't cover a tradeInBST for this usdPayout amount)
         //   NOTE: if lowStableHeld = 0x0 (below): _exeBstPayout|Burn will fallback to contract holdings / minting
         require(_grossStableBalance(WHITELIST_USD_STABLES) >= usdPayout, ' gross bal will not cover usdPayout buy-back :/ ');
-            // balanceOf x2
 
         // NOTE: maintain 1:1 if !ENABLE_MARKET_QUOTE
         //  else, get BST value quotes against highest market valued whitelist stable
@@ -285,8 +284,6 @@ contract BearSharesTrinity is ERC20, Ownable {
             //  then get BST quote against that high market stable (results in least amnt of BST)
             //   ie. least amount of BST used from holdings (to be burned, paid out, or minted)
             address highStable = _getStableTokenHighMarketValue(WHITELIST_USD_STABLES, USWAP_V2_ROUTERS); // 2 loops embedded            
-            // bstPayout = _getTokMarketValueForUsdAmnt(usdPayout, highStable, address(this)); // 1 loop embedded
-            // bstBurn = _getTokMarketValueForUsdAmnt(usdBurn, highStable, address(this)); // 1 loop embedded
             bstPayout = _uint64_from_uint256(_getTokMarketValueForUsdAmnt(usdPayout, highStable, address(this))); 
             bstBurn = _uint64_from_uint256(_getTokMarketValueForUsdAmnt(usdBurn, highStable, address(this))); // 1 loop embedded
             
@@ -310,8 +307,6 @@ contract BearSharesTrinity is ERC20, Ownable {
                 address highStable = _getStableTokenHighMarketValue(WHITELIST_USD_STABLES, USWAP_V2_ROUTERS); // 2 loops embedded
                 auxToken_ = _auxToken; // auxToken_ 'was' BST address(this)
                 auxBurn = _getTokMarketValueForUsdAmnt(usdAuxBurn, highStable, auxToken_); // 1 loop embedded
-                    // getAmountsOut x4
-                    // getAmountsOut x2
             }
         }
 
@@ -322,8 +317,6 @@ contract BearSharesTrinity is ERC20, Ownable {
         // NOTE: if no stables held can cover 'usdPayout', then lowStableHeld = address(0x0)
         //  this is indeed ok as '_exeBstPayout' & '_exeTokBurn' checks for this, and falls back to holdings / minting
         address lowStableHeld = _getStableHeldLowMarketValue(usdPayout, WHITELIST_USD_STABLES, USWAP_V2_ROUTERS); // 3 loops embedded
-            // balanceOf x2
-            // getAmountsOut x2
             
         /** ALGORITHMIC LOGIC ... (for BST ENABLE_MARKET_BUY from dex = ON|OFF)
              if ENABLE_MARKET_BUY, pay|burn BST from market buy
@@ -332,7 +325,6 @@ contract BearSharesTrinity is ERC20, Ownable {
              if ENABLE_AUX_BURN, burn auxToken from market buy
          */
         _exeBstPayout(_payTo, bstPayout, usdPayout, lowStableHeld);
-            // balanceOf x1
 
         // exe burn w/ USD->BST swap path (go through WPLS required)
         address[] memory usd_tok_burn_path = new address[](3);
@@ -340,18 +332,11 @@ contract BearSharesTrinity is ERC20, Ownable {
         usd_tok_burn_path[1] = TOK_WPLS;
         usd_tok_burn_path[2] = address(this);
         _exeTokBurn(bstBurn, usdBurn, usd_tok_burn_path);
-            // balanceOf x1
 
         // exe burn w/ USD->auxToken swap path (go through WPLS required)
         //  NOTE: auxToken_ 'may be' BST address(this) and auxBurn 'may be' calc for burning more BST
         usd_tok_burn_path[2] = auxToken_;
         _exeTokBurn(auxBurn, usdAuxBurn, usd_tok_burn_path);
-            // balanceOf x1
-            // getAmountsOut x2
-            // getAmountsOut x1
-            // approve x1
-            // swapExactTokensForTokens x1
-            // balanceOf x1
             
         // update account balance, ACCT_USD_BALANCES stores uint precision to decimals()
         ACCT_USD_BALANCES[msg.sender] -= _usdValue; // _usdValue 'require' check above
@@ -500,8 +485,6 @@ contract BearSharesTrinity is ERC20, Ownable {
          */
         if (marketBuy_GO && stableHoldings_OK && usdBstPath_OK) {
             uint256 bst_amnt_out = _exeSwapStableForTok(_usdPayout, USD_BST_PATHS[_usdStable]);
-            // address[] memory usd_bst_path = USD_BST_PATHS[_usdStable];
-            // uint256 bst_amnt_out = _exeSwapStableForTok(_usdPayout, _usdStable, usd_bst_path[usd_bst_path.length-1]);
             if (_bstPayout < bst_amnt_out) 
                 bst_amnt_out = _bstPayout;
             _transfer(address(this), _payTo, bst_amnt_out);
@@ -535,29 +518,6 @@ contract BearSharesTrinity is ERC20, Ownable {
         bool bstBurn_GO = ENABLE_MARKET_QUOTE && ENABLE_MARKET_BUY && isBstBurn;
         bool auxBurn_GO = ENABLE_AUX_BURN && !isBstBurn;
 
-        // LEFT OFF HERE ... for fail to see if it gets to this point
-        //  also try testing with one router and one stable
-        // require(false, ' force debug fail _ 0 ');
-
-// balanceOf x2
-
-// getAmountsOut x2
-// getAmountsOut x2
-
-// balanceOf x2
-// getAmountsOut x2
-
-// balanceOf x1
-// balanceOf x1
-
-// getAmountsOut x2
-
-// getAmountsOut x1
-// approve x1
-// swapExactTokensForTokens x1
-// balanceOf x1
-
-
         // NOTE: invoked from 'payOutBST', which sets _auxBurnAmnt
         //  if auxBurn_GO, then _auxBurnAmnt is relative to aux token address (burnToken)
         //  else, _auxBurnAmnt is relative to BST address(this)
@@ -574,14 +534,11 @@ contract BearSharesTrinity is ERC20, Ownable {
                  and hopefully not need to disable ENABLE_MARKET_BUY &| ENABLE_AUX_BURN 
          */
         if ((bstBurn_GO || auxBurn_GO) && stableHoldings_OK && usdSwapPath_OK) {
-            // require(false, ' force debug fail _ 1 ');
             uint256 burn_tok_amnt_out = _exeSwapStableForTok(_usdBurn, _usdSwapPath);
-            // require(false, ' force debug fail _ 1.5 ');
             if (_auxBurnAmnt < burn_tok_amnt_out) 
                 burn_tok_amnt_out = _auxBurnAmnt;
             if (isBstBurn)
                 _burn(address(this), burn_tok_amnt_out);
-                // _transfer(address(this), address(0), burn_tok_amnt_out);
             else
                 IERC20(burnToken).transfer(BURN_ADDR, burn_tok_amnt_out);
             emit BuyAndBurnExecuted(burnToken, burn_tok_amnt_out, 0);
@@ -593,15 +550,11 @@ contract BearSharesTrinity is ERC20, Ownable {
                   burn remaining holdings
                  NOTE: can't burn more, if holdings < _auxBurnAmnt
              */
-
-            // require(false, ' force debug fail _ 2 ');
             uint256 thisBstBal = balanceOf(address(this));
             if (thisBstBal >= _auxBurnAmnt) { // burn all of _auxBurnAmnt
-                // _transfer(address(this), address(0x0), _auxBurnAmnt);
                 _burn(address(this), _auxBurnAmnt);
                 emit BurnExecuted(address(this), _auxBurnAmnt, 0);
             } else if (thisBstBal > 0) { // burn all of thisBstBal
-                // _transfer(address(this), address(0x0), thisBstBal);
                 _burn(address(this), thisBstBal);
                 uint256 bstBurnRem = _auxBurnAmnt - thisBstBal; // calc remaining burn
                 
