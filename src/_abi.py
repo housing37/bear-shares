@@ -42,12 +42,12 @@ BST_FUNC_MAP_WRITE = {
     # "KEEPER_setKeeper(address)": ["11851737", ["address"], []], 
     "KEEPER_editDexRouters(address,bool)": ["bceeba33", ["address","bool"], []], # gas used: 36,601 (rem), 55,723 (add)
     "KEEPER_editWhitelistStables(address,uint8,bool)": ["b290b9bf", ["address","uint8","bool"], []],
-    "KEEPER_enableDexPayouts(bool,bool,bool)": ["3730cf3c", ["bool","bool","bool"], []],
+    "KEEPER_enableDexPayouts(bool,bool,bool)": ["3730cf3c", ["bool","bool","bool"], []], # gas used: 7.731
     "KEEPER_maintenance(uint64,address)": ["3015d747", ["uint64","address"], []], # gas used: 62,434
-    "KEEPER_setBuyBackFeePerc(uint8)": ["dd8645c2", ["uint8"], []], # gas used: 28,887
     "KEEPER_setServiceFeePerc(uint8)": ["61cad1db", ["uint8"], []],
     "KEEPER_setBstBurnPerc(uint8)": ["f5e867fa", ["uint8"], []],
     "KEEPER_setAuxBurnPerc(uint8)": ["02c0bee0", ["uint8"], []],
+    "KEEPER_setBuyBackFeePerc(uint8)": ["dd8645c2", ["uint8"], []], # gas used: 28,887
     "KEEPER_setUsdBstPath(address,address[])": ["4f51d029", ['address','address[]'], []],
 
     "payOutBST(uint64,address,address)": ["09f5c380", ["uint64","address","address"], []], # gas used: 212,143

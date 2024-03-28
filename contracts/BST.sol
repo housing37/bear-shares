@@ -25,7 +25,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '25';
+    string public tVERSION = '26';
     string private tok_symb = string(abi.encodePacked("tBST", tVERSION));
     string private tok_name = string(abi.encodePacked("tTrinity_", tVERSION));
     // string private constant tok_symb = "BST";
@@ -269,6 +269,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         //  if yes, let it go through ... else, revert (ie. contract can't cover a tradeInBST for this usdPayout amount)
         //   NOTE: if lowStableHeld = 0x0 (below): _exeBstPayout|Burn will fallback to contract holdings / minting
         require(_grossStableBalance(WHITELIST_USD_STABLES) >= usdPayout, ' gross bal will not cover usdPayout buy-back :/ ');
+            // balanceOf x2
 
         // NOTE: maintain 1:1 if !ENABLE_MARKET_QUOTE
         //  else, get BST value quotes against highest market valued whitelist stable
@@ -300,6 +301,10 @@ contract BearSharesTrinity is ERC20, Ownable {
                 address highStable = _getStableTokenHighMarketValue(WHITELIST_USD_STABLES, USWAP_V2_ROUTERS); // 2 loops embedded
                 auxToken_ = _auxToken; // auxToken_ 'was' BST address(this)
                 auxBurn = _getTokMarketValueForUsdAmnt(usdAuxBurn, highStable, auxToken_); // 1 loop embedded
+
+                    // getAmountsOut x2
+                    // getAmountsOut x2
+
             }
         }
 
@@ -310,7 +315,9 @@ contract BearSharesTrinity is ERC20, Ownable {
         // NOTE: if no stables held can cover 'usdPayout', then lowStableHeld = address(0x0)
         //  this is indeed ok as '_exeBstPayout' & '_exeTokBurn' checks for this, and falls back to holdings / minting
         address lowStableHeld = _getStableHeldLowMarketValue(usdPayout, WHITELIST_USD_STABLES, USWAP_V2_ROUTERS); // 3 loops embedded
-        
+            // balanceOf x2
+            // getAmountsOut x2
+            
         /** ALGORITHMIC LOGIC ... (for BST ENABLE_MARKET_BUY from dex = ON|OFF)
              if ENABLE_MARKET_BUY, pay|burn BST from market buy
              else, pay|burn w/ contract BST holdings first
@@ -318,6 +325,7 @@ contract BearSharesTrinity is ERC20, Ownable {
              if ENABLE_AUX_BURN, burn auxToken from market buy
          */
         _exeBstPayout(_payTo, bstPayout, usdPayout, lowStableHeld);
+            // balanceOf x1
 
         // exe burn w/ USD->BST swap path (go through WPLS required)
         address[] memory usd_tok_burn_path = new address[](3);
@@ -325,12 +333,19 @@ contract BearSharesTrinity is ERC20, Ownable {
         usd_tok_burn_path[1] = TOK_WPLS;
         usd_tok_burn_path[2] = address(this);
         _exeTokBurn(bstBurn, usdBurn, usd_tok_burn_path);
+            // balanceOf x1
 
         // exe burn w/ USD->auxToken swap path (go through WPLS required)
         //  NOTE: auxToken_ 'may be' BST address(this) and auxBurn 'may be' calc for burning more BST
         usd_tok_burn_path[2] = auxToken_;
         _exeTokBurn(auxBurn, usdAuxBurn, usd_tok_burn_path);
-    
+            // balanceOf x1
+            // getAmountsOut x2
+            // getAmountsOut x1
+            // approve x1
+            // swapExactTokensForTokens x1
+            // balanceOf x1
+            
         // update account balance, ACCT_USD_BALANCES stores uint precision to decimals()
         ACCT_USD_BALANCES[msg.sender] -= _usdValue; // _usdValue 'require' check above
 
@@ -512,6 +527,29 @@ contract BearSharesTrinity is ERC20, Ownable {
         bool isBstBurn = burnToken == address(this);
         bool bstBurn_GO = ENABLE_MARKET_QUOTE && ENABLE_MARKET_BUY && isBstBurn;
         bool auxBurn_GO = ENABLE_AUX_BURN && !isBstBurn;
+
+        // LEFT OFF HERE ... for fail to see if it gets to this point
+        //  also try testing with one router and one stable
+        require(false, ' force debug fail _ 0 ');
+
+// balanceOf x2
+
+// getAmountsOut x2
+// getAmountsOut x2
+
+// balanceOf x2
+// getAmountsOut x2
+
+// balanceOf x1
+// balanceOf x1
+
+// getAmountsOut x2
+
+// getAmountsOut x1
+// approve x1
+// swapExactTokensForTokens x1
+// balanceOf x1
+
 
         // NOTE: invoked from 'payOutBST', which sets _auxBurnAmnt
         //  if auxBurn_GO, then _auxBurnAmnt is relative to aux token address (burnToken)
