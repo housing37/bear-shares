@@ -18,6 +18,7 @@ BST_FUNC_MAP_READ = {
     "AUX_BURN_PERC()": ["abccfeb0", [], ['uint8']],
     "BUY_BACK_FEE_PERC()": ["aa21f232", [], ['uint8']],
     "TOK_WPLS()": ["fa4a9870", [], ['address']],
+    "BURN_ADDR()": ["783028a9", [], ['address']],
     "WHITELIST_USD_STABLES(uint256)": ["593d1bf7", ["uint256"], ['address']],
     "USD_STABLES_HISTORY(uint256)": ["cd196d89", ["uint256"], ['address']],
     "USD_STABLE_DECIMALS(address)": ["7f8754f4", ["address"], ['uint8']],
@@ -50,9 +51,10 @@ BST_FUNC_MAP_WRITE = {
     "KEEPER_setBuyBackFeePerc(uint8)": ["dd8645c2", ["uint8"], []], # gas used: 28,887
     "KEEPER_setUsdBstPath(address,address[])": ["4f51d029", ['address','address[]'], []],
 
-    "payOutBST(uint64,address,address)": ["09f5c380", ["uint64","address","address"], []], # gas used: 212,143
-    "tradeInBST(uint64)": ["d8785767", ["uint64"], []], # gas used: 139,998
-
+    "payOutBST(uint64,address,address)": ["09f5c380", ["uint64","address","address"], []], # gas used: 453,750
+    "tradeInBST(uint64)": ["d8785767", ["uint64"], []], # gas used: 144,195
+    
+    "burn(uint64)": ["9dbead42", ["uint64"], []], 
     "allowance(address,address)": ["dd62ed3e", ["address","address"], []],
     "approve(address,uint256)": ["095ea7b3", ["address","uint256"], []],
     "transfer(address,uint256)": ["a9059cbb", ["address","uint256"], []],

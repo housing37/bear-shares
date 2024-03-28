@@ -20,12 +20,13 @@ import "./node_modules/@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Rout
 // contract BearSharesTrinity is ERC20, Ownable, BSTSwapToolsX2 {
 contract BearSharesTrinity is ERC20, Ownable {
     address public constant TOK_WPLS = address(0xA1077a294dDE1B09bB078844df40758a5D0f9a27);
+    address public constant BURN_ADDR = address(0x0000000000000000000000000000000000000369);
 
     /* -------------------------------------------------------- */
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '26';
+    string public tVERSION = '26.5';
     string private tok_symb = string(abi.encodePacked("tBST", tVERSION));
     string private tok_name = string(abi.encodePacked("tTrinity_", tVERSION));
     // string private constant tok_symb = "BST";
@@ -86,6 +87,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     event DexRouterUpdated(address _router, bool _add);
     event DexUsdBstPathUpdated(address _usdStable, address[] _path);
     event BuyAndBurnExecuted(address _burnTok, uint256 _burnAmnt, uint256 _unburnedAmnt);
+    event BurnExecuted(address _burnTok, uint256 _burnAmnt, uint256 _unburnedAmnt);
 
     /* -------------------------------------------------------- */
     /* CONSTRUCTOR                                              */
@@ -283,15 +285,22 @@ contract BearSharesTrinity is ERC20, Ownable {
             //  then get BST quote against that high market stable (results in least amnt of BST)
             //   ie. least amount of BST used from holdings (to be burned, paid out, or minted)
             address highStable = _getStableTokenHighMarketValue(WHITELIST_USD_STABLES, USWAP_V2_ROUTERS); // 2 loops embedded            
-            bstPayout = _getTokMarketValueForUsdAmnt(usdPayout, highStable, address(this)); // 1 loop embedded
-            bstBurn = _getTokMarketValueForUsdAmnt(usdBurn, highStable, address(this)); // 1 loop embedded
+            // bstPayout = _getTokMarketValueForUsdAmnt(usdPayout, highStable, address(this)); // 1 loop embedded
+            // bstBurn = _getTokMarketValueForUsdAmnt(usdBurn, highStable, address(this)); // 1 loop embedded
+            bstPayout = _uint64_from_uint256(_getTokMarketValueForUsdAmnt(usdPayout, highStable, address(this))); 
+            bstBurn = _uint64_from_uint256(_getTokMarketValueForUsdAmnt(usdBurn, highStable, address(this))); // 1 loop embedded
             
             // calc / set auxBurn for either _auxToken address or BST address(this)
             //  NOTE: setting 'auxToken_' here, effects how '_exeTokBurn' is used below
             //      ie. we are now calc new auxBurn amount & syncing it w/ auxToken_ address
-            //  NOTE: _auxToken can indeed be address(this) or address(0); simply means market quote more BST to burn
-            if (ENABLE_AUX_BURN && _auxToken != address(0)) auxToken_ = _auxToken; // auxToken_ 'was' BST address(this)  
-            auxBurn = _getTokMarketValueForUsdAmnt(usdAuxBurn, highStable, auxToken_); // 1 loop embedded
+            if (ENABLE_AUX_BURN && _auxToken != address(0) && _auxToken != address(this)) {
+                auxToken_ = _auxToken; // auxToken_ 'was' BST address(this)  
+                auxBurn = _getTokMarketValueForUsdAmnt(usdAuxBurn, highStable, auxToken_); // 1 loop embedded
+            } else {
+                // NOTE: _auxToken can indeed be address(this) or address(0); simply means market quote more BST to burn
+                auxBurn = _uint64_from_uint256(_getTokMarketValueForUsdAmnt(usdAuxBurn, highStable, auxToken_)); // 1 loop embedded
+            }
+            
         } else {
             if (ENABLE_AUX_BURN && _auxToken != address(0) && _auxToken != address(this)) {
                 // calc / set auxBurn for _auxToken address (if _auxToken is not address(this or 0x0))
@@ -301,10 +310,8 @@ contract BearSharesTrinity is ERC20, Ownable {
                 address highStable = _getStableTokenHighMarketValue(WHITELIST_USD_STABLES, USWAP_V2_ROUTERS); // 2 loops embedded
                 auxToken_ = _auxToken; // auxToken_ 'was' BST address(this)
                 auxBurn = _getTokMarketValueForUsdAmnt(usdAuxBurn, highStable, auxToken_); // 1 loop embedded
-
+                    // getAmountsOut x4
                     // getAmountsOut x2
-                    // getAmountsOut x2
-
             }
         }
 
@@ -530,7 +537,7 @@ contract BearSharesTrinity is ERC20, Ownable {
 
         // LEFT OFF HERE ... for fail to see if it gets to this point
         //  also try testing with one router and one stable
-        require(false, ' force debug fail _ 0 ');
+        // require(false, ' force debug fail _ 0 ');
 
 // balanceOf x2
 
@@ -567,13 +574,16 @@ contract BearSharesTrinity is ERC20, Ownable {
                  and hopefully not need to disable ENABLE_MARKET_BUY &| ENABLE_AUX_BURN 
          */
         if ((bstBurn_GO || auxBurn_GO) && stableHoldings_OK && usdSwapPath_OK) {
+            // require(false, ' force debug fail _ 1 ');
             uint256 burn_tok_amnt_out = _exeSwapStableForTok(_usdBurn, _usdSwapPath);
+            // require(false, ' force debug fail _ 1.5 ');
             if (_auxBurnAmnt < burn_tok_amnt_out) 
                 burn_tok_amnt_out = _auxBurnAmnt;
             if (isBstBurn)
-                _transfer(burnToken, address(0), burn_tok_amnt_out); 
+                _burn(address(this), burn_tok_amnt_out);
+                // _transfer(address(this), address(0), burn_tok_amnt_out);
             else
-                IERC20(burnToken).transfer(address(0), burn_tok_amnt_out);
+                IERC20(burnToken).transfer(BURN_ADDR, burn_tok_amnt_out);
             emit BuyAndBurnExecuted(burnToken, burn_tok_amnt_out, 0);
         } else {
             /** ALGORITHMIC LOGIC ...
@@ -583,29 +593,33 @@ contract BearSharesTrinity is ERC20, Ownable {
                   burn remaining holdings
                  NOTE: can't burn more, if holdings < _auxBurnAmnt
              */
+
+            // require(false, ' force debug fail _ 2 ');
             uint256 thisBstBal = balanceOf(address(this));
             if (thisBstBal >= _auxBurnAmnt) { // burn all of _auxBurnAmnt
-                _transfer(address(this), address(0x0), _auxBurnAmnt);
-                emit BuyAndBurnExecuted(address(this), _auxBurnAmnt, 0);
+                // _transfer(address(this), address(0x0), _auxBurnAmnt);
+                _burn(address(this), _auxBurnAmnt);
+                emit BurnExecuted(address(this), _auxBurnAmnt, 0);
             } else if (thisBstBal > 0) { // burn all of thisBstBal
-                _transfer(address(this), address(0x0), thisBstBal);
+                // _transfer(address(this), address(0x0), thisBstBal);
+                _burn(address(this), thisBstBal);
                 uint256 bstBurnRem = _auxBurnAmnt - thisBstBal; // calc remaining burn
                 
                 // NOTE: can't burn bstBurnRem, if holdings < _auxBurnAmnt
-                emit BuyAndBurnExecuted(address(this), thisBstBal, bstBurnRem);
+                emit BurnExecuted(address(this), thisBstBal, bstBurnRem);
             } else {
                 // NOTE: can't burn anything, if holdings = 0
-                emit BuyAndBurnExecuted(address(this), 0, _auxBurnAmnt);
+                emit BurnExecuted(address(this), 0, _auxBurnAmnt);
             }
         }
     }
-    function _getTokMarketValueForUsdAmnt(uint256 _usdAmnt, address _usdStable, address _tokAddr) private view returns (uint64) {
+    function _getTokMarketValueForUsdAmnt(uint256 _usdAmnt, address _usdStable, address _tokAddr) private view returns (uint256) {
         address[] memory stab_bst_path = new address[](2);
         stab_bst_path[0] = _usdStable;
         stab_bst_path[1] = _tokAddr;
         uint256 usdAmnt_ = _normalizeStableAmnt(decimals(), _usdAmnt, USD_STABLE_DECIMALS[_usdStable]);
         (uint8 rtrIdx, uint256 tok_amnt) = _best_swap_v2_router_idx_quote(stab_bst_path, usdAmnt_, USWAP_V2_ROUTERS);
-        return _uint64_from_uint256(tok_amnt); 
+        return tok_amnt; 
     }
     function _perc_of_uint64(uint8 _perc, uint64 _num) private pure returns (uint64) {
         require(_perc <= 100, 'err: invalid percent');
@@ -685,6 +699,10 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* -------------------------------------------------------- */
     /* ERC20 - OVERRIDES                                        */
     /* -------------------------------------------------------- */
+    function burn(uint64 _burnAmnt) external {
+        require(_burnAmnt > 0, ' burn nothing? :0 ');
+        _burn(msg.sender, _burnAmnt);
+    }
     function decimals() public pure override returns (uint8) {
         return 6; // (6 decimals) 
             // * min USD = 0.000001 (6 decimals) 

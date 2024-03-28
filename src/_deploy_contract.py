@@ -112,7 +112,7 @@ def main():
 
     constr_args = generate_contructor() # 0x78b48b71C8BaBd02589e3bAe82238EC78966290c
     print(f'  using "constructor({", ".join(map(str, constr_args))})"')
-    assert input('\n (2) procced? [y/n]\n  > ') == 'y', "aborted...\n"
+    assert input(f'\n (2) procced? [y/n] _ {get_time_now()}\n  > ') == 'y', "aborted...\n"
 
     # proceed = estimate_gas(CONTRACT, constr_args) # (3) proceed? [y/n]
     # assert proceed, "\ndeployment canceled after gas estimate\n"
