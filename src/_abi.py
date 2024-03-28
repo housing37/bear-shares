@@ -50,7 +50,7 @@ BST_FUNC_MAP_WRITE = {
     "KEEPER_setAuxBurnPerc(uint8)": ["02c0bee0", ["uint8"], []],
     "KEEPER_setUsdBstPath(address,address[])": ["4f51d029", ['address','address[]'], []],
 
-    "payOutBST(uint64,address)": ["031cc420", ["uint64","address"], []], # gas used: 212,143
+    "payOutBST(uint64,address,address)": ["09f5c380", ["uint64","address","address"], []], # gas used: 212,143
     "tradeInBST(uint64)": ["d8785767", ["uint64"], []], # gas used: 139,998
 
     "allowance(address,address)": ["dd62ed3e", ["address","address"], []],

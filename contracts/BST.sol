@@ -97,7 +97,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         ENABLE_MARKET_BUY = false;
         ENABLE_AUX_BURN = false;
         SERVICE_FEE_PERC = 5;  // 5%
-        BST_BURN_PERC = 3; // 5%
+        BST_BURN_PERC = 3; // 3%
         AUX_BURN_PERC = 2; // 2%
         BUY_BACK_FEE_PERC = 2; // 2%
         KEEPER = msg.sender;

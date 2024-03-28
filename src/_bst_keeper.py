@@ -433,7 +433,7 @@ if __name__ == "__main__":
                         write_with_hash(*tup_params)
                 except Exception as e:
                     print_except(e, debugLvl=0)
-                print(f'\nBST_ADDRESS: {BST_ADDRESS}\nfunc_select: {func_select}')
+                print(f'\nBST_ADDRESS: {BST_ADDRESS}\nfunc_select: {func_select}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}')
                 # assert input('\n (^) proceed? [y/n]\n  > ') == 'y', f"aborted... _ {get_time_now()}\n\n"
         else:
             # loop through all functions in BST_FUNC_MAP
