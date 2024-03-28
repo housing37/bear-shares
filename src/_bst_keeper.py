@@ -492,3 +492,4 @@ print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
 # tBST1: 0xc679C6FeDc13Aae0CEC1754a9688768Ade3f0443
 
 # weUSDT: 0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f
+# pDAI: 0x6B175474E89094C44Da98b954EedeAC495271d0F
