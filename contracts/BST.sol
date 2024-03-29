@@ -26,7 +26,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '27.1';
+    string public tVERSION = '28.1';
     string private tok_symb = string(abi.encodePacked("tBST", tVERSION));
     string private tok_name = string(abi.encodePacked("tTrinity_", tVERSION));
     // string private constant tok_symb = "BST";
@@ -38,15 +38,15 @@ contract BearSharesTrinity is ERC20, Ownable {
     bool public ENABLE_MARKET_QUOTE = false; // set BST pay & burn val w/ market quote (else 1:1)
     bool public ENABLE_MARKET_BUY = false; // cover BST pay & burn val w/ market buy (else use holdings & mint)
     bool public ENABLE_AUX_BURN = false;
-    uint8 public SERVICE_FEE_PERC = 0; // 0%
-    uint8 public BST_BURN_PERC = 0; // 0%
-    uint8 public AUX_BURN_PERC = 0; // 0%
-    uint8 public BUY_BACK_FEE_PERC = 0; // 0%
+    uint8 public PERC_SERVICE_FEE = 0; // 0%
+    uint8 public PERC_BST_BURN = 0; // 0%
+    uint8 public PERC_AUX_BURN = 0; // 0%
+    uint8 public PERC_BUY_BACK_FEE = 0; // 0%
     
     /* _ ACCOUNT SUPPORT _ */
     // uint64 max USD: ~18T -> 18,446,744,073,709.551615 (6 decimals)
     // NOTE: all USD bals & payouts stores uint precision to decimals()
-    address[] public ACCOUNTS;
+    address[] private ACCOUNTS;
     mapping(address => uint64) public ACCT_USD_BALANCES; 
     mapping(address => ACCT_PAYOUT[]) public ACCT_USD_PAYOUTS;
 
@@ -63,10 +63,11 @@ contract BearSharesTrinity is ERC20, Ownable {
         address receiver;
         uint64 usdAmnt; // USD total ACCT deduction
         uint64 usdFee; // USD service fee amount
-        uint64 usdBurn; // USD burn value
+        uint64 usdBurnVal; // BST burned in USD value
         uint64 usdPayout; // USD payout value
-        uint64 bstBurn; // BST burn amount
         uint64 bstPayout; // BST payout amount
+        address auxTok; // aux token burned during payout
+        uint256 auxTokUsdBurnVal; // aux token burned in USD val during payout
     }
 
     /* -------------------------------------------------------- */
@@ -87,7 +88,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     event WhitelistStableUpdated(address _usdStable, uint8 _decimals, bool _add);
     event DexRouterUpdated(address _router, bool _add);
     event DexUsdBstPathUpdated(address _usdStable, address[] _path);
-    event BuyAndBurnExecuted(address _burnTok, uint256 _burnAmnt, uint256 _unburnedAmnt);
+    event BuyAndBurnExecuted(address _burnTok, uint256 _burnAmnt);
 
     /* -------------------------------------------------------- */
     /* CONSTRUCTOR                                              */
@@ -98,10 +99,10 @@ contract BearSharesTrinity is ERC20, Ownable {
         ENABLE_MARKET_QUOTE = false;
         ENABLE_MARKET_BUY = false;
         ENABLE_AUX_BURN = false;
-        SERVICE_FEE_PERC = 5;  // 5%
-        BST_BURN_PERC = 3; // 3%
-        AUX_BURN_PERC = 2; // 2%
-        BUY_BACK_FEE_PERC = 2; // 2%
+        PERC_SERVICE_FEE = 5;  // 5%
+        PERC_BST_BURN = 3; // 3%
+        PERC_AUX_BURN = 2; // 2%
+        PERC_BUY_BACK_FEE = 2; // 2%
         KEEPER = msg.sender;
         _mint(msg.sender, _initSupply * 10**uint8(decimals())); // 'emit Transfer'
 
@@ -144,37 +145,19 @@ contract BearSharesTrinity is ERC20, Ownable {
     }
     function KEEPER_setPayoutPercs(uint8 _servFee, uint8 _bstBurn, uint8 _auxBurn) external onlyKeeper() {
         require(_servFee + _bstBurn + _auxBurn <= 100, ' total percs > 100 :/ ');
-        uint8 prev_0 = SERVICE_FEE_PERC;
-        uint8 prev_1 = BST_BURN_PERC;
-        uint8 prev_2 = AUX_BURN_PERC;
-        SERVICE_FEE_PERC = _servFee;
-        BST_BURN_PERC = _bstBurn;
-        AUX_BURN_PERC = _auxBurn;
-        emit PayoutPercsUpdated(prev_0, prev_1, prev_2, SERVICE_FEE_PERC, BST_BURN_PERC, AUX_BURN_PERC);
+        uint8 prev_0 = PERC_SERVICE_FEE;
+        uint8 prev_1 = PERC_BST_BURN;
+        uint8 prev_2 = PERC_AUX_BURN;
+        PERC_SERVICE_FEE = _servFee;
+        PERC_BST_BURN = _bstBurn;
+        PERC_AUX_BURN = _auxBurn;
+        emit PayoutPercsUpdated(prev_0, prev_1, prev_2, PERC_SERVICE_FEE, PERC_BST_BURN, PERC_AUX_BURN);
     }
-    // function KEEPER_setServiceFeePerc(uint8 _perc) external onlyKeeper() {
-    //     require(_perc + BST_BURN_PERC + AUX_BURN_PERC <= 100, ' total percs > 100 :/ ');
-    //     uint8 prev = SERVICE_FEE_PERC;
-    //     SERVICE_FEE_PERC = _perc;
-    //     emit ServiceFeeUpdate(prev, SERVICE_FEE_PERC);
-    // }
-    // function KEEPER_setBstBurnPerc(uint8 _perc) external onlyKeeper() {
-    //     require(SERVICE_FEE_PERC + AUX_BURN_PERC + _perc <= 100, ' total percs > 100 :/ ');
-    //     uint8 prev = BST_BURN_PERC;
-    //     BST_BURN_PERC = _perc;
-    //     emit BstBurnPercUpdate(prev, BST_BURN_PERC);
-    // }
-    // function KEEPER_setAuxBurnPerc(uint8 _perc) external onlyKeeper() {
-    //     require(SERVICE_FEE_PERC + BST_BURN_PERC + _perc <= 100, ' total percs > 100 :/ ');
-    //     uint8 prev = AUX_BURN_PERC;
-    //     AUX_BURN_PERC = _perc;
-    //     emit AuxBurnPercUpdate(prev, AUX_BURN_PERC);
-    // }
     function KEEPER_setBuyBackFeePerc(uint8 _perc) external onlyKeeper() {
         require(_perc <= 100, 'err: _perc > 100%');
-        uint8 prev = BUY_BACK_FEE_PERC;
-        BUY_BACK_FEE_PERC = _perc;
-        emit TradeInFeeUpdated(prev, BUY_BACK_FEE_PERC);
+        uint8 prev = PERC_BUY_BACK_FEE;
+        PERC_BUY_BACK_FEE = _perc;
+        emit TradeInFeeUpdated(prev, PERC_BUY_BACK_FEE);
     }
     function KEEPER_enableDexPayouts(bool _marketQuote, bool _marketBuy, bool _auxTokenBurn) external onlyKeeper() {
         // NOTE: some functions still indeed get quotes from dexes without this being enabled
@@ -272,51 +255,39 @@ contract BearSharesTrinity is ERC20, Ownable {
         require(_payTo != address(0), ' _payTo 0 address :( ');
 
         // calc & remove service fee & burn amount
-        uint64 usdFee = _perc_of_uint64(SERVICE_FEE_PERC, _usdValue);
-        uint64 usdBurn = _perc_of_uint64(BST_BURN_PERC, _usdValue);
-        uint64 usdAuxBurn = _perc_of_uint64(AUX_BURN_PERC, _usdValue);
-        uint64 usdPayout = _usdValue - usdFee - usdBurn - usdAuxBurn;
+        uint64 usdFee = _perc_of_uint64(PERC_SERVICE_FEE, _usdValue);
+        uint64 usdBurnVal = _perc_of_uint64(PERC_BST_BURN, _usdValue);
+        uint64 usdAuxBurn = _perc_of_uint64(PERC_AUX_BURN, _usdValue);
+        uint64 usdPayout = _usdValue - usdFee - usdBurnVal - usdAuxBurn;
 
         // NOTE: validate contract's collective stable balances can cover usdPayout
         //  if yes, let it go through ... else, revert (ie. contract can't cover a tradeInBST for this usdPayout amount)
-        //   NOTE: if lowStableHeld = 0x0 (below): _exeBstPayout|Burn will fallback to contract holdings / minting
+        //   NOTE: if lowStableHeld = 0x0 (below): _exeBstPayout|Burn will fallback to contract minting
         require(_grossStableBalance(WHITELIST_USD_STABLES) >= usdPayout, ' gross bal will not cover usdPayout buy-back :/ ');
 
         // NOTE: maintain 1:1 if !ENABLE_MARKET_QUOTE
         //  else, get BST value quotes against highest market valued whitelist stable
         uint64 bstPayout = usdPayout;
-        uint64 bstBurn = usdBurn;
-        uint256 auxBurn = usdAuxBurn; // default to BST 1:1 (for !ENABLE_AUX_BURN)
         address auxToken_ = address(this); // default to BST (for !ENABLE_AUX_BURN)
         if (ENABLE_MARKET_QUOTE) {
-            // NOTE: integration runs 4 embedded loops
-            //  choose whitelist stable with highest market value
-            //  then get BST quote against that high market stable (results in least amnt of BST)
-            //   ie. least amount of BST used from holdings (to be burned, paid out, or minted)
+            // NOTE: integration runs 3 embedded loops
+            //  choose whitelist stable with highest market value, then get BST payout quote against that high market stable 
+            //   (results in least amnt of BST for payout w/ mint | market buy)
             address highStable = _getStableTokenHighMarketValue(WHITELIST_USD_STABLES, USWAP_V2_ROUTERS); // 2 loops embedded            
-            bstPayout = _uint64_from_uint256(_getTokMarketValueForUsdAmnt(usdPayout, highStable, address(this))); 
-            bstBurn = _uint64_from_uint256(_getTokMarketValueForUsdAmnt(usdBurn, highStable, address(this))); // 1 loop embedded
+            bstPayout = _uint64_from_uint256(_getTokMarketValueForUsdAmnt(usdPayout, highStable, address(this))); // 1 loop embedded
             
-            // calc / set auxBurn for either _auxToken address or BST address(this)
-            //  NOTE: setting 'auxToken_' here, effects how '_exeTokBurn' is used below
-            //      ie. we are now calc new auxBurn amount & syncing it w/ auxToken_ address
+            // NOTE: _auxToken can indeed be address(this) or address(0); simply means market quote more BST to burn
+            //  setting 'auxToken_' here, effects how '_exeTokBuyBurn' is used below
+            //   ie. we are now setting new auxToken_ address, previously defaulted to BST address(this)
             if (ENABLE_AUX_BURN && _auxToken != address(0) && _auxToken != address(this)) {
                 auxToken_ = _auxToken; // auxToken_ 'was' BST address(this)  
-                auxBurn = _getTokMarketValueForUsdAmnt(usdAuxBurn, highStable, auxToken_); // 1 loop embedded
-            } else {
-                // NOTE: _auxToken can indeed be address(this) or address(0); simply means market quote more BST to burn
-                auxBurn = _uint64_from_uint256(_getTokMarketValueForUsdAmnt(usdAuxBurn, highStable, auxToken_)); // 1 loop embedded
             }
-            
         } else {
             if (ENABLE_AUX_BURN && _auxToken != address(0) && _auxToken != address(this)) {
-                // calc / set auxBurn for _auxToken address (if _auxToken is not address(this or 0x0))
-                //  NOTE: setting 'auxToken_' here, effects how '_exeTokBurn' is used below
-                //      ie. we are now calc new auxBurn amount & syncing it w/ new auxToken_ address
-                //  NOTE: _auxToken cannot be address(this) or address(0); always market quoting some aux (alt) token
-                address highStable = _getStableTokenHighMarketValue(WHITELIST_USD_STABLES, USWAP_V2_ROUTERS); // 2 loops embedded
+                // NOTE: _auxToken cannot be address(this) or address(0); always market quoting some aux (alt) token
+                //  setting 'auxToken_' here, effects how '_exeTokBuyBurn' is used below
+                //   ie. we are now setting new auxToken_ address, previously defaulted to BST address(this)
                 auxToken_ = _auxToken; // auxToken_ 'was' BST address(this)
-                auxBurn = _getTokMarketValueForUsdAmnt(usdAuxBurn, highStable, auxToken_); // 1 loop embedded
             }
         }
 
@@ -325,7 +296,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         //  then choose stable with lowest market value (results in most amnt of BST)
         //   ie. most amount of BST bought from open market (to be burned or paid out)
         // NOTE: if no stables held can cover 'usdPayout', then lowStableHeld = address(0x0)
-        //  this is indeed ok as '_exeBstPayout' & '_exeTokBurn' checks for this, and falls back to holdings / minting
+        //  this is indeed ok as '_exeBstPayout' & '_exeTokBuyBurn' checks for this, and falls back to minting
         address lowStableHeld = _getStableHeldLowMarketValue(usdPayout, WHITELIST_USD_STABLES, USWAP_V2_ROUTERS); // 3 loops embedded
             
         /** ALGORITHMIC LOGIC ... (for BST ENABLE_MARKET_BUY from dex = ON|OFF)
@@ -340,18 +311,18 @@ contract BearSharesTrinity is ERC20, Ownable {
         usd_tok_burn_path[0] = lowStableHeld;
         usd_tok_burn_path[1] = TOK_WPLS;
         usd_tok_burn_path[2] = address(this);
-        _exeTokBurn(bstBurn, usdBurn, usd_tok_burn_path);
+        _exeTokBuyBurn(usdBurnVal, usd_tok_burn_path);
 
         // exe burn w/ USD->auxToken swap path (go through WPLS required)
-        //  NOTE: auxToken_ 'may be' BST address(this) and auxBurn 'may be' calc for burning more BST
+        //  NOTE: auxToken_ 'may be' BST address(this)
         usd_tok_burn_path[2] = auxToken_;
-        _exeTokBurn(auxBurn, usdAuxBurn, usd_tok_burn_path);
+        _exeTokBuyBurn(usdAuxBurn, usd_tok_burn_path);
             
         // update account balance, ACCT_USD_BALANCES stores uint precision to decimals()
         ACCT_USD_BALANCES[msg.sender] -= _usdValue; // _usdValue 'require' check above
 
         // log this payout, ACCT_USD_PAYOUTS stores uint precision to decimals()
-        ACCT_USD_PAYOUTS[msg.sender].push(ACCT_PAYOUT(_payTo, _usdValue, usdFee, usdBurn, usdPayout, bstBurn, bstPayout));
+        ACCT_USD_PAYOUTS[msg.sender].push(ACCT_PAYOUT(_payTo, _usdValue, usdFee, usdBurnVal, usdPayout, bstPayout, auxToken_, usdAuxBurn));
 
         emit PayOutProcessed(msg.sender, _payTo, _usdValue);
     }
@@ -365,7 +336,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         uint64 usdBuyBackVal = _bstAmnt; 
         
         // calc usd trade in value (1:1, minus buy back fee)
-        uint64 usdBuyBackFee = _perc_of_uint64(BUY_BACK_FEE_PERC, usdBuyBackVal);
+        uint64 usdBuyBackFee = _perc_of_uint64(PERC_BUY_BACK_FEE, usdBuyBackVal);
         uint64 usdTradeVal = usdBuyBackVal - usdBuyBackFee;
 
         // NOTE: validate contract's collective stable balances can cover usdTradeVal
@@ -414,27 +385,21 @@ contract BearSharesTrinity is ERC20, Ownable {
          */
         if (marketBuy_GO && stableHoldings_OK && usdBstPath_OK) {
             uint256 bst_amnt_out = _exeSwapStableForTok(_usdPayout, USD_BST_PATHS[_usdStable]);
-            if (_bstPayout < bst_amnt_out) 
-                bst_amnt_out = _bstPayout;
-            _transfer(address(this), _payTo, bst_amnt_out);
+            _transfer(address(this), _payTo, bst_amnt_out); // send bst payout
         } else {
-            _mint(_payTo, _bstPayout);
+            _mint(_payTo, _bstPayout); // mint bst payout
         }
     }
-    function _exeTokBurn(uint256 _auxBurnAmnt, uint64 _usdBurn, address[] memory _usdSwapPath) private {
+    function _exeTokBuyBurn(uint64 _usdBurn, address[] memory _usdSwapPath) private {
         address usdStable = _usdSwapPath[0];
         address burnToken = _usdSwapPath[_usdSwapPath.length-1];
+            // NOTE: burnToken should never be 0x0, since payOutBST defaults it to BST address(this)
         bool stableHoldings_OK = _stableHoldingsCovered(_usdBurn, usdStable);
         bool usdSwapPath_OK = usdStable != address(0) && burnToken != address(0);
         bool isBstBurn = burnToken == address(this);
         bool bstBurn_GO = ENABLE_MARKET_QUOTE && ENABLE_MARKET_BUY && isBstBurn;
         bool auxBurn_GO = ENABLE_AUX_BURN && !isBstBurn;
 
-        // NOTE: invoked from 'payOutBST', which sets _auxBurnAmnt
-        //  if auxBurn_GO, then _auxBurnAmnt is relative to aux token address (burnToken)
-        //  else, _auxBurnAmnt is relative to BST address(this)
-        // NOTE: burnToken should never be 0, since payOutBST defaults it to BST address(this)
-        
         /** ALGORITHMIC LOGIC ...
              if ENABLE_MARKET_BUY | ENABLE_AUX_BURN, burn token from market buy
              else, nothing burned
@@ -445,17 +410,12 @@ contract BearSharesTrinity is ERC20, Ownable {
                  and hopefully not need to disable ENABLE_MARKET_BUY &| ENABLE_AUX_BURN 
          */
         if ((bstBurn_GO || auxBurn_GO) && stableHoldings_OK && usdSwapPath_OK) {
-            uint256 burn_tok_amnt_out = _exeSwapStableForTok(_usdBurn, _usdSwapPath);
-            if (_auxBurnAmnt < burn_tok_amnt_out) 
-                burn_tok_amnt_out = _auxBurnAmnt;
+            uint256 burn_tok_amnt_out = _exeSwapStableForTok(_usdBurn, _usdSwapPath);                
             if (isBstBurn)
                 _burn(address(this), burn_tok_amnt_out);
             else
                 IERC20(burnToken).transfer(BURN_ADDR, burn_tok_amnt_out);
-            emit BuyAndBurnExecuted(burnToken, burn_tok_amnt_out, 0);
-        } else {
-            // NOTIFY: nothing burned
-            emit BuyAndBurnExecuted(burnToken, 0, _auxBurnAmnt);
+            emit BuyAndBurnExecuted(burnToken, burn_tok_amnt_out);
         }
     }
     function _grossStableBalance(address[] memory _stables) private view returns (uint64) {
