@@ -31,7 +31,7 @@ BST_FUNC_MAP_READ = {
 
     "USD_BST_PATHS(address,uint256)": ["85783459", ["address","uint256"], ['address']],
     "USWAP_V2_ROUTERS(uint256)": ["ee80b054", ["uint256"], ['address']],
-    
+
     "balanceOf(address)": ["70a08231", ["address"], ['uint256']],
     "decimals()": ["313ce567", [], ['uint8']],
     "getAccounts()": ["8a48ac03", [], ['address[]']],
@@ -51,7 +51,7 @@ BST_FUNC_MAP_WRITE = {
     "KEEPER_maintenance(uint64,address)": ["3015d747", ["uint64","address"], []], # gas used: 62,434
     "KEEPER_editDexRouters(address,bool)": ["bceeba33", ["address","bool"], []], # gas used: 36,601 (rem), 55,723 (add)
     "KEEPER_editWhitelistStables(address,uint8,bool)": ["b290b9bf", ["address","uint8","bool"], []],
-    "KEEPER_setUsdBstPath(address,address[])": ["4f51d029", ['address','address[]'], []],
+    "KEEPER_setUsdBstPath(address,address[])": ["4f51d029", ['address','address[]'], []], # gas used: 38,852
 
     "KEEPER_enableDexPayouts(bool,bool,bool)": ["3730cf3c", ["bool","bool","bool"], []], # gas used: 7.731
     "KEEPER_setPayoutPercs(uint8,uint8,uint8)": ["9939b76f", ["uint8","uint8","uint8"], []], # gas used: 30,082

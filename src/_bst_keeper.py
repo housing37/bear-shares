@@ -232,7 +232,7 @@ def write_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst
     if len(_lst_param_types) > 0:
         func_sign = _func_hash + encode_abi(_lst_param_types, _lst_params).hex()
 
-    print('building tx_data w/ _contr_addr & func_sign ...')
+    print(f'building tx_data w/ ...\n _contr_addr: {_contr_addr}\n _func_hash: {_func_hash}')
     tx_data = {
         "to": _contr_addr,
         "data": func_sign,
@@ -323,6 +323,8 @@ def go_enter_bst_addr():
     global BST_ADDRESS
     while BST_ADDRESS == None or BST_ADDRESS == '':
         BST_ADDRESS = input('\n Enter BST contract address:\n  > ')
+
+    BST_ADDRESS = W3_.W3.to_checksum_address(BST_ADDRESS)
     print(f'  using BST_ADDRESS: {BST_ADDRESS}')
 
 def go_select_func():
@@ -346,8 +348,7 @@ def go_enter_func_params(_func_select):
         if v.lower() == 'true': lst_func_params.append(True)
         elif v.lower() == 'false': lst_func_params.append(False)
         elif v.isdigit(): lst_func_params.append(int(v))
-        elif v[0]=='[' and v[-1]==']': lst_func_params.append(i.strip() for i in v[1:-1].split(','))
-            # LEFT OFF HERE ... trying to parase input correclty to send w/ KEEPER_setUsdBstPath(address,address[])
+        elif v.startswith('['): lst_func_params.append([i.strip() for i in v[1:-1].split(',')])
         else: lst_func_params.append(v)
 
     print(f'  executing "{_func_select}" w/ params: {lst_func_params} ...\n')
