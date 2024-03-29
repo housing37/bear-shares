@@ -26,7 +26,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '28.1';
+    string public tVERSION = '29';
     string private tok_symb = string(abi.encodePacked("tBST", tVERSION));
     string private tok_name = string(abi.encodePacked("tTrinity_", tVERSION));
     // string private constant tok_symb = "BST";
@@ -51,10 +51,10 @@ contract BearSharesTrinity is ERC20, Ownable {
     mapping(address => ACCT_PAYOUT[]) public ACCT_USD_PAYOUTS;
 
     address[] public USWAP_V2_ROUTERS;
-    address[] public WHITELIST_USD_STABLES;
-    address[] public USD_STABLES_HISTORY;
+    address[] private WHITELIST_USD_STABLES;
+    address[] private USD_STABLES_HISTORY;
     mapping(address => uint8) public USD_STABLE_DECIMALS;
-    mapping(address => address[]) public USD_BST_PATHS;
+    mapping(address => address[]) private USD_BST_PATHS;
 
     /* -------------------------------------------------------- */
     /* STRUCTS                                        
@@ -191,6 +191,9 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* -------------------------------------------------------- */
     /* PUBLIC - KEEPER - ACCESSORS
     /* -------------------------------------------------------- */
+    // LEFT OFF HERE .... need to add param _keeperCheck
+    //      and validate against new global uint256 private KEEPER_CHECK
+    //       and need setter KEEPER_setKeeperCheck(uint256 _newCheck)
     function KEEPER_collectiveStableBalances(bool _history) external view onlyKeeper() returns (uint64, uint64, int64) {
         if (_history)
             return _collectiveStableBalances(USD_STABLES_HISTORY);
@@ -202,6 +205,10 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* -------------------------------------------------------- */
     function getAccounts() external view returns (address[] memory) {
         return ACCOUNTS;
+    }
+    function getAccountPayouts(address _account) external view returns (ACCT_PAYOUT[] memory) {
+        require(_account != address(0), ' 0 address? ;[+] ');
+        return ACCT_USD_PAYOUTS[_account];
     }
     function getUsdBstPath(address _usdStable) external view returns (address[] memory) {
         return USD_BST_PATHS[_usdStable];
@@ -320,7 +327,8 @@ contract BearSharesTrinity is ERC20, Ownable {
 
         // log this payout, ACCT_USD_PAYOUTS stores uint precision to decimals()
         ACCT_USD_PAYOUTS[msg.sender].push(ACCT_PAYOUT(_payTo, _usdValue, usdPayout, bstPayout, usdFee, usdBurnVal, usdAuxBurn, auxToken_));
-
+            // LEFT OFF HERE ... need additional ACCT_PAYOUT param: <tot-usd-burn-val> ... between usdFee and usdBurnVal
+            //  return <tot-usd-burn-val> from _exeTokBuyBurn, based on if swap and burn occurred for param '_usdBurn'
         emit PayOutProcessed(msg.sender, _payTo, _usdValue);
     }
     
@@ -444,6 +452,9 @@ contract BearSharesTrinity is ERC20, Ownable {
         uint64 gross_bal = _grossStableBalance(_stables);
         uint64 owed_bal = _owedStableBalance();
         int64 net_bal = int64(gross_bal) - int64(owed_bal);
+            // LEFT OFF HERE .. net bal is not gross - owed
+            //      i think it should be = gross - owed - totalSupply()
+            //      and return totalSupply() between owed_bal and net_bal
         return (gross_bal, owed_bal, net_bal);
     }
     function _editWhitelistStables(address _usdStable, uint8 _decimals, bool _add) private { // allows duplicates

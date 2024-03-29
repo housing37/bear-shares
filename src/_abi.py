@@ -10,8 +10,7 @@ BST_FUNC_MAP_READ = {
     "KEEPER_collectiveStableBalances(bool)": ["0586b523", ['bool'], ['uint64','uint64','int64']],
 
     "ACCT_USD_BALANCES(address)": ["c67483dc", ["address"], ['uint64']],
-    "ACCT_USD_PAYOUTS(address,uint256)": ["8b47da26", ["address","uint256"], ['address', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'address', 'uint256']],
-    # "ACCT_USD_PAYOUTS(address,uint256)": ["8b47da26", ["address","uint256"], ['address', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'uint256', 'address']],
+    "ACCT_USD_PAYOUTS(address,uint256)": ["8b47da26", ["address","uint256"], ['address', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'uint256', 'address']],
 
     "ENABLE_MARKET_QUOTE()": ["46538f8c", [], ['bool']],
     "ENABLE_MARKET_BUY()": ["405d2a83", [], ['bool']],
@@ -25,16 +24,17 @@ BST_FUNC_MAP_READ = {
     "TOK_WPLS()": ["fa4a9870", [], ['address']],
     "BURN_ADDR()": ["783028a9", [], ['address']],
 
-    "WHITELIST_USD_STABLES(uint256)": ["593d1bf7", ["uint256"], ['address']],
-    "USD_STABLES_HISTORY(uint256)": ["cd196d89", ["uint256"], ['address']],
+    # "WHITELIST_USD_STABLES(uint256)": ["593d1bf7", ["uint256"], ['address']],
+    # "USD_STABLES_HISTORY(uint256)": ["cd196d89", ["uint256"], ['address']],
     "USD_STABLE_DECIMALS(address)": ["7f8754f4", ["address"], ['uint8']],
 
-    "USD_BST_PATHS(address,uint256)": ["85783459", ["address","uint256"], ['address']],
+    # "USD_BST_PATHS(address,uint256)": ["85783459", ["address","uint256"], ['address']],
     "USWAP_V2_ROUTERS(uint256)": ["ee80b054", ["uint256"], ['address']],
 
     "balanceOf(address)": ["70a08231", ["address"], ['uint256']],
     "decimals()": ["313ce567", [], ['uint8']],
     "getAccounts()": ["8a48ac03", [], ['address[]']],
+    "getAccountPayouts(address)": ["d08e6c88", ["address"], ['address', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'uint256', 'address']],
     "getSwapRouters()": ["c85ec1e0", [], ['address[]']],
     "getWhitelistStables()": ["00f403e8", [], ['address[]']],
     "getUsdStablesHistory()": ["d4155f07", [], ['address[]']],
