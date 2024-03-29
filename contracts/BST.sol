@@ -61,22 +61,19 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* -------------------------------------------------------- */
     struct ACCT_PAYOUT {
         address receiver;
-        uint64 usdAmnt; // USD total ACCT deduction
-        uint64 usdFee; // USD service fee amount
-        uint64 usdBurnVal; // BST burned in USD value
+        uint64 usdAmntDebit; // USD total ACCT deduction
         uint64 usdPayout; // USD payout value
         uint64 bstPayout; // BST payout amount
+        uint64 usdFeeVal; // USD service fee amount
+        uint64 usdBurnVal; // BST burned in USD value
+        uint256 auxUsdBurnVal; // aux token burned in USD val during payout
         address auxTok; // aux token burned during payout
-        uint256 auxTokUsdBurnVal; // aux token burned in USD val during payout
     }
 
     /* -------------------------------------------------------- */
     /* EVENTS                                        
     /* -------------------------------------------------------- */
     event KeeperTransfer(address _prev, address _new);
-    // event ServiceFeeUpdate(uint8 _prev, uint8 _new);
-    // event BstBurnPercUpdate(uint8 _prev, uint8 _new);
-    // event AuxBurnPercUpdate(uint8 _prev, uint8 _new);
     event TradeInFeeUpdated(uint8 _prev, uint8 _new);
     event PayoutPercsUpdated(uint8 _prev_0, uint8 _prev_1, uint8 _prev_2, uint8 _new_0, uint8 _new_1, uint8 _new_2);
     event DexExecutionsUpdated(bool _prev_0, bool _prev_1, bool _prev_2, bool _new_0, bool _new_1, bool _new_2);
@@ -322,7 +319,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         ACCT_USD_BALANCES[msg.sender] -= _usdValue; // _usdValue 'require' check above
 
         // log this payout, ACCT_USD_PAYOUTS stores uint precision to decimals()
-        ACCT_USD_PAYOUTS[msg.sender].push(ACCT_PAYOUT(_payTo, _usdValue, usdFee, usdBurnVal, usdPayout, bstPayout, auxToken_, usdAuxBurn));
+        ACCT_USD_PAYOUTS[msg.sender].push(ACCT_PAYOUT(_payTo, _usdValue, usdPayout, bstPayout, usdFee, usdBurnVal, usdAuxBurn, auxToken_));
 
         emit PayOutProcessed(msg.sender, _payTo, _usdValue);
     }

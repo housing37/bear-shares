@@ -289,6 +289,7 @@ def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_
     tx_data = {
         "to": _contr_addr,
         "data": func_sign,
+        "from": W3_.SENDER_ADDRESS,
     }
 
     # Call contract function to retrieve the value of the KEEPER state variable
@@ -299,7 +300,8 @@ def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_
     print(f'return_val: {return_val}')
     print(f'return_val.hex(): {return_val.hex()}')
     decoded_value_return = decode_abi(_lst_ret_types, return_val)
-    print(f'decoded_value_return: {decoded_value_return}')
+    # print(*decoded_value_return, sep='\n')
+    print(f'decoded_value_return', *decoded_value_return, sep='\n ')
     # hex_bytes = HexBytes('0x745472696e6974795f39')
     hex_bytes = decoded_value_return[0]
     decoded_string = hex_bytes
@@ -344,6 +346,8 @@ def go_enter_func_params(_func_select):
         if v.lower() == 'true': lst_func_params.append(True)
         elif v.lower() == 'false': lst_func_params.append(False)
         elif v.isdigit(): lst_func_params.append(int(v))
+        elif v[0]=='[' and v[-1]==']': lst_func_params.append(i.strip() for i in v[1:-1].split(','))
+            # LEFT OFF HERE ... trying to parase input correclty to send w/ KEEPER_setUsdBstPath(address,address[])
         else: lst_func_params.append(v)
 
     print(f'  executing "{_func_select}" w/ params: {lst_func_params} ...\n')
