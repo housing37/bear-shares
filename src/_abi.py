@@ -7,10 +7,10 @@ cStrDivider_1 = '#--------------------------------------------------------------
 BST_FUNC_MAP_READ = {
     # read functions
     "KEEPER()": ["862a179e", [], ['address']],
-    "KEEPER_collectiveStableBalances(bool,uint256)": ["cf0c8683", ['bool'], ['uint64','uint64','uint64','int64']],
+    "KEEPER_collectiveStableBalances(bool,uint256)": ["cf0c8683", ['bool','uint256'], ['uint64','uint64','uint64','int64']],
 
     "ACCT_USD_BALANCES(address)": ["c67483dc", ["address"], ['uint64']],
-    "ACCT_USD_PAYOUTS(address,uint256)": ["8b47da26", ["address","uint256"], ['address', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'uint256', 'address']],
+    "ACCT_USD_PAYOUTS(address,uint256)": ["8b47da26", ["address","uint256"], ['address', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'uint256', 'address']],
 
     "ENABLE_MARKET_QUOTE()": ["46538f8c", [], ['bool']],
     "ENABLE_MARKET_BUY()": ["405d2a83", [], ['bool']],
