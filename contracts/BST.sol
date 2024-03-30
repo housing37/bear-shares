@@ -26,7 +26,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '31';
+    string public tVERSION = '32';
     string private tok_symb = string(abi.encodePacked("tBST", tVERSION));
     string private tok_name = string(abi.encodePacked("tTrinity_", tVERSION));
     // string private constant tok_symb = "BST";
@@ -39,10 +39,10 @@ contract BearSharesTrinity is ERC20, Ownable {
     bool public ENABLE_MARKET_QUOTE = false; // set BST pay & burn val w/ market quote (else 1:1)
     bool public ENABLE_MARKET_BUY = false; // cover BST pay & burn val w/ market buy (else use holdings & mint)
     bool public ENABLE_AUX_BURN = false;
-    uint8 public PERC_SERVICE_FEE = 0; // 0%
-    uint8 public PERC_BST_BURN = 0; // 0%
-    uint8 public PERC_AUX_BURN = 0; // 0%
-    uint8 public PERC_BUY_BACK_FEE = 0; // 0%
+    uint32 public PERC_SERVICE_FEE = 0; // 0.00%
+    uint32 public PERC_BST_BURN = 0; // 0.00%
+    uint32 public PERC_AUX_BURN = 0; // 0.00%
+    uint32 public PERC_BUY_BACK_FEE = 0; // 0.00%
     
     /* _ ACCOUNT SUPPORT _ */
     // uint64 max USD: ~18T -> 18,446,744,073,709.551615 (6 decimals)
@@ -76,8 +76,8 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* EVENTS                                        
     /* -------------------------------------------------------- */
     event KeeperTransfer(address _prev, address _new);
-    event TradeInFeeUpdated(uint8 _prev, uint8 _new);
-    event PayoutPercsUpdated(uint8 _prev_0, uint8 _prev_1, uint8 _prev_2, uint8 _new_0, uint8 _new_1, uint8 _new_2);
+    event TradeInFeePercUpdated(uint32 _prev, uint32 _new);
+    event PayoutPercsUpdated(uint32 _prev_0, uint32 _prev_1, uint32 _prev_2, uint32 _new_0, uint32 _new_1, uint32 _new_2);
     event DexExecutionsUpdated(bool _prev_0, bool _prev_1, bool _prev_2, bool _new_0, bool _new_1, bool _new_2);
     event DepositReceived(address _account, uint256 _plsDeposit, uint64 _stableConvert);
     event PayOutProcessed(address _from, address _to, uint64 _usdAmnt, uint64 _usdAmntPaid, uint64 _usdBurnValTot);
@@ -98,10 +98,10 @@ contract BearSharesTrinity is ERC20, Ownable {
         ENABLE_MARKET_QUOTE = false;
         ENABLE_MARKET_BUY = false;
         ENABLE_AUX_BURN = false;
-        PERC_SERVICE_FEE = 5;  // 5%
-        PERC_BST_BURN = 3; // 3%
-        PERC_AUX_BURN = 2; // 2%
-        PERC_BUY_BACK_FEE = 2; // 2%
+        PERC_SERVICE_FEE = 500;  // 5.00%
+        PERC_BST_BURN = 300; // 3.00%
+        PERC_AUX_BURN = 200; // 2.00%
+        PERC_BUY_BACK_FEE = 200; // 2.00%
         KEEPER = msg.sender;
         KEEPER_CHECK = 0;
         _mint(msg.sender, _initSupply * 10**uint8(decimals())); // 'emit Transfer'
@@ -146,21 +146,21 @@ contract BearSharesTrinity is ERC20, Ownable {
     function KEEPER_setKeeperCheck(uint256 _keeperCheck) external onlyKeeper {
         KEEPER_CHECK = _keeperCheck;
     }
-    function KEEPER_setPayoutPercs(uint8 _servFee, uint8 _bstBurn, uint8 _auxBurn) external onlyKeeper() {
-        require(_servFee + _bstBurn + _auxBurn <= 100, ' total percs > 100 :/ ');
-        uint8 prev_0 = PERC_SERVICE_FEE;
-        uint8 prev_1 = PERC_BST_BURN;
-        uint8 prev_2 = PERC_AUX_BURN;
+    function KEEPER_setPayoutPercs(uint32 _servFee, uint32 _bstBurn, uint32 _auxBurn) external onlyKeeper() {
+        require(_servFee + _bstBurn + _auxBurn <= 10000, ' total percs > 100.00% ;) ');
+        uint32 prev_0 = PERC_SERVICE_FEE;
+        uint32 prev_1 = PERC_BST_BURN;
+        uint32 prev_2 = PERC_AUX_BURN;
         PERC_SERVICE_FEE = _servFee;
         PERC_BST_BURN = _bstBurn;
         PERC_AUX_BURN = _auxBurn;
         emit PayoutPercsUpdated(prev_0, prev_1, prev_2, PERC_SERVICE_FEE, PERC_BST_BURN, PERC_AUX_BURN);
     }
-    function KEEPER_setBuyBackFeePerc(uint8 _perc) external onlyKeeper() {
-        require(_perc <= 100, 'err: _perc > 100%');
-        uint8 prev = PERC_BUY_BACK_FEE;
+    function KEEPER_setBuyBackFeePerc(uint32 _perc) external onlyKeeper() {
+        require(_perc <= 10000, 'err: _perc > 100.00%');
+        uint32 prev = PERC_BUY_BACK_FEE;
         PERC_BUY_BACK_FEE = _perc;
-        emit TradeInFeeUpdated(prev, PERC_BUY_BACK_FEE);
+        emit TradeInFeePercUpdated(prev, PERC_BUY_BACK_FEE);
     }
     function KEEPER_enableDexPayouts(bool _marketQuote, bool _marketBuy, bool _auxTokenBurn) external onlyKeeper() {
         // NOTE: some functions still indeed get quotes from dexes without this being enabled
@@ -517,14 +517,14 @@ contract BearSharesTrinity is ERC20, Ownable {
         (uint8 rtrIdx, uint256 tok_amnt) = _best_swap_v2_router_idx_quote(stab_bst_path, usdAmnt_, USWAP_V2_ROUTERS);
         return tok_amnt; 
     }
-    function _perc_of_uint64(uint8 _perc, uint64 _num) private pure returns (uint64) {
-        require(_perc <= 100, 'err: invalid percent');
-        uint32 aux_perc = uint32(_perc) * 100;
-        uint64 result = (_num * uint64(aux_perc)) / 10000; // chatGPT equation
+    function _perc_of_uint64(uint32 _perc, uint64 _num) private pure returns (uint64) {
+        require(_perc <= 10000, 'err: invalid percent');
+        uint32 aux_perc = _perc * 100; // Multiply by 100 to accommodate decimals
+        uint64 result = (_num * uint64(aux_perc)) / 1000000; // chatGPT equation
         return result;
 
         // NOTE: more efficient with no local vars allocated
-        // return (_num * uint64(uint32(_perc) * 100)) / 10000; // chatGPT equation
+        // return (_num * uint64(uint32(_perc) * 100)) / 1000000; // chatGPT equation
     }
     function _uint64_from_uint256(uint256 value) private pure returns (uint64) {
         require(value <= type(uint64).max, "Value exceeds uint64 range");

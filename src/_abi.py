@@ -16,10 +16,10 @@ BST_FUNC_MAP_READ = {
     "ENABLE_MARKET_BUY()": ["405d2a83", [], ['bool']],
     "ENABLE_AUX_BURN()": ["59fbb128", [], ['bool']],
 
-    "PERC_SERVICE_FEE()": ["3351b2bc", [], ['uint8']],
-    "PERC_BST_BURN()": ["ba424c02", [], ['uint8']],
-    "PERC_AUX_BURN()": ["53f17827", [], ['uint8']],
-    "PERC_BUY_BACK_FEE()": ["96e38e90", [], ['uint8']],
+    "PERC_SERVICE_FEE()": ["3351b2bc", [], ['uint32']],
+    "PERC_BST_BURN()": ["ba424c02", [], ['uint32']],
+    "PERC_AUX_BURN()": ["53f17827", [], ['uint32']],
+    "PERC_BUY_BACK_FEE()": ["96e38e90", [], ['uint32']],
 
     "TOK_WPLS()": ["fa4a9870", [], ['address']],
     "BURN_ADDR()": ["783028a9", [], ['address']],
@@ -54,8 +54,8 @@ BST_FUNC_MAP_WRITE = {
     "KEEPER_setUsdBstPath(address,address[])": ["4f51d029", ['address','address[]'], []], # gas used: 38,852
 
     "KEEPER_enableDexPayouts(bool,bool,bool)": ["3730cf3c", ["bool","bool","bool"], []], # gas used: 7.731
-    "KEEPER_setPayoutPercs(uint8,uint8,uint8)": ["9939b76f", ["uint8","uint8","uint8"], []], # gas used: 30,082
-    "KEEPER_setBuyBackFeePerc(uint8)": ["dd8645c2", ["uint8"], []], # gas used: 28,887
+    "KEEPER_setPayoutPercs(uint32,uint32,uint32)": ["c0e202fa", ["uint32","uint32","uint32"], []], # gas used: 30,082
+    "KEEPER_setBuyBackFeePerc(uint32)": ["57e8a5a5", ["uint32"], []], # gas used: 28,887
 
     "payOutBST(uint64,address,address)": ["09f5c380", ["uint64","address","address"], []], # gas used: 500,000+
     "tradeInBST(uint64)": ["d8785767", ["uint64"], []], # gas used: 126,956+
