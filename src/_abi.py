@@ -12,17 +12,14 @@ BST_FUNC_MAP_READ = {
     "ACCT_USD_BALANCES(address)": ["c67483dc", ["address"], ['uint64']],
     "ACCT_USD_PAYOUTS(address,uint256)": ["8b47da26", ["address","uint256"], ['address', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'uint256', 'address']],
 
-    "ENABLE_MARKET_QUOTE()": ["46538f8c", [], ['bool']],
-    "ENABLE_MARKET_BUY()": ["405d2a83", [], ['bool']],
-    "ENABLE_AUX_BURN()": ["59fbb128", [], ['bool']],
+    # "ENABLE_MARKET_QUOTE()": ["46538f8c", [], ['bool']],
+    # "ENABLE_MARKET_BUY()": ["405d2a83", [], ['bool']],
+    # "ENABLE_AUX_BURN()": ["59fbb128", [], ['bool']],
 
-    "PERC_SERVICE_FEE()": ["3351b2bc", [], ['uint32']],
-    "PERC_BST_BURN()": ["ba424c02", [], ['uint32']],
-    "PERC_AUX_BURN()": ["53f17827", [], ['uint32']],
-    "PERC_BUY_BACK_FEE()": ["96e38e90", [], ['uint32']],
-
-    "TOK_WPLS()": ["fa4a9870", [], ['address']],
-    "BURN_ADDR()": ["783028a9", [], ['address']],
+    # "PERC_SERVICE_FEE()": ["3351b2bc", [], ['uint32']],
+    # "PERC_BST_BURN()": ["ba424c02", [], ['uint32']],
+    # "PERC_AUX_BURN()": ["53f17827", [], ['uint32']],
+    # "PERC_BUY_BACK_FEE()": ["96e38e90", [], ['uint32']],
 
     "USD_STABLE_DECIMALS(address)": ["7f8754f4", ["address"], ['uint8']],
 
@@ -34,9 +31,15 @@ BST_FUNC_MAP_READ = {
     "getAccounts()": ["8a48ac03", [], ['address[]']],
     "getAccountPayouts(address)": ["d08e6c88", ["address"], ['address', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'uint256', 'address']],
     "getSwapRouters()": ["c85ec1e0", [], ['address[]']],
+    "getDexOptions()": ["3685f08b", [], ['bool','bool','bool']],
+    "getPayoutPercs()": ["2edef8a4", [], ['uint32','uint32','uint32','uint32']],
     "getWhitelistStables()": ["00f403e8", [], ['address[]']],
     "getUsdStablesHistory()": ["d4155f07", [], ['address[]']],
     "getUsdBstPath(address)": ["260e5df9", ['address'], ['address[]']],
+
+    "TOK_WPLS()": ["fa4a9870", [], ['address']],
+    "BURN_ADDR()": ["783028a9", [], ['address']],
+
     "name()": ["06fdde03", [], ['string']],
     "owner()": ["8da5cb5b", [], ['address']],
     "symbol()": ["95d89b41", [], ['string']],
@@ -53,7 +56,9 @@ BST_FUNC_MAP_WRITE = {
     "KEEPER_editWhitelistStables(address,uint8,bool)": ["b290b9bf", ["address","uint8","bool"], []],
     "KEEPER_setUsdBstPath(address,address[])": ["4f51d029", ['address','address[]'], []], # gas used: 38,852
 
-    "KEEPER_enableDexPayouts(bool,bool,bool)": ["3730cf3c", ["bool","bool","bool"], []], # gas used: 7.731
+    # "KEEPER_enableDexPayouts(bool,bool,bool)": ["3730cf3c", ["bool","bool","bool"], []], # gas used: 7.731
+    "KEEPER_enableDexOptions(bool,bool,bool)": ["ffc9f2fd", ["bool","bool","bool"], []], # gas used: 7.731
+
     "KEEPER_setPayoutPercs(uint32,uint32,uint32)": ["c0e202fa", ["uint32","uint32","uint32"], []], # gas used: 30,082
     "KEEPER_setBuyBackFeePerc(uint32)": ["57e8a5a5", ["uint32"], []], # gas used: 28,887
 

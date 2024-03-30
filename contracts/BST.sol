@@ -26,23 +26,22 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '32.1';
+    string public tVERSION = '33';
     string private tok_symb = string(abi.encodePacked("tBST", tVERSION));
     string private tok_name = string(abi.encodePacked("tTrinity_", tVERSION));
     // string private constant tok_symb = "BST";
     // string private constant tok_name = "Trinity";
 
-
     /* _ ADMIN SUPPORT _ */
     address public KEEPER;
     uint256 private KEEPER_CHECK;
-    bool public ENABLE_MARKET_QUOTE = false; // set BST pay & burn val w/ market quote (else 1:1)
-    bool public ENABLE_MARKET_BUY = false; // cover BST pay & burn val w/ market buy (else use holdings & mint)
-    bool public ENABLE_AUX_BURN = false;
-    uint32 public PERC_SERVICE_FEE = 0; // 0.00%
-    uint32 public PERC_BST_BURN = 0; // 0.00%
-    uint32 public PERC_AUX_BURN = 0; // 0.00%
-    uint32 public PERC_BUY_BACK_FEE = 0; // 0.00%
+    bool private ENABLE_MARKET_QUOTE = false; // set BST pay & burn val w/ market quote (else 1:1)
+    bool private ENABLE_MARKET_BUY = false; // cover BST pay & burn val w/ market buy (else use holdings & mint)
+    bool private ENABLE_AUX_BURN = false;
+    uint32 private PERC_SERVICE_FEE = 0; // 0.00%
+    uint32 private PERC_BST_BURN = 0; // 0.00%
+    uint32 private PERC_AUX_BURN = 0; // 0.00%
+    uint32 private PERC_BUY_BACK_FEE = 0; // 0.00%
     
     /* _ ACCOUNT SUPPORT _ */
     // uint64 max USD: ~18T -> 18,446,744,073,709.551615 (6 decimals)
@@ -107,12 +106,23 @@ contract BearSharesTrinity is ERC20, Ownable {
         _mint(msg.sender, _initSupply * 10**uint8(decimals())); // 'emit Transfer'
 
         // add default stables
+        // > 0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f [0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f,0xA1077a294dDE1B09bB078844df40758a5D0f9a27,address(this)]
+        // > 0xefD766cCb38EaF1dfd701853BFCe31359239F305 [0xefD766cCb38EaF1dfd701853BFCe31359239F305,0xA1077a294dDE1B09bB078844df40758a5D0f9a27,address(this)]
         address usdStable_0 = address(0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f); // weUSDT
         address usdStable_1 = address(0xefD766cCb38EaF1dfd701853BFCe31359239F305); // weDAI
         uint8 decimals_0 = 6;
         uint8 decimals_1 = 18;
         _editWhitelistStables(usdStable_0, decimals_0, true); // true = add
         _editWhitelistStables(usdStable_1, decimals_1, true); // true = add
+
+        // add default USD_BST_PATHS (routing through WPLS required)
+        address[] memory path = new address[](3);
+        path[0] = usdStable_0;
+        path[1] = TOK_WPLS;
+        path[2] = address(this);
+        USD_BST_PATHS[usdStable_0] = path; // add usdStable_0 path
+        path[0] = usdStable_1;
+        USD_BST_PATHS[usdStable_1] = path; // add usdStable_1 path
 
         // add default routers: pulsex x2 
         address router_0 = address(0x98bf93ebf5c380C0e6Ae8e192A7e2AE08edAcc02); // pulseX v1
@@ -128,7 +138,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         require(msg.sender == KEEPER, "!keeper :p");
         _;
     }
-
+    
     /* -------------------------------------------------------- */
     /* PUBLIC - KEEPER SUPPORT            
     /* -------------------------------------------------------- */
@@ -162,7 +172,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         PERC_BUY_BACK_FEE = _perc;
         emit TradeInFeePercUpdated(prev, PERC_BUY_BACK_FEE);
     }
-    function KEEPER_enableDexPayouts(bool _marketQuote, bool _marketBuy, bool _auxTokenBurn) external onlyKeeper() {
+    function KEEPER_enableDexOptions(bool _marketQuote, bool _marketBuy, bool _auxTokenBurn) external onlyKeeper() {
         // NOTE: some functions still indeed get quotes from dexes without this being enabled
         // require(_marketQuote || (!_marketBuy && !_auxTokenBurn), ' invalid input combo :{=} ');
         require(_marketQuote || (!_marketBuy), ' invalid input combo :{=} ');
@@ -213,6 +223,12 @@ contract BearSharesTrinity is ERC20, Ownable {
     function getAccountPayouts(address _account) external view returns (ACCT_PAYOUT[] memory) {
         require(_account != address(0), ' 0 address? ;[+] ');
         return ACCT_USD_PAYOUTS[_account];
+    }
+    function getDexOptions() external view returns (bool, bool, bool) {
+        return (ENABLE_MARKET_QUOTE, ENABLE_MARKET_BUY, ENABLE_AUX_BURN);
+    }
+    function getPayoutPercs() external view returns (uint32, uint32, uint32, uint32) {
+        return (PERC_SERVICE_FEE, PERC_BST_BURN, PERC_AUX_BURN, PERC_BUY_BACK_FEE);
     }
     function getUsdBstPath(address _usdStable) external view returns (address[] memory) {
         return USD_BST_PATHS[_usdStable];
