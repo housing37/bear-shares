@@ -24,8 +24,6 @@ BST_FUNC_MAP_READ = {
     "TOK_WPLS()": ["fa4a9870", [], ['address']],
     "BURN_ADDR()": ["783028a9", [], ['address']],
 
-    # "WHITELIST_USD_STABLES(uint256)": ["593d1bf7", ["uint256"], ['address']],
-    # "USD_STABLES_HISTORY(uint256)": ["cd196d89", ["uint256"], ['address']],
     "USD_STABLE_DECIMALS(address)": ["7f8754f4", ["address"], ['uint8']],
 
     # "USD_BST_PATHS(address,uint256)": ["85783459", ["address","uint256"], ['address']],
@@ -59,7 +57,7 @@ BST_FUNC_MAP_WRITE = {
     "KEEPER_setPayoutPercs(uint8,uint8,uint8)": ["9939b76f", ["uint8","uint8","uint8"], []], # gas used: 30,082
     "KEEPER_setBuyBackFeePerc(uint8)": ["dd8645c2", ["uint8"], []], # gas used: 28,887
 
-    "payOutBST(uint64,address,address)": ["09f5c380", ["uint64","address","address"], []], # gas used: 421,988+
+    "payOutBST(uint64,address,address)": ["09f5c380", ["uint64","address","address"], []], # gas used: 500,000+
     "tradeInBST(uint64)": ["d8785767", ["uint64"], []], # gas used: 126,956+
 
     "burn(uint64)": ["9dbead42", ["uint64"], []], 
