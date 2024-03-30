@@ -7,7 +7,7 @@ cStrDivider_1 = '#--------------------------------------------------------------
 BST_FUNC_MAP_READ = {
     # read functions
     "KEEPER()": ["862a179e", [], ['address']],
-    "KEEPER_collectiveStableBalances(bool)": ["0586b523", ['bool'], ['uint64','uint64','int64']],
+    "KEEPER_collectiveStableBalances(bool,uint256)": ["cf0c8683", ['bool'], ['uint64','uint64','uint64','int64']],
 
     "ACCT_USD_BALANCES(address)": ["c67483dc", ["address"], ['uint64']],
     "ACCT_USD_PAYOUTS(address,uint256)": ["8b47da26", ["address","uint256"], ['address', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'uint256', 'address']],
@@ -48,6 +48,8 @@ BST_FUNC_MAP_READ = {
 BST_FUNC_MAP_WRITE = {
     # write functions
     # "KEEPER_setKeeper(address)": ["11851737", ["address"], []], 
+    "KEEPER_setKeeperCheck(uint256)": ["9d7c9834", ["uint256"], []],
+
     "KEEPER_maintenance(uint64,address)": ["3015d747", ["uint64","address"], []], # gas used: 62,434
     "KEEPER_editDexRouters(address,bool)": ["bceeba33", ["address","bool"], []], # gas used: 36,601 (rem), 55,723 (add)
     "KEEPER_editWhitelistStables(address,uint8,bool)": ["b290b9bf", ["address","uint8","bool"], []],
