@@ -26,7 +26,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '32';
+    string public tVERSION = '32.1';
     string private tok_symb = string(abi.encodePacked("tBST", tVERSION));
     string private tok_name = string(abi.encodePacked("tTrinity_", tVERSION));
     // string private constant tok_symb = "BST";
@@ -115,7 +115,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         _editWhitelistStables(usdStable_1, decimals_1, true); // true = add
 
         // add default routers: pulsex x2 
-        address router_0 = address(0x98bf93ebf5c380C0e6Ae8e192A7e2AE08edAcc02);
+        address router_0 = address(0x98bf93ebf5c380C0e6Ae8e192A7e2AE08edAcc02); // pulseX v1
         address router_1 = address(0x165C3410fC91EF562C50559f7d2289fEbed552d9);
         _editDexRouters(router_0, true); // true = add
         _editDexRouters(router_1, true); // true = add
@@ -280,9 +280,9 @@ contract BearSharesTrinity is ERC20, Ownable {
         if (ENABLE_MARKET_QUOTE) {
             // NOTE: integration runs 3 embedded loops
             //  choose whitelist stable with highest market value, then get BST payout quote against that high market stable 
-            //   (results in least amnt of BST for payout w/ mint | market buy)
+            //   (results in least amnt of BST for mint-based payout)
             address highStable = _getStableTokenHighMarketValue(WHITELIST_USD_STABLES, USWAP_V2_ROUTERS); // 2 loops embedded
-            uint64 bstQuote = _uint64_from_uint256(_getTokMarketValueForUsdAmnt(usdPayout, highStable, address(this))); // 1 loop embedded
+            uint64 bstQuote = _uint64_from_uint256(_getTokMarketValueForUsdAmnt(usdPayout, highStable, USD_BST_PATHS[highStable])); // 1 loop embedded
 
             // if market quote results in receiving less than 1 BST -> 1 USD
             //  then that means BST market value is above 1 USD
@@ -509,12 +509,9 @@ contract BearSharesTrinity is ERC20, Ownable {
         uint256 usdAmnt_ = _normalizeStableAmnt(decimals(), _usdAmnt, USD_STABLE_DECIMALS[_usdStable]);
         return IERC20(_usdStable).balanceOf(address(this)) >= usdAmnt_;
     }
-    function _getTokMarketValueForUsdAmnt(uint256 _usdAmnt, address _usdStable, address _tokAddr) private view returns (uint256) {
-        address[] memory stab_bst_path = new address[](2);
-        stab_bst_path[0] = _usdStable;
-        stab_bst_path[1] = _tokAddr;
+    function _getTokMarketValueForUsdAmnt(uint256 _usdAmnt, address _usdStable, address[] memory _stab_tok_path) private view returns (uint256) {
         uint256 usdAmnt_ = _normalizeStableAmnt(decimals(), _usdAmnt, USD_STABLE_DECIMALS[_usdStable]);
-        (uint8 rtrIdx, uint256 tok_amnt) = _best_swap_v2_router_idx_quote(stab_bst_path, usdAmnt_, USWAP_V2_ROUTERS);
+        (uint8 rtrIdx, uint256 tok_amnt) = _best_swap_v2_router_idx_quote(_stab_tok_path, usdAmnt_, USWAP_V2_ROUTERS);
         return tok_amnt; 
     }
     function _perc_of_uint64(uint32 _perc, uint64 _num) private pure returns (uint64) {
