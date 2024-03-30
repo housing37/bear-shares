@@ -273,32 +273,33 @@ contract BearSharesTrinity is ERC20, Ownable {
         //   NOTE: if lowStableHeld = 0x0 (below): _exeBstPayout|Burn will fallback to contract minting
         require(_grossStableBalance(WHITELIST_USD_STABLES) >= usdPayout, ' gross bal will not cover usdPayout buy-back :/ ');
 
-        // NOTE: maintain 1:1 if !ENABLE_MARKET_QUOTE
+        // NOTE: maintain 1:1 (if !ENABLE_MARKET_QUOTE || BST market quote < 1 USD value)
         //  else, get BST value quotes against highest market valued whitelist stable
-        uint64 bstPayout = usdPayout;
+        uint64 bstPayout = usdPayout; // default mint-based payout to 1:1 USD value
         address auxToken_ = address(this); // default to BST (for !ENABLE_AUX_BURN)
         if (ENABLE_MARKET_QUOTE) {
             // NOTE: integration runs 3 embedded loops
             //  choose whitelist stable with highest market value, then get BST payout quote against that high market stable 
             //   (results in least amnt of BST for payout w/ mint | market buy)
-            address highStable = _getStableTokenHighMarketValue(WHITELIST_USD_STABLES, USWAP_V2_ROUTERS); // 2 loops embedded            
-            bstPayout = _uint64_from_uint256(_getTokMarketValueForUsdAmnt(usdPayout, highStable, address(this))); // 1 loop embedded
-            
-            // NOTE: _auxToken can indeed be address(this) or address(0); simply means market quote more BST to burn
-            //  setting 'auxToken_' here, effects how '_exeTokBuyBurn' is used below
-            //   ie. we are now setting new auxToken_ address, previously defaulted to BST address(this)
-            if (ENABLE_AUX_BURN && _auxToken != address(0) && _auxToken != address(this)) {
-                auxToken_ = _auxToken; // auxToken_ 'was' BST address(this)  
-            }
-        } else {
-            if (ENABLE_AUX_BURN && _auxToken != address(0) && _auxToken != address(this)) {
-                // NOTE: _auxToken cannot be address(this) or address(0); always market quoting some aux (alt) token
-                //  setting 'auxToken_' here, effects how '_exeTokBuyBurn' is used below
-                //   ie. we are now setting new auxToken_ address, previously defaulted to BST address(this)
-                auxToken_ = _auxToken; // auxToken_ 'was' BST address(this)
-            }
+            address highStable = _getStableTokenHighMarketValue(WHITELIST_USD_STABLES, USWAP_V2_ROUTERS); // 2 loops embedded
+            uint64 bstQuote = _uint64_from_uint256(_getTokMarketValueForUsdAmnt(usdPayout, highStable, address(this))); // 1 loop embedded
+
+            // if market quote results in receiving less than 1 BST -> 1 USD
+            //  then that means BST market value is above 1 USD
+            //  hence, set bstPayout to bstQuote (for less BST payout when minting)
+            // else, always perform mint-based payouts at 1:1 USD value (ie. bstPayout remains defaulted above)
+            // NOTE: this check required so accounts can't drain the contract's USD stable balances
+            //  by executing a payOut/tradeIn loop when BST market value falls below 1:1 USD
+            if (bstQuote < usdPayout) bstPayout = bstQuote;
         }
 
+        if (ENABLE_AUX_BURN && _auxToken != address(0) && _auxToken != address(this)) {
+            // NOTE: _auxToken can indeed be address(this) or address(0); simply runs _exeTokBuyBurn on more BST
+            //  setting 'auxToken_' here, effects how '_exeTokBuyBurn' is used below (w/ usd_tok_burn_path)
+            //   ie. we are now setting new auxToken_ address, previously defaulted to BST address(this)
+            auxToken_ = _auxToken; // auxToken_ 'was' BST address(this)
+        }
+        
         // NOTE: integration runs 3 embedded loops 
         //  get whitelist stables with holdings that can cover usdPayout
         //  then choose stable with lowest market value (results in most amnt of BST)
