@@ -31,6 +31,8 @@ BST_FUNC_MAP_READ = {
     "getAccounts()": ["8a48ac03", [], ['address[]']],
     "getAccountPayouts(address)": ["d08e6c88", ["address"], ['address', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'uint256', 'address']],
     "getSwapRouters()": ["c85ec1e0", [], ['address[]']],
+    "getDexRouters()": ["ba41debb", [], ['address[]']],
+
     "getDexOptions()": ["3685f08b", [], ['bool','bool','bool']],
     "getPayoutPercs()": ["2edef8a4", [], ['uint32','uint32','uint32','uint32']],
     "getWhitelistStables()": ["00f403e8", [], ['address[]']],
