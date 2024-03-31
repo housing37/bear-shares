@@ -43,7 +43,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '34.5';
+    string public tVERSION = '34.6';
     string private tok_symb = string(abi.encodePacked("tBST", tVERSION));
     string private tok_name = string(abi.encodePacked("tTrinity_", tVERSION));
     // string private constant tok_symb = "BST";
@@ -128,30 +128,57 @@ contract BearSharesTrinity is ERC20, Ownable {
         //  to fascilitate contract buying its own contract token
         _setSwapDelegate(SWAP_DELEGATE_INIT);
         
-        // add default stables
-        // > 0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f [0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f,0xA1077a294dDE1B09bB078844df40758a5D0f9a27,address(this)]
-        // > 0xefD766cCb38EaF1dfd701853BFCe31359239F305 [0xefD766cCb38EaF1dfd701853BFCe31359239F305,0xA1077a294dDE1B09bB078844df40758a5D0f9a27,address(this)]
-        address usdStable_0 = address(0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f); // weUSDT
-        address usdStable_1 = address(0xefD766cCb38EaF1dfd701853BFCe31359239F305); // weDAI
-        uint8 decimals_0 = 6;
-        uint8 decimals_1 = 18;
-        _editWhitelistStables(usdStable_0, decimals_0, true); // true = add
-        _editWhitelistStables(usdStable_1, decimals_1, true); // true = add
+        // // add default stables
+        // // > 0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f [0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f,0xA1077a294dDE1B09bB078844df40758a5D0f9a27,address(this)]
+        // // > 0xefD766cCb38EaF1dfd701853BFCe31359239F305 [0xefD766cCb38EaF1dfd701853BFCe31359239F305,0xA1077a294dDE1B09bB078844df40758a5D0f9a27,address(this)]
+        // address usdStable_0 = address(0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f); // weUSDT
+        // address usdStable_1 = address(0xefD766cCb38EaF1dfd701853BFCe31359239F305); // weDAI
+        // uint8 decimals_0 = 6;
+        // uint8 decimals_1 = 18;
+        // _editWhitelistStables(usdStable_0, decimals_0, true); // true = add
+        // _editWhitelistStables(usdStable_1, decimals_1, true); // true = add
 
-        // add default USD_BST_PATHS (routing through WPLS required)
+        // // add default USD_BST_PATHS (routing through WPLS required)
+        // address[] memory path = new address[](3);
+        // path[0] = usdStable_0;
+        // path[1] = TOK_WPLS;
+        // path[2] = address(this);
+        // USD_BST_PATHS[usdStable_0] = path; // add usdStable_0 path
+        // path[0] = usdStable_1;
+        // USD_BST_PATHS[usdStable_1] = path; // add usdStable_1 path
+
+        // // add default routers: pulsex x2 
+        // address router_0 = address(0x98bf93ebf5c380C0e6Ae8e192A7e2AE08edAcc02); // pulseX v1
+        // address router_1 = address(0x165C3410fC91EF562C50559f7d2289fEbed552d9);
+        // _editDexRouters(router_0, true); // true = add
+        // _editDexRouters(router_1, true); // true = add
+
+        // add default stables & default USD_BST_PATHS (routing through WPLS required)
+        address usdStable_0 = address(0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f); // weUSDT
         address[] memory path = new address[](3);
         path[0] = usdStable_0;
         path[1] = TOK_WPLS;
         path[2] = address(this);
-        USD_BST_PATHS[usdStable_0] = path; // add usdStable_0 path
+        // _editWhitelistStables(usdStable_0, 6, true); // weDAI, decs, true = add
+        // _setUsdBstPath(usdStable_0, path);
+        // > 0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f [0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f,0xA1077a294dDE1B09bB078844df40758a5D0f9a27,address(this)]
+
+        address usdStable_1 = address(0xefD766cCb38EaF1dfd701853BFCe31359239F305); // weDAI
         path[0] = usdStable_1;
-        USD_BST_PATHS[usdStable_1] = path; // add usdStable_1 path
+        _setUsdBstPath(usdStable_1, path);
+        _editWhitelistStables(usdStable_1, 18, true); // weDAI, decs, true = add
+        // > 0xefD766cCb38EaF1dfd701853BFCe31359239F305 [0xefD766cCb38EaF1dfd701853BFCe31359239F305,0xA1077a294dDE1B09bB078844df40758a5D0f9a27,address(this)]
 
         // add default routers: pulsex x2 
-        address router_0 = address(0x98bf93ebf5c380C0e6Ae8e192A7e2AE08edAcc02); // pulseX v1
-        address router_1 = address(0x165C3410fC91EF562C50559f7d2289fEbed552d9);
-        _editDexRouters(router_0, true); // true = add
-        _editDexRouters(router_1, true); // true = add
+        _editDexRouters(address(0x98bf93ebf5c380C0e6Ae8e192A7e2AE08edAcc02), true); // pulseX v1, true = add
+        // _editDexRouters(address(0x165C3410fC91EF562C50559f7d2289fEbed552d9), true); // true = add
+    }
+    function _setUsdBstPath(address _usdStable, address[] memory _path) private {
+        require(_usdStable != address(0) && _path.length > 1, ' invalid inputs ;{=} ');
+        require(_usdStable == _path[0], ' stable / entry path mismatch ;) ');
+        USD_BST_PATHS[_usdStable] = _path;
+        emit DexUsdBstPathUpdated(_usdStable, _path);
+        // NOTE: '_path' must be valid within all 'USWAP_V2_ROUTERS' addresses
     }
 
     /* -------------------------------------------------------- */
@@ -229,11 +256,12 @@ contract BearSharesTrinity is ERC20, Ownable {
         emit DexRouterUpdated(_router, _add);
     }
     function KEEPER_setUsdBstPath(address _usdStable, address[] memory _path) external onlyKeeper() {
-        require(_usdStable != address(0) && _path.length > 1, 'err: invalid input :{=}');
-        require(_usdStable == _path[0], 'err: stable / path mismatch =)');
-        USD_BST_PATHS[_usdStable] = _path;
-        emit DexUsdBstPathUpdated(_usdStable, _path);
-        // NOTE: '_path' must be valid within all 'USWAP_V2_ROUTERS' addresses
+        require(_usdStable != address(0) && _path.length > 1, ' invalid inputs :{=} ');
+        require(_usdStable == _path[0], ' stable / entry path mismatch =)');
+        _setUsdBstPath(_usdStable, _path);
+        // USD_BST_PATHS[_usdStable] = _path;
+        // emit DexUsdBstPathUpdated(_usdStable, _path);
+        // // NOTE: '_path' must be valid within all 'USWAP_V2_ROUTERS' addresses
     }
 
     /* -------------------------------------------------------- */
@@ -780,8 +808,8 @@ contract BearSharesTrinity is ERC20, Ownable {
         uint256 amntOut = _swap_v2(router, path, amntIn, amountsOut[amountsOut.length -1], outReceiver, fromETH); // approve & execute swap
                 
         // verifiy new balance of token received
-        uint256 new_bal = IERC20(path[path.length -1]).balanceOf(address(this));
-        require(new_bal >= amntOut, "err: balance low :{");
+        uint256 new_bal = IERC20(path[path.length -1]).balanceOf(outReceiver);
+        require(new_bal >= amntOut, " _swap: receiver bal too low :{ ");
         
         return amntOut;
     }

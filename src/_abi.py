@@ -20,14 +20,14 @@ BST_FUNC_MAP_READ = {
     "decimals()": ["313ce567", [], ['uint8']],
     "getAccounts()": ["8a48ac03", [], ['address[]']],
     "getAccountPayouts(address)": ["d08e6c88", ["address"], ['address', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'uint256', 'address']],
-    # "getSwapRouters()": ["c85ec1e0", [], ['address[]']],
-    "getDexRouters()": ["ba41debb", [], ['address[]']],
-    "getSwapDelegateUser()": ["3f01a483", [], ['uint8','address']],
 
     "getDexOptions()": ["3685f08b", [], ['bool','bool','bool']],
     "getPayoutPercs()": ["2edef8a4", [], ['uint32','uint32','uint32','uint32']],
-    "getWhitelistStables()": ["00f403e8", [], ['address[]']],
+    
     "getUsdStablesHistory()": ["d4155f07", [], ['address[]']],
+    "getWhitelistStables()": ["00f403e8", [], ['address[]']],
+    "getDexRouters()": ["ba41debb", [], ['address[]']],
+    "getSwapDelegateUser()": ["3f01a483", [], ['uint8','address']],
     "getUsdBstPath(address)": ["260e5df9", ['address'], ['address[]']],
 
     "TOK_WPLS()": ["fa4a9870", [], ['address']],
@@ -42,11 +42,11 @@ BST_FUNC_MAP_READ = {
 BST_FUNC_MAP_WRITE = {
     # write functions
     # "KEEPER_setKeeper(address)": ["11851737", ["address"], []], 
+    "KEEPER_maintenance(uint64,address)": ["3015d747", ["uint64","address"], []], # gas used: 62,434
     "KEEPER_setKeeperCheck(uint256)": ["9d7c9834", ["uint256"], []],
     "KEEPER_setSwapDelegate(address)": ["c1533a53", ["address"], []],
 	"KEEPER_setSwapDelegateUser(address)": ["126d4301", ['address'], []],
 
-    "KEEPER_maintenance(uint64,address)": ["3015d747", ["uint64","address"], []], # gas used: 62,434
     "KEEPER_editDexRouters(address,bool)": ["bceeba33", ["address","bool"], []], # gas used: 36,601 (rem), 55,723 (add)
     "KEEPER_editWhitelistStables(address,uint8,bool)": ["b290b9bf", ["address","uint8","bool"], []],
     "KEEPER_setUsdBstPath(address,address[])": ["4f51d029", ['address','address[]'], []], # gas used: 38,852
@@ -55,7 +55,7 @@ BST_FUNC_MAP_WRITE = {
     "KEEPER_setPayoutPercs(uint32,uint32,uint32)": ["c0e202fa", ["uint32","uint32","uint32"], []], # gas used: 30,082
     "KEEPER_setBuyBackFeePerc(uint32)": ["57e8a5a5", ["uint32"], []], # gas used: 28,887
 
-    "payOutBST(uint64,address,address)": ["09f5c380", ["uint64","address","address"], []], # gas used: 500,000+
+    "payOutBST(uint64,address,address)": ["09f5c380", ["uint64","address","address"], []], # gas used: 700,000+
     "tradeInBST(uint64)": ["d8785767", ["uint64"], []], # gas used: 126,956+
 
     "burn(uint64)": ["9dbead42", ["uint64"], []], 
