@@ -239,7 +239,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     function getWhitelistStables() external view returns (address[] memory) {
         return WHITELIST_USD_STABLES;
     }
-    function getSwapRouters() external view returns (address[] memory) {
+    function getDexRouters() external view returns (address[] memory) {
         return USWAP_V2_ROUTERS;
     }
 
@@ -288,6 +288,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         //  if yes, let it go through ... else, revert (ie. contract can't cover a tradeInBST for this usdPayout amount)
         //   NOTE: if lowStableHeld = 0x0 (below): _exeBstPayout|Burn will fallback to contract minting
         require(_grossStableBalance(WHITELIST_USD_STABLES) >= usdPayout, ' gross bal will not cover usdPayout buy-back :/ ');
+            // balanceOf x2
 
         // NOTE: maintain 1:1 (if !ENABLE_MARKET_QUOTE || BST market quote < 1 USD value)
         //  else, get BST value quotes against highest market valued whitelist stable
@@ -299,7 +300,9 @@ contract BearSharesTrinity is ERC20, Ownable {
             //   (results in least amnt of BST for mint-based payout)
             address highStable = _getStableTokenHighMarketValue(WHITELIST_USD_STABLES, USWAP_V2_ROUTERS); // 2 loops embedded
             uint64 bstQuote = _uint64_from_uint256(_getTokMarketValueForUsdAmnt(usdPayout, highStable, USD_BST_PATHS[highStable])); // 1 loop embedded
-
+                    // getAmountsOut x4
+                    // getAmountsOut x2
+                    
             // if market quote results in receiving less than 1 BST -> 1 USD
             //  then that means BST market value is above 1 USD
             //  hence, set bstPayout to bstQuote (for less BST payout when minting)
