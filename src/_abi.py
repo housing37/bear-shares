@@ -8,30 +8,21 @@ BST_FUNC_MAP_READ = {
     # read functions
     "KEEPER()": ["862a179e", [], ['address']],
     "KEEPER_collectiveStableBalances(bool,uint256)": ["cf0c8683", ['bool','uint256'], ['uint64','uint64','uint64','int64']],
-
     "ACCT_USD_BALANCES(address)": ["c67483dc", ["address"], ['uint64']],
     "ACCT_USD_PAYOUTS(address,uint256)": ["8b47da26", ["address","uint256"], ['address', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'uint256', 'address']],
 
-    # "ENABLE_MARKET_QUOTE()": ["46538f8c", [], ['bool']],
-    # "ENABLE_MARKET_BUY()": ["405d2a83", [], ['bool']],
-    # "ENABLE_AUX_BURN()": ["59fbb128", [], ['bool']],
-
-    # "PERC_SERVICE_FEE()": ["3351b2bc", [], ['uint32']],
-    # "PERC_BST_BURN()": ["ba424c02", [], ['uint32']],
-    # "PERC_AUX_BURN()": ["53f17827", [], ['uint32']],
-    # "PERC_BUY_BACK_FEE()": ["96e38e90", [], ['uint32']],
-
     "USD_STABLE_DECIMALS(address)": ["7f8754f4", ["address"], ['uint8']],
-
     # "USD_BST_PATHS(address,uint256)": ["85783459", ["address","uint256"], ['address']],
     "USWAP_V2_ROUTERS(uint256)": ["ee80b054", ["uint256"], ['address']],
-
+	"SWAP_DELEGATE()": ["a5e1d421", [], ['address']],
+    
     "balanceOf(address)": ["70a08231", ["address"], ['uint256']],
     "decimals()": ["313ce567", [], ['uint8']],
     "getAccounts()": ["8a48ac03", [], ['address[]']],
     "getAccountPayouts(address)": ["d08e6c88", ["address"], ['address', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'uint256', 'address']],
-    "getSwapRouters()": ["c85ec1e0", [], ['address[]']],
+    # "getSwapRouters()": ["c85ec1e0", [], ['address[]']],
     "getDexRouters()": ["ba41debb", [], ['address[]']],
+    "getSwapDelegateUser()": ["3f01a483", [], ['uint8','address']],
 
     "getDexOptions()": ["3685f08b", [], ['bool','bool','bool']],
     "getPayoutPercs()": ["2edef8a4", [], ['uint32','uint32','uint32','uint32']],
@@ -52,13 +43,13 @@ BST_FUNC_MAP_WRITE = {
     # write functions
     # "KEEPER_setKeeper(address)": ["11851737", ["address"], []], 
     "KEEPER_setKeeperCheck(uint256)": ["9d7c9834", ["uint256"], []],
+    "KEEPER_setSwapDelegate(address)": ["c1533a53", ["address"], []],
+	"KEEPER_setSwapDelegateUser(address)": ["126d4301", ['address'], []],
 
     "KEEPER_maintenance(uint64,address)": ["3015d747", ["uint64","address"], []], # gas used: 62,434
     "KEEPER_editDexRouters(address,bool)": ["bceeba33", ["address","bool"], []], # gas used: 36,601 (rem), 55,723 (add)
     "KEEPER_editWhitelistStables(address,uint8,bool)": ["b290b9bf", ["address","uint8","bool"], []],
     "KEEPER_setUsdBstPath(address,address[])": ["4f51d029", ['address','address[]'], []], # gas used: 38,852
-
-    # "KEEPER_enableDexPayouts(bool,bool,bool)": ["3730cf3c", ["bool","bool","bool"], []], # gas used: 7.731
     "KEEPER_enableDexOptions(bool,bool,bool)": ["ffc9f2fd", ["bool","bool","bool"], []], # gas used: 7.731
 
     "KEEPER_setPayoutPercs(uint32,uint32,uint32)": ["c0e202fa", ["uint32","uint32","uint32"], []], # gas used: 30,082

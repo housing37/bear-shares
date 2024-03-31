@@ -232,7 +232,8 @@ def go_enter_func_params(_func_select):
         if v.lower() == 'true': lst_func_params.append(True)
         elif v.lower() == 'false': lst_func_params.append(False)
         elif v.isdigit(): lst_func_params.append(int(v))
-        elif v.startswith('['): lst_func_params.append([i.strip() for i in v[1:-1].split(',')])
+        # elif v.startswith('['): lst_func_params.append([i.strip() for i in v[1:-1].split(',')])
+        elif v.startswith('['): lst_func_params.append([W3_.W3.to_checksum_address(i.strip()) for i in v[1:-1].split(',')])
         else: lst_func_params.append(v)
 
     print(f'  executing "{_func_select}" w/ params: {lst_func_params} ...\n')
@@ -368,6 +369,10 @@ if __name__ == "__main__":
 
 print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
 
+# tBST34.5: 0x2624790f5C7aA70596eF07F26c6e3D047a6F4fD8
+# tBST34: 0xe6f2c0679BdA5088A1bB32058086cA4AC146745c
+# tBST33: 0x98A70cB2dE88303875c081241E3eA50b22493Ce2
+# tBST32.1: 0x74b6e139eD3a11a079d161fbF7F5F2BC55f86df4
 # tBST32: 0x67f311C04a38F6565FC8e34276668d0EA516a1f4
 # tBST31: 0x0576128e47d9D8D63239cDf7dCaE74F442b8FbB8
 # tBST30: 0xB1BaA6f4591F9fe97d5E28c5f83Be243401b315c

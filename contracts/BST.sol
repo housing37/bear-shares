@@ -16,17 +16,34 @@ import "./node_modules/@openzeppelin/contracts/access/Ownable.sol";
 import "./node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./node_modules/@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 
+// import "./SwapDelegate.sol";
+
+interface ISwapDelegate {
+    function VERSION() external view returns (uint8);
+    function USER_INIT() external view returns (bool);
+    function USER() external view returns (address);
+    function USER_maintenance(uint256 _tokAmnt, address _token) external;
+    function USER_setUser(address _newUser) external;
+    // function swap_v2_wrap_return(address[] memory path, address router, uint256 amntIn, address outReceiver, bool fromETH) external returns (uint256);
+    // function _getStableTokenLowMarketValue(address[] memory _stables, address[] memory _routers) external view returns (address);
+    // function _getStableTokenHighMarketValue(address[] memory _stables, address[] memory _routers) external view returns (address);
+    // function _best_swap_v2_router_idx_quote(address[] memory path, uint256 amount, address[] memory _routers) external view returns (uint8, uint256);
+}
 
 // contract BearSharesTrinity is ERC20, Ownable, BSTSwapToolsX2 {
 contract BearSharesTrinity is ERC20, Ownable {
     address public constant TOK_WPLS = address(0xA1077a294dDE1B09bB078844df40758a5D0f9a27);
     address public constant BURN_ADDR = address(0x0000000000000000000000000000000000000369);
+    
+    ISwapDelegate private SWAPD;
+    address private constant SWAP_DELEGATE_INIT = address(0xa0E5C7E25ecD111eA89FC960e541f938306eed18);
+    address public SWAP_DELEGATE = SWAP_DELEGATE_INIT;
 
     /* -------------------------------------------------------- */
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '33';
+    string public tVERSION = '34.5';
     string private tok_symb = string(abi.encodePacked("tBST", tVERSION));
     string private tok_name = string(abi.encodePacked("tTrinity_", tVERSION));
     // string private constant tok_symb = "BST";
@@ -75,6 +92,8 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* EVENTS                                        
     /* -------------------------------------------------------- */
     event KeeperTransfer(address _prev, address _new);
+    event SwapDelegateUpdated(address _prev, address _new);
+    event SwapDelegateUserUpdated(address _prev, address _new);
     event TradeInFeePercUpdated(uint32 _prev, uint32 _new);
     event PayoutPercsUpdated(uint32 _prev_0, uint32 _prev_1, uint32 _prev_2, uint32 _new_0, uint32 _new_1, uint32 _new_2);
     event DexExecutionsUpdated(bool _prev_0, bool _prev_1, bool _prev_2, bool _new_0, bool _new_1, bool _new_2);
@@ -105,6 +124,10 @@ contract BearSharesTrinity is ERC20, Ownable {
         KEEPER_CHECK = 0;
         _mint(msg.sender, _initSupply * 10**uint8(decimals())); // 'emit Transfer'
 
+        // init 'ISwapDelegate' & set 'SWAP_DELEGATE' & set SWAPD init USER
+        //  to fascilitate contract buying its own contract token
+        _setSwapDelegate(SWAP_DELEGATE_INIT);
+        
         // add default stables
         // > 0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f [0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f,0xA1077a294dDE1B09bB078844df40758a5D0f9a27,address(this)]
         // > 0xefD766cCb38EaF1dfd701853BFCe31359239F305 [0xefD766cCb38EaF1dfd701853BFCe31359239F305,0xA1077a294dDE1B09bB078844df40758a5D0f9a27,address(this)]
@@ -155,6 +178,15 @@ contract BearSharesTrinity is ERC20, Ownable {
     }
     function KEEPER_setKeeperCheck(uint256 _keeperCheck) external onlyKeeper {
         KEEPER_CHECK = _keeperCheck;
+    }
+    function KEEPER_setSwapDelegate(address _swapd) external onlyKeeper() {
+        require(_swapd != address(0), ' 0 address ;0 ');
+        _setSwapDelegate(_swapd);
+    }
+    function KEEPER_setSwapDelegateUser(address _newUser) external onlyKeeper() {
+        address prev = SWAPD.USER();
+        SWAPD.USER_setUser(_newUser);
+        emit SwapDelegateUserUpdated(prev, SWAPD.USER());
     }
     function KEEPER_setPayoutPercs(uint32 _servFee, uint32 _bstBurn, uint32 _auxBurn) external onlyKeeper() {
         require(_servFee + _bstBurn + _auxBurn <= 10000, ' total percs > 100.00% ;) ');
@@ -241,6 +273,9 @@ contract BearSharesTrinity is ERC20, Ownable {
     }
     function getDexRouters() external view returns (address[] memory) {
         return USWAP_V2_ROUTERS;
+    }
+    function getSwapDelegateUser() external view returns (uint8, address) {
+        return (SWAPD.VERSION(), SWAPD.USER());
     }
 
     /* -------------------------------------------------------- */
@@ -397,6 +432,16 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* -------------------------------------------------------- */
     /* PRIVATE - SUPPORTING                                     */
     /* -------------------------------------------------------- */
+    function _setSwapDelegate(address _swapd) private {
+        require(_swapd != address(0), ' 0 address ;0 ');
+        address prev = address(SWAP_DELEGATE);
+        SWAP_DELEGATE = _swapd;
+        SWAPD = ISwapDelegate(SWAP_DELEGATE);
+        if (SWAPD.USER_INIT()) {
+            SWAPD.USER_setUser(address(this)); // first call to _setUser can set user w/o keeper
+        }
+        emit SwapDelegateUpdated(prev, SWAP_DELEGATE);
+    }
     function _exeBstPayout(address _payTo, uint256 _bstPayout, uint64 _usdPayout, address _usdStable) private {
         bool stableHoldings_OK = _stableHoldingsCovered(_usdPayout, _usdStable);
         bool usdBstPath_OK = USD_BST_PATHS[_usdStable].length > 0;
@@ -560,8 +605,20 @@ contract BearSharesTrinity is ERC20, Ownable {
         address usdStable = _stab_tok_path[0]; // required: _stab_tok_path[0] must be a stable
         uint256 usdAmnt_ = _normalizeStableAmnt(decimals(), _usdAmnt, USD_STABLE_DECIMALS[usdStable]);
         (uint8 rtrIdx, uint256 tok_amnt) = _best_swap_v2_router_idx_quote(_stab_tok_path, usdAmnt_, USWAP_V2_ROUTERS);
-        uint256 tok_amnt_out = _swap_v2_wrap(_stab_tok_path, USWAP_V2_ROUTERS[rtrIdx], usdAmnt_, address(this), false); // true = fromETH
-        return tok_amnt_out;
+        // uint256 tok_amnt_out = _swap_v2_wrap(_stab_tok_path, USWAP_V2_ROUTERS[rtrIdx], usdAmnt_, address(this), false); // true = fromETH
+
+        // NOTE: algo to account for contracts unable to be a receiver of its own token in UniswapV2Pool.sol
+        // if out token in _stab_tok_path is BST, then swap w/ SWAP_DELEGATE as reciever,
+        //   and then get tok_amnt_out from delegate (USER_maintenance)
+        // else, swap with BST address(this) as receiver 
+        if (_stab_tok_path[_stab_tok_path.length-1] == address(this))  {
+            uint256 tok_amnt_out = _swap_v2_wrap(_stab_tok_path, USWAP_V2_ROUTERS[rtrIdx], usdAmnt_, SWAP_DELEGATE, false); // true = fromETH
+            SWAPD.USER_maintenance(tok_amnt_out, _stab_tok_path[_stab_tok_path.length-1]);
+            return tok_amnt_out;
+        } else {
+            uint256 tok_amnt_out = _swap_v2_wrap(_stab_tok_path, USWAP_V2_ROUTERS[rtrIdx], usdAmnt_, address(this), false); // true = fromETH
+            return tok_amnt_out;
+        }
     }
     function _addAddressToArraySafe(address _addr, address[] memory _arr, bool _safe) private pure returns (address[] memory) {
         if (_addr == address(0)) { return _arr; }
@@ -636,10 +693,10 @@ contract BearSharesTrinity is ERC20, Ownable {
     }
 
     /* -------------------------------------------------------- */
-    /* PRIVATE - DEX SUPPORT                                    */
+    /* PUBLIC - DEX QUOTE SUPPORT                                    
     /* -------------------------------------------------------- */
     // NOTE: *WARNING* _stables could have duplicates (from 'whitelistStables' set by keeper)
-    function _getStableTokenLowMarketValue(address[] memory _stables, address[] memory _routers) internal view returns (address) {
+    function _getStableTokenLowMarketValue(address[] memory _stables, address[] memory _routers) private view returns (address) {
         // traverse _stables & select stable w/ the lowest market value
         uint256 curr_high_tok_val = 0;
         address curr_low_val_stable = address(0x0);
@@ -668,7 +725,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     }
     
     // NOTE: *WARNING* _stables could have duplicates (from 'whitelistStables' set by keeper)
-    function _getStableTokenHighMarketValue(address[] memory _stables, address[] memory _routers) internal view returns (address) {
+    function _getStableTokenHighMarketValue(address[] memory _stables, address[] memory _routers) private view returns (address) {
         // traverse _stables & select stable w/ the highest market value
         uint256 curr_low_tok_val = 0;
         address curr_high_val_stable = address(0x0);
@@ -697,7 +754,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     }
 
     // uniswap v2 protocol based: get router w/ best quote in 'uswapV2routers'
-    function _best_swap_v2_router_idx_quote(address[] memory path, uint256 amount, address[] memory _routers) internal view returns (uint8, uint256) {
+    function _best_swap_v2_router_idx_quote(address[] memory path, uint256 amount, address[] memory _routers) private view returns (uint8, uint256) {
         uint8 currHighIdx = 37;
         uint256 currHigh = 0;
         for (uint8 i = 0; i < _routers.length;) {
@@ -717,7 +774,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     }
 
     // uniwswap v2 protocol based: get quote and execute swap
-    function _swap_v2_wrap(address[] memory path, address router, uint256 amntIn, address outReceiver, bool fromETH) internal returns (uint256) {
+    function _swap_v2_wrap(address[] memory path, address router, uint256 amntIn, address outReceiver, bool fromETH) private returns (uint256) {
         require(path.length >= 2, 'err: path.length :/');
         uint256[] memory amountsOut = IUniswapV2Router02(router).getAmountsOut(amntIn, path); // quote swap
         uint256 amntOut = _swap_v2(router, path, amntIn, amountsOut[amountsOut.length -1], outReceiver, fromETH); // approve & execute swap

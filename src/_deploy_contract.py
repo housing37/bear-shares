@@ -22,6 +22,7 @@ import _web3 # from web3 import Account, Web3, HTTPProvider
 
 LST_CONTR_ABI_BIN = [
     "../bin/contracts/BearSharesTrinity",
+    "../bin/contracts/SwapDelegate",
 ]
 
 W3_ = None
