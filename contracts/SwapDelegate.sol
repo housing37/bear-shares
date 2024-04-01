@@ -9,7 +9,7 @@ pragma solidity ^0.8.24;
 import "./node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol"; // local
 
 contract SwapDelegate {
-    uint8 public VERSION = 3;
+    uint8 public VERSION = 4;
     bool public USER_INIT;
     address public USER;
     event UserTransfer(address _prev, address _new);

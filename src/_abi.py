@@ -14,7 +14,6 @@ BST_FUNC_MAP_READ = {
     "USD_STABLE_DECIMALS(address)": ["7f8754f4", ["address"], ['uint8']],
     # "USD_BST_PATHS(address,uint256)": ["85783459", ["address","uint256"], ['address']],
     "USWAP_V2_ROUTERS(uint256)": ["ee80b054", ["uint256"], ['address']],
-	"SWAP_DELEGATE()": ["a5e1d421", [], ['address']],
     
     "balanceOf(address)": ["70a08231", ["address"], ['uint256']],
     "decimals()": ["313ce567", [], ['uint8']],
@@ -27,7 +26,7 @@ BST_FUNC_MAP_READ = {
     "getUsdStablesHistory()": ["d4155f07", [], ['address[]']],
     "getWhitelistStables()": ["00f403e8", [], ['address[]']],
     "getDexRouters()": ["ba41debb", [], ['address[]']],
-    "getSwapDelegateUser()": ["3f01a483", [], ['uint8','address']],
+    "getSwapDelegateInfo()": ["4bae2eef", [], ['address','uint8','address']],
     "getUsdBstPath(address)": ["260e5df9", ['address'], ['address[]']],
 
     "TOK_WPLS()": ["fa4a9870", [], ['address']],
