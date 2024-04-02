@@ -211,7 +211,7 @@ async def cmd_handler(update: Update, context):
         if tg_cmd == req_handler.kADMIN_APPROVE_SHILL:
             # if user did not give 2 params ['<tg_user_at>','<shill_id>']
             if len(inp_split) != 4:
-                str_r = f'invalid number of params; please use cmd format:\n /{tg_cmd} {" ".join(req_handler.LST_CMD_APPROVE_SHILLS_ADMIN)}'
+                str_r = f'invalid cmd; please use format::\n /{tg_cmd} {" ".join(req_handler.LST_CMD_APPROVE_SHILLS_ADMIN)}'
                 print(str_r)
                 print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
                 await update.message.reply_text(str_r)
@@ -240,7 +240,7 @@ async def cmd_handler(update: Update, context):
         if tg_cmd == req_handler.kADMIN_SET_SHILL_REM: # ['<tg_user_at>','<shill_id>','removed']
             # if user did not give 2 params ['<tg_user_at>','<shill_id>']
             if len(inp_split) != 4:
-                str_r = f'invalid number of params; please use cmd format:\n /{tg_cmd} {" ".join(req_handler.LST_CMD_SET_SHILL_REM_ADMIN)}'
+                str_r = f'invalid cmd; please use format::\n /{tg_cmd} {" ".join(req_handler.LST_CMD_SET_SHILL_REM_ADMIN)}'
                 print(str_r)
                 print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
                 await update.message.reply_text(str_r)
@@ -258,6 +258,18 @@ async def cmd_handler(update: Update, context):
                 print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
                 await update.message.reply_text(f'Mark this shill as removed or not-removed?', reply_markup=InlineKeyboardMarkup(keyboard))
             return # invokes 'cmd_exe'
+        
+        # NOTE: 'kADMIN_PAY_SHILL_EARNS' pays out at current rate in db
+        #   if admin wants to change payout, they must do so using 'kADMIN_SET_USR_SHILL_PAY_RATE', 
+        #    before using 'kADMIN_APPROVE_SHILL', and then call 'kADMIN_PAY_SHILL_EARNS'
+        if tg_cmd == req_handler.kADMIN_PAY_SHILL_EARNS:
+            # if user did not give 1 param ['<tg_user_at>']
+            if len(inp_split) != 3:
+                str_r = f'invalid cmd; please use format:\n /{tg_cmd} {" ".join(req_handler.LST_CMD_PAY_SHILL_ADMIN)}'
+                print(str_r)
+                print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
+                await update.message.reply_text(str_r)
+                return
 
     context.user_data['inp_split'] = list(inp_split)
     await cmd_exe(update, context)
@@ -425,6 +437,9 @@ async def cmd_exe(update: Update, context, aux_cmd=False):
             str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
             await update.message.reply_text(f"Set cashout wallet ...\n {str_r}")
 
+        elif tg_cmd == req_handler.kADMIN_PAY_SHILL_EARNS:
+            str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys()])
+            await update.message.reply_text(f"Payout Tx Processed ...\n {str_r}")
         else:
             await update.message.reply_text(f"'/{tg_cmd}' Executed Successfully! _ ")
         

@@ -8,6 +8,7 @@ print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globa
 #         imports                                     #
 #=====================================================#
 from _env import env
+import _abi
 from db_controller import *
 from req_helpers import *
 from datetime import datetime
@@ -193,18 +194,23 @@ LST_KEYS_VIEW_SHILL_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_GET_USR_SHILL = 'GET_USER_SHILL'
 LST_KEYS_VIEW_SHILL = ['admin_id','user_at','shill_id','shill_url']
 
-# '/admin_pay_shill_rewards' _ NOTE: requires solidty 'transfer' call _ ** HOUSE ONLY **
+# '/admin_pay_shill_rewards' _ NOTE: requires solidty 'payOutBST' call _ ** HOUSE ONLY **
+# NOTE: 'kADMIN_PAY_SHILL_EARNS' pays out at current rate in db
+#   if admin wants to change payout, they must do so using 'kADMIN_SET_USR_SHILL_PAY_RATE', 
+#    before using 'kADMIN_APPROVE_SHILL', and then call 'kADMIN_PAY_SHILL_EARNS'
 kADMIN_PAY_SHILL_EARNS = "admin_pay_shill_rewards"
-LST_CMD_PAY_SHILL_ADMIN = ['<tg_user_at>','<shill_id>']
+LST_CMD_PAY_SHILL_ADMIN = ['<tg_user_at>']
 STR_ERR_PAY_SHILL_ADMIN = f'''please use cmd format :\n /{kADMIN_PAY_SHILL_EARNS} {" ".join(LST_CMD_PAY_SHILL_ADMIN)}'''
 LST_KEYS_PAY_SHILL_EARNS_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_SET_USR_PAY_SUBMIT = 'SET_USER_PAY_TX_SUBMIT' # -> get_usr_pay_usd_appr_sum, set_usr_pay_usd_tx_submit
 LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_at']
-    # POST-DB: perform python/solidity 'transfer(user_earns.usd_owed, wallet_address)' to get tx data for DB_PROC_SET_USR_PAY_CONF
+    # POST-DB: perform python/solidity 'payOutBST(user_earns.usd_owed, wallet_address, aux_token)' to get tx data for DB_PROC_SET_USR_PAY_CONF
     #	        get 'wallet_address' from 'GET_USER_EARNINGS(tg_user_id)'
+kADMIN_PAY_SHILL_EARNS_conf = "admin_pay_shill_rewards_conf"
+LST_KEYS_PAY_SHILL_EARNS_CONF_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_SET_USR_PAY_CONF = 'SET_USER_PAY_TX_STATUS' # -> set_usr_pay_usd_tx_status
 LST_KEYS_PAY_SHILL_EARNS_CONF = ['admin_id','user_at','chain_usd_paid','tx_hash','tx_status','tok_addr','tok_symb','tok_amnt']
-    # PRE-DB: perform python/solidity 'transfer' to get tx data for DB_PROC_SET_USR_PAY_CONF
+    # PRE-DB: perform python/solidity 'payOutBST' to get tx data for DB_PROC_SET_USR_PAY_CONF
 
 # '/admin_log_removed_shill'
 kADMIN_SET_SHILL_REM = "admin_log_removed_shill"
@@ -265,6 +271,8 @@ DICT_CMD_EXE = {
     kADMIN_SET_SHILL_REM:[kADMIN_SET_SHILL_REM,LST_KEYS_SET_SHILL_REM,LST_KEYS_SET_SHILL_REM_RESP,DB_PROC_SET_SHILL_REM,LST_CMD_SET_SHILL_REM_ADMIN,STR_ERR_SET_SHILL_REM_ADMIN],
     kADMIN_CHECK_USR_REM_SHILLS:[kADMIN_CHECK_USR_REM_SHILLS,LST_KEYS_CHECK_USR_REM_SHILLS,LST_KEYS_CHECK_USR_REM_SHILLS_RESP,DB_PROC_CHECK_USR_REM_SHILL,LST_CMD_CHECK_USR_REM_ADMIN,STR_ERR_CHECK_USR_REM_ADMIN],
     kADMIN_SET_USR_SHILL_PAY_RATE:[kADMIN_SET_USR_SHILL_PAY_RATE,LST_KEYS_SET_USR_SHILL_PAY_RATE,LST_KEYS_SET_USR_SHILL_PAY_RATE_RESP,DB_PROC_SET_USR_RATES,LST_CMD_SET_USR_RATE_ADMIN,STR_ERR_SET_USR_RATE_ADMIN],
+
+    kADMIN_PAY_SHILL_EARNS_conf:[kADMIN_PAY_SHILL_EARNS_conf,LST_KEYS_PAY_SHILL_EARNS_CONF,LST_KEYS_PAY_SHILL_EARNS_CONF_RESP,DB_PROC_SET_USR_PAY_CONF,['<nil_lst>'],'<nil_str>'],
 }
 
 #=====================================================#
@@ -442,10 +450,44 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
             stored_proc = DICT_CMD_EXE[tg_cmd][3] # [tg_cmd][3] = 'stored-proc-name'
             dbProcResult = exe_stored_proc(-1, stored_proc, keyVals)
             if dbProcResult[0]['status'] == 'failed': errMsg = dbProcResult[0]['info']
-            else: errMsg = None    
+            else: errMsg = None
             bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=VERBOSE_LOG, errMsg=errMsg) # errMsg != None: force fail from db
             # bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=True)
             
+            # TBST34.8: 0xa1dceD3D249e1745CA5322B783F8cB76E9d89823
+            if tg_cmd == kADMIN_PAY_SHILL_EARNS and not bErr:
+                usd_val_pay = dbProcResult[0]['tot_owed']
+                wallet_addr = dbProcResult[0]['wallet_address']
+                aux_token = 0
+                func_select = 'payOutBST(uint64,address,address)'
+                BST_ADDRESS = '0xa1dceD3D249e1745CA5322B783F8cB76E9d89823'
+                BST_FUNC_MAP = _abi.BST_FUNC_MAP_WRITE
+                lst_func_params = [usd_val_pay, wallet_addr, aux_token]
+                lst_params = list(BST_FUNC_MAP[func_select])
+                lst_params.insert(2, lst_func_params)
+                tup_params = (BST_ADDRESS,lst_params[0],lst_params[1],lst_params[2],lst_params[3])
+                # LEFT OFF HERE ... import and invoke _bst_keeper.py 
+                #   write_with_hash(*tup_params)
+                #   'write_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_ret_types)'
+                # - note: need W3_ intialized in order to use 'write_with_hash' from _bst_keeper.py
+                #   then populate 'lst_params' with tx receipt info (ref: LST_KEYS_PAY_SHILL_EARNS_CONF)
+                
+                # LST_KEYS_PAY_SHILL_EARNS_CONF = ['admin_id','user_at','chain_usd_paid','tx_hash','tx_status','tok_addr','tok_symb','tok_amnt']
+                # generate keyVals from input cmd params
+                lst_params = '<populate-from-tx-receipt>'
+                tg_cmd = kADMIN_PAY_SHILL_EARNS_conf
+                keyVals_ = {}
+                print(' tg_cmd: '+tg_cmd)
+                print(' lst_params: ', *lst_params, sep='\n  ')
+                print(' DICT_CMD_EXE[tg_cmd][1]: ', *DICT_CMD_EXE[tg_cmd][1], sep='\n  ')
+                for i,v in enumerate(lst_params): 
+                    print(f' lst_params[{i}]={v}')
+                    keyVals_[DICT_CMD_EXE[tg_cmd][1][i]] = str(v) # [tg_cmd][1] = LST_KEYS_...
+                stored_proc = DICT_CMD_EXE[tg_cmd][3] # [tg_cmd][3] = 'stored-proc-name'
+                dbProcResult = exe_stored_proc(-1, stored_proc, keyVals_)
+                if dbProcResult[0]['status'] == 'failed': errMsg = dbProcResult[0]['info']
+                else: errMsg = None
+                bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=VERBOSE_LOG, errMsg=errMsg) # errMsg != None: force fail from db
         else:
             dbProcResult=-1
             bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=True)

@@ -971,6 +971,12 @@ BEGIN
 				@v_tg_user_id as tg_user_id,
 				p_tg_user_at as tg_user_at_inp;
 
+	-- fail: if user has not set a wallet address yet
+	ELSEIF NOT valid_wallet_set(tg_user_id, p_tg_user_at) THEN
+		SELECT 'failed' as `status`, 
+				'no wallet address set' as info,
+				p_tg_user_at as tg_user_at_inp;
+
 	ELSE
 		-- calc total pay sum of all approved shills w/ txs non-pending
 		--	get total usd_owed for p_tg_user_at (@v_tg_user_id)
@@ -989,7 +995,7 @@ BEGIN
 		ELSE
 			-- set 'pay_tx_submit=TRUE' for all approved shills that are not tx pending yet
 			SELECT set_usr_pay_usd_tx_submit(@v_tg_user_id) INTO @v_success;
-			SELECT *, 
+			SELECT ue.*, u.wallet_address,
 					'success' as `status`,
 					'user pay tx submitted' as info,
 					@v_user_id as user_id,
@@ -998,8 +1004,10 @@ BEGIN
 					@v_tot_owed as tot_owed,
 					@v_tg_user_id as tg_user_id,
 					p_tg_user_at as tg_user_at_inp
-				FROM user_earns
-				WHERE fk_user_id = @v_user_id;
+				FROM user_earns ue
+				INNER JOIN users u
+					ON u.id = ue.fk_user_id
+				WHERE ue.fk_user_id = @v_user_id;
 		END IF;
 	END IF;
 END 
@@ -1147,7 +1155,7 @@ END
 $$ DELIMITER ;
 
 -- # '/admin_set_shiller_rate'
--- LST_KEYS_SET_USR_SHILL_PAY_RATES = ['admin_id','user_id','shill_play','shill_type','pay_usd']
+-- LST_KEYS_SET_USR_SHILL_PAY_RATES = ['admin_id','user_id','shill_plat','shill_type','pay_usd']
 -- DB_PROC_SET_USR_RATES = 'SET_USER_PAY_RATE'
 DELIMITER $$
 DROP PROCEDURE IF EXISTS SET_USER_PAY_RATE;
