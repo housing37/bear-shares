@@ -40,8 +40,8 @@ BST_FUNC_MAP_READ = {
 }
 BST_FUNC_MAP_WRITE = {
     # write functions
-    # "KEEPER_setKeeper(address)": ["11851737", ["address"], []], 
     "KEEPER_maintenance(uint64,address)": ["3015d747", ["uint64","address"], []], # gas used: 62,434
+    "KEEPER_setKeeper(address)": ["11851737", ["address"], []], 
     "KEEPER_setKeeperCheck(uint256)": ["9d7c9834", ["uint256"], []],
     "KEEPER_setSwapDelegate(address)": ["c1533a53", ["address"], []],
 	"KEEPER_setSwapDelegateUser(address)": ["126d4301", ['address'], []],
