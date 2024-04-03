@@ -108,8 +108,9 @@ def generate_contructor():
         constr_args.append(arg)
     return constr_args
 
-def write_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_ret_types):
+def write_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_ret_types, _w3:_web3.myWEB3=None):
     global W3_
+    if _w3 == None: _w3 = W3_
 
     print('preparing function signature w/ func hash & params lists ...')
     func_sign = _func_hash
@@ -123,21 +124,21 @@ def write_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst
     }
 
     print('setting tx_params ...')
-    tx_nonce = W3_.W3.eth.get_transaction_count(W3_.SENDER_ADDRESS)
+    tx_nonce = _w3.W3.eth.get_transaction_count(_w3.SENDER_ADDRESS)
     tx_params = {
-        'chainId': W3_.CHAIN_ID,
+        'chainId': _w3.CHAIN_ID,
         'nonce': tx_nonce,
     }
     print('setting gas params in tx_params ...')
-    lst_gas_params = get_gas_params_lst(W3_.RPC_URL, min_params=False, max_params=True, def_params=True)
+    lst_gas_params = get_gas_params_lst(_w3.RPC_URL, min_params=False, max_params=True, def_params=True)
     for d in lst_gas_params: tx_params.update(d) # append gas params
 
     print('update tx_data w/ tx_params')
     tx_data.update(tx_params)
 
     print(f'signing and sending tx w/ NONCE: {tx_nonce} ... {get_time_now()}')
-    tx_signed = W3_.W3.eth.account.sign_transaction(tx_data, private_key=W3_.SENDER_SECRET)
-    tx_hash = W3_.W3.eth.send_raw_transaction(tx_signed.rawTransaction)
+    tx_signed = _w3.W3.eth.account.sign_transaction(tx_data, private_key=_w3.SENDER_SECRET)
+    tx_hash = _w3.W3.eth.send_raw_transaction(tx_signed.rawTransaction)
 
     print(cStrDivider_1, f'waiting for receipt ... {get_time_now()}', sep='\n')
     print(f'    tx_hash: {tx_hash.hex()}')
@@ -145,21 +146,26 @@ def write_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst
     # Wait for the transaction to be mined
     wait_time = 300 # sec
     try:
-        tx_receipt = W3_.W3.eth.wait_for_transaction_receipt(tx_hash, timeout=wait_time)
+        tx_receipt = _w3.W3.eth.wait_for_transaction_receipt(tx_hash, timeout=wait_time)
         print("Transaction confirmed in block:", tx_receipt.blockNumber, f' ... {get_time_now()}')
     except Exception as e:
         print(f"\n{get_time_now()}\n Transaction not confirmed within the specified timeout... wait_time: {wait_time}")
         print_except(e)
-        exit(1)
+        return -1, tx_hash.hex()
+        # exit(1)
 
     # print incoming tx receipt (requires pprint & AttributeDict)
     tx_receipt = AttributeDict(tx_receipt) # import required
     tx_rc_print = pprint.PrettyPrinter().pformat(tx_receipt)
     print(cStrDivider_1, f'RECEIPT:\n {tx_rc_print}', sep='\n')
     print("\nTransaction mined!")
-
+    print(" return status="+tx_receipt['status'])
+    # tx_status = tx_receipt['status']
+    # tx_hash = tx_receipt['logs'][0]['transactionHash']
+    
     return_value = decode_abi(['address'], bytes.fromhex(tx_receipt['output'][2:]))[0]
     print(f'function call return_value: {return_value}')
+    return tx_receipt, tx_hash.hex()
 
 def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_ret_types):
     global W3_
@@ -198,6 +204,7 @@ def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_
 def go_user_inputs(_set_gas=True):
     global W3_, CONTRACT_ABI # REQUIRED (using assignment)
     W3_ = _web3.myWEB3().init_inp(_set_gas)
+    
     # ABI_FILE, BIN_FILE = W3_.inp_sel_abi_bin(LST_CONTR_ABI_BIN) # returns .abi|bin
     # CONTRACT_ABI = W3_.read_abi_file(ABI_FILE)
     # CONTRACT_ABI = _abi.BST_ABI

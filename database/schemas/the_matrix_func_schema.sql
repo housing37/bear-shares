@@ -443,28 +443,33 @@ drop FUNCTION if exists set_usr_pay_usd_tx_status; -- setup
 CREATE FUNCTION `set_usr_pay_usd_tx_status`(
 		p_tg_user_id VARCHAR(40),
 		p_pay_tx_hash VARCHAR(255),
-		p_pay_tx_status VARCHAR(40), -- const: baseFee, pending, queued
+		p_pay_tx_status INT(11), -- 0 = tx fail, 1 = tx success
+		p_pay_to_wallet_addr VARCHAR(255),
 		p_pay_tok_addr VARCHAR(255),
-		p_pay_tok_symb VARCHAR(40),
-		p_pay_tok_amnt FLOAT)
+		p_pay_tok_symb VARCHAR(40))
 		RETURNS VARCHAR(40)
     READS SQL DATA
     DETERMINISTIC
 BEGIN
 	-- get id for p_tg_user_id in users table
 	SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
-
+	SET @v_is_paid = TRUE;
+	IF NOT p_pay_tx_status = 1 THEN
+		SET @v_is_paid = FALSE;
+	END IF;
 	-- set various tx data & paid to TRUE for all approved shills and tx submitted
 	--	for user_id where approved, not removed, not paid
+	-- NOTE: can't account for each token amount paid for each shill (ie. pay_tok_amnt)
 	UPDATE shills
 		SET pay_tx_status = p_pay_tx_status,
 			dt_tx_status = NOW(),
 			pay_tx_hash = p_pay_tx_hash,
 			pay_tx_status = p_pay_tx_status,
+			pay_to_wallet_addr = p_pay_to_wallet_addr,
 			pay_tok_addr = p_pay_tok_addr,
 			pay_tok_symb = p_pay_tok_symb,
-			pay_tok_amnt = p_pay_tok_amnt,
-			is_paid = TRUE
+			-- pay_tok_amnt = p_pay_tok_amnt, 
+			is_paid = @v_is_paid
 		WHERE id 
 			IN (SELECT id
 					FROM shills 

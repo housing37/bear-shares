@@ -8,11 +8,14 @@ print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globa
 #         imports                                     #
 #=====================================================#
 from _env import env
+import _web3 # from web3 import Account, Web3, HTTPProvider
 import _abi
+import _bst_keeper
 from db_controller import *
 from req_helpers import *
 from datetime import datetime
 import json, time
+from ethereum.abi import encode_abi, decode_abi # pip install ethereum
 
 # twitter support
 from selenium import webdriver
@@ -209,7 +212,7 @@ LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_at']
 kADMIN_PAY_SHILL_EARNS_conf = "admin_pay_shill_rewards_conf"
 LST_KEYS_PAY_SHILL_EARNS_CONF_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_SET_USR_PAY_CONF = 'SET_USER_PAY_TX_STATUS' # -> set_usr_pay_usd_tx_status
-LST_KEYS_PAY_SHILL_EARNS_CONF = ['admin_id','user_at','chain_usd_paid','tx_hash','tx_status','tok_addr','tok_symb','tok_amnt']
+LST_KEYS_PAY_SHILL_EARNS_CONF = ['admin_id','user_at','chain_usd_paid','tx_hash','tx_status','payout_wallet_addr','pay_tok_addr','pay_tok_symb']
     # PRE-DB: perform python/solidity 'payOutBST' to get tx data for DB_PROC_SET_USR_PAY_CONF
 
 # '/admin_log_removed_shill'
@@ -456,34 +459,76 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
             
             # TBST34.8: 0xa1dceD3D249e1745CA5322B783F8cB76E9d89823
             if tg_cmd == kADMIN_PAY_SHILL_EARNS and not bErr:
-                usd_val_pay = dbProcResult[0]['tot_owed']
+
+                # parse db return into solidity input
+                usd_val_pay = int(float(dbProcResult[0]['tot_owed']) * 10**6) # convert to BST decimal precision
                 wallet_addr = dbProcResult[0]['wallet_address']
                 aux_token = 0
-                func_select = 'payOutBST(uint64,address,address)'
-                BST_ADDRESS = '0xa1dceD3D249e1745CA5322B783F8cB76E9d89823'
-                BST_FUNC_MAP = _abi.BST_FUNC_MAP_WRITE
-                lst_func_params = [usd_val_pay, wallet_addr, aux_token]
-                lst_params = list(BST_FUNC_MAP[func_select])
-                lst_params.insert(2, lst_func_params)
-                tup_params = (BST_ADDRESS,lst_params[0],lst_params[1],lst_params[2],lst_params[3])
-                # LEFT OFF HERE ... import and invoke _bst_keeper.py 
-                #   write_with_hash(*tup_params)
-                #   'write_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_ret_types)'
-                # - note: need W3_ intialized in order to use 'write_with_hash' from _bst_keeper.py
-                #   then populate 'lst_params' with tx receipt info (ref: LST_KEYS_PAY_SHILL_EARNS_CONF)
                 
-                # LST_KEYS_PAY_SHILL_EARNS_CONF = ['admin_id','user_at','chain_usd_paid','tx_hash','tx_status','tok_addr','tok_symb','tok_amnt']
-                # generate keyVals from input cmd params
-                lst_params = '<populate-from-tx-receipt>'
+                # generate solidity function input params
+                lst_func_params = [usd_val_pay, wallet_addr, aux_token]
+                lst_params = list(_abi.BST_FUNC_MAP_WRITE[_abi.BST_PAYOUT_FUNC_SIGN])
+                lst_params.insert(2, lst_func_params)
+                
+                # init myWEB3 driver and set the gas needed for 'payOutBST' (highend average)
+                #   NOTE: 'sender' should be account that will be doing the payout
+                W3_ = _web3.myWEB3().init_nat(1, env.sender_addr_trinity, env.sender_secr_trinity) # 1 = pulsechain
+                W3_.set_default_gas_params(W3_.W3, _gas_limit=700_000, _fee_perc_markup=0.25)
+
+                # finalize input params for writing to blockchain
+                tup_params = (env.bst_contr_addr,lst_params[0],lst_params[1],lst_params[2],lst_params[3],W3_)
+                try:
+                    # write to blockchain with input params (invoking _bst_keeper.py)
+                    tx_receipt, tx_hash = _bst_keeper.write_with_hash(*tup_params)
+                    chain_usd_paid = -1
+                    tx_status = -1 # -1 = exception occurred within 'W3.eth.wait_for_transaction_receipt'
+                    if tx_receipt != -1: # ie. 'exception' did NOT occur within 'W3.eth.wait_for_transaction_receipt'
+                        print(' ... generating a success tx lst_params_ for db update\n')
+                        chain_usd_paid = decode_abi(['uint64'], bytes.fromhex(tx_receipt['output'][2:]))[0], # 'chain_usd_paid'
+                        tx_hash = tx_receipt['logs'][0]['transactionHash'], # 'tx_hash'
+                        tx_status = int(tx_receipt['status']), # 'tx_status'
+                    else:
+                        print(' ... generating a failed tx lst_params_ for db update (tx_receipt = -1)\n')
+
+                    # simulates a tg input cmd 'lst_params_' for LST_KEYS_PAY_SHILL_EARNS_CONF
+                    lst_params_ = [
+                        keyVals['admin_id'], # 'admin_id'
+                        keyVals['user_at'], # 'user_at'
+                        chain_usd_paid, # 'chain_usd_paid'
+                        tx_hash, # 'tx_hash'
+                        tx_status, # 'tx_status'
+                        wallet_addr, # 'payout_wallet_addr'
+                        env.bst_contr_addr, # 'pay_tok_addr'
+                        env.bst_contr_symb # 'pay_tok_symb'
+                    ]
+
+                except Exception as e:
+                    print_except(e, debugLvl=0)
+                    print(' ... generating a failed tx lst_params_ for db update\n')
+                    # generate a failed 'lst_params_' for LST_KEYS_PAY_SHILL_EARNS_CONF
+                    lst_params_ = [
+                        keyVals['admin_id'], # 'admin_id'
+                        keyVals['user_at'], # 'user_at'
+                        -1, # 'chain_usd_paid'
+                        '-1', # 'tx_hash'
+                        -2, # 'tx_status' # -2 = exception occurred within '_bst_keeper.write_with_hash'
+                        wallet_addr, # 'payout_wallet_addr'
+                        env.bst_contr_addr, # 'pay_tok_addr'
+                        env.bst_contr_symb # 'pay_tok_symb'
+                    ]
+                
+                # generate keyVals from simulated input cmd params (lst_params_)
                 tg_cmd = kADMIN_PAY_SHILL_EARNS_conf
                 keyVals_ = {}
                 print(' tg_cmd: '+tg_cmd)
-                print(' lst_params: ', *lst_params, sep='\n  ')
+                print(' lst_params_: ', *lst_params_, sep='\n  ')
                 print(' DICT_CMD_EXE[tg_cmd][1]: ', *DICT_CMD_EXE[tg_cmd][1], sep='\n  ')
-                for i,v in enumerate(lst_params): 
-                    print(f' lst_params[{i}]={v}')
+                for i,v in enumerate(lst_params_): 
+                    print(f' lst_params_[{i}]={v}')
                     keyVals_[DICT_CMD_EXE[tg_cmd][1][i]] = str(v) # [tg_cmd][1] = LST_KEYS_...
                 stored_proc = DICT_CMD_EXE[tg_cmd][3] # [tg_cmd][3] = 'stored-proc-name'
+
+                # exe db call to update status on payout tx attempt
                 dbProcResult = exe_stored_proc(-1, stored_proc, keyVals_)
                 if dbProcResult[0]['status'] == 'failed': errMsg = dbProcResult[0]['info']
                 else: errMsg = None

@@ -45,6 +45,15 @@ class myWEB3:
         return tx_pool
         # return json.dumps(tx_pool, indent=4)
     
+    def init_nat(self, _chain_sel, _sender_addr, sender_secret):
+        rpc_url, chain_id, chain_sel    = self.set_chain(_chain_sel)
+        sender_address, sender_secret   = self.set_sender(_sender_addr, sender_secret)
+        w3, account                     = self.init_web3()
+
+        self.print_curr_chain_gas_price() # LEFT OFF HERE ...
+        self.set_default_gas_params(self, w3, _gas_limit=600_000, _fee_perc_markup=0.25)
+        return self
+    
     def init_inp(self, _set_gas=True):
         rpc_url, chain_id, chain_sel    = self.inp_sel_chain()
         sender_address, sender_secret   = self.inp_sel_sender()
@@ -52,6 +61,19 @@ class myWEB3:
         if _set_gas: gas_tup            = self.get_gas_settings(w3)
         return self
 
+    def set_chain(self, _chain_sel):
+        self.CHAIN_SEL = _chain_sel
+        assert 0 <= int(self.CHAIN_SEL) <= 1, 'Invalid entry, abort'
+        self.RPC_URL, self.CHAIN_ID = (env.eth_main, env.eth_main_cid) if int(self.CHAIN_SEL) == 0 else (env.pc_main, env.pc_main_cid)
+        print(f'  set chain: {(self.RPC_URL, self.CHAIN_ID)}')
+        return self.RPC_URL, self.CHAIN_ID, self.CHAIN_SEL
+
+    def set_sender(self, _sender_addr, _sender_sercret):
+        self.SENDER_ADDRESS = _sender_addr
+        self.SENDER_SECRET = _sender_sercret
+        print(f'  set sender: {self.SENDER_ADDRESS}')
+        return self.SENDER_ADDRESS, self.SENDER_SECRET
+    
     def inp_sel_abi_bin(self, _lst_abi_bin=[], str_input='Select abi|bin file path:'):
         print('\n', str_input)
         for i, v in enumerate(_lst_abi_bin): print(' ',i,'=',f'{v} _ {self.get_file_dt(v+".bin")}') # parse through tuple
@@ -113,8 +135,8 @@ class myWEB3:
         if with_sender: self.ACCOUNT = Account.from_key(self.SENDER_SECRET)
         return self.W3, self.ACCOUNT
     
-    def get_gas_settings(self, w3):
-        print('\nGAS SETTINGS ...')
+    def set_default_gas_params(self, w3, _gas_limit=600_000, _fee_perc_markup=0.25):
+        print(' setting default gas params ...')
         if int(self.CHAIN_SEL) == 0:
             self.GAS_LIMIT = 3_000_000
             self.GAS_PRICE = w3.to_wei('10', 'gwei')
@@ -122,12 +144,17 @@ class myWEB3:
             self.MAX_PRIOR_FEE_RATIO = 1.0
             self.MAX_PRIOR_FEE = int(w3.eth.max_priority_fee * self.MAX_PRIOR_FEE_RATIO)
         else:
+            wei, gwei, eth = self.get_curr_gas_price()
             self.GAS_PRICE = w3.to_wei('0.0005', 'ether') # 'gasPrice' param fails on PC
-            self.GAS_LIMIT = 600_000
-            self.MAX_FEE = w3.to_wei('350_000', 'gwei')
+            self.GAS_LIMIT = _gas_limit
+            # self.MAX_FEE = w3.to_wei('350_000', 'gwei')
+            self.MAX_FEE = wei + (wei * _fee_perc_markup) # dafaul to current gas price + 25%
             self.MAX_PRIOR_FEE_RATIO = 1.0
             self.MAX_PRIOR_FEE = int(w3.eth.max_priority_fee * self.MAX_PRIOR_FEE_RATIO)
-        
+
+    def get_gas_settings(self, w3):
+        print('\nGAS SETTINGS ...')
+        self.set_default_gas_params(w3)        
         sel_ans = '1'
         while sel_ans != '0':
             self.print_gas_params()
@@ -139,6 +166,17 @@ class myWEB3:
         self.print_gas_params()
 
         return self.GAS_LIMIT, self.GAS_PRICE, self.MAX_FEE, self.MAX_PRIOR_FEE_RATIO, self.MAX_PRIOR_FEE
+    
+    def print_curr_chain_gas_price(self):
+        wei, gwei, eth = self.get_curr_gas_price()
+        print(f'''\n Current ON-CHAIN_GAS_PRICE: {gwei:,} beat (per unit) == {eth:.5f} PLS''')
+    
+    def get_curr_gas_price(self):
+        w3 = self.W3
+        wei = w3.eth.gas_price
+        gwei = round(w3.from_wei(wei, 'gwei'), 0)
+        eth = w3.from_wei(wei, 'ether')
+        return wei, gwei, eth
     
     def print_gas_params(self):
         w3 = self.W3

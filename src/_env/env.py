@@ -98,6 +98,9 @@ sender_secret_2 = os.environ['PRIVATE_KEY_5']
 sender_address_3 = os.environ['PUBLIC_KEY_6']
 sender_secret_3 = os.environ['PRIVATE_KEY_6']
 
+sender_addr_trinity = sender_address_1
+sender_secr_trinity = sender_secret_1
+
 #============================================================================#
 ## web3 constants
 #============================================================================#
@@ -107,3 +110,5 @@ eth_test = f'https://goerli.infura.io/v3/'
 pc_main = f'https://rpc.pulsechain.com'
 eth_main_cid=1
 pc_main_cid=369
+bst_contr_addr = os.environ['BST_CONTR_ADDR']
+bst_contr_symb = os.environ['BST_CONTR_SYMB']

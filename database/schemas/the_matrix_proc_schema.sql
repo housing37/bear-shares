@@ -1,45 +1,45 @@
 -- #================================================================# --
 -- #STORED PROCEDURES
 -- #================================================================# --
-DELIMITER $$
-DROP PROCEDURE IF EXISTS ADD_NEW_QUIZ_LOG;
-CREATE PROCEDURE `ADD_NEW_QUIZ_LOG`(
-	IN p_user_id INT(11),
-    IN p_tg_bot_id VARCHAR(40), -- '581475171'
-	IN p_tg_bot_at VARCHAR(1024), -- '@bs_trinity_bot'
-    IN p_question TEXT)
-BEGIN
-	-- add to users table
-	INSERT INTO log_bot_quiz (
-			p_user_id,
-			p_tg_bot_id,
-			p_tg_bot_at,
-			p_question
-		) VALUES (
-			fk_user_id_created,
-			tg_bot_id,
-			tg_bot_at,
-			question
-		);
+-- DELIMITER $$
+-- DROP PROCEDURE IF EXISTS ADD_NEW_QUIZ_LOG;
+-- CREATE PROCEDURE `ADD_NEW_QUIZ_LOG`(
+-- 	IN p_user_id INT(11),
+--     IN p_tg_bot_id VARCHAR(40), -- '581475171'
+-- 	IN p_tg_bot_at VARCHAR(1024), -- '@bs_trinity_bot'
+--     IN p_question TEXT)
+-- BEGIN
+-- 	-- add to users table
+-- 	INSERT INTO log_bot_quiz (
+-- 			p_user_id,
+-- 			p_tg_bot_id,
+-- 			p_tg_bot_at,
+-- 			p_question
+-- 		) VALUES (
+-- 			fk_user_id_created,
+-- 			tg_bot_id,
+-- 			tg_bot_at,
+-- 			question
+-- 		);
 
-	-- get new user id
-	SELECT LAST_INSERT_ID() into @new_usr_id;
-END 
-$$ DELIMITER ;
+-- 	-- get new user id
+-- 	SELECT LAST_INSERT_ID() into @new_usr_id;
+-- END 
+-- $$ DELIMITER ;
 
-DELIMITER $$
-DROP PROCEDURE IF EXISTS ADD_NEW_DATA_LOG;
-CREATE PROCEDURE `ADD_NEW_DATA_LOG`(
-    IN p_tg_user_id VARCHAR(40), -- '581475171'
-	IN p_tg_user_at VARCHAR(1024), -- '@whatever'
-	IN p_tg_user_handle VARCHAR(1024), -- 'my handle'
-    IN p_wallet_address VARCHAR(255),
-    IN p_tw_conf_url VARCHAR(1024),
-	IN p_tw_conf_id VARCHAR(40),
-	IN p_tw_user_at VARCHAR(255))
-BEGIN
-END 
-$$ DELIMITER ;
+-- DELIMITER $$
+-- DROP PROCEDURE IF EXISTS ADD_NEW_DATA_LOG;
+-- CREATE PROCEDURE `ADD_NEW_DATA_LOG`(
+--     IN p_tg_user_id VARCHAR(40), -- '581475171'
+-- 	IN p_tg_user_at VARCHAR(1024), -- '@whatever'
+-- 	IN p_tg_user_handle VARCHAR(1024), -- 'my handle'
+--     IN p_wallet_address VARCHAR(255),
+--     IN p_tw_conf_url VARCHAR(1024),
+-- 	IN p_tw_conf_id VARCHAR(40),
+-- 	IN p_tw_user_at VARCHAR(255))
+-- BEGIN
+-- END 
+-- $$ DELIMITER ;
 
 -- # '/set_wallet'
 -- LST_KEYS_SET_WALLET = ['user_id','user_at','wallet_address']
@@ -1024,10 +1024,10 @@ CREATE PROCEDURE `SET_USER_PAY_TX_STATUS`(
 	IN p_tg_user_at VARCHAR(40),
 	IN p_chain_usd_paid FLOAT,
 	IN p_pay_tx_hash VARCHAR(255),
-	IN p_pay_tx_status VARCHAR(40), -- const: baseFee, pending, queued
+	IN p_pay_tx_status INT(11), -- 0 = fail, 1 = success
+	IN p_pay_to_wallet_addr VARCHAR(255),
 	IN p_pay_tok_addr VARCHAR(255),
-	IN p_pay_tok_symb VARCHAR(40),
-	IN p_pay_tok_amnt FLOAT)
+	IN p_pay_tok_symb VARCHAR(40))
 BEGIN
 	-- validate admin
 	IF NOT valid_tg_user_admin(p_tg_admin_id) THEN
@@ -1048,46 +1048,36 @@ BEGIN
 		SELECT usd_owed FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_curr_usd_owed;
 		SELECT usd_paid FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_curr_usd_paid;
 
-		-- validate that on-chain pay usd matches user curr usd owed
-		IF p_chain_usd_paid != @v_curr_usd_owed THEN
-			SELECT 'failed' as `status`, 
-					'on-chain usd_paid != user usd_owed' as info,
-					@v_user_id as user_id,
-					@v_curr_usd_owed as curr_usd_owed,
-					@v_curr_usd_paid as curr_usd_paid,
-					p_tg_user_at as tg_user_at_inp,
-					@v_tg_user_id as tg_user_id,
-					p_chain_usd_paid as chain_usd_paid_inp,
-					p_pay_tx_hash as pay_tx_hash_inp;
-		ELSE
-			-- update user_earns entry (change usd_owed|paid accordingly; reset withdraw_requested)
-			SET @v_new_usd_paid = @v_curr_usd_paid + @v_curr_usd_owed;
-			UPDATE user_earns
-				SET usd_owed = 0.0,
-					usd_paid = @v_new_usd_paid,
-					withdraw_requested = FALSE
-				WHERE fk_user_id = @v_user_id;
-			
-			-- update tx data (w/ is_paid) for all shills that were submitted by @v_tg_user_id
-			SELECT set_usr_pay_usd_tx_status(@v_tg_user_id, p_pay_tx_hash, p_pay_tx_status, p_pay_tok_addr, p_pay_tok_symb, p_pay_tok_amnt) INTO @v_status;
+		-- update user_earns entry (change usd_owed|paid accordingly; reset withdraw_requested)
+		SET @v_new_usd_paid = @v_curr_usd_paid + @v_curr_usd_owed;
+		SET @v_usd_paid_owed_diff = @v_curr_usd_owed - p_chain_usd_paid; -- should monitor ~= 0.0
+		UPDATE user_earns
+			SET dt_updated = NOW(),
+				usd_owed = 0.0,
+				usd_paid = @v_new_usd_paid,
+				withdraw_requested = FALSE
+			WHERE fk_user_id = @v_user_id;
+		
+		-- update tx data (w/ is_paid) for all shills that were submitted by @v_tg_user_id
+		SELECT set_usr_pay_usd_tx_status(@v_tg_user_id, p_pay_tx_hash, p_pay_tx_status, p_pay_to_wallet_addr, p_pay_tok_addr, p_pay_tok_symb) INTO @v_status;
 
-			-- return
-			SELECT *, 
-					'success' as `status`,
-					'user pay tx status updated' as info,
-					@v_user_id as user_id,
-					@v_status as tx_status_set,
-					p_chain_usd_paid as chain_usd_paid_inp,
-					p_pay_tx_hash as pay_tx_hash_inp,
-					p_pay_tx_status as pay_tx_status_inp,
-					p_pay_tok_addr as pay_tok_addr_inp,
-					p_pay_tok_symb as pay_tok_symb_inp,
-					p_pay_tok_amnt as pay_tok_amnt_inp,
-					p_tg_user_at as tg_user_at_inp,
-					@v_tg_user_id as tg_user_id
-				FROM user_earns
-				WHERE fk_user_id = @v_user_id;
-		END IF; 	
+		-- return
+		SELECT *, 
+				'success' as `status`,
+				'user pay tx status updated' as info,
+				@v_user_id as user_id,
+				@v_status as tx_status_set,
+				@v_usd_paid_owed_diff as usd_paid_owed_diff,
+				@v_new_usd_paid as new_usd_tot_paid,
+				p_chain_usd_paid as chain_usd_paid_inp,
+				p_pay_tx_hash as pay_tx_hash_inp,
+				p_pay_tx_status as pay_tx_status_inp,
+				p_pay_tok_addr as pay_tok_addr_inp,
+				p_pay_tok_symb as pay_tok_symb_inp,
+				p_tg_user_at as tg_user_at_inp,
+				@v_tg_user_id as tg_user_id
+			FROM user_earns
+			WHERE fk_user_id = @v_user_id;
 	END IF;
 END 
 $$ DELIMITER ;
