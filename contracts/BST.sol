@@ -293,7 +293,7 @@ contract BearSharesTrinity is ERC20, Ownable {
 
     // handle account payouts
     //  NOTE: _usdValue must be in uint precision to address(this) 'decimals()'
-    function payOutBST(uint64 _usdValue, address _payTo, address _auxToken) external returns (uint64) {
+    function payOutBST(uint64 _usdValue, address _payTo, address _auxToken) external {
         // NOTE: payOutBST runs a total of 7 loops embedded
         //  invokes _getStableTokenHighMarketValue -> _best_swap_v2_router_idx_quote
         //  invokes _getTokMarketValueForUsdAmnt -> _best_swap_v2_router_idx_quote
@@ -377,8 +377,8 @@ contract BearSharesTrinity is ERC20, Ownable {
 
         // log this payout, ACCT_USD_PAYOUTS stores uint precision to decimals()
         ACCT_USD_PAYOUTS[msg.sender].push(ACCT_PAYOUT(_payTo, _usdValue, usdPayout, bstPayout, usdFee, usdBurnValTot, usdBurnVal, usdAuxBurnVal, auxToken_));
+
         emit PayOutProcessed(msg.sender, _payTo, _usdValue, usdPayout, usdFee, usdBurnValTot);
-        return usdPayout;
     }
     
     // handle contract BST buy-backs

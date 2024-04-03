@@ -164,8 +164,27 @@ def write_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst
     # tx_status = tx_receipt['status']
     # tx_hash = tx_receipt['logs'][0]['transactionHash']
     
-    return_value = decode_abi(['address'], bytes.fromhex(tx_receipt['output'][2:]))[0]
-    print(f'function call return_value: {return_value}')
+    # Get the logs from the transaction receipt
+    logs = tx_receipt['logs']
+
+    # Define the event signature
+    event_signature = _w3.W3.keccak(text="PayOutProcessed(address,address,uint64,uint64,uint64,uint64)").hex()
+
+    # Filter the logs based on the event signature
+    pay_out_logs = [log for log in logs if log['topics'][0].hex() == event_signature]
+
+    # Parse the event logs
+    for log in pay_out_logs:
+        lst_evt_params = ['address', 'address', 'uint64', 'uint64', 'uint64', 'uint64']
+        evt_data = log['data']
+        decoded_data = decode_abi(lst_evt_params, evt_data)
+        print("From:", decoded_data[0])
+        print("To:", decoded_data[1])
+        print("USD Amount:", decoded_data[2])
+        print("USD Amount Paid:", decoded_data[3])
+        print("USD Fee:", decoded_data[4])
+        print("USD Burn Value Total:", decoded_data[5])
+
     return tx_receipt, tx_hash.hex()
 
 def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_ret_types):
@@ -410,4 +429,5 @@ print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
 # SWAPD4: 0x8cEEbE726e610B888fdC2d42263c819580F07a11
 # tBST34.6: 0x9c35A862420501c7e71f71da369f532716540594
 # tBST34.7: 0x4A65F25739EDf015E0CBE838113592750746e037
-# TBST34.8: 0xa1dceD3D249e1745CA5322B783F8cB76E9d89823
+# tBST34.8: 0xa1dceD3D249e1745CA5322B783F8cB76E9d89823
+# tBST35: 0x294EF12222066a4569d5e377Bb924c6ADA446F25
