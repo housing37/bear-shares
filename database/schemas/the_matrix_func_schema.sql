@@ -396,7 +396,7 @@ BEGIN
 		WHERE fk_user_id = @v_user_id
 			AND is_approved = TRUE
 			AND is_removed = FALSE
-			AND pay_tx_submit = FALSE
+			AND (pay_tx_submit = FALSE OR pay_tx_status < 1)
 			AND is_paid = p_is_paid
 		INTO @v_tot_amnt;
 
@@ -429,7 +429,7 @@ BEGIN
 					WHERE fk_user_id = @v_user_id
 						AND is_approved = TRUE
 						AND is_removed = FALSE
-						AND pay_tx_submit = FALSE
+						AND (pay_tx_submit = FALSE OR pay_tx_status < 1)
 						AND is_paid = FALSE) AS s2 
 			ON s1.id = s2.id
 		SET s1.pay_tx_submit = TRUE,
@@ -443,10 +443,12 @@ drop FUNCTION if exists set_usr_pay_usd_tx_status; -- setup
 CREATE FUNCTION `set_usr_pay_usd_tx_status`(
 		p_tg_user_id VARCHAR(40),
 		p_pay_tx_hash VARCHAR(255),
-		p_pay_tx_status INT(11), -- 0 = tx fail, 1 = tx success
+		p_pay_tx_status INT(11), -- -1|-2 = tx exception, 0 = tx fail, 1 = tx success
 		p_pay_to_wallet_addr VARCHAR(255),
+		p_chain_usd_paid FLOAT,
 		p_pay_tok_addr VARCHAR(255),
-		p_pay_tok_symb VARCHAR(40))
+		p_pay_tok_symb VARCHAR(40),
+		p_aux_tok_burn VARCHAR(255))
 		RETURNS VARCHAR(40)
     READS SQL DATA
     DETERMINISTIC
@@ -475,8 +477,10 @@ BEGIN
 			pay_tx_hash = p_pay_tx_hash,
 			pay_tx_status = p_pay_tx_status,
 			pay_to_wallet_addr = p_pay_to_wallet_addr,
+			pay_tok_chain_amnt = p_chain_usd_paid,
 			pay_tok_addr = p_pay_tok_addr,
 			pay_tok_symb = p_pay_tok_symb,
+			aux_tok_burn = p_aux_tok_burn,
 			-- pay_tok_amnt = p_pay_tok_amnt, 
 			is_paid = @v_is_paid;
 	RETURN p_pay_tx_status;
@@ -526,7 +530,7 @@ CREATE FUNCTION `usr_shill_limit_reached`(
 BEGIN
 	-- NOTE_030724: current integration checks 3 posts per day max
 	--	potential update: check for max pay_usd total per day 
-	SET @max_shills_per_day = 3;
+	SET @max_shills_per_day = 10;
 	SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
 	SELECT COUNT(*) FROM shills 
 		WHERE fk_user_id = @v_user_id

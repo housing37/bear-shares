@@ -448,7 +448,8 @@ BEGIN
 				p_tg_user_at as tg_user_at_inp;
 				
 	ELSE
-		SET @v_usd_min = 1.00;
+		-- SET @v_usd_min = 1.00;
+		SET @v_usd_min = 0.25;
 		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
 		SELECT usd_owed FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_usd_owed;
 
@@ -1024,10 +1025,11 @@ CREATE PROCEDURE `SET_USER_PAY_TX_STATUS`(
 	IN p_tg_user_at VARCHAR(40),
 	IN p_chain_usd_paid FLOAT,
 	IN p_pay_tx_hash VARCHAR(255),
-	IN p_pay_tx_status INT(11), -- 0 = fail, 1 = success
+	IN p_pay_tx_status INT(11), -- -1|-2 = tx exception, 0 = tx fail, 1 = tx success
 	IN p_pay_to_wallet_addr VARCHAR(255),
 	IN p_pay_tok_addr VARCHAR(255),
-	IN p_pay_tok_symb VARCHAR(40))
+	IN p_pay_tok_symb VARCHAR(40),
+	IN p_aux_tok_burn VARCHAR(255))
 BEGIN
 	-- validate admin
 	IF NOT valid_tg_user_admin(p_tg_admin_id) THEN
@@ -1050,7 +1052,7 @@ BEGIN
 
 		-- update user_earns entry (change usd_owed|paid accordingly; reset withdraw_requested)
 		SET @v_new_usd_paid = @v_curr_usd_paid + @v_curr_usd_owed;
-		SET @v_usd_paid_owed_diff = @v_curr_usd_owed - p_chain_usd_paid;
+		SET @v_usd_owed_paid_diff = @v_curr_usd_owed - p_chain_usd_paid;
 
 		-- NOTE: do not update user_earns if tx failed (ie. p_chain_usd_paid == -1)
 		IF p_chain_usd_paid > 0 THEN
@@ -1063,7 +1065,7 @@ BEGIN
 		END IF;
 		
 		-- update tx data (w/ is_paid) for all shills that were submitted by @v_tg_user_id
-		SELECT set_usr_pay_usd_tx_status(@v_tg_user_id, p_pay_tx_hash, p_pay_tx_status, p_pay_to_wallet_addr, p_pay_tok_addr, p_pay_tok_symb) INTO @v_status;
+		SELECT set_usr_pay_usd_tx_status(@v_tg_user_id, p_pay_tx_hash, p_pay_tx_status, p_pay_to_wallet_addr, p_chain_usd_paid, p_pay_tok_addr, p_pay_tok_symb, p_aux_tok_burn) INTO @v_status;
 
 		-- return
 		SELECT *, 
@@ -1071,13 +1073,15 @@ BEGIN
 				'user pay tx status updated' as info,
 				@v_user_id as user_id,
 				@v_status as tx_status_set,
-				@v_usd_paid_owed_diff as usd_paid_owed_diff,
-				@v_new_usd_paid as new_usd_tot_paid,
+				@v_curr_usd_owed as old_usd_owed,
 				p_chain_usd_paid as chain_usd_paid_inp,
+				@v_usd_owed_paid_diff as usd_owed_paid_diff,
+				@v_new_usd_paid as new_usd_tot_paid,
 				p_pay_tx_hash as pay_tx_hash_inp,
 				p_pay_tx_status as pay_tx_status_inp,
 				p_pay_tok_addr as pay_tok_addr_inp,
 				p_pay_tok_symb as pay_tok_symb_inp,
+				p_aux_tok_burn as aux_tok_burn_addr,
 				p_tg_user_at as tg_user_at_inp,
 				@v_tg_user_id as tg_user_id
 			FROM user_earns

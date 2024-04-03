@@ -109,7 +109,7 @@ def generate_contructor():
         constr_args.append(arg)
     return constr_args
 
-def write_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_ret_types, _w3:_web3.myWEB3=None):
+def write_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_ret_types, _w3:_web3.myWEB3=None, _tx_wait_sec=300):
     global W3_
     if _w3 == None: _w3 = W3_
 
@@ -118,7 +118,7 @@ def write_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst
     if len(_lst_param_types) > 0:
         func_sign = _func_hash + encode_abi(_lst_param_types, _lst_params).hex()
 
-    print(f'building tx_data w/ ...\n _contr_addr: {_contr_addr}\n _func_hash: {_func_hash}')
+    print(f'building tx_data w/ ...\n _contr_addr: {_contr_addr}\n _func_hash: {_func_hash}\n _lst_params: {_lst_params}')
     tx_data = {
         "to": _contr_addr,
         "data": func_sign,
@@ -145,14 +145,15 @@ def write_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst
     print(f'    tx_hash: {tx_hash.hex()}')
 
     # Wait for the transaction to be mined
-    wait_time = 300 # sec
+    # wait_time = 300 # sec
+    wait_time = _tx_wait_sec # sec
     try:
         tx_receipt = _w3.W3.eth.wait_for_transaction_receipt(tx_hash, timeout=wait_time)
         print("Transaction confirmed in block:", tx_receipt.blockNumber, f' ... {get_time_now()}')
     except Exception as e:
         print(f"\n{get_time_now()}\n Transaction not confirmed within the specified timeout... wait_time: {wait_time}")
         print_except(e)
-        return -1, tx_hash.hex()
+        return -1, tx_hash.hex(), {}
         # exit(1)
 
     # print incoming tx receipt (requires pprint & AttributeDict)
@@ -165,28 +166,46 @@ def write_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst
     # tx_hash = tx_receipt['logs'][0]['transactionHash']
     
     # Get the logs from the transaction receipt
-    logs = tx_receipt['logs']
+    d_ret_log = parse_logs_for_func_hash(tx_receipt, _func_hash, _w3)
+    print('returning from "write_with_hash"')
+    return tx_receipt, tx_hash.hex(), d_ret_log
 
-    # Define the event signature
-    event_signature = _w3.W3.keccak(text="PayOutProcessed(address,address,uint64,uint64,uint64,uint64)").hex()
+def parse_logs_for_func_hash(_tx_receipt, _func_hash, _w3:_web3.myWEB3=None):
+    # Get the logs from the transaction receipt
+    logs = _tx_receipt['logs']
+    d_ret_log = {'err':'no logs found'}
+    if _w3 == None: return d_ret_log
+    print(f' event logs (for func_hash: {_func_hash}) ...')
+    if _func_hash == _abi.BST_FUNC_MAP_WRITE[_abi.BST_PAYOUT_FUNC_SIGN][0]:
+        # Define & filter logs based on the event signature
+        event_signature = _w3.W3.keccak(text="PayOutProcessed(address,address,uint64,uint64,uint64,uint64)").hex()
+        pay_out_logs = [log for log in logs if log['topics'][0].hex() == event_signature]
+        
+        # Parse the event logs
+        for log in pay_out_logs:
+            lst_evt_params = ['address', 'address', 'uint64', 'uint64', 'uint64', 'uint64']
+            evt_data = log['data']
+            decoded_data = decode_abi(lst_evt_params, evt_data)
+            # print(" From:", decoded_data[0])
+            # print(" To:", decoded_data[1])
+            # print(" USD Amount:", decoded_data[2])
+            # print(" USD Amount Paid:", decoded_data[3])
+            # print(" USD Fee:", decoded_data[4])
+            # print(" USD Burn Value Total:", decoded_data[5])
 
-    # Filter the logs based on the event signature
-    pay_out_logs = [log for log in logs if log['topics'][0].hex() == event_signature]
-
-    # Parse the event logs
-    for log in pay_out_logs:
-        lst_evt_params = ['address', 'address', 'uint64', 'uint64', 'uint64', 'uint64']
-        evt_data = log['data']
-        decoded_data = decode_abi(lst_evt_params, evt_data)
-        print("From:", decoded_data[0])
-        print("To:", decoded_data[1])
-        print("USD Amount:", decoded_data[2])
-        print("USD Amount Paid:", decoded_data[3])
-        print("USD Fee:", decoded_data[4])
-        print("USD Burn Value Total:", decoded_data[5])
-
-    return tx_receipt, tx_hash.hex()
-
+            # event PayOutProcessed(address _from, address _to, uint64 _usdAmnt, uint64 _usdAmntPaid, uint64 _usdFee, uint64 _usdBurnValTot);
+            d_ret_log = {'_from':decoded_data[0],
+                         '_to':decoded_data[1],
+                         '_usdAmnt':decoded_data[2],
+                         '_usdAmntPaid':decoded_data[3],
+                         '_usdFee':decoded_data[4],
+                         '_usdBurnValTot':decoded_data[5]}
+        
+            [print(f'   {key}: {val}') for key,val in d_ret_log.items()]
+            print()
+            
+    return d_ret_log
+            
 def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_ret_types):
     global W3_
 
@@ -431,3 +450,4 @@ print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
 # tBST34.7: 0x4A65F25739EDf015E0CBE838113592750746e037
 # tBST34.8: 0xa1dceD3D249e1745CA5322B783F8cB76E9d89823
 # tBST35: 0x294EF12222066a4569d5e377Bb924c6ADA446F25
+# tBST35.1: 0x3bf59b1d3e99e53d4b52c54bf2f524969fc92679

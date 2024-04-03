@@ -145,11 +145,13 @@ CREATE TABLE `shills` (
   `dt_tx_submit` timestamp NULL DEFAULT NULL,
   `dt_tx_status` timestamp NULL DEFAULT NULL,
   `pay_tx_submit` BOOLEAN DEFAULT FALSE,
-  `pay_tx_status` VARCHAR(40) DEFAULT 'nil', -- const: baseFee, pending, queued
+  `pay_tx_status` INT(11) DEFAULT -37, -- -1|-2 = tx exception, 0 = tx fail, 1 = tx success
   `pay_tx_hash` VARCHAR(255) DEFAULT '0x0', 
   `pay_to_wallet_addr` VARCHAR(255) DEFAULT '0x0',
+  `pay_tok_chain_amnt` FLOAT DEFAULT -1.0,
   `pay_tok_addr` VARCHAR(255) DEFAULT '0x0',
   `pay_tok_symb` VARCHAR(40) DEFAULT 'nil_tok_symb',
+  `aux_tok_burn_addr` VARCHAR(255) DEFAULT '0x0',
   -- `pay_tok_amnt` FLOAT DEFAULT -1.0, -- n/a, NOTE: can't account for each token amount paid for each shill
 
   UNIQUE KEY `ID` (`id`) USING BTREE
