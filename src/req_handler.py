@@ -473,7 +473,7 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
                 # init myWEB3 driver and set the gas needed for 'payOutBST' (highend average)
                 #   NOTE: 'sender' should be account that will be doing the payout
                 W3_ = _web3.myWEB3().init_nat(1, env.sender_addr_trinity, env.sender_secr_trinity) # 1 = pulsechain
-                W3_.set_default_gas_params(W3_.W3, _gas_limit=700_000, _fee_perc_markup=0.25)
+                W3_.set_gas_params(W3_.W3, _gas_limit=700_000, _fee_perc_markup=0.25)
 
                 # finalize input params for writing to blockchain
                 tup_params = (env.bst_contr_addr,lst_params[0],lst_params[1],lst_params[2],lst_params[3],W3_)

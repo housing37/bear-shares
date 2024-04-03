@@ -422,18 +422,18 @@ BEGIN
 	SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
 
 	-- set tx submit to TRUE for all approved shills and not tx sumbit yet
-	--	for user_id where approved, not removed, not paid
-	UPDATE shills
-		SET pay_tx_submit = TRUE,
-			dt_tx_submit = NOW()
-		WHERE id 
-			IN (SELECT id
+	--	for user_id where approved, not removed, not paid						
+	UPDATE shills AS s1
+		INNER JOIN (SELECT id
 					FROM shills 
 					WHERE fk_user_id = @v_user_id
 						AND is_approved = TRUE
 						AND is_removed = FALSE
 						AND pay_tx_submit = FALSE
-						AND is_paid = FALSE);
+						AND is_paid = FALSE) AS s2 
+			ON s1.id = s2.id
+		SET s1.pay_tx_submit = TRUE,
+			s1.dt_tx_submit = NOW();
 	RETURN TRUE;
 END 
 $$ DELIMITER ;
@@ -460,8 +460,17 @@ BEGIN
 	-- set various tx data & paid to TRUE for all approved shills and tx submitted
 	--	for user_id where approved, not removed, not paid
 	-- NOTE: can't account for each token amount paid for each shill (ie. pay_tok_amnt)
-	UPDATE shills
+	UPDATE shills AS s1
+		INNER JOIN (SELECT id
+					FROM shills 
+					WHERE fk_user_id = @v_user_id
+						AND pay_tx_submit = TRUE
+						AND is_approved = TRUE
+						AND is_removed = FALSE
+						AND is_paid = FALSE) AS s2 
+			ON s1.id = s2.id
 		SET pay_tx_status = p_pay_tx_status,
+			dt_updated = NOW(),
 			dt_tx_status = NOW(),
 			pay_tx_hash = p_pay_tx_hash,
 			pay_tx_status = p_pay_tx_status,
@@ -469,15 +478,7 @@ BEGIN
 			pay_tok_addr = p_pay_tok_addr,
 			pay_tok_symb = p_pay_tok_symb,
 			-- pay_tok_amnt = p_pay_tok_amnt, 
-			is_paid = @v_is_paid
-		WHERE id 
-			IN (SELECT id
-					FROM shills 
-					WHERE fk_user_id = @v_user_id
-						AND pay_tx_submit = TRUE
-						AND is_approved = TRUE
-						AND is_removed = FALSE
-						AND is_paid = FALSE);
+			is_paid = @v_is_paid;
 	RETURN p_pay_tx_status;
 END 
 $$ DELIMITER ;

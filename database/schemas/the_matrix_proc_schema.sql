@@ -972,7 +972,7 @@ BEGIN
 				p_tg_user_at as tg_user_at_inp;
 
 	-- fail: if user has not set a wallet address yet
-	ELSEIF NOT valid_wallet_set(tg_user_id, p_tg_user_at) THEN
+	ELSEIF NOT valid_wallet_set(@v_tg_user_id, p_tg_user_at) THEN
 		SELECT 'failed' as `status`, 
 				'no wallet address set' as info,
 				p_tg_user_at as tg_user_at_inp;
@@ -1050,13 +1050,17 @@ BEGIN
 
 		-- update user_earns entry (change usd_owed|paid accordingly; reset withdraw_requested)
 		SET @v_new_usd_paid = @v_curr_usd_paid + @v_curr_usd_owed;
-		SET @v_usd_paid_owed_diff = @v_curr_usd_owed - p_chain_usd_paid; -- should monitor ~= 0.0
-		UPDATE user_earns
-			SET dt_updated = NOW(),
-				usd_owed = 0.0,
-				usd_paid = @v_new_usd_paid,
-				withdraw_requested = FALSE
-			WHERE fk_user_id = @v_user_id;
+		SET @v_usd_paid_owed_diff = @v_curr_usd_owed - p_chain_usd_paid;
+
+		-- NOTE: do not update user_earns if tx failed (ie. p_chain_usd_paid == -1)
+		IF p_chain_usd_paid > 0 THEN
+			UPDATE user_earns
+				SET dt_updated = NOW(),
+					usd_owed = 0.0,
+					usd_paid = @v_new_usd_paid,
+					withdraw_requested = FALSE
+				WHERE fk_user_id = @v_user_id;
+		END IF;
 		
 		-- update tx data (w/ is_paid) for all shills that were submitted by @v_tg_user_id
 		SELECT set_usr_pay_usd_tx_status(@v_tg_user_id, p_pay_tx_hash, p_pay_tx_status, p_pay_to_wallet_addr, p_pay_tok_addr, p_pay_tok_symb) INTO @v_status;

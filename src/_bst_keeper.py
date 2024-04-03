@@ -78,14 +78,15 @@ def estimate_gas(contract, contract_args=[]):
 
 # note: params checked/set in priority order; 'def|max_params' uses 'mpf_ratio'
 #   if all params == False, falls back to 'min_params=True' (ie. just use 'gas_limit')
-def get_gas_params_lst(rpc_url, min_params=False, max_params=False, def_params=True):
+def get_gas_params_lst(rpc_url, min_params=False, max_params=False, def_params=True, _w3:_web3.myWEB3=None):
     global W3_
+    if _w3 == None: _w3 = W3_
     # Estimate the gas cost for the transaction
     #gas_estimate = buy_tx.estimate_gas()
-    gas_limit = W3_.GAS_LIMIT # max gas units to use for tx (required)
-    gas_price = W3_.GAS_PRICE # price to pay for each unit of gas (optional?)
-    max_fee = W3_.MAX_FEE # max fee per gas unit to pay (optional?)
-    max_prior_fee = W3_.MAX_PRIOR_FEE # max fee per gas unit to pay for priority (faster) (optional)
+    gas_limit = _w3.GAS_LIMIT # max gas units to use for tx (required)
+    gas_price = _w3.GAS_PRICE # price to pay for each unit of gas (optional?)
+    max_fee = _w3.MAX_FEE # max fee per gas unit to pay (optional?)
+    max_prior_fee = _w3.MAX_PRIOR_FEE # max fee per gas unit to pay for priority (faster) (optional)
     #max_priority_fee = W3.to_wei('0.000000003', 'ether')
 
     if min_params:
@@ -130,7 +131,7 @@ def write_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst
         'nonce': tx_nonce,
     }
     print('setting gas params in tx_params ...')
-    lst_gas_params = get_gas_params_lst(_w3.RPC_URL, min_params=False, max_params=True, def_params=True)
+    lst_gas_params = get_gas_params_lst(_w3.RPC_URL, min_params=False, max_params=True, def_params=True, _w3=_w3)
     for d in lst_gas_params: tx_params.update(d) # append gas params
 
     print('update tx_data w/ tx_params')
@@ -159,7 +160,7 @@ def write_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst
     tx_rc_print = pprint.PrettyPrinter().pformat(tx_receipt)
     print(cStrDivider_1, f'RECEIPT:\n {tx_rc_print}', sep='\n')
     print("\nTransaction mined!")
-    print(" return status="+tx_receipt['status'])
+    print(f" return status={tx_receipt['status']}")
     # tx_status = tx_receipt['status']
     # tx_hash = tx_receipt['logs'][0]['transactionHash']
     

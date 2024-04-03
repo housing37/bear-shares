@@ -45,13 +45,13 @@ class myWEB3:
         return tx_pool
         # return json.dumps(tx_pool, indent=4)
     
-    def init_nat(self, _chain_sel, _sender_addr, sender_secret):
+    def init_nat(self, _chain_sel, _sender_addr, sender_secret, default_gas=False):
         rpc_url, chain_id, chain_sel    = self.set_chain(_chain_sel)
         sender_address, sender_secret   = self.set_sender(_sender_addr, sender_secret)
         w3, account                     = self.init_web3()
 
         self.print_curr_chain_gas_price() # LEFT OFF HERE ...
-        self.set_default_gas_params(self, w3, _gas_limit=600_000, _fee_perc_markup=0.25)
+        if default_gas: self.set_gas_params(self, w3, _gas_limit=600_000, _fee_perc_markup=0.25)
         return self
     
     def init_inp(self, _set_gas=True):
@@ -135,7 +135,7 @@ class myWEB3:
         if with_sender: self.ACCOUNT = Account.from_key(self.SENDER_SECRET)
         return self.W3, self.ACCOUNT
     
-    def set_default_gas_params(self, w3, _gas_limit=600_000, _fee_perc_markup=0.25):
+    def set_gas_params(self, w3, _gas_limit=600_000, _fee_perc_markup=0.25):
         print(' setting default gas params ...')
         if int(self.CHAIN_SEL) == 0:
             self.GAS_LIMIT = 3_000_000
@@ -148,13 +148,13 @@ class myWEB3:
             self.GAS_PRICE = w3.to_wei('0.0005', 'ether') # 'gasPrice' param fails on PC
             self.GAS_LIMIT = _gas_limit
             # self.MAX_FEE = w3.to_wei('350_000', 'gwei')
-            self.MAX_FEE = wei + (wei * _fee_perc_markup) # dafaul to current gas price + 25%
+            self.MAX_FEE = int(wei + (wei * _fee_perc_markup)) # dafaul to current gas price + 25%
             self.MAX_PRIOR_FEE_RATIO = 1.0
             self.MAX_PRIOR_FEE = int(w3.eth.max_priority_fee * self.MAX_PRIOR_FEE_RATIO)
 
     def get_gas_settings(self, w3):
         print('\nGAS SETTINGS ...')
-        self.set_default_gas_params(w3)        
+        self.set_gas_params(w3)        
         sel_ans = '1'
         while sel_ans != '0':
             self.print_gas_params()

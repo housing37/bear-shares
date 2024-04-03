@@ -332,14 +332,30 @@ async def cmd_exe(update: Update, context, aux_cmd=False):
     else:
         d_resp = response_dict['PAYLOAD']['result_arr'][0]
         # [print(k, d_resp[k]) for k in d_resp.keys()]
-
+        d_txt_rates = { 
+                'htag':'🙏️️️️️️ a simple hashtag',
+                'short_txt':'👍️️ a few words',
+                'long_txt':'😉️️️️️️ a nice shill',
+                'img_meme':'😮️️️️️️ include a meme',
+                'short_vid':'😘️️️️️️ include a video',
+                'long_vid':'🤝️️️️️️ something really nice',
+                }
+        d_txt_rates_alt = { 
+                'pay_usd_hashtag':d_txt_rates['htag'],
+                'pay_usd_short_text':d_txt_rates['short_txt'],
+                'pay_usd_long_text':d_txt_rates['long_txt'],
+                'pay_usd_img_meme':d_txt_rates['img_meme'],
+                'pay_usd_short_vid':d_txt_rates['short_vid'],
+                'pay_usd_long_vid':d_txt_rates['long_vid'],
+                }
         # if tg_cmd == 'register_as_shiller':
         if tg_cmd == req_handler.kSHILLER_REG:
-            str_r = f"user: @{d_resp['tg_user_at']}\n wallet: {d_resp['wallet_address_inp']}\n twitter: @{d_resp['tw_user_at']}\n twitter_conf: {d_resp['tw_conf_url']}"
+            str_wallet = d_resp['wallet_address_inp'] if d_resp['wallet_address_inp'] != '0x0' else "add with -> '/trinity_set_wallet'"
+            str_r = f"user: @{d_resp['tg_user_at']}\n wallet: {str_wallet}\n twitter: @{d_resp['tw_user_at']}\n starting rates ..."
             lst_d_resp = response_dict['PAYLOAD']['result_arr']
             for d in lst_d_resp:
-                str_r = str_r + f"\n {d['platform']} pay_usd_{d['type_descr']}: {d['pay_usd']}"
-            await update.message.reply_text(f"Shiller Registration Successfull! ...\n {str_r}")
+                str_r = str_r + f"\n   {d_txt_rates[d['type_descr']]}: ${d['pay_usd']}"
+            await update.message.reply_text(f"Shiller Registration Successfull!\n {str_r}")
 
         # elif tg_cmd == 'confirm_twitter':
         elif tg_cmd == req_handler.kTWITTER_CONF:
@@ -364,8 +380,8 @@ async def cmd_exe(update: Update, context, aux_cmd=False):
         # elif tg_cmd == 'show_my_rates' or tg_cmd == 'admin_show_user_rates':   
         elif tg_cmd == req_handler.kSHOW_USR_RATES or tg_cmd == req_handler.kADMIN_SHOW_USR_RATES:
             ommit_ = ['status','info','user_id','tg_user_id_inp','platform_inp']
-            str_r = '\n '.join([str(k)+': '+str(round(float(d_resp[k]), 3)) for k in d_resp.keys() if str(k) not in ommit_])
-            await update.message.reply_text(f"Your current rates (per tweet) ...\n {str_r}")
+            str_r = '\n   '.join([str(d_txt_rates_alt[k])+':      $'+str(round(float(d_resp[k]), 3)) for k in d_resp.keys() if str(k) not in ommit_])
+            await update.message.reply_text(f"Your current rates (per tweet) ...\n   {str_r}")
 
         # elif tg_cmd == 'show_my_earnings' or tg_cmd == 'admin_show_user_earnings':
         elif tg_cmd == req_handler.kSHOW_USR_EARNS or tg_cmd == req_handler.kADMIN_SHOW_USR_EARNS:
