@@ -14,10 +14,13 @@ backup_file="$backup_dir/the_matrix_db_${dt}ET.sql"
 # SSH into the server and run the mysqldump command
 ssh -i "$ssh_pem_key" "$ssh_user@$ssh_host" \
     "mysqldump -u house -p -h 127.0.0.1 --databases the_matrix" > "$backup_file"
+# ssh -i "$ssh_pem_key" "$ssh_user@$ssh_host" \
+#     "mysqldump -u house -p --no-create-db -h 127.0.0.1 --databases the_matrix" > "$backup_file"
 
 # Check if the mysqldump command was successful
 if [ $? -eq 0 ]; then
     echo "MySQL dump completed successfully. Output saved to: $backup_file"
+    # echo "MySQL dump completed successfully (--no-create-db). Output saved to: $backup_file"
 else
     echo "Error: MySQL dump failed."
 fi
