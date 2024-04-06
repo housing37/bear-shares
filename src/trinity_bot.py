@@ -470,7 +470,7 @@ def valid_tweet_url(_tw_url):
 def used_bs_tweet_url(_keyVals):
     success, jsonResp, dbProcResult = req_handler.execute_db_proc(_keyVals, 'TW_URL_IS_USED')
     if success: return bool(dbProcResult[0]['is_used'])
-    else: True # db proc failes, return True (act shill already used)
+    else: True # db proc failes, return True (act like shill already used)
 
 async def attempt_aux_cmd_exe(update: Update, context):
     funcname = 'attempt_aux_cmd_exe'

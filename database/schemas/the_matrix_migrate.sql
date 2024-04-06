@@ -31,9 +31,6 @@ SELECT id, dt_created, dt_updated, dt_deleted, fk_user_id, usd_total, usd_owed, 
 FROM the_matrix.user_earns;
 
 -- Copy Old table Data to the Temporary Table
--- INSERT INTO the_matrix_2.shills (id, dt_created, dt_updated, dt_deleted, fk_user_id, post_url, post_id, post_uname, pay_usd, shill_plat, shill_type, is_approved, dt_updated_approve, is_paid, is_removed, dt_shill_removed, dt_tx_submit, dt_tx_status, pay_tx_submit, pay_tx_status, pay_tx_hash, pay_to_wallet_addr, pay_tok_chain_amnt, pay_tok_addr, pay_tok_symb, aux_tok_burn_addr)
--- SELECT id, dt_created, dt_updated, dt_deleted, fk_user_id, post_url, post_id, post_uname, pay_usd, shill_plat, shill_type, is_approved, dt_updated_approve, is_paid, is_removed, dt_shill_removed, dt_tx_submit, dt_tx_status, pay_tx_submit, pay_tx_status, pay_tx_hash, pay_to_wallet_addr, pay_tok_chain_amnt, pay_tok_addr, pay_tok_symb, aux_tok_burn_addr
--- FROM the_matrix.shills;
 INSERT INTO the_matrix_2.shills (id, dt_created, dt_updated, dt_deleted, fk_user_id, post_url, post_id, post_uname, pay_usd, shill_plat, shill_type, is_approved, dt_updated_approve, is_paid, is_removed, dt_shill_removed, dt_tx_submit, dt_tx_status, pay_tx_submit, pay_tx_hash, pay_tok_addr, pay_tok_symb)
 SELECT id, dt_created, dt_updated, dt_deleted, fk_user_id, post_url, post_id, post_uname, pay_usd, shill_plat, shill_type, is_approved, dt_updated_approve, is_paid, is_removed, dt_shill_removed, dt_tx_submit, dt_tx_status, pay_tx_submit, pay_tx_hash, pay_tok_addr, pay_tok_symb
 FROM the_matrix.shills;

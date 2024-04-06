@@ -281,8 +281,37 @@ DICT_CMD_EXE = {
 #=====================================================#
 #         request handler accessors/mutators          #
 #=====================================================#
-def exe_tg_cmd(_lst_inp, _use_prod_accts):
-    funcname = f'{__filename} exe_tg_cmd(_use_prod_accts={_use_prod_accts})'
+# '/bst/submit_shill_web' _ key_vals={tg_cmd_sim, tg_user_at, tweet_url}
+# '/bst/request_pay_web' _ key_vals={tg_cmd_sim, tg_user_at}
+# '/bst/shiller_info_web' _ key_vals={tg_cmd_sim, tg_user_at}
+def bst_web_request(request):
+    funcname = f'{__filename} bst_web_request'
+    print(funcname + ' - ENTER')
+
+    # parse request to get keVals to simulate call to 'exe_tg_cmd'
+    bErr, jsonResp, keyVals = parse_request(request, 'TRINITY_WEB_DAPP')
+    if bErr: return jsonResp # JSONResponse(...)
+
+    # exe db call to get tg_user_id to simulate call to 'exe_tg_cmd'
+    bErr, jsonResp, dbProcResult = execute_db_proc({'tg_user_at':keyVals['tg_user_at']}, 'GET_TG_USER_ID_WEB')
+    if bErr: return jsonResp # JSONResponse(...)
+    
+    # generate lst_inp to simulate call to 'exe_tg_cmd'
+    tg_cmd = str(keyVals['tg_cmd_sim'])
+    tg_user_id = dbProcResult[0]['tg_user_id']
+    lst_inp = [tg_cmd, tg_user_id]
+    lst_inp.extend([keyVals[k] for k in keyVals])    
+
+    # append edge case params for web request 'view my stuff'
+    #   NOTE: don't need to append anything for 'kSHOW_USR_EARNS'
+    if tg_cmd == kSHOW_USR_RATES: lst_inp.append('twitter') # platform=twitter
+    if tg_cmd == kADMIN_SHOW_USR_SHILLS: lst_inp.extend(['0','0']) # is_approved=False, is_removed=False
+
+    # NOTE: returns from 'handle_request'
+    return exe_tg_cmd(lst_inp, False, True) # True = coming from web-dapp
+
+def exe_tg_cmd(_lst_inp, _is_tg_prod_acct, _is_web_dapp=False):
+    funcname = f'{__filename} exe_tg_cmd(_is_tg_prod_acct={_is_tg_prod_acct}, _is_web_dapp={_is_web_dapp})'
     print(funcname+' - ENTER')
 
     # generate keyVals to pass as 'request' w/ 'tg_cmd!=None', to 'handle_request'
@@ -536,12 +565,14 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
                 if dbProcResult[0]['status'] == 'failed': errMsg = dbProcResult[0]['info']
                 else: errMsg = None
                 bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=VERBOSE_LOG, errMsg=errMsg) # errMsg != None: force fail from db
+
         else:
             dbProcResult=-1
             bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=True)
     else:
+        # NOTE: current http request integration is delgated through 'exe_tg_cmd'
         print('HIT - http request integration')
-        pass # http request integration
+        pass 
     
     return bErr, jsonResp, dbProcResult
 
@@ -578,7 +609,8 @@ def validate_params(keyVals, req_handler_key, tg_cmd=None):
         else:
             return False
     else:
-        pass # http request integration
+        # http request integration
+        return req_handler_key == 'TRINITY_WEB_DAPP'
     return False
 
 #=====================================================#

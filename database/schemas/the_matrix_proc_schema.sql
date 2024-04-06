@@ -41,6 +41,29 @@
 -- END 
 -- $$ DELIMITER ;
 
+DELIMITER $$
+DROP PROCEDURE IF EXISTS GET_TG_USER_ID_WEB;
+CREATE PROCEDURE `GET_TG_USER_ID_WEB`(
+	IN p_tg_user_at VARCHAR(40))
+BEGIN
+	-- fail: if tg_user_at doesn't exist
+	IF NOT valid_tg_user_at(p_tg_user_at) THEN
+		SELECT 'failed' as `status`, 
+				'user does not exists' as info, 
+				p_tg_user_at as tg_user_at_inp;
+	ELSE
+		-- get support requirements
+		SELECT id FROM users WHERE tg_user_at = p_tg_user_at INTO @v_user_id;
+		SELECT tg_user_id FROM users WHERE id = @v_user_id INTO @v_tg_user_id;
+		SELECT 'success' as `status`, 
+				'found user id for user at' as info, 
+				@v_user_id as user_id,
+				@v_tg_user_id as tg_user_id,
+				p_tg_user_at as tg_user_at_inp;
+	END IF;
+END 
+$$ DELIMITER ;
+
 -- # '/set_wallet'
 -- LST_KEYS_SET_WALLET = ['user_id','user_at','wallet_address']
 -- DB_PROC_SET_WALLET = 'SET_WALLET_ADDR'
@@ -295,34 +318,6 @@ BEGIN
 END
 $$ DELIMITER ;
 
--- # '/submit_shill_web'
--- LST_KEYS_SUBMIT_SHILL_WEB = ['user_at','post_url']
--- DB_PROC_ADD_SHILL_WEB = 'ADD_USER_SHILL_TW_WEB'
-DELIMITER $$
-DROP PROCEDURE IF EXISTS ADD_USER_SHILL_TW_WEB;
-CREATE PROCEDURE `ADD_USER_SHILL_TW_WEB`(
-    -- IN p_tg_user_id VARCHAR(40),
-	IN p_tg_user_at VARCHAR(40),
-    IN p_post_url VARCHAR(1024),
-	IN p_post_id VARCHAR(255),
-	IN p_post_uname VARCHAR(255))
-BEGIN
-	-- fail: if tg_user_at doesn't exist
-	IF NOT valid_tg_user_at(p_tg_user_at) THEN
-		SELECT 'failed' as `status`, 
-				'user does not exists' as info, 
-				p_tg_user_at as tg_user_at_inp;
-	ELSE
-		-- get support requirements
-		SELECT id FROM users WHERE tg_user_at = p_tg_user_at INTO @v_user_id;
-		SELECT tg_user_id FROM users WHERE id = @v_user_id INTO @v_tg_user_id;
-
-		-- invoke 'ADD_USER_SHILL_TW' normally with retreived '@v_tg_user_id'
-		CALL ADD_USER_SHILL_TW(@v_tg_user_id, p_tg_user_at, p_post_url, p_post_id, p_post_uname);
-	END IF;
-END 
-$$ DELIMITER ;
-
 -- # '/submit_shill'
 -- LST_KEYS_SUBMIT_SHILL = ['user_id','user_at','post_url']
 -- DB_PROC_ADD_SHILL = 'ADD_USER_SHILL_TW'
@@ -393,31 +388,6 @@ BEGIN
 			INNER JOIN users u
 				ON s.fk_user_id = u.id
 			WHERE s.id = @new_shill_id;
-	END IF;
-END 
-$$ DELIMITER ;
-
--- # '/request_cashout_web'
--- LST_KEYS_REQUEST_CASHOUT_WEB = ['user_at']
--- DB_PROC_REQUEST_CASHOUT_WEB = 'SET_USER_WITHDRAW_REQUESTED_WEB'
-DELIMITER $$
-DROP PROCEDURE IF EXISTS SET_USER_WITHDRAW_REQUESTED_WEB;
-CREATE PROCEDURE `SET_USER_WITHDRAW_REQUESTED_WEB`(
-    -- IN p_tg_user_id VARCHAR(40),
-	IN p_tg_user_at VARCHAR(40))
-BEGIN
-	-- fail: if tg_user_at doesn't exist
-	IF NOT valid_tg_user_at(p_tg_user_at) THEN
-		SELECT 'failed' as `status`, 
-				'user does not exists' as info, 
-				p_tg_user_at as tg_user_at_inp;
-	ELSE
-		-- get support requirements
-		SELECT id FROM users WHERE tg_user_at = p_tg_user_at INTO @v_user_id;
-		SELECT tg_user_id FROM users WHERE id = @v_user_id INTO @v_tg_user_id;
-
-		-- invoke 'SET_USER_WITHDRAW_REQUESTED' normally with retreived '@v_tg_user_id'
-		CALL SET_USER_WITHDRAW_REQUESTED(@v_tg_user_id, p_tg_user_at);
 	END IF;
 END 
 $$ DELIMITER ;
