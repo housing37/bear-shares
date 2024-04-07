@@ -61,7 +61,7 @@ Test out our new AI bots ...
 Contact ... 
     TG: t.me/BearShares
     Web: bearshares.vercel.app
-    Twitter: @BearSharesNFT
+    Twitter: @BearSharesX
 '''
 
 print('TOKEN: '+TOKEN)

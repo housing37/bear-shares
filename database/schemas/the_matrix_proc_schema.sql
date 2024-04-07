@@ -123,7 +123,7 @@ $$ DELIMITER ;
 -- # '/register_as_shiller'
 -- LST_KEYS_REG_SHILLER = ['user_id','user_at','user_handle','wallet_address','trinity_tw_url']
 -- DB_PROC_ADD_NEW_USER = 'ADD_NEW_TG_USER'
--- # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
+-- # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesX' & 'trinity' & 'register'
 DELIMITER $$
 DROP PROCEDURE IF EXISTS ADD_NEW_TG_USER;
 CREATE PROCEDURE `ADD_NEW_TG_USER`(
@@ -249,7 +249,7 @@ $$ DELIMITER ;
 -- # '/confirm_twitter'
 -- LST_KEYS_TW_CONF = ['user_id','user_at','trinity_tw_url']
 -- DB_PROC_RENEW_TW_CONFRIM = 'UPDATE_TWITTER_CONF'
--- # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
+-- # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesX' & 'trinity' & 'register
 DELIMITER $$
 DROP PROCEDURE IF EXISTS UPDATE_TWITTER_CONF;
 CREATE PROCEDURE `UPDATE_TWITTER_CONF`(

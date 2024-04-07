@@ -139,7 +139,7 @@ def set_twitter_auth_keys():
     ACCESS_TOKEN = env.ACCESS_TOKEN_0
     ACCESS_TOKEN_SECRET = env.ACCESS_TOKEN_SECRET_0
     if USE_PROD:
-        # @BearSharesNFT
+        # @BearSharesX
         CONSUMER_KEY = env.CONSUMER_KEY_1
         CONSUMER_SECRET = env.CONSUMER_SECRET_1
         ACCESS_TOKEN = env.ACCESS_TOKEN_1

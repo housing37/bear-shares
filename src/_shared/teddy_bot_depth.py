@@ -66,7 +66,7 @@ def set_twitter_auth_keys():
     ACCESS_TOKEN = 'from_twitter_dev_account'
     ACCESS_TOKEN_SECRET = 'from_twitter_dev_account'
     if USE_PROD:
-        # @BearSharesNFT
+        # @BearSharesX
         CONSUMER_KEY = 'from_twitter_dev_account'
         CONSUMER_SECRET = 'from_twitter_dev_account'
         ACCESS_TOKEN = 'from_twitter_dev_account'

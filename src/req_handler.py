@@ -43,7 +43,7 @@ VERBOSE_LOG = False
 WEB_DRIVER_WAIT_SEC = 30 # num sec to wait for html render
 WEB_DRIVER_WAIT_CNT = 6 # num of tries to wait and find 'X:' in each html rendered
 WEB_DRIVE_WAIT_SLEEP_SEC = 0.1 # sleep sec before next web driver wait attempt
-LST_IGNORE_TWITTER_AT = ['BearSharesNFT']
+LST_IGNORE_TWITTER_AT = ['BearSharesX']
 
 # twitter access globals
 CONSUMER_KEY = 'nil_tw_key'
@@ -87,27 +87,27 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 # '/trinity_register_as_shiller'
 kSHILLER_REG = "trinity_register_as_shiller"
 LST_CMD_REG_USER = ['<wallet_address>', '<tweet_url>']
-STR_ERR_REG_USER = f'Please tweet "@BearSharesNFT trinity" 👍️️️️️️\n Then use that link to register with cmd:\n /{kSHILLER_REG} {" ".join(LST_CMD_REG_USER)}'
+STR_ERR_REG_USER = f'Please tweet "@BearSharesX #Trinity register" 👍️️️️️️\n Then use that link to register with cmd:\n /{kSHILLER_REG} {" ".join(LST_CMD_REG_USER)}'
 LST_KEYS_REG_USER_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_ADD_NEW_USER = 'ADD_NEW_TG_USER'
 LST_KEYS_REG_USER = ['user_id','user_at','user_handle','wallet_address','trinity_tw_url']
 # LST_KEYS_REG_USER = ['user_id','user_at','user_handle','wallet_address','trinity_tw_url','trinity_tw_id','tw_user_at']
-    # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
+    # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesX' & 'trinity'
 
 # '/trinity_confirm_twitter'
 kTWITTER_CONF = "trinity_confirm_twitter"
 LST_CMD_TW_CONF = ['<tweet_url>']
-STR_ERR_TW_CONF = f'To keep your registration up-to-date, please tweet "@BearSharesNFT trinity" once a week 👍️️️️️️\n Then use that link to confirm your twitter with cmd:\n /{kTWITTER_CONF} {" ".join(LST_CMD_TW_CONF)}'
+STR_ERR_TW_CONF = f'To keep your registration up-to-date, please tweet "@BearSharesX #Trinity register" once a week 👍️️️️️️\n Then use that link to confirm your twitter with cmd:\n /{kTWITTER_CONF} {" ".join(LST_CMD_TW_CONF)}'
 LST_KEYS_TW_CONF_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_RENEW_TW_CONFRIM = 'UPDATE_TWITTER_CONF'
 LST_KEYS_TW_CONF = ['user_id','user_at','trinity_tw_url']
 # LST_KEYS_TW_CONF = ['user_id','user_at','trinity_tw_url','trinity_tw_id','tw_user_at']
-    # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesNFT' & 'trinity'
+    # PRE-DB: validate 'trinity_tw_url' contains texts '@BearSharesX' & 'trinity'
 
 # '/trinity_submit_shill'
 kSUBMIT_SHILL = "trinity_submit_shill"
 LST_CMD_SUBMIT_SHILL = ['<tweet_url>']
-STR_ERR_SUBMIT_SHILL = f'Please submit your shill using the cmd:\n /{kSUBMIT_SHILL} {" ".join(LST_CMD_SUBMIT_SHILL)}\n tweets must at least contain "@BearSharesNFT" to be credited'
+STR_ERR_SUBMIT_SHILL = f'Please submit your shill using the cmd:\n /{kSUBMIT_SHILL} {" ".join(LST_CMD_SUBMIT_SHILL)}\n tweets must at least contain "@BearSharesX" to be credited'
 LST_KEYS_SUBMIT_SHILL_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_ADD_SHILL = 'ADD_USER_SHILL_TW'
 LST_KEYS_SUBMIT_SHILL = ['user_id','user_at','post_url']
@@ -383,7 +383,7 @@ def parse_request(request, req_handler_key, tg_cmd=None): # (1)
                     return bErr, jsonResp, None # JSONResponse(...)
 
                 # check if tweet url contains text list
-                success, msg = valid_trinity_tweet(keyVals['trinity_tw_url'], ['@BearSharesNFT', 'Trinity'])
+                success, msg = valid_trinity_tweet(keyVals['trinity_tw_url'], ['@BearSharesX', 'Trinity','register'])
                 if not success:
                     bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=VERBOSE_LOG, errMsg='invalid tweet confirmation / '+msg) # False = force fail
                     return bErr, jsonResp, None # dbProcResult
@@ -396,7 +396,7 @@ def parse_request(request, req_handler_key, tg_cmd=None): # (1)
                     return bErr, jsonResp, None # JSONResponse(...)
 
                 # check if tweet url contains text list
-                success, msg = valid_trinity_tweet(keyVals['post_url'], ['@BearSharesNFT'])
+                success, msg = valid_trinity_tweet(keyVals['post_url'], ['@BearSharesX'])
                 if not success:
                     bErr, jsonResp = prepJsonResponseValidParams(keyVals, False, tprint=VERBOSE_LOG, errMsg='invalid shill, '+msg) # False = force fail
                     return bErr, jsonResp, None # dbProcResult

@@ -44,17 +44,18 @@ DISABLE_TG_HANDLES = True
 
 TRINITY_INFO = '''
 Hello! I am Trinity! 
-It's time to start claiming your free air-drop!
+Welcome to $BST (BearSharesTrinity token)!
+DM: @bs_trinity_bot for more privacy 👍️️️️️️
 
 $BST is a PRC20 token that pays you to tweet.. it's as simple as that 🤷️️️️
 $BST is redeambale 1:1 for USD stable on our web dapp
 
-* CLAIM AIR-DROP *
-Follow these 2 simple steps to start claiming ...
-1) register by tweeting "@BearSharesNFT trinity"
+* START GETTING PAID *
+Follow these 2 simple steps to start earning ...
+1) register by tweeting "@BearSharesX #Trinity register"
     - then simply paste that tweet's link into this TG chat
 
-2) earn $BST by tweeting anything you want w/ "@BearSharesNFT" included
+2) earn $BST by tweeting anything you want w/ "@BearSharesX" included
     - then simply paste that tweet's link into this TG chat
 
 Then to view your earnings & request $BST cashout ...
@@ -501,8 +502,8 @@ async def attempt_aux_cmd_exe(update: Update, context):
             tweet_is_used = used_bs_tweet_url(keyVals) # db check for used reg or shill
             print(f'tweet_is_used: {tweet_is_used}')
             if not tweet_is_used:
-                valid_shill, msg = req_handler.valid_trinity_tweet(str_, ['@BearSharesNFT']) # net request
-                valid_reg, msg = req_handler.valid_trinity_tweet(str_, ['@BearSharesNFT', 'Trinity']) # net request
+                valid_shill, msg = req_handler.valid_trinity_tweet(str_, ['@BearSharesX']) # net request
+                valid_reg, msg = req_handler.valid_trinity_tweet(str_, ['@BearSharesX', 'Trinity', 'register']) # net request
                 print(f'valid_shill: {valid_shill}')
                 if valid_shill:
                     aux_inp_split = ['/'+req_handler.kSUBMIT_SHILL, uid, uname_at, str_]
@@ -514,6 +515,8 @@ async def attempt_aux_cmd_exe(update: Update, context):
                     aux_inp_split = ['/'+req_handler.kSHILLER_REG, uid, uname_at, uname_handle, '0x0', str_]
                     context.user_data['inp_split'] = list(aux_inp_split)
                     await cmd_exe(update, context, aux_cmd=True)
+                print(f'valid_shill: {valid_shill}')
+                print(f'valid_reg: {valid_reg}')
 
     print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
 
@@ -662,7 +665,7 @@ print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
 
 
 # @BearSharesNFT ...
-# https://twitter.com/BearSharesNFT/status/1769436246084919550?s=19 # only '@BearSharesNFT'
+# https://twitter.com/BearSharesX/status/1769436246084919550?s=19 # only '@BearSharesNFT'
 
 # @SolAudits ...
 # ex tweet_conf (fails): https://x.com/SolAudits/status/1765925371851972744?s=20 # only '@BearSharesNFT'

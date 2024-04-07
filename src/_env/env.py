@@ -59,7 +59,7 @@ CONSUMER_SECRET_0 = os.environ['CONSUMER_SECRET_0']
 ACCESS_TOKEN_0 = os.environ['ACCESS_TOKEN_0']
 ACCESS_TOKEN_SECRET_0 = os.environ['ACCESS_TOKEN_SECRET_0']
 
-# twitter support @BearSharesNFT
+# twitter support @BearSharesX
 CONSUMER_KEY_1 = os.environ['CONSUMER_KEY_1']
 CONSUMER_SECRET_1 = os.environ['CONSUMER_SECRET_1']
 ACCESS_TOKEN_1 = os.environ['ACCESS_TOKEN_1']
