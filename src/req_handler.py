@@ -656,8 +656,15 @@ def parse_twitter_url(_keyVals, _key):
     # parse twitter @username & tweet id (note: 'https' required, else fails)
     #   ex: https://x.com/SolAudits/status/1765925225844089300?s=20
     tw_url = _keyVals[_key]
-    valid_uri = '?' in tw_url and tw_url.startswith('https://')
+    # valid_uri = '?' in tw_url and tw_url.startswith('https://')
+    valid_uri = tw_url.startswith('https://')
     if not valid_uri: return _keyVals, False # check for no slash ('/') in url
+
+    # append '?s=20' if needed
+    #   for some reason 'search_tweet_for_text' fails w/o it
+    #    while users are indeed submitting tweets w/o it
+    if '?' not in tw_url: tw_url += '?s=20' 
+
     lst_items = tw_url.split('/')
     valid_dom = 'x.com' in lst_items[2] or 'twitter.com' in lst_items[2]
     if not valid_dom: return _keyVals, False

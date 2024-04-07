@@ -39,7 +39,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '35.1';
+    string public tVERSION = '36';
     string private tok_symb = string(abi.encodePacked("tBST", tVERSION));
     string private tok_name = string(abi.encodePacked("tTrinity_", tVERSION));
     // string private constant tok_symb = "BST";
@@ -196,7 +196,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         PERC_BUY_BACK_FEE = _perc;
         emit TradeInFeePercUpdated(prev, PERC_BUY_BACK_FEE);
     }
-    function KEEPER_enableDexOptions(bool _marketQuote, bool _marketBuy, bool _auxTokenBurn) external onlyKeeper() {
+    function KEEPER_setDexOptions(bool _marketQuote, bool _marketBuy, bool _auxTokenBurn) external onlyKeeper() {
         // NOTE: some functions still indeed get quotes from dexes without this being enabled
         // require(_marketQuote || (!_marketBuy && !_auxTokenBurn), ' invalid input combo :{=} ');
         require(_marketQuote || (!_marketBuy), ' invalid input combo :{=} ');
@@ -293,7 +293,7 @@ contract BearSharesTrinity is ERC20, Ownable {
 
     // handle account payouts
     //  NOTE: _usdValue must be in uint precision to address(this) 'decimals()'
-    function payOutBST(uint64 _usdValue, address _payTo, address _auxToken) external {
+    function payOutBST(uint64 _usdValue, address _payTo, address _auxToken, bool _selAuxPay) external {
         // NOTE: payOutBST runs a total of 7 loops embedded
         //  invokes _getStableTokenHighMarketValue -> _best_swap_v2_router_idx_quote
         //  invokes _getTokMarketValueForUsdAmnt -> _best_swap_v2_router_idx_quote
@@ -365,12 +365,12 @@ contract BearSharesTrinity is ERC20, Ownable {
         usd_tok_burn_path[0] = lowStableHeld;
         usd_tok_burn_path[1] = TOK_WPLS;
         usd_tok_burn_path[2] = address(this);
-        uint64 usdBurnValTot = _exeTokBuyBurn(usdBurnVal, usd_tok_burn_path);
+        uint64 usdBurnValTot = _exeTokBuyBurn(usdBurnVal, usd_tok_burn_path, _selAuxPay, _payTo);
 
         // exe burn w/ USD->auxToken swap path (go through WPLS required)
         //  NOTE: auxToken_ 'may be' BST address(this)
         usd_tok_burn_path[2] = auxToken_;
-        usdBurnValTot += _exeTokBuyBurn(usdAuxBurnVal, usd_tok_burn_path);
+        usdBurnValTot += _exeTokBuyBurn(usdAuxBurnVal, usd_tok_burn_path, _selAuxPay, _payTo);
             
         // update account balance, ACCT_USD_BALANCES stores uint precision to decimals()
         ACCT_USD_BALANCES[msg.sender] -= _usdValue; // _usdValue 'require' check above
@@ -461,7 +461,7 @@ contract BearSharesTrinity is ERC20, Ownable {
             _mint(_payTo, _bstPayout); // mint bst payout
         }
     }
-    function _exeTokBuyBurn(uint64 _usdBurnVal, address[] memory _usdSwapPath) private returns (uint64) {
+    function _exeTokBuyBurn(uint64 _usdBurnVal, address[] memory _usdSwapPath, bool _selAuxPay, address _auxPayTo) private returns (uint64) {
         address usdStable = _usdSwapPath[0];
         address burnToken = _usdSwapPath[_usdSwapPath.length-1];
             // NOTE: burnToken should never be 0x0, since payOutBST defaults it to BST address(this)
@@ -485,7 +485,8 @@ contract BearSharesTrinity is ERC20, Ownable {
             if (isBstBurn)
                 _burn(address(this), burn_tok_amnt_out);
             else
-                IERC20(burnToken).transfer(BURN_ADDR, burn_tok_amnt_out);
+                if (_selAuxPay) IERC20(burnToken).transfer(_auxPayTo, burn_tok_amnt_out);
+                else IERC20(burnToken).transfer(BURN_ADDR, burn_tok_amnt_out);
             emit BuyAndBurnExecuted(burnToken, burn_tok_amnt_out);
             return _usdBurnVal;
         }

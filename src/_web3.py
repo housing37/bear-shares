@@ -152,13 +152,13 @@ class myWEB3:
             self.MAX_PRIOR_FEE_RATIO = 1.0
             self.MAX_PRIOR_FEE = int(w3.eth.max_priority_fee * self.MAX_PRIOR_FEE_RATIO)
         self.print_gas_params()
-        
+
     def get_gas_settings(self, w3):
         print('\nGAS SETTINGS ...')
         self.set_gas_params(w3)        
         sel_ans = '1'
         while sel_ans != '0':
-            self.print_gas_params()
+            # self.print_gas_params()
             sel_ans = input("\n Verifiy Gas Settings:\n  0 = use current params\n  1 = set new params (format: xxxx | x_xxx)\n  > ")
             if sel_ans == '1':
                 self.GAS_LIMIT = int(input("\n Enter GAS_LIMIT (max gas units):\n  > "))
