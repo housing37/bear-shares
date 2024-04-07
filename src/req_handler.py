@@ -72,7 +72,7 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 # admin_list_all_pend_shills - no_params
 # admin_approve_pend_shill - <tg_user_at> <shill_id>
 # admin_view_shill_status - <tg_user_at> <shill_id> <shill_url>
-# admin_pay_shill_rewards - WORKING
+# admin_pay_shill_rewards - <tg_user_at>
 # admin_log_removed_shill - <tg_user_at> <shill_id>
 # admin_scan_web_for_dead_shills - pending
 # admin_set_shiller_rates - pending

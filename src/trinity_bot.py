@@ -43,12 +43,13 @@ USE_ALT_ACCT = False # True = alt user 'LAO Pirates'
 DISABLE_TG_HANDLES = True 
 
 TRINITY_INFO = '''
-Hello! I am Trinity! 
-Welcome to $BST (BearSharesTrinity token)!
-DM: @bs_trinity_bot for more privacy 👍️️️️️️
+Hello! I am Trinity! I pay you to tweet!
+(DM me @bs_trinity_bot for more privacy 👍️️️️️️)
 
+Welcome to $BST (BearSharesTrinity Token)!
 $BST is a PRC20 token that pays you to tweet.. it's as simple as that 🤷️️️️
 $BST is redeambale 1:1 for USD stable on our web dapp
+Web-Dapp: bearshares.vercel.app/trinity.html
 
 * START GETTING PAID *
 Follow these 2 simple steps to start earning ...
@@ -58,7 +59,7 @@ Follow these 2 simple steps to start earning ...
 2) earn $BST by tweeting anything you want w/ "@BearSharesX" included
     - then simply paste that tweet's link into this TG chat
 
-Then to view your earnings & request $BST cashout ...
+To view your earnings & request $BST cashout ...
     CMD: /trinity_show_my_earnings
     CMD: /trinity_request_cashout
     CMD: /trinity_set_wallet
@@ -68,7 +69,7 @@ NOTE: Better-Pays-More (earn more for memes, videos, etc.)
     - your pay rates increase as your tweets get better
         CMD: /trinity_show_my_rates
 
-Questions: @WhiteRabbit0x0 or @Housing37
+Questions: @housing37
 
 GLHF!
 '''
@@ -351,7 +352,14 @@ async def cmd_exe(update: Update, context, aux_cmd=False):
                 }
         # if tg_cmd == 'register_as_shiller':
         if tg_cmd == req_handler.kSHILLER_REG:
-            str_wallet = d_resp['wallet_address_inp'] if d_resp['wallet_address_inp'] != '0x0' else "add with -> '/trinity_set_wallet'"
+            # str_wallet = d_resp['wallet_address_inp'] if d_resp['wallet_address_inp'] != '0x0' else "add with -> '/trinity_set_wallet'"
+
+            # obfuscate wallet_address
+            str_wallet = d_resp['wallet_address_inp']
+            if len(str_wallet) > 15:
+                str_wallet = str_wallet[:6] + 'xxxxxx' + str_wallet[-4:]
+            elif str_wallet == '0x0':
+                str_wallet = "add with -> '/trinity_set_wallet'"
             str_r = f"user: @{d_resp['tg_user_at']}\n wallet: {str_wallet}\n twitter: @{d_resp['tw_user_at']}\n starting rates ..."
             lst_d_resp = response_dict['PAYLOAD']['result_arr']
             for d in lst_d_resp:
@@ -370,6 +378,14 @@ async def cmd_exe(update: Update, context, aux_cmd=False):
         elif tg_cmd == req_handler.kREQUEST_CASHOUT:
             lst_resp_arr = response_dict['PAYLOAD']['result_arr']
             lst_admin_tg_at = [f"@{r['tg_user_at']}" for r in lst_resp_arr if r['is_admin'] or r['is_admin_pay']]
+
+            # obfuscate wallet_address
+            for r in lst_resp_arr:
+                str_wallet = r['wallet_address']
+                if len(str_wallet) > 15:
+                    str_wallet = str_wallet[:6] + 'xxxxxx' + str_wallet[-4:]
+                r['wallet_address'] = str_wallet
+
             if len(lst_resp_arr) == 1: # admin invoked '/request_cashout'
                 lst_user_tg_at = [f"User(TG): @{r['tg_user_at']}\n Twitter: @{r['tw_user_at']}\n usd_amnt: {r['usd_owed']}\n wallet: {r['wallet_address']}" for r in lst_resp_arr]
             else: # non-admin invoked '/request_cashout'
@@ -386,7 +402,7 @@ async def cmd_exe(update: Update, context, aux_cmd=False):
 
         # elif tg_cmd == 'show_my_earnings' or tg_cmd == 'admin_show_user_earnings':
         elif tg_cmd == req_handler.kSHOW_USR_EARNS or tg_cmd == req_handler.kADMIN_SHOW_USR_EARNS:
-            inc_ = ['usd_total','usd_paid','usd_owed','wallet_address','withdraw_requested']
+            inc_ = ['usd_total','usd_paid','usd_owed','withdraw_requested']
             str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
             await update.message.reply_text(f"Your current earnings ...\n {str_r}")
 
@@ -450,8 +466,15 @@ async def cmd_exe(update: Update, context, aux_cmd=False):
             await update.callback_query.message.reply_text(f"Remove set for shill id: {shill_id} ...\n {str_r}")
 
         elif tg_cmd == req_handler.kSET_WALLET:
-            inc_ = ['wallet_address','info']
-            str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
+            # inc_ = ['wallet_address','info']
+            # str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
+
+            # obfuscate wallet_address
+            str_wallet = d_resp['wallet_address']
+            str_info = d_resp['info']
+            if str_wallet != '0x0' and len(str_wallet) > 15:
+                str_wallet = str_wallet[:6] + 'xxxxxx' + str_wallet[-4:]
+            str_r = f'\n {str_wallet}\n {str_info}'
             await update.message.reply_text(f"Set cashout wallet ...\n {str_r}")
 
         elif tg_cmd == req_handler.kADMIN_PAY_SHILL_EARNS:

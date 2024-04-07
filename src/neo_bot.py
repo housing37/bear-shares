@@ -42,11 +42,11 @@ OPENAI_API_KEY = env.OPENAI_KEY
 NEO_BS_WELCOME = '''
 WELCOME to BearShares!
 
-Time to claim your free air-drops!
-For more info, use command: "/trinity"
-
 We are actively launching our first product!
-$BST - BearSharesTrinity
+$BST - BearSharesTrinity Token
+
+For more info, use command: "/trinity"
+Or visit: bearshares.vercel.app/trinity.html
 
 What is BearShares?
  - Get paid to Tweet!
@@ -58,10 +58,8 @@ Test out our new AI bots ...
     /morpheus - learn about claiming memes
     /neo - talk to 'the one'
 
-Contact ... 
-    TG: t.me/BearShares
-    Web: bearshares.vercel.app
-    Twitter: @BearSharesX
+Twitter: @BearSharesX
+Web: bearshares.vercel.app
 '''
 
 print('TOKEN: '+TOKEN)
