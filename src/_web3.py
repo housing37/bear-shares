@@ -164,7 +164,7 @@ class myWEB3:
                 self.GAS_LIMIT = int(input("\n Enter GAS_LIMIT (max gas units):\n  > "))
                 inp_fee = input("\n Enter MAX_FEE (max price per unit in gwei|beat):\n  > ")
                 self.MAX_FEE = w3.to_wei(inp_fee, 'gwei')
-        self.print_gas_params()
+            self.print_gas_params()
 
         return self.GAS_LIMIT, self.GAS_PRICE, self.MAX_FEE, self.MAX_PRIOR_FEE_RATIO, self.MAX_PRIOR_FEE
     

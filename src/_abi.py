@@ -38,7 +38,8 @@ BST_FUNC_MAP_READ = {
     "tVERSION()": ["9a60f330", [], ['string']],
     "totalSupply()": ["18160ddd", [], ['uint256']],
 }
-BST_PAYOUT_FUNC_SIGN = "payOutBST(uint64,address,address)"
+BST_PAYOUT_FUNC_SIGN = "payOutBST(uint64,address,address,bool)"
+BST_PAYOUT_FUNC_HASH = '5c1b4b51'
 BST_FUNC_MAP_WRITE = {
     # write functions
     "KEEPER_maintenance(uint64,address)": ["3015d747", ["uint64","address"], []], # gas used: 62,434
@@ -50,12 +51,12 @@ BST_FUNC_MAP_WRITE = {
     "KEEPER_editDexRouters(address,bool)": ["bceeba33", ["address","bool"], []], # gas used: 36,601 (rem), 55,723 (add)
     "KEEPER_editWhitelistStables(address,uint8,bool)": ["b290b9bf", ["address","uint8","bool"], []],
     "KEEPER_setUsdBstPath(address,address[])": ["4f51d029", ['address','address[]'], []], # gas used: 38,852
-    "KEEPER_enableDexOptions(bool,bool,bool)": ["ffc9f2fd", ["bool","bool","bool"], []], # gas used: 7.731
+    "KEEPER_setDexOptions(bool,bool,bool)": ["80143a0d", ["bool","bool","bool"], []], # gas used: 7.731
 
     "KEEPER_setPayoutPercs(uint32,uint32,uint32)": ["c0e202fa", ["uint32","uint32","uint32"], []], # gas used: 30,082
     "KEEPER_setBuyBackFeePerc(uint32)": ["57e8a5a5", ["uint32"], []], # gas used: 28,887
 
-    BST_PAYOUT_FUNC_SIGN: ["09f5c380", ["uint64","address","address"], []], # gas used: 700,000+
+    BST_PAYOUT_FUNC_SIGN: [BST_PAYOUT_FUNC_HASH, ["uint64","address","address","bool"], []], # gas used: 700,000+
     "tradeInBST(uint64)": ["d8785767", ["uint64"], []], # gas used: 126,956+
 
     "burn(uint64)": ["9dbead42", ["uint64"], []], 
