@@ -211,12 +211,12 @@ BEGIN
 		SELECT add_default_user_earns(@new_usr_id) INTO @new_earns_id;
 
 		-- set default rates for new user
-		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'htag', 0.005) INTO @v_rate_id; -- tw, hashtag, .5c
-		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'short_txt', 0.01) INTO @v_rate_id; -- tw, short_txt, 1c
-		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'long_txt', 0.05) INTO @v_rate_id; -- tw, long_txt, 5c
-		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'img_meme', 0.25) INTO @v_rate_id; -- tw, meme/img, 25c
-		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'short_vid', 0.50) INTO @v_rate_id; -- tw, short_vid, 50c
-		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'long_vid', 1.00) INTO @v_rate_id; -- tw, long_vid, 100c
+		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'level_0', 0.5) INTO @v_rate_id; -- tw, hashtag, .5c
+		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'level_1', 1.00) INTO @v_rate_id; -- tw, short_txt, 1c
+		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'level_2', 2.00) INTO @v_rate_id; -- tw, long_txt, 5c
+		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'level_3', 5.00) INTO @v_rate_id; -- tw, meme/img, 25c
+		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'level_4', 10.00) INTO @v_rate_id; -- tw, short_vid, 50c
+		SELECT add_user_shill_rate(@new_usr_id, 'twitter', 'level_5', 25.00) INTO @v_rate_id; -- tw, long_vid, 100c
 		-- SELECT add_user_shill_rate(@new_usr_id, 0, 0, 0.005); -- tw, hashtag, .5c
 		-- SELECT add_user_shill_rate(@new_usr_id, 0, 1, 0.01); -- tw, short_txt, 1c
 		-- SELECT add_user_shill_rate(@new_usr_id, 0, 2, 0.05); -- tw, long_txt, 5c
@@ -418,8 +418,8 @@ BEGIN
 				p_tg_user_at as tg_user_at_inp;
 				
 	ELSE
-		-- SET @v_usd_min = 1.00;
-		SET @v_usd_min = 0.25;
+		SET @v_usd_min = 1.00;
+		-- SET @v_usd_min = 0.25;
 		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
 		SELECT usd_owed FROM user_earns WHERE fk_user_id = @v_user_id INTO @v_usd_owed;
 
@@ -504,12 +504,12 @@ BEGIN
 	ELSE
 		-- get latest 'p_platform' rates for tg_user_id (note: 'ORDER BY id DESC LIMIT 1')
 		SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
-		SELECT get_usr_pay_rate(@v_user_id, p_platform, 'htag') INTO @v_pay_usd_htag;		
-		SELECT get_usr_pay_rate(@v_user_id, p_platform, 'short_txt') INTO @v_pay_usd_stxt;
-		SELECT get_usr_pay_rate(@v_user_id, p_platform, 'long_txt') INTO @v_pay_usd_ltxt;
-		SELECT get_usr_pay_rate(@v_user_id, p_platform, 'img_meme') INTO @v_pay_usd_img;
-		SELECT get_usr_pay_rate(@v_user_id, p_platform, 'short_vid') INTO @v_pay_usd_svid;
-		SELECT get_usr_pay_rate(@v_user_id, p_platform, 'long_vid') INTO @v_pay_usd_lvid;
+		SELECT get_usr_pay_rate(@v_user_id, p_platform, 'level_0') INTO @v_pay_usd_htag;		
+		SELECT get_usr_pay_rate(@v_user_id, p_platform, 'level_1') INTO @v_pay_usd_stxt;
+		SELECT get_usr_pay_rate(@v_user_id, p_platform, 'level_2') INTO @v_pay_usd_ltxt;
+		SELECT get_usr_pay_rate(@v_user_id, p_platform, 'level_3') INTO @v_pay_usd_img;
+		SELECT get_usr_pay_rate(@v_user_id, p_platform, 'level_4') INTO @v_pay_usd_svid;
+		SELECT get_usr_pay_rate(@v_user_id, p_platform, 'level_5') INTO @v_pay_usd_lvid;
 		SELECT 'success' as `status`,
 				'get user rates' as info,
 				@v_user_id as user_id,
@@ -918,7 +918,9 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS SET_USER_PAY_TX_SUBMIT;
 CREATE PROCEDURE `SET_USER_PAY_TX_SUBMIT`(
     IN p_tg_admin_id VARCHAR(40),
-	IN p_tg_user_at VARCHAR(40))
+	IN p_tg_user_at VARCHAR(40),
+	IN p_aux_tok_burn VARCHAR(255), -- NOT IN USE, requied to settle python side
+	IN p_sel_aux_tok_send BOOLEAN)
 BEGIN
 	SELECT tg_user_id FROM users WHERE tg_user_at = p_tg_user_at INTO @v_tg_user_id;
 	SELECT id FROM users WHERE tg_user_id = @v_tg_user_id INTO @v_user_id;
@@ -965,7 +967,7 @@ BEGIN
 					p_tg_user_at as tg_user_at_inp;
 		ELSE
 			-- set 'pay_tx_submit=TRUE' for all approved shills that are not tx pending yet
-			SELECT set_usr_pay_usd_tx_submit(@v_tg_user_id) INTO @v_success;
+			SELECT set_usr_pay_usd_tx_submit(@v_tg_user_id, p_sel_aux_tok_send) INTO @v_success;
 			SELECT ue.*, u.wallet_address,
 					'success' as `status`,
 					'user pay tx submitted' as info,

@@ -39,7 +39,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '36';
+    string public tVERSION = '36.1';
     string private tok_symb = string(abi.encodePacked("tBST", tVERSION));
     string private tok_name = string(abi.encodePacked("tTrinity_", tVERSION));
     // string private constant tok_symb = "BST";
@@ -94,7 +94,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     event PayoutPercsUpdated(uint32 _prev_0, uint32 _prev_1, uint32 _prev_2, uint32 _new_0, uint32 _new_1, uint32 _new_2);
     event DexExecutionsUpdated(bool _prev_0, bool _prev_1, bool _prev_2, bool _new_0, bool _new_1, bool _new_2);
     event DepositReceived(address _account, uint256 _plsDeposit, uint64 _stableConvert);
-    event PayOutProcessed(address _from, address _to, uint64 _usdAmnt, uint64 _usdAmntPaid, uint64 _usdFee, uint64 _usdBurnValTot);
+    event PayOutProcessed(address _from, address _to, uint64 _usdAmnt, uint64 _usdAmntPaid, uint64 _usdFee, uint64 _usdBurnValTot, address _auxToken);
     event TradeInFailed(address _trader, uint64 _bstAmnt, uint64 _usdTradeVal);
     event TradeInDenied(address _trader, uint64 _bstAmnt, uint64 _usdTradeVal);
     event TradeInProcessed(address _trader, uint64 _bstAmnt, uint64 _usdTradeVal);
@@ -378,7 +378,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         // log this payout, ACCT_USD_PAYOUTS stores uint precision to decimals()
         ACCT_USD_PAYOUTS[msg.sender].push(ACCT_PAYOUT(_payTo, _usdValue, usdPayout, bstPayout, usdFee, usdBurnValTot, usdBurnVal, usdAuxBurnVal, auxToken_));
 
-        emit PayOutProcessed(msg.sender, _payTo, _usdValue, usdPayout, usdFee, usdBurnValTot);
+        emit PayOutProcessed(msg.sender, _payTo, _usdValue, usdPayout, usdFee, usdBurnValTot, auxToken_);
     }
     
     // handle contract BST buy-backs

@@ -178,28 +178,22 @@ def parse_logs_for_func_hash(_tx_receipt, _func_hash, _w3:_web3.myWEB3=None):
     print(f' event logs (for func_hash: {_func_hash}) ...')
     if _func_hash == _abi.BST_FUNC_MAP_WRITE[_abi.BST_PAYOUT_FUNC_SIGN][0]:
         # Define & filter logs based on the event signature
-        event_signature = _w3.W3.keccak(text="PayOutProcessed(address,address,uint64,uint64,uint64,uint64)").hex()
+        # event PayOutProcessed(address _from, address _to, uint64 _usdAmnt, uint64 _usdAmntPaid, uint64 _usdFee, uint64 _usdBurnValTot, address _auxToken);
+        event_signature = _w3.W3.keccak(text="PayOutProcessed(address,address,uint64,uint64,uint64,uint64,address)").hex()
         pay_out_logs = [log for log in logs if log['topics'][0].hex() == event_signature]
         
         # Parse the event logs
         for log in pay_out_logs:
-            lst_evt_params = ['address', 'address', 'uint64', 'uint64', 'uint64', 'uint64']
+            lst_evt_params = ['address', 'address', 'uint64', 'uint64', 'uint64', 'uint64','address']
             evt_data = log['data']
             decoded_data = decode_abi(lst_evt_params, evt_data)
-            # print(" From:", decoded_data[0])
-            # print(" To:", decoded_data[1])
-            # print(" USD Amount:", decoded_data[2])
-            # print(" USD Amount Paid:", decoded_data[3])
-            # print(" USD Fee:", decoded_data[4])
-            # print(" USD Burn Value Total:", decoded_data[5])
-
-            # event PayOutProcessed(address _from, address _to, uint64 _usdAmnt, uint64 _usdAmntPaid, uint64 _usdFee, uint64 _usdBurnValTot);
             d_ret_log = {'_from':decoded_data[0],
                          '_to':decoded_data[1],
                          '_usdAmnt':decoded_data[2],
                          '_usdAmntPaid':decoded_data[3],
                          '_usdFee':decoded_data[4],
-                         '_usdBurnValTot':decoded_data[5]}
+                         '_usdBurnValTot':decoded_data[5],
+                         '_auxToken':decoded_data[6]}
         
             [print(f'   {key}: {val}') for key,val in d_ret_log.items()]
             print()
@@ -451,4 +445,5 @@ print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
 # tBST34.8: 0xa1dceD3D249e1745CA5322B783F8cB76E9d89823 -> wiped
 # tBST35: 0x294EF12222066a4569d5e377Bb924c6ADA446F25 -> wiped
 # tBST35.1: 0x3bf59b1d3e99e53d4b52c54bf2f524969fc92679 -> wiped
-# tBST36: 0x791eDb652325bA375F8405D3B48ce73f1f0888A0
+# tBST36: 0x791eDb652325bA375F8405D3B48ce73f1f0888A0 -> wiped
+# tBST36.1: 0x2E3B5FC17E9792Eb7179e0209b85630adBa2Fcae

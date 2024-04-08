@@ -221,17 +221,17 @@ async def cmd_handler(update: Update, context):
                 # Creating buttons for the first step
                 keyboard = [
                     [
-                        InlineKeyboardButton("hashtag", callback_data='htag'),
-                        InlineKeyboardButton("short text", callback_data='short_txt'),
-                        InlineKeyboardButton("long text", callback_data='long_txt')],
+                        InlineKeyboardButton("Level 0", callback_data='level_0'),
+                        InlineKeyboardButton("Level 1", callback_data='level_1'),
+                        InlineKeyboardButton("Level 2", callback_data='level_2')],
                     [
-                        InlineKeyboardButton("image/meme", callback_data='img_meme'),
-                        InlineKeyboardButton("short video", callback_data='short_vid'),
-                        InlineKeyboardButton("long video", callback_data='long_vid')],
+                        InlineKeyboardButton("Level 3", callback_data='level_3'),
+                        InlineKeyboardButton("Level 4", callback_data='level_4'),
+                        InlineKeyboardButton("Level 5", callback_data='level_5')],
                 ]
                 context.user_data['inp_split'] = list(inp_split)
                 print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
-                await update.message.reply_text('Select shill type (used to calc payment):', reply_markup=InlineKeyboardMarkup(keyboard))
+                await update.message.reply_text('Select shill pay level (used to calc payment):', reply_markup=InlineKeyboardMarkup(keyboard))
             return # invokes 'cmd_exe'
         
         if tg_cmd == req_handler.kADMIN_VIEW_SHILL: # ['<tg_user_at>','<shill_id>','<shill_url>']
@@ -265,8 +265,8 @@ async def cmd_handler(update: Update, context):
         #   if admin wants to change payout, they must do so using 'kADMIN_SET_USR_SHILL_PAY_RATE', 
         #    before using 'kADMIN_APPROVE_SHILL', and then call 'kADMIN_PAY_SHILL_EARNS'
         if tg_cmd == req_handler.kADMIN_PAY_SHILL_EARNS:
-            # if user did not give 1 param ['<tg_user_at>']
-            if len(inp_split) != 3:
+            # if user did not give 3 param ['<tg_user_at>','<aux_tok_addr>',<'sel_aux_send'>]
+            if len(inp_split) != 5:
                 str_r = f'invalid cmd; please use format:\n /{tg_cmd} {" ".join(req_handler.LST_CMD_PAY_SHILL_ADMIN)}'
                 print(str_r)
                 print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
@@ -335,20 +335,20 @@ async def cmd_exe(update: Update, context, aux_cmd=False):
         d_resp = response_dict['PAYLOAD']['result_arr'][0]
         # [print(k, d_resp[k]) for k in d_resp.keys()]
         d_txt_rates = { 
-                'htag':'🙏️️️️️️ a simple hashtag',
-                'short_txt':'👍️️ a few words',
-                'long_txt':'😉️️️️️️ a nice shill',
-                'img_meme':'😮️️️️️️ include a meme',
-                'short_vid':'😘️️️️️️ include a video',
-                'long_vid':'🤝️️️️️️ something really nice',
+                'level_0':'🙏️️️️️️ a simple hashtag',
+                'level_1':'👍️️ a few words',
+                'level_2':'😉️️️️️️ a nice shill',
+                'level_3':'😮️️️️️️ include a meme',
+                'level_4':'😘️️️️️️ include a video',
+                'level_5':'🤝️️️️️️ something really nice',
                 }
         d_txt_rates_alt = { 
-                'pay_usd_hashtag':d_txt_rates['htag'],
-                'pay_usd_short_text':d_txt_rates['short_txt'],
-                'pay_usd_long_text':d_txt_rates['long_txt'],
-                'pay_usd_img_meme':d_txt_rates['img_meme'],
-                'pay_usd_short_vid':d_txt_rates['short_vid'],
-                'pay_usd_long_vid':d_txt_rates['long_vid'],
+                'pay_usd_hashtag':d_txt_rates['level_0'],
+                'pay_usd_short_text':d_txt_rates['level_1'],
+                'pay_usd_long_text':d_txt_rates['level_2'],
+                'pay_usd_img_meme':d_txt_rates['level_3'],
+                'pay_usd_short_vid':d_txt_rates['level_4'],
+                'pay_usd_long_vid':d_txt_rates['level_5'],
                 }
         # if tg_cmd == 'register_as_shiller':
         if tg_cmd == req_handler.kSHILLER_REG:
@@ -471,11 +471,9 @@ async def cmd_exe(update: Update, context, aux_cmd=False):
 
             # obfuscate wallet_address
             str_wallet = d_resp['wallet_address']
-            str_info = d_resp['info']
             if str_wallet != '0x0' and len(str_wallet) > 15:
                 str_wallet = str_wallet[:6] + 'xxxxxx' + str_wallet[-4:]
-            str_r = f'\n {str_wallet}\n {str_info}'
-            await update.message.reply_text(f"Set cashout wallet ...\n {str_r}")
+            await update.message.reply_text(f"Set cashout wallet ...\n {str_wallet}")
 
         elif tg_cmd == req_handler.kADMIN_PAY_SHILL_EARNS:
             str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys()])
@@ -689,6 +687,11 @@ print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
 
 # @BearSharesNFT ...
 # https://twitter.com/BearSharesX/status/1769436246084919550?s=19 # only '@BearSharesNFT'
+
+# @SolAudits ... @bearsharesx
+# https://x.com/SolAudits/status/1777412699086897210 # register
+# https://x.com/SolAudits/status/1777413084904055091
+# https://x.com/SolAudits/status/1777415144860946445
 
 # @SolAudits ...
 # ex tweet_conf (fails): https://x.com/SolAudits/status/1765925371851972744?s=20 # only '@BearSharesNFT'

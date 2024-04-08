@@ -152,6 +152,7 @@ CREATE TABLE `shills` (
   `pay_tok_addr` VARCHAR(255) DEFAULT '0x0',
   `pay_tok_symb` VARCHAR(40) DEFAULT 'nil_tok_symb',
   `aux_tok_burn_addr` VARCHAR(255) DEFAULT '0x0',
+  `aux_tok_sel_send` BOOLEAN DEFAULT FALSE,
   -- `pay_tok_amnt` FLOAT DEFAULT -1.0, -- n/a, NOTE: can't account for each token amount paid for each shill
 
   UNIQUE KEY `ID` (`id`) USING BTREE

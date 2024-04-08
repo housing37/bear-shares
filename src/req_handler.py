@@ -72,7 +72,7 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 # admin_list_all_pend_shills - no_params
 # admin_approve_pend_shill - <tg_user_at> <shill_id>
 # admin_view_shill_status - <tg_user_at> <shill_id> <shill_url>
-# admin_pay_shill_rewards - <tg_user_at>
+# admin_pay_shill_rewards - <tg_user_at> <aux_tok_addr> <sel_aux_send>
 # admin_log_removed_shill - <tg_user_at> <shill_id>
 # admin_scan_web_for_dead_shills - pending
 # admin_set_shiller_rates - pending
@@ -202,17 +202,17 @@ LST_KEYS_VIEW_SHILL = ['admin_id','user_at','shill_id','shill_url']
 #   if admin wants to change payout, they must do so using 'kADMIN_SET_USR_SHILL_PAY_RATE', 
 #    before using 'kADMIN_APPROVE_SHILL', and then call 'kADMIN_PAY_SHILL_EARNS'
 kADMIN_PAY_SHILL_EARNS = "admin_pay_shill_rewards"
-LST_CMD_PAY_SHILL_ADMIN = ['<tg_user_at>']
+LST_CMD_PAY_SHILL_ADMIN = ['<tg_user_at>','<aux_tok_addr>','<sel_aux_send>']
 STR_ERR_PAY_SHILL_ADMIN = f'''please use cmd format :\n /{kADMIN_PAY_SHILL_EARNS} {" ".join(LST_CMD_PAY_SHILL_ADMIN)}'''
 LST_KEYS_PAY_SHILL_EARNS_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_SET_USR_PAY_SUBMIT = 'SET_USER_PAY_TX_SUBMIT' # -> get_usr_pay_usd_appr_sum, set_usr_pay_usd_tx_submit
-LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_at']
+LST_KEYS_PAY_SHILL_EARNS = ['admin_id','user_at','aux_tok_addr','sel_aux_send']
     # POST-DB: perform python/solidity 'payOutBST(user_earns.usd_owed, wallet_address, aux_token)' to get tx data for DB_PROC_SET_USR_PAY_CONF
     #	        get 'wallet_address' from 'GET_USER_EARNINGS(tg_user_id)'
 kADMIN_PAY_SHILL_EARNS_conf = "admin_pay_shill_rewards_conf"
 LST_KEYS_PAY_SHILL_EARNS_CONF_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_SET_USR_PAY_CONF = 'SET_USER_PAY_TX_STATUS' # -> set_usr_pay_usd_tx_status
-LST_KEYS_PAY_SHILL_EARNS_CONF = ['admin_id','user_at','chain_usd_paid','tx_hash','tx_status','payout_wallet_addr','pay_tok_addr','pay_tok_symb','aux_tok_burn']
+LST_KEYS_PAY_SHILL_EARNS_CONF = ['admin_id','user_at','chain_usd_paid','tx_hash','tx_status','payout_wallet_addr','pay_tok_addr','pay_tok_symb','aux_tok_burn_addr']
     # PRE-DB: perform python/solidity 'payOutBST' to get tx data for DB_PROC_SET_USR_PAY_CONF
 
 # '/admin_log_removed_shill'
@@ -491,10 +491,11 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
                 # parse db return into solidity input
                 usd_val_pay = int(float(dbProcResult[0]['tot_owed']) * 10**6) # convert to BST decimal precision
                 wallet_addr = dbProcResult[0]['wallet_address']
-                aux_token = 0
+                aux_token = keyVals['aux_tok_addr']
+                sel_aux_tok_send = bool(int(keyVals['sel_aux_send']))
                 
                 # generate solidity function input params
-                lst_func_params = [usd_val_pay, wallet_addr, aux_token]
+                lst_func_params = [usd_val_pay, wallet_addr, aux_token, sel_aux_tok_send]
                 lst_params = list(_abi.BST_FUNC_MAP_WRITE[_abi.BST_PAYOUT_FUNC_SIGN])
                 lst_params.insert(2, lst_func_params)
                 
@@ -530,7 +531,7 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
                         wallet_addr, # 'payout_wallet_addr'
                         env.bst_contr_addr, # 'pay_tok_addr'
                         env.bst_contr_symb, # 'pay_tok_symb'
-                        aux_token, # 'aux_tok_burn'
+                        aux_token, # 'aux_tok_burn_addr'
                     ]
 
                 except Exception as e:
@@ -546,7 +547,7 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
                         wallet_addr, # 'payout_wallet_addr'
                         env.bst_contr_addr, # 'pay_tok_addr'
                         env.bst_contr_symb, # 'pay_tok_symb'
-                        aux_token, # 'aux_tok_burn'
+                        aux_token, # 'aux_tok_burn_addr'
                     ]
                 
                 # generate keyVals from simulated input cmd params (lst_params_)

@@ -187,7 +187,7 @@ CREATE FUNCTION `exp_tw_conf`(
     READS SQL DATA
     DETERMINISTIC
 BEGIN
-	set @v_exp_days = 7;
+	set @v_exp_days = 30;
 	SELECT COUNT(*) FROM users
 		WHERE tg_user_id = p_tg_user_id
 			AND DATEDIFF(NOW(), dt_last_tw_conf) > @v_exp_days into @v_exp_fnd;
@@ -413,7 +413,8 @@ $$ DELIMITER ;
 DELIMITER $$
 drop FUNCTION if exists set_usr_pay_usd_tx_submit; -- setup
 CREATE FUNCTION `set_usr_pay_usd_tx_submit`(
-		p_tg_user_id VARCHAR(40))
+		p_tg_user_id VARCHAR(40),
+		p_sel_aux_tok_send BOOLEAN)
 		RETURNS BOOLEAN
     READS SQL DATA
     DETERMINISTIC
@@ -433,7 +434,8 @@ BEGIN
 						AND is_paid = FALSE) AS s2 
 			ON s1.id = s2.id
 		SET s1.pay_tx_submit = TRUE,
-			s1.dt_tx_submit = NOW();
+			s1.dt_tx_submit = NOW(),
+			s1.aux_tok_sel_send = p_sel_aux_tok_send;
 	RETURN TRUE;
 END 
 $$ DELIMITER ;
@@ -480,7 +482,7 @@ BEGIN
 			pay_tok_chain_amnt = p_chain_usd_paid,
 			pay_tok_addr = p_pay_tok_addr,
 			pay_tok_symb = p_pay_tok_symb,
-			aux_tok_burn = p_aux_tok_burn,
+			aux_tok_burn_addr = p_aux_tok_burn,
 			-- pay_tok_amnt = p_pay_tok_amnt, 
 			is_paid = @v_is_paid;
 	RETURN p_pay_tx_status;
@@ -530,7 +532,7 @@ CREATE FUNCTION `usr_shill_limit_reached`(
 BEGIN
 	-- NOTE_030724: current integration checks 3 posts per day max
 	--	potential update: check for max pay_usd total per day 
-	SET @max_shills_per_day = 10;
+	SET @max_shills_per_day = 5;
 	SELECT id FROM users WHERE tg_user_id = p_tg_user_id INTO @v_user_id;
 	SELECT COUNT(*) FROM shills 
 		WHERE fk_user_id = @v_user_id
