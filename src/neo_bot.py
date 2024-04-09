@@ -42,21 +42,21 @@ OPENAI_API_KEY = env.OPENAI_KEY
 NEO_BS_WELCOME = '''
 WELCOME to BearShares!
 
-We are actively launching our first product!
+We're kickstarting our debut offering!
 $BST - BearSharesTrinity Token
 
-For more info, use command: "/trinity"
-Or visit: bearshares.vercel.app/trinity.html
+For deeper insight, execute: "/trinity"
+Or cruise to: bearshares.vercel.app/trinity.html
 
-What is BearShares?
- - Get paid to Tweet!
- - Claim memes as NFTs!
- - PulseChain ERC404 integration!
+What's BearShares?
+    Cash in on Tweets!
+    Snag memes as NFTs!
+    PulseChain ERC404 fusion!
 
-Test out our new AI bots ...
-    /trinity - get paid to tweet
+Experiment with our fresh AI avatars ...
+    /trinity - cash for tweets
     /morpheus - learn about claiming memes
-    /neo - talk to 'the one'
+    /neo - converse with 'the one'
 
 Twitter: @BearSharesX
 Web: bearshares.vercel.app

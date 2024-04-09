@@ -43,36 +43,35 @@ USE_ALT_ACCT = False # True = alt user 'LAO Pirates'
 DISABLE_TG_HANDLES = True 
 
 TRINITY_INFO = '''
-Hello! I am Trinity! I pay you to tweet!
-(DM me @bs_trinity_bot for more privacy 👍️️️️️️)
+Greetings! I'm Trinity! I reward you for your tweets!
+(DM me @bs_trinity_bot for added privacy 👍️️️️️️)
 
 Welcome to $BST (BearSharesTrinity Token)!
-$BST is a PRC20 token that pays you to tweet.. it's as simple as that 🤷️️️️
-$BST is redeambale 1:1 for USD stable on our web dapp
+$BST is a PRC20 token designed to pay you to tweet... it's that simple 🤷️️️️
+$BST can be redeemed 1:1 for USD stablecoin on our web dapp
 Web-Dapp: bearshares.vercel.app/trinity.html
 
-* START GETTING PAID *
-Follow these 2 simple steps to start earning ...
-1) register by tweeting "@BearSharesX #Trinity register"
-    - then simply paste that tweet's link into this TG chat
+* START EARNING NOW *
+Follow these two simple steps to begin earning...
+    1) Sign up by tweeting "@BearSharesX #Trinity register"
+        then just share the link to that tweet in this Telegram chat
+    2) Earn $BST by tweeting anything you like with "@BearSharesX" included
+        then simply share the link to that tweet in this Telegram chat
 
-2) earn $BST by tweeting anything you want w/ "@BearSharesX" included
-    - then simply paste that tweet's link into this TG chat
-
-To view your earnings & request $BST cashout ...
-    CMD: /trinity_show_my_earnings
-    CMD: /trinity_request_cashout
-    CMD: /trinity_set_wallet
-    DM: @bs_trinity_bot for more privacy 👍️️️️️️
+    To check your earnings and request a $BST cashout...
+        CMD: /trinity_show_my_earnings
+        CMD: /trinity_request_cashout
+        CMD: /trinity_set_wallet
 
 NOTE: Better-Pays-More (earn more for memes, videos, etc.)
-    - your pay rates increase as your tweets get better
+    - your pay rates increase as your tweets improve
         CMD: /trinity_show_my_rates
 
 Questions: @housing37
 
 GLHF!
 '''
+
 #------------------------------------------------------------#
 #   FUNCTIONS                                                #
 #------------------------------------------------------------#
