@@ -69,6 +69,9 @@ NOTE: Better-Pays-More (earn more for memes, videos, etc.)
 
 Questions: @housing37
 
+*IMORTANT* 
+    you need a TG @username setup to register
+
 GLHF!
 '''
 
@@ -499,6 +502,12 @@ async def attempt_aux_cmd_exe(update: Update, context):
     uid = user.id
     uname_at = user.username
     uname_handle = 'nil_disabled'
+
+    # validate user has @username setup
+    if uname_at == None:
+        print(f'{get_time_now()} __ action : found uname_at == None; skip attempt_aux_cmd_exe')
+        return
+    
     if USE_ALT_ACCT: 
         # uid = '1058890141'
         # uname_at = 'laycpirates'
