@@ -4,6 +4,7 @@ cStrDivider = '#================================================================
 print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globals', cStrDivider, sep='\n')
 cStrDivider_1 = '#----------------------------------------------------------------#'
 
+BST_GET_ACCT_PAYOUTS_FUNC_HASH = "d08e6c88"
 BST_FUNC_MAP_READ = {
     # read functions
     "KEEPER()": ["862a179e", [], ['address']],
@@ -18,7 +19,7 @@ BST_FUNC_MAP_READ = {
     "balanceOf(address)": ["70a08231", ["address"], ['uint256']],
     "decimals()": ["313ce567", [], ['uint8']],
     "getAccounts()": ["8a48ac03", [], ['address[]']],
-    "getAccountPayouts(address)": ["d08e6c88", ["address"], ['address', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'uint256', 'address']],
+    "getAccountPayouts(address)": [BST_GET_ACCT_PAYOUTS_FUNC_HASH, ["address"], ['address', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'uint256', 'address']],
 
     "getDexOptions()": ["3685f08b", [], ['bool','bool','bool']],
     "getPayoutPercs()": ["2edef8a4", [], ['uint32','uint32','uint32','uint32']],

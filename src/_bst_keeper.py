@@ -220,19 +220,71 @@ def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_
     return_val = W3_.W3.eth.call(tx_data)
     print(f'calling contract function _ {get_time_now()} ... DONE')
     print('\nparsing & printing response ...')
-    print(f'return_val: {return_val}')
-    print(f'return_val.hex(): {return_val.hex()}')
+    # print(f'return_val: {return_val}')
+    # print(f'return_val.hex(): {return_val.hex()}')
     decoded_value_return = decode_abi(_lst_ret_types, return_val)
-    # print(*decoded_value_return, sep='\n')
     print(f'decoded_value_return', *decoded_value_return, sep='\n ')
-    # hex_bytes = HexBytes('0x745472696e6974795f39')
     hex_bytes = decoded_value_return[0]
     decoded_string = hex_bytes
     if isinstance(hex_bytes, bytes):
+        print('found bytes')
         bytes_value = bytes(hex_bytes) # Convert hex bytes to bytes
         decoded_string = bytes_value.decode('utf-8') # Decode bytes to string
     print(f'decoded_string: {decoded_string}')
     return decoded_string
+
+def read_with_abi(_contr_addr, _func_hash, _lst_params):
+    if _func_hash == _abi.BST_GET_ACCT_PAYOUTS_FUNC_HASH:
+        print(f'building contract_abi for func_hash: "{_func_hash}" ...')
+        contract_abi = [
+            {
+                "inputs": [{"internalType": "address", "name": "_account", "type": "address"}],
+                "name": "getAccountPayouts",
+                "outputs": [{"components": [
+                    {"internalType": "address", "name": "receiver", "type": "address"},
+                    {"internalType": "uint64", "name": "usdAmntDebit", "type": "uint64"},
+                    {"internalType": "uint64", "name": "usdPayout", "type": "uint64"},
+                    {"internalType": "uint64", "name": "bstPayout", "type": "uint64"},
+                    {"internalType": "uint64", "name": "usdFeeVal", "type": "uint64"},
+                    {"internalType": "uint64", "name": "usdBurnValTot", "type": "uint64"},
+                    {"internalType": "uint64", "name": "usdBurnVal", "type": "uint64"},
+                    {"internalType": "uint256", "name": "auxUsdBurnVal", "type": "uint256"},
+                    {"internalType": "address", "name": "auxTok", "type": "address"}
+                ], "internalType": "struct MyContract.ACCT_PAYOUT[]", "name": "", "type": "tuple[]"}],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ]
+        print(f'building web3 contract w/ abi &\n  _contr_addr: {_contr_addr}')
+        contract = W3_.W3.eth.contract(address=_contr_addr, abi=contract_abi)
+
+        print(f'calling contract function _ {get_time_now()}')
+        payouts = contract.functions.getAccountPayouts(_lst_params[0]).call()
+        print(f'calling contract function _ {get_time_now()} ... DONE')
+
+        print('\nparsing & printing response ...')
+        for payout in payouts:
+            # print(" Receiver (receiver):", payout[0])
+            # print(" USD Amount Debit (usdAmntDebit):", payout[1])
+            # print(" USD Payout (usdPayout):", payout[2])
+            # print(" BST Payout (bstPayout):", payout[3])
+            # print(" USD Fee Value (usdFeeVal):", payout[4])
+            # print(" USD Burn Value Total (usdBurnValTot):", payout[5])
+            # print(" BST Burned in USD Value (usdBurnVal):", payout[6])
+            # print(" Aux Token Burned in USD Value (auxUsdBurnVal):", payout[7])
+            # print(" Aux Token (auxTok):", payout[8])
+
+            print(" receiver:", payout[0])
+            print(" usdAmntDebit:", payout[1])
+            print(" usdPayout:", payout[2])
+            print(" bstPayout:", payout[3])
+            print(" usdFeeVal:", payout[4])
+            print(" usdBurnValTot:", payout[5])
+            print(" usdBurnVal:", payout[6])
+            print(" auxUsdBurnVal:", payout[7])
+            print(" auxTok:", payout[8])
+            print()
+        return payouts
 
 def go_user_inputs(_set_gas=True):
     global W3_, CONTRACT_ABI # REQUIRED (using assignment)
@@ -358,11 +410,14 @@ if __name__ == "__main__":
                 tup_params = (BST_ADDRESS,lst_params[0],lst_params[1],lst_params[2],lst_params[3])
                 try:
                     if not IS_WRITE:
-                        read_with_hash(*tup_params)
+                        if lst_params[0] == _abi.BST_GET_ACCT_PAYOUTS_FUNC_HASH:
+                            read_with_abi(BST_ADDRESS, lst_params[0], lst_params[2])
+                        else:
+                            read_with_hash(*tup_params)
                     else:
                         write_with_hash(*tup_params)
                 except Exception as e:
-                    print_except(e, debugLvl=0)
+                    print_except(e, debugLvl=3)
                 print(f'\nBST_ADDRESS: {BST_ADDRESS}\nfunc_select: {func_select}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}')
                 # assert input('\n (^) proceed? [y/n]\n  > ') == 'y', f"aborted... _ {get_time_now()}\n\n"
         else:
@@ -377,7 +432,10 @@ if __name__ == "__main__":
                 tup_params = (BST_ADDRESS,lst_params[0],lst_params[1],lst_params[2],lst_params[3])
                 try:
                     if not IS_WRITE:
-                        decoded_string = read_with_hash(*tup_params)
+                        if lst_params[0] == _abi.BST_GET_ACCT_PAYOUTS_FUNC_HASH:
+                            decoded_string = read_with_abi(BST_ADDRESS, lst_params[0], lst_params[2])
+                        else:
+                            decoded_string = read_with_hash(*tup_params)
                         dict_returns[func_select] = decoded_string
                     else:
                         write_with_hash(*tup_params)
