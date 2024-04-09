@@ -504,4 +504,5 @@ print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
 # tBST35: 0x294EF12222066a4569d5e377Bb924c6ADA446F25 -> wiped
 # tBST35.1: 0x3bf59b1d3e99e53d4b52c54bf2f524969fc92679 -> wiped
 # tBST36: 0x791eDb652325bA375F8405D3B48ce73f1f0888A0 -> wiped
-# tBST36.1: 0x2E3B5FC17E9792Eb7179e0209b85630adBa2Fcae
+# tBST36.1: 0x2E3B5FC17E9792Eb7179e0209b85630adBa2Fcae -> not wiped yet (needs SwapDelegate migrate)
+# tBST37: 0x85BB584a97A4996fB835ca9af3A85D3D8B1408fB

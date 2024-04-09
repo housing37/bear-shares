@@ -9,11 +9,12 @@ BST_FUNC_MAP_READ = {
     # read functions
     "KEEPER()": ["862a179e", [], ['address']],
     "KEEPER_collectiveStableBalances(bool,uint256)": ["cf0c8683", ['bool','uint256'], ['uint64','uint64','uint64','int64']],
+    "KEEPER_getRatios(uint256)": ["ffa21500", ['uint256'], ['uint32','uint32']],
+    
     "ACCT_USD_BALANCES(address)": ["c67483dc", ["address"], ['uint64']],
     "ACCT_USD_PAYOUTS(address,uint256)": ["8b47da26", ["address","uint256"], ['address', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'uint256', 'address']],
 
     "USD_STABLE_DECIMALS(address)": ["7f8754f4", ["address"], ['uint8']],
-    # "USD_BST_PATHS(address,uint256)": ["85783459", ["address","uint256"], ['address']],
     "USWAP_V2_ROUTERS(uint256)": ["ee80b054", ["uint256"], ['address']],
     
     "balanceOf(address)": ["70a08231", ["address"], ['uint256']],
@@ -44,6 +45,8 @@ BST_PAYOUT_FUNC_HASH = '5c1b4b51'
 BST_FUNC_MAP_WRITE = {
     # write functions
     "KEEPER_maintenance(uint64,address)": ["3015d747", ["uint64","address"], []], # gas used: 62,434
+    "KEEEPER_setRatios(uint32,uint32)": ["0402de0d", ["uint32","uint32"], []], 
+
     "KEEPER_setKeeper(address)": ["11851737", ["address"], []], 
     "KEEPER_setKeeperCheck(uint256)": ["9d7c9834", ["uint256"], []],
     "KEEPER_setSwapDelegate(address)": ["c1533a53", ["address"], []],
@@ -56,6 +59,7 @@ BST_FUNC_MAP_WRITE = {
 
     "KEEPER_setPayoutPercs(uint32,uint32,uint32)": ["c0e202fa", ["uint32","uint32","uint32"], []], # gas used: 30,082
     "KEEPER_setBuyBackFeePerc(uint32)": ["57e8a5a5", ["uint32"], []], # gas used: 28,887
+    "KEEPER_setTokNameSymb(string,string)": ["65c021bc", ["string","string"], []],
 
     BST_PAYOUT_FUNC_SIGN: [BST_PAYOUT_FUNC_HASH, ["uint64","address","address","bool"], []], # gas used: 700,000+
     "tradeInBST(uint64)": ["d8785767", ["uint64"], []], # gas used: 126,956+

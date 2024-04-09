@@ -39,11 +39,11 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '36.1';
-    string private tok_symb = string(abi.encodePacked("tBST", tVERSION));
-    string private tok_name = string(abi.encodePacked("tTrinity_", tVERSION));
-    // string private constant tok_symb = "BST";
-    // string private constant tok_name = "Trinity";
+    string public tVERSION = '37';
+    string private TOK_SYMB = string(abi.encodePacked("tBST", tVERSION));
+    string private TOK_NAME = string(abi.encodePacked("tTrinity_", tVERSION));
+    // string private TOK_SYMB = "BST";
+    // string private TOK_NAME = "Trinity";
 
     /* _ ADMIN SUPPORT _ */
     address public KEEPER;
@@ -51,10 +51,12 @@ contract BearSharesTrinity is ERC20, Ownable {
     bool private ENABLE_MARKET_QUOTE = false; // set BST pay & burn val w/ market quote (else 1:1)
     bool private ENABLE_MARKET_BUY = false; // cover BST pay & burn val w/ market buy (else use holdings & mint)
     bool private ENABLE_AUX_BURN = false;
-    uint32 private PERC_SERVICE_FEE = 0; // 0.00%
+    uint32 private PERC_SERVICE_FEE = 0; // 0 = 0.00%, 505 = 5.05%, 2505 = 25.05%, 10000 = 100.00%
     uint32 private PERC_BST_BURN = 0; // 0.00%
     uint32 private PERC_AUX_BURN = 0; // 0.00%
     uint32 private PERC_BUY_BACK_FEE = 0; // 0.00%
+    uint32 private RATIO_BST_PAYOUT = 10000; // default 10000 _ ie. 100.00% (bstPayout:usdPayout -> 1:1 USD)
+    uint32 private RATIO_BST_TRADEIN = 10000; // default 10000 _ ie. 100.00% (usdBuyBackVal:_bstAmnt -> 1:1 BST)
     
     /* _ ACCOUNT SUPPORT _ */
     // uint64 max USD: ~18T -> 18,446,744,073,709.551615 (6 decimals)
@@ -88,6 +90,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* EVENTS                                        
     /* -------------------------------------------------------- */
     event KeeperTransfer(address _prev, address _new);
+    event TokenNameSymbolUpdated(string TOK_NAME, string TOK_SYMB);
     event SwapDelegateUpdated(address _prev, address _new);
     event SwapDelegateUserUpdated(address _prev, address _new);
     event TradeInFeePercUpdated(uint32 _prev, uint32 _new);
@@ -107,7 +110,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* CONSTRUCTOR                                              */
     /* -------------------------------------------------------- */
     // NOTE: sets msg.sender to '_owner' ('Ownable' maintained)
-    constructor(uint256 _initSupply) ERC20(tok_name, tok_symb) Ownable(msg.sender) {
+    constructor(uint256 _initSupply) ERC20(TOK_NAME, TOK_SYMB) Ownable(msg.sender) {
         // set default globals
         ENABLE_MARKET_QUOTE = false;
         ENABLE_MARKET_BUY = false;
@@ -171,6 +174,12 @@ contract BearSharesTrinity is ERC20, Ownable {
     function KEEPER_setKeeperCheck(uint256 _keeperCheck) external onlyKeeper {
         KEEPER_CHECK = _keeperCheck;
     }
+    function KEEPER_setTokNameSymb(string memory _tok_name, string memory _tok_symb) external onlyKeeper() {
+        require(bytes(_tok_name).length > 0 && bytes(_tok_symb).length > 0, ' invalid input  :<> ');
+        TOK_NAME = _tok_name;
+        TOK_SYMB = _tok_symb;
+        emit TokenNameSymbolUpdated(TOK_NAME, TOK_SYMB);
+    }
     function KEEPER_setSwapDelegate(address _swapd) external onlyKeeper() {
         require(_swapd != address(0), ' 0 address ;0 ');
         _setSwapDelegate(_swapd);
@@ -210,6 +219,10 @@ contract BearSharesTrinity is ERC20, Ownable {
         
         emit DexExecutionsUpdated(prev_0, prev_1, prev_2, ENABLE_MARKET_QUOTE, ENABLE_MARKET_BUY, ENABLE_AUX_BURN);
     }
+    function KEEEPER_setRatios(uint32 _payoutRatio, uint32 _tradeinRatio) external onlyKeeper {
+        RATIO_BST_PAYOUT = _payoutRatio; // default 10000 _ ie. 100.00% (bstPayout:usdPayout -> 1:1 USD)
+        RATIO_BST_TRADEIN = _tradeinRatio; // default 10000 _ ie. 100.00% (usdBuyBackVal:_bstAmnt -> 1:1 BST)
+    }
     function KEEPER_editWhitelistStables(address _usdStable, uint8 _decimals, bool _add) external onlyKeeper {
         require(_usdStable != address(0), 'err: 0 address');
         _editWhitelistStables(_usdStable, _decimals, _add);
@@ -235,6 +248,10 @@ contract BearSharesTrinity is ERC20, Ownable {
         if (_history)
             return _collectiveStableBalances(USD_STABLES_HISTORY);
         return _collectiveStableBalances(WHITELIST_USD_STABLES);
+    }
+    function KEEPER_getRatios(uint256 _keeperCheck) external view onlyKeeper returns (uint32, uint32) { 
+        require(_keeperCheck == KEEPER_CHECK, ' KEEPER_CHECK failed :( ');
+        return (RATIO_BST_PAYOUT, RATIO_BST_TRADEIN);
     }
 
     /* -------------------------------------------------------- */
@@ -316,9 +333,31 @@ contract BearSharesTrinity is ERC20, Ownable {
         require(_grossStableBalance(WHITELIST_USD_STABLES) >= usdPayout, ' gross bal will not cover usdPayout buy-back :/ ');
             // balanceOf x2
 
+        /**
+             NOTE: using 'RATIO_BST_PAYOUT' to set bstPayout, if !ENABLE_MARKET_QUOTE ...
+              bstPayout amount should NEVER go above usdPayout (ie. 1>1 USD), 
+               if it does: there would be more BST minted, than USD held in escrow
+               if bstPayout is below usdPayout (ie. 1<1 USD): we are minting less than 1 BST per USD in escrow,
+                 HENCE, profits increase as we lower bstPayout
+              bstPayout should NEVER go below bstQuote
+               if it does: then _payTo wouldn't be paid their full calc usdPayout owed
+              HENCE, bstQuote <= bstPayout <= usdPayout 
+               However, if !ENABLE_MARKET_QUOTE: we don't know the lower bound
+               HENCE, need to be careful when setting RATIO_BST_PAYOUT
+            
+             USE-CASE for 'RATIO_BST_PAYOUT' (only takes effect if !ENABLE_MARKET_QUOTE)
+              RATIO_BST_PAYOUT min: $BST market val _ ie. KEEPER observed $BST market price
+              RATIO_BST_PAYOUT max: 10000 _ ie. 100.00% of usdPayout
+                 raise|lower RATIO_BST_PAYOUT to decrease|increase profit margin
+                 a higher|lower RATIO_BST_PAYOUT means more|less $BST minted during payout (if !ENABLE_MARKET_QUOTE)
+                     HENCE, raising|lowering RATIO_BST_PAYOUT, increases|decreases supply in the market
+                            raising|lowering RATIO_BST_PAYOUT, decreases|increases profit margin
+        */
+
         // NOTE: maintain 1:1 (if !ENABLE_MARKET_QUOTE || BST market quote < 1 USD value)
         //  else, get BST value quotes against highest market valued whitelist stable
         uint64 bstPayout = usdPayout; // default mint-based payout to 1:1 USD value
+        bstPayout = _perc_of_uint64(RATIO_BST_PAYOUT, bstPayout); // ref: using 'RATIO_BST_PAYOUT' above
         address auxToken_ = address(this); // default to BST (for !ENABLE_AUX_BURN)
         if (ENABLE_MARKET_QUOTE) {
             // NOTE: integration runs 3 embedded loops
@@ -386,12 +425,36 @@ contract BearSharesTrinity is ERC20, Ownable {
     function tradeInBST(uint64 _bstAmnt) external {
         require(balanceOf(msg.sender) >= _bstAmnt,' not enough BST :/ ');
 
+        /**
+             NOTE: using 'RATIO_BST_TRADEIN' to set usdBuyBackVal ...
+              usdBuyBackVal amount should NEVER be less than _bstAmnt (ie. 1>:1 BST), 
+               if it's less: then we are not maintaining a floor val of $1
+                 However, this results in more USD held in escrow than BST in the market
+                 HENCE, profits increase as we lower usdBuyBackVal
+               if it's more: then we are rapidly decreasing USD held in escrow
+                 HENCE, profits decrease as we raise usdBuyBackVal, 
+                  However, this eventually leads to not enough USD held escrow to cover BST amount in the market
+            
+                 *WARNING* -> when usdBuyBackVal goes above $BST market val, 
+                   then the contract is aggressively competing with dexes to buy $BST
+                   results in rapid increase of trade-ins, aggressively leading to low USD held in escrow
+            
+                 HENCE need to be careful with setting RATIO_BST_TRADEIN 
+                     (need to watch gross/net bal w/ KEEPER_collectiveStableBalances)
+            
+             USE-CASE for 'RATIO_BST_TRADEIN'
+              RATIO_BST_TRADEIN min: 10000 _ ie. 100.00% of usdBuyBackVal (maintain BST flood 1:1 USD)
+              RATIO_BST_TRADEIN max: $BST market val _ ie. KEEPER observed $BST market price
+                 a higher|lower RATIO_BST_TRADEIN means more|less USD removed from escrow and paid out during trade-in
+                     HENCE, raising|lowering RATIO_BST_TRADEIN, increases|decreases incentive to trade-in BST
+                            raising|lowering RATIO_BST_TRADEIN, decreases|increases profit margin
+        */
         // buy-back value is always 1:1        
         uint64 usdBuyBackVal = _bstAmnt; 
-        
+        usdBuyBackVal = _perc_of_uint64_unchecked(RATIO_BST_TRADEIN, usdBuyBackVal); // ref: using 'RATIO_BST_TRADEIN' above
+
         // calc usd trade in value (1:1, minus buy back fee)
-        uint64 usdBuyBackFee = _perc_of_uint64(PERC_BUY_BACK_FEE, usdBuyBackVal);
-        uint64 usdTradeVal = usdBuyBackVal - usdBuyBackFee;
+        uint64 usdTradeVal = usdBuyBackVal - _perc_of_uint64(PERC_BUY_BACK_FEE, usdBuyBackVal);
 
         // NOTE: validate contract's collective stable balances can cover usdTradeVal
         uint64 stab_gross_bal = _grossStableBalance(WHITELIST_USD_STABLES);
@@ -411,7 +474,6 @@ contract BearSharesTrinity is ERC20, Ownable {
         }
         
         // burn BST coming in
-        // _transfer(msg.sender, address(this), _bstAmnt);
         _burn(msg.sender, _bstAmnt);
 
         // transfer USD stable out
@@ -580,9 +642,13 @@ contract BearSharesTrinity is ERC20, Ownable {
     }
     function _perc_of_uint64(uint32 _perc, uint64 _num) private pure returns (uint64) {
         require(_perc <= 10000, 'err: invalid percent');
+        return _perc_of_uint64_unchecked(_perc, _num);
+    }
+    function _perc_of_uint64_unchecked(uint32 _perc, uint64 _num) private pure returns (uint64) {
+        // require(_perc <= 10000, 'err: invalid percent');
         uint32 aux_perc = _perc * 100; // Multiply by 100 to accommodate decimals
         uint64 result = (_num * uint64(aux_perc)) / 1000000; // chatGPT equation
-        return result;
+        return result; // uint64 max USD: ~18T -> 18,446,744,073,709.551615 (6 decimals)
 
         // NOTE: more efficient with no local vars allocated
         // return (_num * uint64(uint32(_perc) * 100)) / 1000000; // chatGPT equation
@@ -662,33 +728,6 @@ contract BearSharesTrinity is ERC20, Ownable {
                 return _usdAmnt * scalingFactor; // increase # of 0's in _usdAmnt
             }
         }
-    }
-
-    /* -------------------------------------------------------- */
-    /* ERC20 - OVERRIDES                                        */
-    /* -------------------------------------------------------- */
-    function burn(uint64 _burnAmnt) external {
-        require(_burnAmnt > 0, ' burn nothing? :0 ');
-        _burn(msg.sender, _burnAmnt); // NOTE: checks _balance[msg.sender]
-    }
-    function decimals() public pure override returns (uint8) {
-        return 6; // (6 decimals) 
-            // * min USD = 0.000001 (6 decimals) 
-            // uint16 max USD: ~0.06 -> 0.065535 (6 decimals)
-            // uint32 max USD: ~4K -> 4,294.967295 USD (6 decimals)
-            // uint64 max USD: ~18T -> 18,446,744,073,709.551615 (6 decimals)
-        // return 18; // (18 decimals) 
-            // * min USD = 0.000000000000000001 (18 decimals) 
-            // uint64 max USD: ~18 -> 18.446744073709551615 (18 decimals)
-            // uint128 max USD: ~340T -> 340,282,366,920,938,463,463.374607431768211455 (18 decimals)
-    }
-    function transferFrom(address from, address to, uint256 value) public override returns (bool) {
-        if (from != address(this)) {
-            return super.transferFrom(from, to, value);
-        } else {
-            _transfer(from, to, value); // balance checks, etc. indeed occur
-        }
-        return true;
     }
 
     /* -------------------------------------------------------- */
@@ -809,5 +848,40 @@ contract BearSharesTrinity is ERC20, Ownable {
                         );
         }
         return uint256(amntOut[amntOut.length - 1]); // idx 0=path[0].amntOut, 1=path[1].amntOut, etc.
+    }
+
+    /* -------------------------------------------------------- */
+    /* ERC20 - OVERRIDES                                        */
+    /* -------------------------------------------------------- */
+    function symbol() public view override returns (string memory) {
+        // return _symbol;
+        return TOK_SYMB;
+    }
+    function name() public view override returns (string memory) {
+        // return _name;
+        return TOK_NAME;
+    }
+    function burn(uint64 _burnAmnt) external {
+        require(_burnAmnt > 0, ' burn nothing? :0 ');
+        _burn(msg.sender, _burnAmnt); // NOTE: checks _balance[msg.sender]
+    }
+    function decimals() public pure override returns (uint8) {
+        return 6; // (6 decimals) 
+            // * min USD = 0.000001 (6 decimals) 
+            // uint16 max USD: ~0.06 -> 0.065535 (6 decimals)
+            // uint32 max USD: ~4K -> 4,294.967295 USD (6 decimals)
+            // uint64 max USD: ~18T -> 18,446,744,073,709.551615 (6 decimals)
+        // return 18; // (18 decimals) 
+            // * min USD = 0.000000000000000001 (18 decimals) 
+            // uint64 max USD: ~18 -> 18.446744073709551615 (18 decimals)
+            // uint128 max USD: ~340T -> 340,282,366,920,938,463,463.374607431768211455 (18 decimals)
+    }
+    function transferFrom(address from, address to, uint256 value) public override returns (bool) {
+        if (from != address(this)) {
+            return super.transferFrom(from, to, value);
+        } else {
+            _transfer(from, to, value); // balance checks, etc. indeed occur
+        }
+        return true;
     }
 }
