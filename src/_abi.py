@@ -46,8 +46,8 @@ BST_TRADEIN_FUNC_SIGN = "tradeInBST(uint64)"
 BST_TRADEIN_FUNC_HASH = "d8785767"
 BST_FUNC_MAP_WRITE = {
     # write functions
-    "KEEPER_maintenance(uint64,address)": ["3015d747", ["uint64","address"], []], # gas used: 62,434
-    "KEEEPER_setRatios(uint32,uint32)": ["0402de0d", ["uint32","uint32"], []], 
+    "KEEPER_maintenance(uint256,address)": ["4dd534c0", ["uint64","address"], []], # gas used: 62,434
+    "KEEPER_setRatios(uint32,uint32)": ["3dcff192", ["uint32","uint32"], []], 
 
     "KEEPER_setKeeper(address)": ["11851737", ["address"], []], 
     "KEEPER_setKeeperCheck(uint256)": ["9d7c9834", ["uint256"], []],

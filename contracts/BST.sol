@@ -39,7 +39,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '37.1';
+    string public tVERSION = '37.3';
     string private TOK_SYMB = string(abi.encodePacked("tBST", tVERSION));
     string private TOK_NAME = string(abi.encodePacked("tTrinity_", tVERSION));
     // string private TOK_SYMB = "BST";
@@ -224,7 +224,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         
         emit DexExecutionsUpdated(prev_0, prev_1, prev_2, ENABLE_MARKET_QUOTE, ENABLE_MARKET_BUY, ENABLE_AUX_BURN);
     }
-    function KEEEPER_setRatios(uint32 _payoutRatio, uint32 _tradeinRatio) external onlyKeeper {
+    function KEEPER_setRatios(uint32 _payoutRatio, uint32 _tradeinRatio) external onlyKeeper {
         RATIO_BST_PAYOUT = _payoutRatio; // default 10000 _ ie. 100.00% (bstPayout:usdPayout -> 1:1 USD)
         RATIO_USD_PAYOUT = _tradeinRatio; // default 10000 _ ie. 100.00% (usdBuyBackVal:_bstAmnt -> 1:1 BST)
     }
