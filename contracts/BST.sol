@@ -166,8 +166,8 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* PUBLIC - KEEPER SUPPORT            
     /* -------------------------------------------------------- */
     //  NOTE: _usdAmnt must be in uint precision to _usdStable.decimals()
-    function KEEPER_maintenance(uint64 _usdAmnt, address _usdStable) external onlyKeeper() {
-        require(IERC20(_usdStable).balanceOf(address(this)) >= _usdAmnt, 'err: not enough _usdStable');
+    function KEEPER_maintenance(uint256 _usdAmnt, address _usdStable) external onlyKeeper() {
+        require(IERC20(_usdStable).balanceOf(address(this)) >= _usdAmnt, ' not enough _usdStable :O ');
         IERC20(_usdStable).transfer(KEEPER, _usdAmnt);
     }
     function KEEPER_setKeeper(address _newKeeper) external onlyKeeper {
@@ -566,13 +566,6 @@ contract BearSharesTrinity is ERC20, Ownable {
     function _grossStableBalance(address[] memory _stables) private view returns (uint64) {
         uint64 gross_bal = 0;
         for (uint8 i = 0; i < _stables.length;) {
-            // address stable = _stables[i];
-            // uint8 decimals_ = USD_STABLE_DECIMALS[stable];
-            // require(decimals_ > 0, 'err: invalid stables decimals :/');
-            // uint256 bal = IERC20(stable).balanceOf(address(this));
-            // uint256 norm_bal = _normalizeStableAmnt(decimals_, bal, decimals());
-            // gross_bal += _uint64_from_uint256(norm_bal);
-
             // NOTE: more efficient algorithm taking up less stack space with local vars
             require(USD_STABLE_DECIMALS[_stables[i]] > 0, ' found stable with invalid decimals :/ ');
             gross_bal += _uint64_from_uint256(_normalizeStableAmnt(USD_STABLE_DECIMALS[_stables[i]], IERC20(_stables[i]).balanceOf(address(this)), decimals()));
