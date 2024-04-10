@@ -151,7 +151,7 @@ contract BearSharesTrinity is ERC20, Ownable {
 
         // add default routers: pulsex x2 
         _editDexRouters(address(0x98bf93ebf5c380C0e6Ae8e192A7e2AE08edAcc02), true); // pulseX v1, true = add
-        // _editDexRouters(address(0x165C3410fC91EF562C50559f7d2289fEbed552d9), true); // true = add
+        // _editDexRouters(address(0x165C3410fC91EF562C50559f7d2289fEbed552d9), true); // pulseX v2, true = add
     }
 
     /* -------------------------------------------------------- */

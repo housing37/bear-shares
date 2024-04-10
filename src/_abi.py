@@ -63,7 +63,7 @@ BST_FUNC_MAP_WRITE = {
     "KEEPER_setBuyBackFeePerc(uint32)": ["57e8a5a5", ["uint32"], []], # gas used: 28,887
     "KEEPER_setTokNameSymb(string,string)": ["65c021bc", ["string","string"], []],
 
-    BST_PAYOUT_FUNC_SIGN: [BST_PAYOUT_FUNC_HASH, ["uint64","address","address","bool"], []], # gas used: 700,000+
+    BST_PAYOUT_FUNC_SIGN: [BST_PAYOUT_FUNC_HASH, ["uint64","address","address","bool"], []], # gas used: 837,000+
     BST_TRADEIN_FUNC_SIGN: [BST_TRADEIN_FUNC_HASH, ["uint64"], []], # gas used: 126,956+
 
     "burn(uint64)": ["9dbead42", ["uint64"], []], 
