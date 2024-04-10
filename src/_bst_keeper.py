@@ -20,6 +20,7 @@ import _web3 # from web3 import Account, Web3, HTTPProvider
 import _abi
 from ethereum.abi import encode_abi, decode_abi # pip install ethereum
 
+DEBUG_LEVEL = 3
 LST_CONTR_ABI_BIN = [
     "../bin/contracts/BearSharesTrinity",
 ]
@@ -152,7 +153,7 @@ def write_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst
         print("Transaction confirmed in block:", tx_receipt.blockNumber, f' ... {get_time_now()}')
     except Exception as e:
         print(f"\n{get_time_now()}\n Transaction not confirmed within the specified timeout... wait_time: {wait_time}")
-        print_except(e)
+        print_except(e, debugLvl=DEBUG_LEVEL)
         return -1, tx_hash.hex(), {}
         # exit(1)
 
@@ -459,7 +460,7 @@ if __name__ == "__main__":
                     else:
                         write_with_hash(*tup_params)
                 except Exception as e:
-                    print_except(e, debugLvl=0)
+                    print_except(e, debugLvl=DEBUG_LEVEL)
                 print(f'\nBST_ADDRESS: {BST_ADDRESS}\nfunc_select: {func_select}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}')
                 # assert input('\n (^) proceed? [y/n]\n  > ') == 'y', f"aborted... _ {get_time_now()}\n\n"
         else:
@@ -482,7 +483,7 @@ if __name__ == "__main__":
                     else:
                         write_with_hash(*tup_params)
                 except Exception as e:
-                    print_except(e, debugLvl=0)
+                    print_except(e, debugLvl=DEBUG_LEVEL)
                 print(f'\nBST_ADDRESS: {BST_ADDRESS}\nfunc_select: {func_select}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}')
             return_print = pprint.PrettyPrinter().pformat(dict_returns)
             print(f'all returns... cnt={len(dict_returns.keys())}')
@@ -502,7 +503,7 @@ if __name__ == "__main__":
         # write_with_hash(BST_ADDRESS, "3015d747", ['uint64','address'], [amnt,usdStable], []) # "KEEPER_maintenance(uint64,address)": "3015d747",
 
     except Exception as e:
-        print_except(e, debugLvl=3)
+        print_except(e, debugLvl=DEBUG_LEVEL)
     
     ## end ##
     print(f'\n\nRUN_TIME_START: {RUN_TIME_START}\nRUN_TIME_END:   {get_time_now()}\n')
@@ -544,10 +545,10 @@ print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
 # tBST34.7: 0x4A65F25739EDf015E0CBE838113592750746e037
 # tBST34.8: 0xa1dceD3D249e1745CA5322B783F8cB76E9d89823 -> wiped
 # tBST35: 0x294EF12222066a4569d5e377Bb924c6ADA446F25 -> wiped
-# tBST35.1: 0x3bf59b1d3e99e53d4b52c54bf2f524969fc92679 -> wiped (is SwapDelegate USER)
+# tBST35.1: 0x3bf59b1d3e99e53d4b52c54bf2f524969fc92679 -> wiped 
 # tBST36: 0x791eDb652325bA375F8405D3B48ce73f1f0888A0 -> wiped
 # tBST36.1: 0x2E3B5FC17E9792Eb7179e0209b85630adBa2Fcae -> wiped
 # tBST37: 0x85BB584a97A4996fB835ca9af3A85D3D8B1408fB -> wiped
 # tBST37.1: 0xA0833E6f0Cc2C1571b1d5b8095F0a23B3640B59b -> wiped
 # tBST37.2: 0x85fA45794abE9CFF542bE6Cbb6ff043Ac7484517 -> not used
-# tBST37.3: 0xD8c88f3E934192e26710D8E82D9fD64B9457E8f0
+# tBST37.3: 0xD8c88f3E934192e26710D8E82D9fD64B9457E8f0 -> wiped (is SwapDelegate USER)

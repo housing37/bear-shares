@@ -39,7 +39,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '37.3';
+    string public tVERSION = '37.4';
     string private TOK_SYMB = string(abi.encodePacked("tBST", tVERSION));
     string private TOK_NAME = string(abi.encodePacked("tTrinity_", tVERSION));
     // string private TOK_SYMB = "BST";
@@ -533,6 +533,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         }
     }
     function _exeTokBuyBurn(uint64 _usdBurnVal, address[] memory _usdSwapPath, bool _selAuxPay, address _auxPayTo) private returns (uint64) {
+        if (_usdBurnVal == 0) return 0; // don't proceced is burning nothing (uswap throws execption on 0 amount)
         address usdStable = _usdSwapPath[0];
         address burnToken = _usdSwapPath[_usdSwapPath.length-1];
             // NOTE: burnToken should never be 0x0, since payOutBST defaults it to BST address(this)
