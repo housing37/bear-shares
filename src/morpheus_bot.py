@@ -75,7 +75,7 @@ async def generate_response(update: Update, context: CallbackContext) -> None:
                 max_tokens=120,  # Adjust the token limit as necessary.
                 temperature=0.7,
                 presence_penalty=0.6,
-                stop=["\n", "Morpheus:"]  # Adjusted stop sequences to ensure proper response termination.
+                stop=["\n"]  # Adjusted stop sequences to ensure proper response termination.
             )
 
             # Extract the response text and ensure it's coherent.
