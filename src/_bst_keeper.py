@@ -178,8 +178,36 @@ def parse_logs_for_func_hash(_tx_receipt, _func_hash, _w3:_web3.myWEB3=None):
     print(f' event logs (for func_hash: {_func_hash}) ...')
     if _func_hash == _abi.BST_FUNC_MAP_WRITE[_abi.BST_PAYOUT_FUNC_SIGN][0]:
         # Define & filter logs based on the event signature
-        # event PayOutProcessed(address _from, address _to, uint64 _usdAmnt, uint64 _usdAmntPaid, uint64 _usdFee, uint64 _usdBurnValTot, address _auxToken);
-        event_signature = _w3.W3.keccak(text="PayOutProcessed(address,address,uint64,uint64,uint64,uint64,address)").hex()
+        # event PayOutProcessed(address _from, address _to, uint64 _usdAmnt, uint64 _usdAmntPaid, uint64 _bstPayout, uint64 _usdFee, uint64 _usdBurnValTot, uint64 _usdBurnVal, uint64 _usdAuxBurnVal, address _auxToken, uint32 _ratioBstPay, uint256 _blockNumber);
+        event_signature = _w3.W3.keccak(text="PayOutProcessed(address,address,uint64,uint64,uint64,uint64,uint64,uint64,uint64,address,uint32,uint256)").hex()
+        
+        pay_out_logs = [log for log in logs if log['topics'][0].hex() == event_signature]
+        
+        # Parse the event logs
+        for log in pay_out_logs:
+            lst_evt_params = ['address','address','uint64','uint64','uint64','uint64','uint64','uint64','uint64','address','uint32','uint256']
+            evt_data = log['data']
+            decoded_data = decode_abi(lst_evt_params, evt_data)
+            d_ret_log = {'_from':decoded_data[0],
+                         '_to':decoded_data[1],
+                         '_usdAmnt':decoded_data[2],
+                         '_usdAmntPaid':decoded_data[3],
+                         '_bstPayout':decoded_data[4],
+                         '_usdFee':decoded_data[5],
+                         '_usdBurnValTot':decoded_data[6],
+                         '_usdBurnVal':decoded_data[7],
+                         '_usdAuxBurnVal':decoded_data[8],
+                         '_auxToken':decoded_data[9],
+                         '_ratioBstPay':decoded_data[10],
+                         '_blockNumber':decoded_data[11]}
+        
+            [print(f'   {key}: {val}') for key,val in d_ret_log.items()]
+            print()
+
+    if _func_hash == _abi.BST_FUNC_MAP_WRITE[_abi.BST_TRADEIN_FUNC_SIGN][0]:
+        # Define & filter logs based on the event signature
+        # event TradeInProcessed(address _trader, uint64 _bstAmnt, uint64 _usdTradeVal, uint64 _usdBuyBackVal, uint32 _ratioBstTrade, uint256 _blockNumber);
+        event_signature = _w3.W3.keccak(text="TradeInProcessed(address,uint64,uint64,uint64,uint32,uint256)").hex()
         pay_out_logs = [log for log in logs if log['topics'][0].hex() == event_signature]
         
         # Parse the event logs
@@ -187,13 +215,12 @@ def parse_logs_for_func_hash(_tx_receipt, _func_hash, _w3:_web3.myWEB3=None):
             lst_evt_params = ['address', 'address', 'uint64', 'uint64', 'uint64', 'uint64','address']
             evt_data = log['data']
             decoded_data = decode_abi(lst_evt_params, evt_data)
-            d_ret_log = {'_from':decoded_data[0],
-                         '_to':decoded_data[1],
-                         '_usdAmnt':decoded_data[2],
-                         '_usdAmntPaid':decoded_data[3],
-                         '_usdFee':decoded_data[4],
-                         '_usdBurnValTot':decoded_data[5],
-                         '_auxToken':decoded_data[6]}
+            d_ret_log = {'_trader':decoded_data[0],
+                         '_bstAmnt':decoded_data[1],
+                         '_usdTradeVal':decoded_data[2],
+                         '_usdBuyBackVal':decoded_data[3],
+                         '_ratioBstTrade':decoded_data[4],
+                         '_blockNumber':decoded_data[5]}
         
             [print(f'   {key}: {val}') for key,val in d_ret_log.items()]
             print()
@@ -236,6 +263,19 @@ def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_
 def read_with_abi(_contr_addr, _func_hash, _lst_params):
     if _func_hash == _abi.BST_GET_ACCT_PAYOUTS_FUNC_HASH:
         print(f'building contract_abi for func_hash: "{_func_hash}" ...')
+        # struct ACCT_PAYOUT {
+        #     address receiver;
+        #     uint64 usdAmntDebit; // USD total ACCT deduction
+        #     uint64 usdPayout; // USD payout value
+        #     uint64 bstPayout; // BST payout amount
+        #     uint64 usdFeeVal; // USD service fee amount
+        #     uint64 usdBurnValTot; // to USD value burned (BST + aux token)
+        #     uint64 usdBurnVal; // BST burned in USD value
+        #     uint256 auxUsdBurnVal; // aux token burned in USD val during payout
+        #     address auxTok; // aux token burned during payout
+        #     uint32 ratioBstPay; // rate at which BST was paid (1<:1 USD)
+        #     uint256 blockNumber; // current block number of this payout
+        # }
         contract_abi = [
             {
                 "inputs": [{"internalType": "address", "name": "_account", "type": "address"}],
@@ -249,7 +289,9 @@ def read_with_abi(_contr_addr, _func_hash, _lst_params):
                     {"internalType": "uint64", "name": "usdBurnValTot", "type": "uint64"},
                     {"internalType": "uint64", "name": "usdBurnVal", "type": "uint64"},
                     {"internalType": "uint256", "name": "auxUsdBurnVal", "type": "uint256"},
-                    {"internalType": "address", "name": "auxTok", "type": "address"}
+                    {"internalType": "address", "name": "auxTok", "type": "address"},
+                    {"internalType": "uint32", "name": "ratioBstPay", "type": "uint32"},
+                    {"internalType": "uint256", "name": "blockNumber", "type": "uint256"}
                 ], "internalType": "struct MyContract.ACCT_PAYOUT[]", "name": "", "type": "tuple[]"}],
                 "stateMutability": "view",
                 "type": "function"
@@ -417,7 +459,7 @@ if __name__ == "__main__":
                     else:
                         write_with_hash(*tup_params)
                 except Exception as e:
-                    print_except(e, debugLvl=3)
+                    print_except(e, debugLvl=0)
                 print(f'\nBST_ADDRESS: {BST_ADDRESS}\nfunc_select: {func_select}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}')
                 # assert input('\n (^) proceed? [y/n]\n  > ') == 'y', f"aborted... _ {get_time_now()}\n\n"
         else:
@@ -502,7 +544,8 @@ print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
 # tBST34.7: 0x4A65F25739EDf015E0CBE838113592750746e037
 # tBST34.8: 0xa1dceD3D249e1745CA5322B783F8cB76E9d89823 -> wiped
 # tBST35: 0x294EF12222066a4569d5e377Bb924c6ADA446F25 -> wiped
-# tBST35.1: 0x3bf59b1d3e99e53d4b52c54bf2f524969fc92679 -> wiped
+# tBST35.1: 0x3bf59b1d3e99e53d4b52c54bf2f524969fc92679 -> wiped (is SwapDelegate USER)
 # tBST36: 0x791eDb652325bA375F8405D3B48ce73f1f0888A0 -> wiped
-# tBST36.1: 0x2E3B5FC17E9792Eb7179e0209b85630adBa2Fcae -> not wiped yet (needs SwapDelegate migrate)
-# tBST37: 0x85BB584a97A4996fB835ca9af3A85D3D8B1408fB
+# tBST36.1: 0x2E3B5FC17E9792Eb7179e0209b85630adBa2Fcae -> wiped
+# tBST37: 0x85BB584a97A4996fB835ca9af3A85D3D8B1408fB -> wiped
+# tBST37.1: 0xA0833E6f0Cc2C1571b1d5b8095F0a23B3640B59b

@@ -34,14 +34,16 @@ BST_FUNC_MAP_READ = {
     "TOK_WPLS()": ["fa4a9870", [], ['address']],
     "BURN_ADDR()": ["783028a9", [], ['address']],
 
+	"owner()": ["8da5cb5b", [], ['address']],
     "name()": ["06fdde03", [], ['string']],
-    "owner()": ["8da5cb5b", [], ['address']],
     "symbol()": ["95d89b41", [], ['string']],
     "tVERSION()": ["9a60f330", [], ['string']],
     "totalSupply()": ["18160ddd", [], ['uint256']],
 }
 BST_PAYOUT_FUNC_SIGN = "payOutBST(uint64,address,address,bool)"
 BST_PAYOUT_FUNC_HASH = '5c1b4b51'
+BST_TRADEIN_FUNC_SIGN = "tradeInBST(uint64)"
+BST_TRADEIN_FUNC_HASH = "d8785767"
 BST_FUNC_MAP_WRITE = {
     # write functions
     "KEEPER_maintenance(uint64,address)": ["3015d747", ["uint64","address"], []], # gas used: 62,434
@@ -62,7 +64,7 @@ BST_FUNC_MAP_WRITE = {
     "KEEPER_setTokNameSymb(string,string)": ["65c021bc", ["string","string"], []],
 
     BST_PAYOUT_FUNC_SIGN: [BST_PAYOUT_FUNC_HASH, ["uint64","address","address","bool"], []], # gas used: 700,000+
-    "tradeInBST(uint64)": ["d8785767", ["uint64"], []], # gas used: 126,956+
+    BST_TRADEIN_FUNC_SIGN: [BST_TRADEIN_FUNC_HASH, ["uint64"], []], # gas used: 126,956+
 
     "burn(uint64)": ["9dbead42", ["uint64"], []], 
     "allowance(address,address)": ["dd62ed3e", ["address","address"], []],

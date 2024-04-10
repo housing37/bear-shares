@@ -39,7 +39,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '37';
+    string public tVERSION = '37.1';
     string private TOK_SYMB = string(abi.encodePacked("tBST", tVERSION));
     string private TOK_NAME = string(abi.encodePacked("tTrinity_", tVERSION));
     // string private TOK_SYMB = "BST";
@@ -55,8 +55,11 @@ contract BearSharesTrinity is ERC20, Ownable {
     uint32 private PERC_BST_BURN = 0; // 0.00%
     uint32 private PERC_AUX_BURN = 0; // 0.00%
     uint32 private PERC_BUY_BACK_FEE = 0; // 0.00%
+
+    // SUMMARY: controlling how much USD to payout (usdBuyBackVal), effecting profits & demand to trade-in
+    // SUMMARY: controlling how much BST to payout (bstPayout), effecting profits & demand on the open market
     uint32 private RATIO_BST_PAYOUT = 10000; // default 10000 _ ie. 100.00% (bstPayout:usdPayout -> 1:1 USD)
-    uint32 private RATIO_BST_TRADEIN = 10000; // default 10000 _ ie. 100.00% (usdBuyBackVal:_bstAmnt -> 1:1 BST)
+    uint32 private RATIO_USD_PAYOUT = 10000; // default 10000 _ ie. 100.00% (usdBuyBackVal:_bstAmnt -> 1:1 BST)
     
     /* _ ACCOUNT SUPPORT _ */
     // uint64 max USD: ~18T -> 18,446,744,073,709.551615 (6 decimals)
@@ -84,6 +87,8 @@ contract BearSharesTrinity is ERC20, Ownable {
         uint64 usdBurnVal; // BST burned in USD value
         uint256 auxUsdBurnVal; // aux token burned in USD val during payout
         address auxTok; // aux token burned during payout
+        uint32 ratioBstPay; // rate at which BST was paid (1<:1 USD)
+        uint256 blockNumber; // current block number of this payout
     }
 
     /* -------------------------------------------------------- */
@@ -97,10 +102,10 @@ contract BearSharesTrinity is ERC20, Ownable {
     event PayoutPercsUpdated(uint32 _prev_0, uint32 _prev_1, uint32 _prev_2, uint32 _new_0, uint32 _new_1, uint32 _new_2);
     event DexExecutionsUpdated(bool _prev_0, bool _prev_1, bool _prev_2, bool _new_0, bool _new_1, bool _new_2);
     event DepositReceived(address _account, uint256 _plsDeposit, uint64 _stableConvert);
-    event PayOutProcessed(address _from, address _to, uint64 _usdAmnt, uint64 _usdAmntPaid, uint64 _usdFee, uint64 _usdBurnValTot, address _auxToken);
+    event PayOutProcessed(address _from, address _to, uint64 _usdAmnt, uint64 _usdAmntPaid, uint64 _bstPayout, uint64 _usdFee, uint64 _usdBurnValTot, uint64 _usdBurnVal, uint64 _usdAuxBurnVal, address _auxToken, uint32 _ratioBstPay, uint256 _blockNumber);
     event TradeInFailed(address _trader, uint64 _bstAmnt, uint64 _usdTradeVal);
     event TradeInDenied(address _trader, uint64 _bstAmnt, uint64 _usdTradeVal);
-    event TradeInProcessed(address _trader, uint64 _bstAmnt, uint64 _usdTradeVal);
+    event TradeInProcessed(address _trader, uint64 _bstAmnt, uint64 _usdTradeVal, uint64 _usdBuyBackVal, uint32 _ratioUsdPay, uint256 _blockNumber);
     event WhitelistStableUpdated(address _usdStable, uint8 _decimals, bool _add);
     event DexRouterUpdated(address _router, bool _add);
     event DexUsdBstPathUpdated(address _usdStable, address[] _path);
@@ -221,7 +226,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     }
     function KEEEPER_setRatios(uint32 _payoutRatio, uint32 _tradeinRatio) external onlyKeeper {
         RATIO_BST_PAYOUT = _payoutRatio; // default 10000 _ ie. 100.00% (bstPayout:usdPayout -> 1:1 USD)
-        RATIO_BST_TRADEIN = _tradeinRatio; // default 10000 _ ie. 100.00% (usdBuyBackVal:_bstAmnt -> 1:1 BST)
+        RATIO_USD_PAYOUT = _tradeinRatio; // default 10000 _ ie. 100.00% (usdBuyBackVal:_bstAmnt -> 1:1 BST)
     }
     function KEEPER_editWhitelistStables(address _usdStable, uint8 _decimals, bool _add) external onlyKeeper {
         require(_usdStable != address(0), 'err: 0 address');
@@ -251,7 +256,7 @@ contract BearSharesTrinity is ERC20, Ownable {
     }
     function KEEPER_getRatios(uint256 _keeperCheck) external view onlyKeeper returns (uint32, uint32) { 
         require(_keeperCheck == KEEPER_CHECK, ' KEEPER_CHECK failed :( ');
-        return (RATIO_BST_PAYOUT, RATIO_BST_TRADEIN);
+        return (RATIO_BST_PAYOUT, RATIO_USD_PAYOUT);
     }
 
     /* -------------------------------------------------------- */
@@ -334,7 +339,7 @@ contract BearSharesTrinity is ERC20, Ownable {
             // balanceOf x2
 
         /**
-             NOTE: using 'RATIO_BST_PAYOUT' to set bstPayout, if !ENABLE_MARKET_QUOTE ...
+             NOTE: using 'RATIO_BST_PAYOUT' to set bstPayout (if !ENABLE_MARKET_QUOTE || BST market quote < 1 USD value) ...
               bstPayout amount should NEVER go above usdPayout (ie. 1>1 USD), 
                if it does: there would be more BST minted, than USD held in escrow
                if bstPayout is below usdPayout (ie. 1<1 USD): we are minting less than 1 BST per USD in escrow,
@@ -342,16 +347,18 @@ contract BearSharesTrinity is ERC20, Ownable {
               bstPayout should NEVER go below bstQuote
                if it does: then _payTo wouldn't be paid their full calc usdPayout owed
               HENCE, bstQuote <= bstPayout <= usdPayout 
-               However, if !ENABLE_MARKET_QUOTE: we don't know the lower bound
+               However, if !ENABLE_MARKET_QUOTE || BST market quote < 1 USD: we don't know the lower bound
                HENCE, need to be careful when setting RATIO_BST_PAYOUT
             
-             USE-CASE for 'RATIO_BST_PAYOUT' (only takes effect if !ENABLE_MARKET_QUOTE)
+             USE-CASE for 'RATIO_BST_PAYOUT' (only takes effect if !ENABLE_MARKET_QUOTE || BST market quote < 1 USD)
               RATIO_BST_PAYOUT min: $BST market val _ ie. KEEPER observed $BST market price
               RATIO_BST_PAYOUT max: 10000 _ ie. 100.00% of usdPayout
                  raise|lower RATIO_BST_PAYOUT to decrease|increase profit margin
                  a higher|lower RATIO_BST_PAYOUT means more|less $BST minted during payout (if !ENABLE_MARKET_QUOTE)
                      HENCE, raising|lowering RATIO_BST_PAYOUT, increases|decreases supply in the market
                             raising|lowering RATIO_BST_PAYOUT, decreases|increases profit margin
+            
+            SUMMARY: controlling how much BST to payout (bstPayout), effecting profits & demand on the open market
         */
 
         // NOTE: maintain 1:1 (if !ENABLE_MARKET_QUOTE || BST market quote < 1 USD value)
@@ -413,11 +420,11 @@ contract BearSharesTrinity is ERC20, Ownable {
             
         // update account balance, ACCT_USD_BALANCES stores uint precision to decimals()
         ACCT_USD_BALANCES[msg.sender] -= _usdValue; // _usdValue 'require' check above
-
+        
         // log this payout, ACCT_USD_PAYOUTS stores uint precision to decimals()
-        ACCT_USD_PAYOUTS[msg.sender].push(ACCT_PAYOUT(_payTo, _usdValue, usdPayout, bstPayout, usdFee, usdBurnValTot, usdBurnVal, usdAuxBurnVal, auxToken_));
+        ACCT_USD_PAYOUTS[msg.sender].push(ACCT_PAYOUT(_payTo, _usdValue, usdPayout, bstPayout, usdFee, usdBurnValTot, usdBurnVal, usdAuxBurnVal, auxToken_, RATIO_BST_PAYOUT, block.number));
 
-        emit PayOutProcessed(msg.sender, _payTo, _usdValue, usdPayout, usdFee, usdBurnValTot, auxToken_);
+        emit PayOutProcessed(msg.sender, _payTo, _usdValue, usdPayout, bstPayout, usdFee, usdBurnValTot, usdBurnVal, usdAuxBurnVal, auxToken_, RATIO_BST_PAYOUT, block.number);
     }
     
     // handle contract BST buy-backs
@@ -426,8 +433,8 @@ contract BearSharesTrinity is ERC20, Ownable {
         require(balanceOf(msg.sender) >= _bstAmnt,' not enough BST :/ ');
 
         /**
-             NOTE: using 'RATIO_BST_TRADEIN' to set usdBuyBackVal ...
-              usdBuyBackVal amount should NEVER be less than _bstAmnt (ie. 1>:1 BST), 
+             NOTE: using 'RATIO_USD_PAYOUT' to set usdBuyBackVal ...
+              usdBuyBackVal amount should NEVER go below _bstAmnt (ie. 1>:1 BST), 
                if it's less: then we are not maintaining a floor val of $1
                  However, this results in more USD held in escrow than BST in the market
                  HENCE, profits increase as we lower usdBuyBackVal
@@ -439,19 +446,21 @@ contract BearSharesTrinity is ERC20, Ownable {
                    then the contract is aggressively competing with dexes to buy $BST
                    results in rapid increase of trade-ins, aggressively leading to low USD held in escrow
             
-                 HENCE need to be careful with setting RATIO_BST_TRADEIN 
+                 HENCE need to be careful with setting RATIO_USD_PAYOUT 
                      (need to watch gross/net bal w/ KEEPER_collectiveStableBalances)
             
-             USE-CASE for 'RATIO_BST_TRADEIN'
-              RATIO_BST_TRADEIN min: 10000 _ ie. 100.00% of usdBuyBackVal (maintain BST flood 1:1 USD)
-              RATIO_BST_TRADEIN max: $BST market val _ ie. KEEPER observed $BST market price
-                 a higher|lower RATIO_BST_TRADEIN means more|less USD removed from escrow and paid out during trade-in
-                     HENCE, raising|lowering RATIO_BST_TRADEIN, increases|decreases incentive to trade-in BST
-                            raising|lowering RATIO_BST_TRADEIN, decreases|increases profit margin
+             USE-CASE for 'RATIO_USD_PAYOUT'
+              RATIO_USD_PAYOUT min: 10000 _ ie. 100.00% of usdBuyBackVal (maintain BST flood 1:1 USD)
+              RATIO_USD_PAYOUT max: $BST market val _ ie. KEEPER observed $BST market price
+                 a higher|lower RATIO_USD_PAYOUT means more|less USD removed from escrow and paid out during trade-in
+                     HENCE, raising|lowering RATIO_USD_PAYOUT, increases|decreases incentive to trade-in BST
+                            raising|lowering RATIO_USD_PAYOUT, decreases|increases profit margin
+
+            SUMMARY: controlling how much USD to payout (usdBuyBackVal), effecting profits & demand to trade-in
         */
         // buy-back value is always 1:1        
         uint64 usdBuyBackVal = _bstAmnt; 
-        usdBuyBackVal = _perc_of_uint64_unchecked(RATIO_BST_TRADEIN, usdBuyBackVal); // ref: using 'RATIO_BST_TRADEIN' above
+        usdBuyBackVal = _perc_of_uint64_unchecked(RATIO_USD_PAYOUT, usdBuyBackVal); // ref: using 'RATIO_USD_PAYOUT' above
 
         // calc usd trade in value (1:1, minus buy back fee)
         uint64 usdTradeVal = usdBuyBackVal - _perc_of_uint64(PERC_BUY_BACK_FEE, usdBuyBackVal);
@@ -480,7 +489,7 @@ contract BearSharesTrinity is ERC20, Ownable {
         uint256 usdTradeVal_ = _normalizeStableAmnt(decimals(), usdTradeVal, USD_STABLE_DECIMALS[usdStable]);
         IERC20(usdStable).transfer(msg.sender, usdTradeVal_);
 
-        emit TradeInProcessed(msg.sender, _bstAmnt, usdTradeVal);
+        emit TradeInProcessed(msg.sender, _bstAmnt, usdTradeVal, usdBuyBackVal, RATIO_USD_PAYOUT, block.number);
     }
 
     /* -------------------------------------------------------- */
