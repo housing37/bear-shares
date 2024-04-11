@@ -207,13 +207,13 @@ def parse_logs_for_func_hash(_tx_receipt, _func_hash, _w3:_web3.myWEB3=None):
 
     if _func_hash == _abi.BST_FUNC_MAP_WRITE[_abi.BST_TRADEIN_FUNC_SIGN][0]:
         # Define & filter logs based on the event signature
-        # event TradeInProcessed(address _trader, uint64 _bstAmnt, uint64 _usdTradeVal, uint64 _usdBuyBackVal, uint32 _ratioBstTrade, uint256 _blockNumber);
+        # event TradeInProcessed(address _trader, uint64 _bstAmnt, uint64 _usdTradeVal, uint64 _usdBuyBackVal, uint32 _ratioUsdPay, uint256 _blockNumber);
         event_signature = _w3.W3.keccak(text="TradeInProcessed(address,uint64,uint64,uint64,uint32,uint256)").hex()
         pay_out_logs = [log for log in logs if log['topics'][0].hex() == event_signature]
         
         # Parse the event logs
         for log in pay_out_logs:
-            lst_evt_params = ['address', 'address', 'uint64', 'uint64', 'uint64', 'uint64','address']
+            lst_evt_params = ['address', 'uint64', 'uint64', 'uint64', 'uint32','uint256']
             evt_data = log['data']
             decoded_data = decode_abi(lst_evt_params, evt_data)
             d_ret_log = {'_trader':decoded_data[0],
@@ -258,7 +258,17 @@ def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_
         print('found bytes')
         bytes_value = bytes(hex_bytes) # Convert hex bytes to bytes
         decoded_string = bytes_value.decode('utf-8') # Decode bytes to string
-    print(f'decoded_string: {decoded_string}')
+    # print(f'decoded_string: {decoded_string}')
+    print(f'pretty print... cnt: {len(decoded_value_return)}')
+    for i in range(len(decoded_value_return)):
+        # if isinstance(decoded_value_return[i], str):
+        if isinstance(decoded_value_return[i], int):
+            f_val = float(decoded_value_return[i]) / 10 ** 6
+            print(f' {f_val}')
+        # else:
+        #     print(decoded_value_return[i])
+    pprint.pprint(decoded_value_return)
+    # print(f'decoded_value_return', *decoded_value_return, sep='\n ')
     return decoded_string
 
 def read_with_abi(_contr_addr, _func_hash, _lst_params):
@@ -552,7 +562,7 @@ print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
 # tBST37.1: 0xA0833E6f0Cc2C1571b1d5b8095F0a23B3640B59b -> wiped
 # tBST37.2: 0x85fA45794abE9CFF542bE6Cbb6ff043Ac7484517 -> not used
 # tBST37.3: 0xD8c88f3E934192e26710D8E82D9fD64B9457E8f0 -> wiped 
-# tBST37.4: 0x5FD6165a21dB9AfCFc61FbC64fa4c1f25854D9e4 ->  NOT wiped yet (and still has LPs out there)
+# tBST37.4: 0x5FD6165a21dB9AfCFc61FbC64fa4c1f25854D9e4 ->  wiped (LP cleared)
 # tBST37.4: 0xf1f6fFd56818535c20490429490041E1F1F1624E -> n/a (mis-fire)
 
 # BST: 0x7A580b7Cd9B48Ba729b48B8deb9F4D2cb216aEBC -> (is swap delegate user)
