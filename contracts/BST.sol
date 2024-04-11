@@ -40,10 +40,10 @@ contract BearSharesTrinity is ERC20, Ownable {
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
     string public tVERSION = '37.4';
-    string private TOK_SYMB = string(abi.encodePacked("tBST", tVERSION));
-    string private TOK_NAME = string(abi.encodePacked("tTrinity_", tVERSION));
-    // string private TOK_SYMB = "BST";
-    // string private TOK_NAME = "Trinity";
+    // string private TOK_SYMB = string(abi.encodePacked("tBST", tVERSION));
+    // string private TOK_NAME = string(abi.encodePacked("tTrinity_", tVERSION));
+    string private TOK_SYMB = "BST";
+    string private TOK_NAME = "Trinity";
 
     /* _ ADMIN SUPPORT _ */
     address public KEEPER;

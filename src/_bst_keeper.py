@@ -552,4 +552,7 @@ print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
 # tBST37.1: 0xA0833E6f0Cc2C1571b1d5b8095F0a23B3640B59b -> wiped
 # tBST37.2: 0x85fA45794abE9CFF542bE6Cbb6ff043Ac7484517 -> not used
 # tBST37.3: 0xD8c88f3E934192e26710D8E82D9fD64B9457E8f0 -> wiped 
-# tBST37.4: 0x5FD6165a21dB9AfCFc61FbC64fa4c1f25854D9e4 ->  (is SwapDelegate USER)
+# tBST37.4: 0x5FD6165a21dB9AfCFc61FbC64fa4c1f25854D9e4 ->  NOT wiped yet (and still has LPs out there)
+# tBST37.4: 0xf1f6fFd56818535c20490429490041E1F1F1624E -> n/a (mis-fire)
+
+# BST: 0x7A580b7Cd9B48Ba729b48B8deb9F4D2cb216aEBC -> (is swap delegate user)
