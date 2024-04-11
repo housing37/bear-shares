@@ -480,6 +480,9 @@ async def cmd_exe(update: Update, context, aux_cmd=False):
         elif tg_cmd == req_handler.kADMIN_PAY_SHILL_EARNS:
             inc_ = ['pay_tok_addr_inp','pay_tx_hash_inp','old_usd_owed','chain_usd_paid_inp','usd_owed_paid_diff','usd_total','usd_owed','tx_status_set','pay_tx_status_inp','tg_user_at_inp']
             d_resp['tg_user_at_inp'] = '@'+str(d_resp['tg_user_at_inp'])
+            d_resp['$BST'] = d_resp['pay_tok_addr_inp']
+            d_resp['tx hash'] = d_resp['pay_tx_hash_inp']
+            inc_ = ['$BST','tx hash','old_usd_owed','chain_usd_paid_inp','usd_owed_paid_diff','usd_total','usd_owed','tx_status_set','pay_tx_status_inp','tg_user_at_inp']
             str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
             # str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys()])
             await update.message.reply_text(f"Payout Tx Processed ...\n {str_r}")
