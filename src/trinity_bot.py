@@ -573,7 +573,7 @@ async def log_activity(update: Update, context):
     lst_chat_data = [chat_id, chat_type]
     print(f'{get_time_now()} _ action: {lst_user_data}, {lst_chat_data}')
     
-    if update.message.text: await attempt_aux_cmd_exe(update, context)
+    if not USE_PAYOUT_ONLY and update.message.text: await attempt_aux_cmd_exe(update, context)
 
 async def test(update: Update, context):
     funcname = 'test'
