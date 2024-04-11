@@ -23,7 +23,7 @@ last_online_time = time.time()  # Initialize with current time
 #   GLOBALS                                                  #
 #------------------------------------------------------------#
 # constants
-LST_TG_CMDS = req_handler.DICT_CMD_EXE.keys()
+LST_TG_CMDS = list(req_handler.DICT_CMD_EXE.keys())
 WHITELIST_CHAT_IDS = [
     '-1002041092613', # $BearShares
     '-1002049491115', # $BearShares - testing
@@ -38,6 +38,7 @@ BLACKLIST_TEXT = [
 USE_PROD_TG = False
 TOKEN = 'nil_tg_token'
 USE_ALT_ACCT = False # True = alt user 'LAO Pirates'
+USE_PAYOUT_ONLY = False # True = remove 'kADMIN_PAY_SHILL_EARNS' from LST_TG_CMDS
 
 # disable parsing '.from_user.first_name' (note_031824: db encoding errors)
 DISABLE_TG_HANDLES = True 
@@ -80,7 +81,8 @@ GLHF!
 #------------------------------------------------------------#
 def set_tg_token():
     global TOKEN
-    TOKEN = env.TOKEN_trin if USE_PROD_TG else env.TOKEN_dev
+    TOKEN = env.TOKEN_trin if USE_PROD_TG else env.TOKEN_trin_pay
+    # TOKEN = env.TOKEN_trin if USE_PROD_TG else env.TOKEN_dev
     # TOKEN = env.TOKEN_prod if USE_PROD_TG else env.TOKEN_trin
 
 def is_valid_chat_id(_chat_id, _group_name, _uname, _handle):
@@ -672,7 +674,8 @@ if __name__ == "__main__":
     ## exe ##
     try:
         # select to use prod bot or dev bot
-        inp = input('\nSelect token type to use:\n  0 = prod \n  1 = dev \n  > ')
+        # inp = input('\nSelect token type to use:\n  0 = prod \n  1 = dev \n  > ')
+        inp = input('\nSelect token type to use:\n  0 = trinity \n  1 = trinity_pay \n  > ')
         USE_PROD_TG = True if inp == '0' else False
         print(f'  input = {inp} _ USE_PROD_TG = {USE_PROD_TG}')
 
@@ -680,9 +683,21 @@ if __name__ == "__main__":
         USE_ALT_ACCT = True if inp.lower() == 'y' or inp.lower() == '1' else False
         print(f'  input = {inp} _ USE_ALT_ACCT = {USE_ALT_ACCT}')
 
+        inp = input('\nRun payout shills cmd only (USE_PAYOUT_ONLY)? [y/n]:\n  > ')
+        USE_PAYOUT_ONLY = True if inp.lower() == 'y' or inp.lower() == '1' else False
+        print(f'  input = {inp} _ USE_PAYOUT_ONLY = {USE_PAYOUT_ONLY}')
+        if USE_PAYOUT_ONLY: # clear cmd list and only add payout cmds
+            LST_TG_CMDS = []
+            LST_TG_CMDS.append(req_handler.kADMIN_PAY_SHILL_EARNS)
+            LST_TG_CMDS.append(req_handler.kADMIN_PAY_SHILL_EARNS_conf)
+        else: # remove payout cmds from default list already set in global
+            LST_TG_CMDS.remove(req_handler.kADMIN_PAY_SHILL_EARNS)
+            LST_TG_CMDS.remove(req_handler.kADMIN_PAY_SHILL_EARNS_conf)
+
         set_tg_token()  
         print(f'\nUSE_PROD_TG: {USE_PROD_TG}')
         print(f'USE_ALT_ACCT: {USE_ALT_ACCT}')
+        print(f'USE_PAYOUT_ONLY: {USE_PAYOUT_ONLY}')
         print(f'Telegram TOKEN: {TOKEN}')
         print(f'Contract Address (symb): {env.bst_contr_addr} ({env.bst_contr_symb})\n')
         # print(f'OpenAI OPENAI_KEY: {OPENAI_KEY}')

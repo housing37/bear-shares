@@ -73,6 +73,7 @@ TOKEN_dev = os.environ['TG_TOKEN_DEV'] # (dev)
 TOKEN_prod = os.environ['TG_TOKEN_PROD'] # (prod)
 TOKEN_neo = os.environ['TG_TOKEN_NEO'] # (neo) @bs_neo_bot
 TOKEN_trin = os.environ['TG_TOKEN_TRIN'] # (trinity) @bs_trinity_bot
+TOKEN_trin_pay = os.environ['TG_TOKEN_TRIN_PAY'] # (trinityPay) @bs_trinity_pay_bot
 TOKEN_morph = os.environ['TG_TOKEN_MORPH'] # @bs_morpheus_bot
 TOKEN_oracle = os.environ['TG_TOKEN_ORACLE'] # @bs_oracle_bot
 
