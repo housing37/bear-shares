@@ -17,12 +17,14 @@ BLACKLIST_SCAM_UNAMES = [
     '@Genstlell', # ['5486688786', '@Genstlell', 'Teller']
     '@KriskcKrypto', # recommended by @psi931 (simon B) _ 031224
     '@lofi_dreamz', # ['5481515986', '@lofi_dreamz', 'Dreamz']
+    '@Skaboush', # ['6779942777', '@Skaboush', 'Ska']
 ]
 BLACKLIST_SCAM_UIDS = [
     # '581475171', # @housing37
     '7017221881', # 7017221881, @AlexSandros6, Alex sandros
     '5486688786', # ['5486688786', '@Genstlell', 'Teller']
     '5481515986', # ['5481515986', '@lofi_dreamz', 'Dreamz']
+    '6779942777', # ['6779942777', '@Skaboush', 'Ska']
 ]
 BLACKLIST_SCAM_HANDLES = [
     'Alex sandros', # 7017221881, @AlexSandros6, Alex sandros
