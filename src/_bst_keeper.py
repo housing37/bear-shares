@@ -268,6 +268,9 @@ def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_
         # else:
         #     print(decoded_value_return[i])
     pprint.pprint(decoded_value_return)
+    if isinstance(decoded_value_return, list) and isinstance(decoded_value_return[0], list) :
+        print(f'pretty print... cnt[0]: {len(decoded_value_return[0])}')
+
     # print(f'decoded_value_return', *decoded_value_return, sep='\n ')
     return decoded_string
 
