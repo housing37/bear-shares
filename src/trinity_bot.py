@@ -366,7 +366,7 @@ async def cmd_exe(update: Update, context, aux_cmd=False):
             lst_d_resp = response_dict['PAYLOAD']['result_arr']
             for d in lst_d_resp:
                 str_r = str_r + f"\n   {d_txt_rates[d['type_descr']]}: ${d['pay_usd']}"
-            await update.message.reply_text(f"Shiller Registration Successfull!\n {str_r}")
+            await update.message.reply_text(f"Shiller Registration Successfull!\n {str_r}\n\nto set wallet DM @bs_trinity_bot and use '/trinity_set_wallet'")
 
         # elif tg_cmd == 'confirm_twitter':
         elif tg_cmd == req_handler.kTWITTER_CONF:
