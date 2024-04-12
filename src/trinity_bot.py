@@ -432,14 +432,17 @@ async def cmd_exe(update: Update, context, aux_cmd=False):
         elif tg_cmd == req_handler.kADMIN_LIST_ALL_PEND_SHILLS:
             # loop through & append unique params for str_r
             lst_resp = response_dict['PAYLOAD']['result_arr']
-            inc_ = ['shill_id','pay_usd','is_paid','is_approved','is_removed','post_url','tg_user_at']
+            # inc_ = ['shill_id','pay_usd','is_paid','is_approved','is_removed','post_url','tg_user_at']
+            inc_ = ['shill_id','post_url','tg_user_at']
             str_r = ''
             for d in lst_resp:
                 str_r = str_r + '\n'
                 for k in inc_:
                     v = d[k]
                     k_ = str(k)
-                    if k_ == 'is_paid' or k_ == 'is_approved' or k_ == 'is_removed' : v = bool(v)
+                    # if k_ == 'is_paid' or k_ == 'is_approved' or k_ == 'is_removed' : v = bool(v)
+                    if k == 'shill_id': k_ = 'Shill ID'
+                    if k == 'post_url': k_ = 'Tweet'
                     if k == 'tg_user_at': 
                         k_ = 'User(TG)'
                         v = '@'+v
@@ -611,7 +614,21 @@ def main():
 
     # Start the Bot
     print('\nbot running ...\n')
-    dp.run_polling()
+    # dp.run_polling()
+    dp.run_polling(allowed_updates=['message'])
+
+    # allowed_updates = [
+    #     'message',                  # Allows your bot to receive new messages sent by users.
+    #     'edited_message',           # Allows your bot to receive edited messages.
+    #     'channel_post',             # Allows your bot to receive new messages sent in channels.
+    #     'edited_channel_post',      # Allows your bot to receive edited messages sent in channels.
+    #     'callback_query',           # Allows your bot to receive callback queries from inline keyboards or inline buttons.
+    #     'inline_query',             # Allows your bot to receive inline queries from users.
+    #     'chosen_inline_result',     # Allows your bot to receive chosen inline results from users.
+    #     'poll',                     # Allows your bot to receive updates related to polls.
+    #     'poll_answer'               # Allows your bot to receive poll answers from users.
+    # ]
+
 
     
 
@@ -683,7 +700,7 @@ if __name__ == "__main__":
         USE_ALT_ACCT = True if inp.lower() == 'y' or inp.lower() == '1' else False
         print(f'  input = {inp} _ USE_ALT_ACCT = {USE_ALT_ACCT}')
 
-        inp = input('\nRun payout shills cmd only (USE_PAYOUT_ONLY)? [y/n]:\n  > ')
+        inp = input('\nONLY Run payout shills cmd (USE_PAYOUT_ONLY)? [y/n]:\n  > ')
         USE_PAYOUT_ONLY = True if inp.lower() == 'y' or inp.lower() == '1' else False
         print(f'  input = {inp} _ USE_PAYOUT_ONLY = {USE_PAYOUT_ONLY}')
         if USE_PAYOUT_ONLY: # clear cmd list and only add payout cmds

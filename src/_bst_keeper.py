@@ -20,7 +20,7 @@ import _web3 # from web3 import Account, Web3, HTTPProvider
 import _abi
 from ethereum.abi import encode_abi, decode_abi # pip install ethereum
 
-DEBUG_LEVEL = 3
+DEBUG_LEVEL = 0
 LST_CONTR_ABI_BIN = [
     "../bin/contracts/BearSharesTrinity",
 ]
@@ -329,16 +329,28 @@ def read_with_abi(_contr_addr, _func_hash, _lst_params):
             # print(" BST Burned in USD Value (usdBurnVal):", payout[6])
             # print(" Aux Token Burned in USD Value (auxUsdBurnVal):", payout[7])
             # print(" Aux Token (auxTok):", payout[8])
+            # f_val = float(payout[0]) / 10 ** 6
+            # print(f' {f_val}')
 
             print(" receiver:", payout[0])
-            print(" usdAmntDebit:", payout[1])
-            print(" usdPayout:", payout[2])
-            print(" bstPayout:", payout[3])
-            print(" usdFeeVal:", payout[4])
-            print(" usdBurnValTot:", payout[5])
-            print(" usdBurnVal:", payout[6])
-            print(" auxUsdBurnVal:", payout[7])
+            print(" usdAmntDebit:", float(payout[1]) / 10 ** 6)
+            print(" usdPayout:", float(payout[2]) / 10 ** 6)
+            print(" bstPayout:", float(payout[3]) / 10 ** 6)
+            print(" usdFeeVal:", float(payout[4]) / 10 ** 6)
+            print(" usdBurnValTot:", float(payout[5]) / 10 ** 6)
+            print(" usdBurnVal:", float(payout[6]) / 10 ** 6)
+            print(" auxUsdBurnVal:", float(payout[7]) / 10 ** 6)
             print(" auxTok:", payout[8])
+
+            # print(" receiver:", payout[0])
+            # print(" usdAmntDebit:", payout[1])
+            # print(" usdPayout:", payout[2])
+            # print(" bstPayout:", payout[3])
+            # print(" usdFeeVal:", payout[4])
+            # print(" usdBurnValTot:", payout[5])
+            # print(" usdBurnVal:", payout[6])
+            # print(" auxUsdBurnVal:", payout[7])
+            # print(" auxTok:", payout[8])
             print()
         return payouts
 
@@ -382,6 +394,7 @@ def go_enter_func_params(_func_select):
         elif v.isdigit(): lst_func_params.append(int(v))
         # elif v.startswith('['): lst_func_params.append([i.strip() for i in v[1:-1].split(',')])
         elif v.startswith('['): lst_func_params.append([W3_.W3.to_checksum_address(i.strip()) for i in v[1:-1].split(',')])
+        elif v.startswith('0x'): lst_func_params.append(W3_.W3.to_checksum_address(v))
         else: lst_func_params.append(v)
 
     print(f'  executing "{_func_select}" w/ params: {lst_func_params} ...\n')

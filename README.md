@@ -1,3 +1,22 @@
+# bear-shares trinity
+
+### kb - pythong TG .run_polling()
+    dp.run_polling(allowed_updates=['message', 'edited_message', 'channel_post', 'callback_query'])
+    chatGBT:
+        In the allowed_updates parameter of the run_polling method in the Telegram API for Python, you can specify different types of updates that your bot is allowed to receive. Here are some common types of updates that you might want to include in the list:
+
+        message: Allows your bot to receive new messages sent by users.
+        edited_message: Allows your bot to receive edited messages.
+        channel_post: Allows your bot to receive new messages sent in channels.
+        edited_channel_post: Allows your bot to receive edited messages sent in channels.
+        callback_query: Allows your bot to receive callback queries from inline keyboards or inline buttons.
+        inline_query: Allows your bot to receive inline queries from users.
+        chosen_inline_result: Allows your bot to receive chosen inline results from users.
+        poll: Allows your bot to receive updates related to polls.
+        poll_answer: Allows your bot to receive poll answers from users.
+        You can include any combination of these updates in the allowed_updates list based on the functionality your bot requires. For example, if your bot doesn't use inline queries, you can exclude inline_query and chosen_inline_result to reduce unnecessary updates.
+
+
 # teddy-shares
 $TeadyShares NFT w/ ERC404 fixes
 
