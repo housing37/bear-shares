@@ -447,7 +447,8 @@ async def cmd_exe(update: Update, context, aux_cmd=False):
                         k_ = 'User(TG)'
                         v = '@'+v
                     str_r = str_r + f'\n {k_}: {v}'
-            await update.message.reply_text(f"Pending Shills (not yet approved for pay) {str_r}")
+            # await update.message.reply_text(f"Pending Shills (not yet approved for pay) {str_r}")
+            await update.message.reply_text(f"Pending Shills (not yet approved for pay) _ cnt: {len(lst_resp)} {str_r}")
 
         elif tg_cmd == req_handler.kADMIN_APPROVE_SHILL:
             d_resp = response_dict['PAYLOAD']['result_arr'][0]
