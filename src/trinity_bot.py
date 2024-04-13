@@ -12,7 +12,7 @@ from _env import env
 import time, os, traceback, sys, json, pprint
 from datetime import datetime
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler, CallbackContext
 
 import req_handler
 
@@ -301,7 +301,7 @@ async def btn_option_selects(update: Update, context):
     context.user_data['inp_split'] = list(inp_split)
     await cmd_exe(update, context)
 
-async def cmd_exe(update: Update, context, aux_cmd=False):
+async def cmd_exe(update: Update, context: CallbackContext, aux_cmd=False):
     funcname = 'cmd_exe'
     print(cStrDivider_1, f'ENTER - {funcname} _ {get_time_now()}', sep='\n')
     
@@ -472,7 +472,9 @@ async def cmd_exe(update: Update, context, aux_cmd=False):
             await update.callback_query.message.reply_text(msg_txt) # reply to message sender
 
             # TODO: return tg_user_id from database
-            user = await context.bot.get_chat(d_resp['tg_user_at_inp']) 
+            # > import telegram
+            # > help(telegram.Bot.get_chat)
+            user = await context.bot.get_chat(int(d_resp['tg_user_at_inp'])) 
             await context.bot.send_message(chat_id=user.id, text=msg_txt) # send DM to approved user
             if str(update.message.chat_id) != str(CHAT_ID_0): # if reply_text is not to the main chat
                 await context.bot.send_message(chat_id=CHAT_ID_0, text=msg_txt) # send to CHAT_ID_0 = "BearShares - trinity"
