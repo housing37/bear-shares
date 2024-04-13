@@ -509,7 +509,7 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
                 tup_params = (BST_ADDRESS,lst_params[0],lst_params[1],lst_params[2],lst_params[3],W3_,360) # 360 = _tx_wait_sec
 
                 # set default failure vals blockchain write response
-                tx_receipt, tx_hash, d_ret_log, chain_usd_paid, chain_bst_paid, tx_status = (-37, '0x37', {}, -37. -37.0, -37.1, -2)
+                tx_receipt, tx_hash, d_ret_log, chain_usd_paid, chain_bst_paid, chain_bst_burn, chain_burn_tok, tx_status = (-37, '0x37', {}, -37. -37.0, -37.1, -37.2, '0x3701', -2)
                 try:
                     # write to blockchain with input params (invoking _bst_keeper.py)
                     tx_receipt, tx_hash, d_ret_log = _bst_keeper.write_with_hash(*tup_params)                    
@@ -517,6 +517,9 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
                         print(' ... generating a success tx lst_params_ for db update (tx_receipt != -1)\n')
                         if '_usdAmntPaid' in d_ret_log.keys(): chain_usd_paid = float(d_ret_log['_usdAmntPaid']) / 10**6
                         if '_bstPayout' in d_ret_log.keys(): chain_bst_paid = float(d_ret_log['_bstPayout']) / 10**6
+                        if '_burnAmnt' in d_ret_log.keys(): chain_bst_burn = float(d_ret_log['_burnAmnt']) / 10**6
+                        if '_burnTok' in d_ret_log.keys(): chain_burn_tok = str(d_ret_log['_burnTok'])
+                        
                         tx_status = int(tx_receipt['status']) # 'tx_status'
                     else:
                         print(' ... generating failed tx lst_params_ for db update (e: tx_receipt == -1)\n')
@@ -570,6 +573,8 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
                     errMsg = None
                     # event PayOutProcessed(address _from, address _to, uint64 _usdAmnt, uint64 _usdAmntPaid, uint64 _bstPayout, uint64 _usdFee, uint64 _usdBurnValTot, uint64 _usdBurnVal, uint64 _usdAuxBurnVal, address _auxToken, uint32 _ratioBstPay, uint256 _blockNumber);
                     dbProcResult[0]['_bstPayout'] = chain_bst_paid
+                    dbProcResult[0]['_burnAmnt'] = chain_bst_burn
+                    dbProcResult[0]['_burnTok'] = chain_burn_tok
                 bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=VERBOSE_LOG, errMsg=errMsg) # errMsg != None: force fail from db
 
         else:

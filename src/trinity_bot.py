@@ -516,10 +516,11 @@ async def cmd_exe(update: Update, context: CallbackContext, aux_cmd=False):
         elif tg_cmd == req_handler.kADMIN_PAY_SHILL_EARNS:
             # inc_ = ['pay_tok_addr_inp','pay_tx_hash_inp','old_usd_owed','chain_usd_paid_inp','usd_owed_paid_diff','usd_total','usd_owed','tx_status_set','pay_tx_status_inp','tg_user_at_inp']
             d_resp_sel = {}
-            d_resp_sel['User(TG)'] = '@' + d_resp['tg_user_at_inp']
+            d_resp_sel['User(TG)'] = f"@{d_resp['tg_user_at_inp']}"
             d_resp_sel['Tx hash'] = d_resp['pay_tx_hash_inp']
             d_resp_sel['Paid in $BST'] = d_resp['pay_tok_addr_inp']
-            d_resp_sel['Amount'] = f"{d_resp['_bstPayout']:.2f} BST (~ {d_resp['chain_usd_paid_inp']:.2f} USD value)"
+            d_resp_sel['Amount Paid'] = f"{d_resp['_bstPayout']:.2f} BST (~ {d_resp['chain_usd_paid_inp']:.2f} USD value)"
+            d_resp_sel['Amount Burned'] = f"{d_resp['_burnAmnt']:.2f} BST"
             d_resp_sel['total_owed'] = f"${d_resp['usd_owed']:.2f}"
             d_resp_sel['total_paid'] = f"${d_resp['new_usd_tot_paid']:.2f}"
             d_resp_sel['total_earned'] = f"${d_resp['usd_total']:.2f}"

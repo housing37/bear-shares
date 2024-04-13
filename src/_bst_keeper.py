@@ -180,16 +180,19 @@ def parse_logs_for_func_hash(_tx_receipt, _func_hash, _w3:_web3.myWEB3=None):
     if _func_hash == _abi.BST_FUNC_MAP_WRITE[_abi.BST_PAYOUT_FUNC_SIGN][0]:
         # Define & filter logs based on the event signature
         # event PayOutProcessed(address _from, address _to, uint64 _usdAmnt, uint64 _usdAmntPaid, uint64 _bstPayout, uint64 _usdFee, uint64 _usdBurnValTot, uint64 _usdBurnVal, uint64 _usdAuxBurnVal, address _auxToken, uint32 _ratioBstPay, uint256 _blockNumber);
-        event_signature = _w3.W3.keccak(text="PayOutProcessed(address,address,uint64,uint64,uint64,uint64,uint64,uint64,uint64,address,uint32,uint256)").hex()
+        # event_signature = _w3.W3.keccak(text="PayOutProcessed(address,address,uint64,uint64,uint64,uint64,uint64,uint64,uint64,address,uint32,uint256)").hex()
+        # pay_out_logs = [log for log in logs if log['topics'][0].hex() == event_signature]
+
+        evt_sign_0 = _w3.W3.keccak(text="PayOutProcessed(address,address,uint64,uint64,uint64,uint64,uint64,uint64,uint64,address,uint32,uint256)").hex()
+        evt_sign_1 = _w3.W3.keccak(text="BuyAndBurnExecuted(address,uint256)").hex()
+        pay_out_logs = [log for log in logs if log['topics'][0].hex() in evt_sign_0]
         
-        pay_out_logs = [log for log in logs if log['topics'][0].hex() == event_signature]
-        
+        d_ret_log = {}
         # Parse the event logs
         for log in pay_out_logs:
             lst_evt_params = ['address','address','uint64','uint64','uint64','uint64','uint64','uint64','uint64','address','uint32','uint256']
-            evt_data = log['data']
-            decoded_data = decode_abi(lst_evt_params, evt_data)
-            d_ret_log = {'_from':decoded_data[0],
+            decoded_data = decode_abi(lst_evt_params, log['data'])
+            d_ret_log.update({'_from':decoded_data[0],
                          '_to':decoded_data[1],
                          '_usdAmnt':decoded_data[2],
                          '_usdAmntPaid':decoded_data[3],
@@ -200,10 +203,21 @@ def parse_logs_for_func_hash(_tx_receipt, _func_hash, _w3:_web3.myWEB3=None):
                          '_usdAuxBurnVal':decoded_data[8],
                          '_auxToken':decoded_data[9],
                          '_ratioBstPay':decoded_data[10],
-                         '_blockNumber':decoded_data[11]}
+                         '_blockNumber':decoded_data[11]})
         
-            [print(f'   {key}: {val}') for key,val in d_ret_log.items()]
-            print()
+            # [print(f'   {key}: {val}') for key,val in d_ret_log.items()]
+            # print()
+        
+        pay_out_logs = [log for log in logs if log['topics'][0].hex() in evt_sign_1]
+        # Parse the event logs
+        for log in pay_out_logs:
+            lst_evt_params = ['address','uint256']
+            decoded_data = decode_abi(lst_evt_params, log['data'])
+            d_ret_log.update({'_burnTok':decoded_data[0],
+                            '_burnAmnt':decoded_data[1]})
+        [print(f'   {key}: {val}') for key,val in d_ret_log.items()]
+        print()
+        print(decoded_data)
 
     if _func_hash == _abi.BST_FUNC_MAP_WRITE[_abi.BST_TRADEIN_FUNC_SIGN][0]:
         # Define & filter logs based on the event signature

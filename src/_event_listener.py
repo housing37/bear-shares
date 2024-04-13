@@ -70,35 +70,20 @@ from _env import env
 # Connect to an Ethereum node
 # w3 = Web3(HTTPProvider('http://localhost:8545'))  # Assuming you're running a local Ethereum node
 
-import _web3
+import _web3, _bst_keeper, _abi
 W3_ = _web3.myWEB3().init_nat(1, env.sender_addr_trinity, env.sender_secr_trinity, default_gas=True) # 1 = pulsechain
-# Event signature
-event_signature = W3_.W3.keccak(text="PayOutProcessed(address,address,uint64,uint64,uint64,uint64,uint64,uint64,uint64,address,uint32,uint256)").hex()
-
-import _bst_keeper
-
-# Function to get event logs
-def get_event_logs(tx_hash, event_signature):
-    # Get transaction receipt
+def get_event_logs(tx_hash):
     tx_receipt = W3_.W3.eth.get_transaction_receipt(tx_hash)
-    d_ret_log = _bst_keeper.parse_logs_for_func_hash(tx_receipt, '5c1b4b51', W3_)    
+    d_ret_log = _bst_keeper.parse_logs_for_func_hash(tx_receipt, _abi.BST_PAYOUT_FUNC_HASH, W3_)    
     return d_ret_log
-    # Get logs
-    # logs = []
-    # if tx_receipt:
-    #     logs = W3_.W3.eth.get_logs({'address': tx_receipt['contractAddress'], 'topics': [event_signature]})
-    
-    # return logs
 
 # Example transaction hash
-tx_hash = '0xee2d3d10cfc5fd4c1a42f0de2de96a41ddcbb43773248365815eb8d4c62c3fd5'
-
-# Get event logs
-event_logs = get_event_logs(tx_hash, event_signature)
-
+# tx_hash = '0xee2d3d10cfc5fd4c1a42f0de2de96a41ddcbb43773248365815eb8d4c62c3fd5'
+tx_hash = '0x9bbc67b34aadcf6209a7fc795af7dc68ba44d6879b244b7f87db96806b244e09'
+event_logs = get_event_logs(tx_hash)
 # Print event logs
-for log in event_logs:
-    print(log)
+# for log in event_logs:
+#     print(log)
 
 
 
