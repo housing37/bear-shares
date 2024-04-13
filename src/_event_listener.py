@@ -65,72 +65,145 @@ from _env import env
 # with open("../contracts/BalancerFLR.json", "r") as file: CONTR_ARB_ABI = file.read()
 # #------------------------------------------------------------#
 
-import _abi, _web3
-import pprint
+# from web3 import Web3, HTTPProvider
 
-W3_ = _web3.myWEB3().init_inp(_set_gas=False)
-CONTR_ARB_ABI = _abi.BST_ABI
-# CONTR_ARB_ADDR = '0x528F9F50Ea0179aF66D0AC99cdc4E45E55120D92'
-CONTR_ARB_ADDR = input('\n Enter BST contract address ...\n  > ')
-# Create a contract instance
-CONTR_ARB_ADDR = W3_.W3.to_checksum_address(CONTR_ARB_ADDR)
-contract = W3_.W3.eth.contract(address=CONTR_ARB_ADDR, abi=CONTR_ARB_ABI)
+# Connect to an Ethereum node
+# w3 = Web3(HTTPProvider('http://localhost:8545'))  # Assuming you're running a local Ethereum node
 
-def handle_event(event):
-    # c = event["args"]["contr"]
-    # s = event["args"]["sender"]
-    # m = event["args"]["message"]
-    bnum = event["blockNumber"]
-    # print(f'\n[EVT] _ b|{bnum} _ ',"Contract: ", c, "Sender: ", s, "Msg: ", m)
+import _web3
+W3_ = _web3.myWEB3().init_nat(1, env.sender_addr_trinity, env.sender_secr_trinity, default_gas=True) # 1 = pulsechain
+# Event signature
+event_signature = W3_.W3.keccak(text="PayOutProcessed(address,address,uint64,uint64,uint64,uint64,uint64,uint64,uint64,address,uint32,uint256)").hex()
 
-    return_print = pprint.PrettyPrinter().pformat(event)
-    print(f'\n[EVT] _ b|{bnum} _ ',return_print, sep='\n')
-#    print("Event received:")
-#    print("Contract:", event["args"]["contr"])
-#    print("Sender:", event["args"]["sender"])
-#    print("Message:", event["args"]["message"])
-#    print("Block Number:", event["blockNumber"])
+import _bst_keeper
 
-# Set up an event filter
-# event_filter_0 = contract.events.logX.create_filter(fromBlock="latest")
-# event_filter_1 = contract.events.logMFL.create_filter(fromBlock="latest")
-# event_filter_2 = contract.events.logRFL.create_filter(fromBlock="latest")
-event_filter_0 = contract.events.KeeperTransfer.create_filter(fromBlock="latest")
+# Function to get event logs
+def get_event_logs(tx_hash, event_signature):
+    # Get transaction receipt
+    tx_receipt = W3_.W3.eth.get_transaction_receipt(tx_hash)
+    d_ret_log = _bst_keeper.parse_logs_for_func_hash(tx_receipt, '5c1b4b51', W3_)    
+    return d_ret_log
+    # Get logs
+    # logs = []
+    # if tx_receipt:
+    #     logs = W3_.W3.eth.get_logs({'address': tx_receipt['contractAddress'], 'topics': [event_signature]})
+    
+    # return logs
 
-event_filter_1 = contract.events.ServiceFeeUpdate.create_filter(fromBlock="latest")
-event_filter_2 = contract.events.ServiceBurnUpdate.create_filter(fromBlock="latest")
-event_filter_3 = contract.events.TradeInFeeUpdate.create_filter(fromBlock="latest")
+# Example transaction hash
+tx_hash = '0xee2d3d10cfc5fd4c1a42f0de2de96a41ddcbb43773248365815eb8d4c62c3fd5'
 
-event_filter_4 = contract.events.MarketBuyEnabled.create_filter(fromBlock="latest")
-event_filter_5 = contract.events.MarketQuoteEnabled.create_filter(fromBlock="latest")
-event_filter_6 = contract.events.DepositReceived.create_filter(fromBlock="latest")
+# Get event logs
+event_logs = get_event_logs(tx_hash, event_signature)
 
-event_filter_7 = contract.events.PayOutProcessed.create_filter(fromBlock="latest")
-event_filter_8 = contract.events.TradeInProcessed.create_filter(fromBlock="latest")
+# Print event logs
+for log in event_logs:
+    print(log)
 
-# Listen for events
-print(f'\nwaiting for events from contract {CONTR_ARB_ADDR} ...')
-while True:
-    time.sleep(5) # wait 5 sec
-    print('.', end=' ', flush=True)
-    for event in event_filter_0.get_new_entries():
-        handle_event(event)
-    for event in event_filter_1.get_new_entries():
-        handle_event(event)
-    for event in event_filter_2.get_new_entries():
-        handle_event(event)
-    for event in event_filter_3.get_new_entries():
-        handle_event(event)
-    for event in event_filter_4.get_new_entries():
-        handle_event(event)
-    for event in event_filter_5.get_new_entries():
-        handle_event(event)
-    for event in event_filter_6.get_new_entries():
-        handle_event(event)
-    for event in event_filter_7.get_new_entries():
-        handle_event(event)
-    for event in event_filter_8.get_new_entries():
-        handle_event(event)
+
+
+
+
+
+
+
+
+# import _abi, _web3
+# import pprint
+
+# W3_ = _web3.myWEB3().init_inp(_set_gas=False)
+# CONTR_ARB_ABI = _abi.BST_ABI
+# # CONTR_ARB_ADDR = '0x528F9F50Ea0179aF66D0AC99cdc4E45E55120D92'
+# CONTR_ARB_ADDR = input('\n Enter BST contract address ...\n  > ')
+# # Create a contract instance
+# CONTR_ARB_ADDR = W3_.W3.to_checksum_address(CONTR_ARB_ADDR)
+# contract = W3_.W3.eth.contract(address=CONTR_ARB_ADDR, abi=CONTR_ARB_ABI)
+
+# # Event listener
+# def event_callback(event):
+#     print(f"Event {event['event']} triggered with arguments: {event['args']}")
+
+# # Listen for events
+# print(f'\nwaiting for events from contract {CONTR_ARB_ADDR} ...')
+# while True:
+#     time.sleep(5) # wait 5 sec
+#     print('.', end=' ', flush=True)
+#     # Start listening for all events
+#     for event_abi in CONTR_ARB_ABI:
+#         if event_abi['type'] == 'event':
+#             event_name = event_abi['name']
+#             event_filter = contract.events[event_name].create_filter(fromBlock='latest')
+#             event_logs = event_filter.get_all_entries()
+#             for event in event_logs:
+#                 event_callback(event)
+
+
+
+
+
+
+
+
+
+# def handle_event(event):
+#     # c = event["args"]["contr"]
+#     # s = event["args"]["sender"]
+#     # m = event["args"]["message"]
+#     bnum = event["blockNumber"]
+#     # print(f'\n[EVT] _ b|{bnum} _ ',"Contract: ", c, "Sender: ", s, "Msg: ", m)
+
+#     return_print = pprint.PrettyPrinter().pformat(event)
+#     print(f'\n[EVT] _ b|{bnum} _ ',return_print, sep='\n')
+# #    print("Event received:")
+# #    print("Contract:", event["args"]["contr"])
+# #    print("Sender:", event["args"]["sender"])
+# #    print("Message:", event["args"]["message"])
+# #    print("Block Number:", event["blockNumber"])
+
+# # Set up an event filter
+# # event_filter_0 = contract.events.logX.create_filter(fromBlock="latest")
+# # event_filter_1 = contract.events.logMFL.create_filter(fromBlock="latest")
+# # event_filter_2 = contract.events.logRFL.create_filter(fromBlock="latest")
+# # event_filter_0 = contract.events.KeeperTransfer.create_filter(fromBlock="latest")
+
+# # event_filter_1 = contract.events.ServiceFeeUpdate.create_filter(fromBlock="latest")
+# # event_filter_2 = contract.events.ServiceBurnUpdate.create_filter(fromBlock="latest")
+# # event_filter_3 = contract.events.TradeInFeeUpdate.create_filter(fromBlock="latest")
+
+# # event_filter_4 = contract.events.MarketBuyEnabled.create_filter(fromBlock="latest")
+# # event_filter_5 = contract.events.MarketQuoteEnabled.create_filter(fromBlock="latest")
+# # event_filter_6 = contract.events.DepositReceived.create_filter(fromBlock="latest")
+
+# # event_filter_7 = contract.events.PayOutProcessed.create_filter(fromBlock="latest")
+# # event_filter_8 = contract.events.TradeInProcessed.create_filter(fromBlock="latest")
+
+# # Listen for events
+# print(f'\nwaiting for events from contract {CONTR_ARB_ADDR} ...')
+# while True:
+#     time.sleep(5) # wait 5 sec
+#     print('.', end=' ', flush=True)
+#     events = contract.events.Transfer().get_logs(fromBlock='latest', toBlock='latest') # toBlock='latest' (default)
+#     for i, event in enumerate(events):
+#         handle_event(event)
+
+    # for event in event_filter_0.get_new_entries():
+    #     handle_event(event)
+    # for event in event_filter_1.get_new_entries():
+    #     handle_event(event)
+    # for event in event_filter_2.get_new_entries():
+    #     handle_event(event)
+    # for event in event_filter_3.get_new_entries():
+    #     handle_event(event)
+    # for event in event_filter_4.get_new_entries():
+    #     handle_event(event)
+    # for event in event_filter_5.get_new_entries():
+    #     handle_event(event)
+    # for event in event_filter_6.get_new_entries():
+    #     handle_event(event)
+    # for event in event_filter_7.get_new_entries():
+    #     handle_event(event)
+    # for event in event_filter_8.get_new_entries():
+    #     handle_event(event)
 #########
 
 ## Replace with the event signature (topic) of the event you want to listen for
