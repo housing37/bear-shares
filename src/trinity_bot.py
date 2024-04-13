@@ -478,7 +478,7 @@ async def cmd_exe(update: Update, context: CallbackContext, aux_cmd=False):
             # user = await context.bot.get_chat('@'+d_resp['tg_user_at_inp']) 
             # await context.bot.send_message(chat_id=user.id, text=msg_txt) # send DM to approved user
             if update.message is None or update.message.chat_id is None or str(update.message.chat_id) != str(CHAT_ID_0): # if reply_text is not to the main chat
-                await context.bot.send_message(chat_id=CHAT_ID_0, text=msg_txt) # send to CHAT_ID_0 = "BearShares - trinity"
+                await context.bot.send_message(chat_id=int(CHAT_ID_0), text=msg_txt) # send to CHAT_ID_0 = "BearShares - trinity"
 
             # LEFT OFF HERE ... need to store and return chat IDs for TG groups using the bot (and tg_user_id)
 
