@@ -388,9 +388,11 @@ async def cmd_exe(update: Update, context: CallbackContext, aux_cmd=False):
             lst_admin_tg_at = [f"@{r['tg_user_at']}" for r in lst_resp_arr if r['is_admin'] or r['is_admin_pay']]
 
             # obfuscate wallet_address
+            # NOTE: need to verify str_wallet is not NoneType
+            #   db proc may return 2 rows, 1 w/o wallet_address
             for r in lst_resp_arr:
                 str_wallet = r['wallet_address']
-                if len(str_wallet) > 15:
+                if str_wallet and len(str_wallet) > 15:
                     str_wallet = str_wallet[:6] + 'xxxxxx' + str_wallet[-4:]
                 r['wallet_address'] = str_wallet
 
