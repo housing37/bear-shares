@@ -471,11 +471,11 @@ async def cmd_exe(update: Update, context: CallbackContext, aux_cmd=False):
             msg_txt = f"Shill has been approved for payment ...\n {str_r}"            
             await update.callback_query.message.reply_text(msg_txt) # reply to message sender
 
-            # TODO: return tg_user_id from database
+            # TODO: return tg_user_id from database (not working with @name)
             # > import telegram
             # > help(telegram.Bot.get_chat)
-            user = await context.bot.get_chat('@'+d_resp['tg_user_at_inp']) 
-            await context.bot.send_message(chat_id=user.id, text=msg_txt) # send DM to approved user
+            # user = await context.bot.get_chat('@'+d_resp['tg_user_at_inp']) 
+            # await context.bot.send_message(chat_id=user.id, text=msg_txt) # send DM to approved user
             if str(update.message.chat_id) != str(CHAT_ID_0): # if reply_text is not to the main chat
                 await context.bot.send_message(chat_id=CHAT_ID_0, text=msg_txt) # send to CHAT_ID_0 = "BearShares - trinity"
 
