@@ -23,9 +23,12 @@ last_online_time = time.time()  # Initialize with current time
 #   GLOBALS                                                  #
 #------------------------------------------------------------#
 # constants
+DEBUG_LVL = 3
 LST_TG_CMDS = list(req_handler.DICT_CMD_EXE.keys())
+CHAT_ID_0 = '-1002041092613', # BearShares - trinity
 WHITELIST_CHAT_IDS = [
-    '-1002041092613', # $BearShares
+    # '-1002041092613', # $BearShares
+    CHAT_ID_0,
     '-1002049491115', # $BearShares - testing
     # '-4139183080', # ?
     '-1001941928043', # TeddyShares - testing
@@ -447,15 +450,34 @@ async def cmd_exe(update: Update, context, aux_cmd=False):
                         k_ = 'User(TG)'
                         v = '@'+v
                     str_r = str_r + f'\n {k_}: {v}'
-            # await update.message.reply_text(f"Pending Shills (not yet approved for pay) {str_r}")
-            await update.message.reply_text(f"Pending Shills (not yet approved for pay) _ cnt: {len(lst_resp)} {str_r}")
+            
+            msg_txt = f"Pending Shills (not yet approved for pay) _ cnt: {len(lst_resp)} {str_r}"            
+            await update.message.reply_text(msg_txt)
 
         elif tg_cmd == req_handler.kADMIN_APPROVE_SHILL:
             d_resp = response_dict['PAYLOAD']['result_arr'][0]
-            inc_ = ['tg_user_at_inp','shill_id_inp','pay_usd','usd_owed','usd_paid','usd_total','shill_url','shill_type_inp']
-            d_resp['tg_user_at_inp'] = '@'+str(d_resp['tg_user_at_inp'])
-            str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
-            await update.callback_query.message.reply_text(f"Shill has been approved for payment ...\n {str_r}")
+            # inc_ = ['tg_user_at_inp','shill_id_inp','pay_usd','usd_owed','usd_paid','usd_total','shill_url','shill_type_inp']
+            # d_resp['tg_user_at_inp'] = '@'+str(d_resp['tg_user_at_inp'])
+            # str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
+
+            d_resp['User(TG)'] = '@' + d_resp['tg_user_at_inp']
+            d_resp['Shill'] = d_resp['shill_url']
+            d_resp['Approval'] = d_resp['shill_type_inp']
+            d_resp['Approvel Pay'] = '$' + d_resp['pay_usd']
+            d_resp['user owed'] = '$' + d_resp['usd_owed']
+            d_resp['user paid'] = '$' + d_resp['usd_paid']
+            d_resp['user total earned'] = '$' + d_resp['usd_total']
+            str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys()])
+            msg_txt = f"Shill has been approved for payment ...\n {str_r}"            
+            await update.callback_query.message.reply_text(msg_txt) # reply to message sender
+
+            # TODO: return tg_user_id from database
+            user = await context.bot.get_chat(d_resp['tg_user_at_inp']) 
+            await context.bot.send_message(chat_id=user.id, text=msg_txt) # send DM to approved user
+            if str(update.message.chat_id) != str(CHAT_ID_0): # if reply_text is not to the main chat
+                await context.bot.send_message(chat_id=CHAT_ID_0, text=msg_txt) # send to CHAT_ID_0 = "BearShares - trinity"
+
+            # LEFT OFF HERE ... need to store and return chat IDs for TG groups using the bot (and tg_user_id)
 
         elif tg_cmd == req_handler.kADMIN_VIEW_SHILL:
             d_resp = response_dict['PAYLOAD']['result_arr'][0]
@@ -615,8 +637,8 @@ def main():
 
     # Start the Bot
     print('\nbot running ...\n')
-    # dp.run_polling()
-    dp.run_polling(allowed_updates=['message'])
+    dp.run_polling(drop_pending_updates=True)
+
 
     # allowed_updates = [
     #     'message',                  # Allows your bot to receive new messages sent by users.
@@ -628,10 +650,7 @@ def main():
     #     'chosen_inline_result',     # Allows your bot to receive chosen inline results from users.
     #     'poll',                     # Allows your bot to receive updates related to polls.
     #     'poll_answer'               # Allows your bot to receive poll answers from users.
-    # ]
-
-
-    
+    # ]    
 
 #------------------------------------------------------------#
 #   DEFAULT SUPPORT                                          #
@@ -720,10 +739,10 @@ if __name__ == "__main__":
         print(f'Contract Address (symb): {env.bst_contr_addr} ({env.bst_contr_symb})\n')
         # print(f'OpenAI OPENAI_KEY: {OPENAI_KEY}')
         # print(f'CONSUMER_KEY: {CONSUMER_KEY}')
-        # print(f'PROMO_TWEET_TEXT:\n{PROMO_TWEET_TEXT}\n')    
+        # print(f'PROMO_TWEET_TEXT:\n{PROMO_TWEET_TEXT}\n')   
         main()
     except Exception as e:
-        print_except(e, debugLvl=0)
+        print_except(e, debugLvl=DEBUG_LVL)
     
     ## end ##
     print(f'\n\nRUN_TIME_START: {RUN_TIME_START}\nRUN_TIME_END:   {get_time_now()}\n')
