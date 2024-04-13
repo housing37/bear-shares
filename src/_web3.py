@@ -135,7 +135,7 @@ class myWEB3:
         if with_sender: self.ACCOUNT = Account.from_key(self.SENDER_SECRET)
         return self.W3, self.ACCOUNT
     
-    def set_gas_params(self, w3, _gas_limit=937_000, _fee_perc_markup=0.5):
+    def set_gas_params(self, w3, _gas_limit=937_000, _fee_perc_markup=0.55):
         print(f' setting default gas params ... (w/ fee % markup: {_fee_perc_markup})')
         if int(self.CHAIN_SEL) == 0:
             self.GAS_LIMIT = 3_000_000
@@ -149,7 +149,7 @@ class myWEB3:
             self.GAS_LIMIT = _gas_limit
             # self.MAX_FEE = w3.to_wei('350_000', 'gwei')
             self.MAX_FEE = int(wei + (wei * _fee_perc_markup)) # dafaul to current gas price + 25%
-            self.MAX_PRIOR_FEE_RATIO = 1.0
+            self.MAX_PRIOR_FEE_RATIO = 4.0
             self.MAX_PRIOR_FEE = int(w3.eth.max_priority_fee * self.MAX_PRIOR_FEE_RATIO)
         self.print_gas_params()
 

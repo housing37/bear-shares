@@ -273,6 +273,8 @@ async def cmd_handler(update: Update, context):
         #    before using 'kADMIN_APPROVE_SHILL', and then call 'kADMIN_PAY_SHILL_EARNS'
         if tg_cmd == req_handler.kADMIN_PAY_SHILL_EARNS:
             # if user did not give 3 param ['<tg_user_at>','<aux_tok_addr>',<'sel_aux_send'>]
+            inp_split.append('0x6B175474E89094C44Da98b954EedeAC495271d0F') # placeholder: aux_tok_addr = pDAI
+            inp_split.append('0') # placeholder: sel_aux_send = False
             if len(inp_split) != 5:
                 str_r = f'invalid cmd; please use format:\n /{tg_cmd} {" ".join(req_handler.LST_CMD_PAY_SHILL_ADMIN)}'
                 print(str_r)
@@ -512,14 +514,27 @@ async def cmd_exe(update: Update, context: CallbackContext, aux_cmd=False):
             await update.message.reply_text(f"Set cashout wallet ...\n {str_wallet}")
 
         elif tg_cmd == req_handler.kADMIN_PAY_SHILL_EARNS:
-            inc_ = ['pay_tok_addr_inp','pay_tx_hash_inp','old_usd_owed','chain_usd_paid_inp','usd_owed_paid_diff','usd_total','usd_owed','tx_status_set','pay_tx_status_inp','tg_user_at_inp']
-            d_resp['tg_user_at_inp'] = '@'+str(d_resp['tg_user_at_inp'])
-            d_resp['$BST'] = d_resp['pay_tok_addr_inp']
-            d_resp['tx hash'] = d_resp['pay_tx_hash_inp']
-            inc_ = ['$BST','tx hash','old_usd_owed','chain_usd_paid_inp','usd_owed_paid_diff','usd_total','usd_owed','tx_status_set','pay_tx_status_inp','tg_user_at_inp']
-            str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
-            # str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys()])
-            await update.message.reply_text(f"Payout Tx Processed ...\n {str_r}")
+            # inc_ = ['pay_tok_addr_inp','pay_tx_hash_inp','old_usd_owed','chain_usd_paid_inp','usd_owed_paid_diff','usd_total','usd_owed','tx_status_set','pay_tx_status_inp','tg_user_at_inp']
+            d_resp_sel = {}
+            d_resp_sel['User(TG)'] = '@' + d_resp['tg_user_at_inp']
+            d_resp_sel['Tx hash'] = d_resp['pay_tx_hash_inp']
+            d_resp_sel['Paid in $BST'] = d_resp['pay_tok_addr_inp']
+            d_resp_sel['Amount'] = f"{d_resp['_bstPayout']:.2f} BST (~ {d_resp['chain_usd_paid_inp']:.2f} USD value)"
+            d_resp_sel['total_owed'] = f"${d_resp['usd_owed']:.2f}"
+            d_resp_sel['total_paid'] = f"${d_resp['new_usd_tot_paid']:.2f}"
+            d_resp_sel['total_earned'] = f"${d_resp['usd_total']:.2f}"
+            
+            str_r = '\n '.join([str(k)+': '+str(d_resp_sel[k]) for k in d_resp_sel.keys()])
+            msg_txt = f"Payout Tx Processed ...\n {str_r}"            
+            # if d_resp['pay_tx_status_inp'] == 1:
+            if int(d_resp['tx_status_set']) == 1:
+                await context.bot.send_message(chat_id=int(CHAT_ID_0), text=msg_txt) # CHAT_ID_0 = "BearShares - trinity"
+            await update.message.reply_text(msg_txt) # reply to message sender
+            
+            # inc_ = ['$BST','tx hash','old_usd_owed','chain_usd_paid_inp','usd_owed_paid_diff','usd_total','usd_owed','tx_status_set','pay_tx_status_inp','tg_user_at_inp']
+            # str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
+            # # str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys()])
+            # await update.message.reply_text(f"Payout Tx Processed ...\n {str_r}")
         else:
             await update.message.reply_text(f"'/{tg_cmd}' Executed Successfully! _ ")
         

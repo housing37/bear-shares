@@ -72,7 +72,7 @@ ACCESS_TOKEN_SECRET = 'nil_tw_key'
 # admin_list_all_pend_shills - no_params
 # admin_approve_pend_shill - <tg_user_at> <shill_id>
 # admin_view_shill_status - <tg_user_at> <shill_id> <shill_url>
-# admin_pay_shill_rewards - <tg_user_at> <aux_tok_addr> <sel_aux_send>
+# admin_pay_shill_rewards - <tg_user_at>
 # admin_log_removed_shill - <tg_user_at> <shill_id>
 # admin_scan_web_for_dead_shills - pending
 # admin_set_shiller_rates - pending
@@ -202,7 +202,7 @@ LST_KEYS_VIEW_SHILL = ['admin_id','user_at','shill_id','shill_url']
 #   if admin wants to change payout, they must do so using 'kADMIN_SET_USR_SHILL_PAY_RATE', 
 #    before using 'kADMIN_APPROVE_SHILL', and then call 'kADMIN_PAY_SHILL_EARNS'
 kADMIN_PAY_SHILL_EARNS = "admin_pay_shill_rewards"
-LST_CMD_PAY_SHILL_ADMIN = ['<tg_user_at>','<aux_tok_addr>','<sel_aux_send>']
+LST_CMD_PAY_SHILL_ADMIN = ['<tg_user_at>'] # default: ['<aux_tok_addr>','<sel_aux_send>']
 STR_ERR_PAY_SHILL_ADMIN = f'''please use cmd format :\n /{kADMIN_PAY_SHILL_EARNS} {" ".join(LST_CMD_PAY_SHILL_ADMIN)}'''
 LST_KEYS_PAY_SHILL_EARNS_RESP = env.LST_KEYS_PLACEHOLDER
 DB_PROC_SET_USR_PAY_SUBMIT = 'SET_USER_PAY_TX_SUBMIT' # -> get_usr_pay_usd_appr_sum, set_usr_pay_usd_tx_submit
@@ -509,13 +509,14 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
                 tup_params = (BST_ADDRESS,lst_params[0],lst_params[1],lst_params[2],lst_params[3],W3_,360) # 360 = _tx_wait_sec
 
                 # set default failure vals blockchain write response
-                tx_receipt, tx_hash, d_ret_log, chain_usd_paid, tx_status = (-37, '0x37', {}, -37.0, -2)
+                tx_receipt, tx_hash, d_ret_log, chain_usd_paid, chain_bst_paid, tx_status = (-37, '0x37', {}, -37. -37.0, -37.1, -2)
                 try:
                     # write to blockchain with input params (invoking _bst_keeper.py)
                     tx_receipt, tx_hash, d_ret_log = _bst_keeper.write_with_hash(*tup_params)                    
                     if tx_receipt != -1: # ie. 'exception' did NOT occur within 'W3.eth.wait_for_transaction_receipt'
                         print(' ... generating a success tx lst_params_ for db update (tx_receipt != -1)\n')
                         if '_usdAmntPaid' in d_ret_log.keys(): chain_usd_paid = float(d_ret_log['_usdAmntPaid']) / 10**6
+                        if '_bstPayout' in d_ret_log.keys(): chain_bst_paid = float(d_ret_log['_bstPayout']) / 10**6
                         tx_status = int(tx_receipt['status']) # 'tx_status'
                     else:
                         print(' ... generating failed tx lst_params_ for db update (e: tx_receipt == -1)\n')
@@ -563,8 +564,12 @@ def execute_db_calls(keyVals, req_handler_key, tg_cmd=None): # (2)
 
                 # exe db call to update status on payout tx attempt
                 dbProcResult = exe_stored_proc(-1, stored_proc, keyVals_)
-                if dbProcResult[0]['status'] == 'failed': errMsg = dbProcResult[0]['info']
-                else: errMsg = None
+                if dbProcResult[0]['status'] == 'failed': 
+                    errMsg = dbProcResult[0]['info']
+                else: 
+                    errMsg = None
+                    # event PayOutProcessed(address _from, address _to, uint64 _usdAmnt, uint64 _usdAmntPaid, uint64 _bstPayout, uint64 _usdFee, uint64 _usdBurnValTot, uint64 _usdBurnVal, uint64 _usdAuxBurnVal, address _auxToken, uint32 _ratioBstPay, uint256 _blockNumber);
+                    dbProcResult[0]['_bstPayout'] = chain_bst_paid
                 bErr, jsonResp = prepJsonResponseDbProcErr(dbProcResult, tprint=VERBOSE_LOG, errMsg=errMsg) # errMsg != None: force fail from db
 
         else:
