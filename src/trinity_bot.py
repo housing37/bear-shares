@@ -465,12 +465,12 @@ async def cmd_exe(update: Update, context: CallbackContext, aux_cmd=False):
             d_resp_sel['Shill ID'] = d_resp['shill_id_inp']
             d_resp_sel['Shill'] = d_resp['shill_url']
             d_resp_sel['Approval'] = d_resp['shill_type_inp']
-            d_resp_sel['Approved Pay'] = '$' + f"{d_resp['usd_owed']:.2f}"
+            d_resp_sel['Approved Pay'] = '$' + f"{d_resp['pay_usd']:.2f}"
             d_resp_sel['total owed'] = '$' + f"{d_resp['usd_owed']:.2f}"
             d_resp_sel['total paid'] = '$' + f"{d_resp['usd_paid']:.2f}"
-            d_resp_sel['total earned'] = '$' + f"{d_resp['usd_owed']:.2f}"
+            d_resp_sel['total earned'] = '$' + f"{d_resp['usd_total']:.2f}"
             str_r = '\n '.join([str(k)+': '+str(d_resp_sel[k]) for k in d_resp_sel.keys()])
-            msg_txt = f"Shill has been approved for payment ...\n {str_r}\nPayments: use '/trinity_request_cashout'"            
+            msg_txt = f"Shill has been approved for payment ...\n {str_r}\n\nPayments: use '/trinity_request_cashout'"            
             await update.callback_query.message.reply_text(msg_txt) # reply to message sender
 
             # TODO: return tg_user_id from database (not working with @name)
