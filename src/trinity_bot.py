@@ -470,7 +470,7 @@ async def cmd_exe(update: Update, context: CallbackContext, aux_cmd=False):
             d_resp_sel['total paid'] = '$' + f"{d_resp['usd_paid']:.2f}"
             d_resp_sel['total earned'] = '$' + f"{d_resp['usd_owed']:.2f}"
             str_r = '\n '.join([str(k)+': '+str(d_resp_sel[k]) for k in d_resp_sel.keys()])
-            msg_txt = f"Shill has been approved for payment ...\n {str_r}"            
+            msg_txt = f"Shill has been approved for payment ...\n {str_r}\nPayments: use '/trinity_request_cashout'"            
             await update.callback_query.message.reply_text(msg_txt) # reply to message sender
 
             # TODO: return tg_user_id from database (not working with @name)
