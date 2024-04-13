@@ -463,10 +463,10 @@ async def cmd_exe(update: Update, context, aux_cmd=False):
             d_resp['User(TG)'] = '@' + d_resp['tg_user_at_inp']
             d_resp['Shill'] = d_resp['shill_url']
             d_resp['Approval'] = d_resp['shill_type_inp']
-            d_resp['Approvel Pay'] = '$' + d_resp['pay_usd']
-            d_resp['user owed'] = '$' + d_resp['usd_owed']
-            d_resp['user paid'] = '$' + d_resp['usd_paid']
-            d_resp['user total earned'] = '$' + d_resp['usd_total']
+            d_resp['Approvel Pay'] = '$' + f"{d_resp['usd_owed']:.2f}"
+            d_resp['user owed'] = '$' + f"{d_resp['usd_owed']:.2f}"
+            d_resp['user paid'] = '$' + f"{d_resp['usd_owed']:.2f}"
+            d_resp['user total earned'] = '$' + f"{d_resp['usd_owed']:.2f}"
             str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys()])
             msg_txt = f"Shill has been approved for payment ...\n {str_r}"            
             await update.callback_query.message.reply_text(msg_txt) # reply to message sender
