@@ -290,9 +290,8 @@ def main():
     dp.add_handler(MessageHandler(filters.ALL, log_activity))
     print('added handler ALL: log_activity')
 
-    # Start the Bot
     print('\nbot running ...\n')
-    dp.run_polling()
+    dp.run_polling(drop_pending_updates=True)
 
     
 

@@ -109,8 +109,8 @@ def main():
     #   ref: https://docs.python-telegram-bot.org/en/stable/telegram.ext.filters.html#filters-module
     # app.add_handler(MessageHandler(filters.ALL, check_scammer))    
     
-    # Start the bot
-    app.run_polling()
+    print('\nbot running ...\n')
+    app.run_polling(drop_pending_updates=True)
     print('EXIT - main()')
 
 if __name__ == "__main__":
