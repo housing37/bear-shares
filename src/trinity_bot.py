@@ -529,7 +529,7 @@ async def cmd_exe(update: Update, context: CallbackContext, aux_cmd=False):
             # if d_resp['pay_tx_status_inp'] == 1:
             if int(d_resp['tx_status_set']) == 1:
                 await context.bot.send_message(chat_id=int(CHAT_ID_0), text=msg_txt) # CHAT_ID_0 = "BearShares - trinity"
-            await update.message.reply_text(msg_txt + f'\n\n tx_status_set: {d_resp['tx_status_set']}') # reply to message sender
+            await update.message.reply_text(msg_txt + f"\n\n tx_status_set: {d_resp['tx_status_set']}") # reply to message sender
             
             # inc_ = ['$BST','tx hash','old_usd_owed','chain_usd_paid_inp','usd_owed_paid_diff','usd_total','usd_owed','tx_status_set','pay_tx_status_inp','tg_user_at_inp']
             # str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
