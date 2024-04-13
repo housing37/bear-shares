@@ -459,15 +459,16 @@ async def cmd_exe(update: Update, context: CallbackContext, aux_cmd=False):
             # inc_ = ['tg_user_at_inp','shill_id_inp','pay_usd','usd_owed','usd_paid','usd_total','shill_url','shill_type_inp']
             # d_resp['tg_user_at_inp'] = '@'+str(d_resp['tg_user_at_inp'])
             # str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
-
-            d_resp['User(TG)'] = '@' + d_resp['tg_user_at_inp']
-            d_resp['Shill'] = d_resp['shill_url']
-            d_resp['Approval'] = d_resp['shill_type_inp']
-            d_resp['Approvel Pay'] = '$' + f"{d_resp['usd_owed']:.2f}"
-            d_resp['user owed'] = '$' + f"{d_resp['usd_owed']:.2f}"
-            d_resp['user paid'] = '$' + f"{d_resp['usd_owed']:.2f}"
-            d_resp['user total earned'] = '$' + f"{d_resp['usd_owed']:.2f}"
-            str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys()])
+            d_resp_sel = {}
+            d_resp_sel['User(TG)'] = '@' + d_resp['tg_user_at_inp']
+            d_resp_sel['Shill ID'] = d_resp['shill_id_inp']
+            d_resp_sel['Shill'] = d_resp['shill_url']
+            d_resp_sel['Approval'] = d_resp['shill_type_inp']
+            d_resp_sel['Approved Pay'] = '$' + f"{d_resp['usd_owed']:.2f}"
+            d_resp_sel['user owed'] = '$' + f"{d_resp['usd_owed']:.2f}"
+            d_resp_sel['user paid'] = '$' + f"{d_resp['usd_owed']:.2f}"
+            d_resp_sel['user total earned'] = '$' + f"{d_resp['usd_owed']:.2f}"
+            str_r = '\n '.join([str(k)+': '+str(d_resp_sel[k]) for k in d_resp.keys()])
             msg_txt = f"Shill has been approved for payment ...\n {str_r}"            
             await update.callback_query.message.reply_text(msg_txt) # reply to message sender
 
