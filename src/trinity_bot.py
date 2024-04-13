@@ -466,9 +466,9 @@ async def cmd_exe(update: Update, context: CallbackContext, aux_cmd=False):
             d_resp_sel['Shill'] = d_resp['shill_url']
             d_resp_sel['Approval'] = d_resp['shill_type_inp']
             d_resp_sel['Approved Pay'] = '$' + f"{d_resp['usd_owed']:.2f}"
-            d_resp_sel['user owed'] = '$' + f"{d_resp['usd_owed']:.2f}"
-            d_resp_sel['user paid'] = '$' + f"{d_resp['usd_owed']:.2f}"
-            d_resp_sel['user total earned'] = '$' + f"{d_resp['usd_owed']:.2f}"
+            d_resp_sel['total owed'] = '$' + f"{d_resp['usd_owed']:.2f}"
+            d_resp_sel['total paid'] = '$' + f"{d_resp['usd_paid']:.2f}"
+            d_resp_sel['total earned'] = '$' + f"{d_resp['usd_owed']:.2f}"
             str_r = '\n '.join([str(k)+': '+str(d_resp_sel[k]) for k in d_resp_sel.keys()])
             msg_txt = f"Shill has been approved for payment ...\n {str_r}"            
             await update.callback_query.message.reply_text(msg_txt) # reply to message sender
@@ -479,9 +479,6 @@ async def cmd_exe(update: Update, context: CallbackContext, aux_cmd=False):
             # user = await context.bot.get_chat('@'+d_resp['tg_user_at_inp']) 
             # await context.bot.send_message(chat_id=user.id, text=msg_txt) # send DM to approved user
             if update.message is None or update.message.chat_id is None or str(update.message.chat_id) != str(CHAT_ID_0): # if reply_text is not to the main chat
-                print(f'CHAT_ID_0: {CHAT_ID_0}')
-                print(f'CHAT_ID_0: {int(CHAT_ID_0[0])}')
-                print(f'CHAT_ID_0: {str(CHAT_ID_0[0])}')
                 await context.bot.send_message(chat_id=int(CHAT_ID_0[0]), text=msg_txt) # send to CHAT_ID_0 = "BearShares - trinity"
 
             # LEFT OFF HERE ... need to store and return chat IDs for TG groups using the bot (and tg_user_id)
