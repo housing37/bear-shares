@@ -1,5 +1,3 @@
-## mysql db queries
-
 select * from users;
 select * from user_shill_rates;
 select * from user_earns;
@@ -26,8 +24,15 @@ select * from log_tg_user_at_changes;
 select ue.*, u.tg_user_at, u.wallet_address from user_earns ue
 	inner join users u
 		on u.id = ue.fk_user_id 
-	where usd_owed > 0
-	order by withdraw_requested desc;
+	-- where usd_owed > 0
+	where usd_owed > 1
+	order by usd_owed DESC, withdraw_requested desc;
+
+-- ************************************** --
+-- SET WITHDRAW REQUESTS MANUALLY FOR usd_owed > $1
+-- update user_earns set withdraw_requested = 1 
+-- 	where id in (select id from user_earns
+-- 	where usd_owed > 1);
 
 -- ************************************** --
 -- GET USER EARNINGS REPORT
@@ -45,12 +50,6 @@ SELECT SUM(usd_owed) AS tot_owed,
 -- select * from user_earns order by withdraw_requested desc;
 
 
-
--- update user_earns set withdraw_requested = 1 
--- 	where id = 
--- select * from user_earns
--- 	where usd_owed > 0
--- 	order by withdraw_requested desc;
 
 -- select * from users;
 -- set @v_fk_user_id = 22;
