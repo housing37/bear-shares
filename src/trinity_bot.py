@@ -414,8 +414,15 @@ async def cmd_exe(update: Update, context: CallbackContext, aux_cmd=False):
 
         # elif tg_cmd == 'show_my_earnings' or tg_cmd == 'admin_show_user_earnings':
         elif tg_cmd == req_handler.kSHOW_USR_EARNS or tg_cmd == req_handler.kADMIN_SHOW_USR_EARNS:
-            inc_ = ['usd_total','usd_paid','usd_owed','withdraw_requested']
-            str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
+            # inc_ = ['usd_total','usd_paid','usd_owed','withdraw_requested']
+            # str_r = '\n '.join([str(k)+': '+str(d_resp[k]) for k in d_resp.keys() if str(k) in inc_])
+
+            d_resp_sel = {}
+            d_resp_sel['\nTotal Credits\n  owed'] = f"${d_resp['usd_owed']:.2f}"
+            d_resp_sel[' paid'] = f"${d_resp['usd_paid']:.2f}"
+            d_resp_sel[' earned'] = f"${d_resp['usd_total']:.2f}"
+            d_resp_sel['Withdraw Requested'] = bool(int(d_resp['withdraw_requested']))
+            str_r = '\n '.join([str(k)+': '+str(d_resp_sel[k]) for k in d_resp_sel.keys()])
             await update.message.reply_text(f"Your current earnings ...\n {str_r}")
 
         elif tg_cmd == req_handler.kADMIN_SHOW_USR_SHILLS:
@@ -470,9 +477,10 @@ async def cmd_exe(update: Update, context: CallbackContext, aux_cmd=False):
             d_resp_sel['Shill'] = d_resp['shill_url']
             d_resp_sel['Approval'] = d_resp['shill_type_inp']
             d_resp_sel['Approved Pay'] = '$' + f"{d_resp['pay_usd']:.2f}"
-            d_resp_sel['total owed'] = '$' + f"{d_resp['usd_owed']:.2f}"
-            d_resp_sel['total paid'] = '$' + f"{d_resp['usd_paid']:.2f}"
-            d_resp_sel['total earned'] = '$' + f"{d_resp['usd_total']:.2f}"
+            d_resp_sel['\nTotal Credits\n  owed'] = f"${d_resp['usd_owed']:.2f}"
+            d_resp_sel[' paid'] = f"${d_resp['usd_paid']:.2f}"
+            d_resp_sel[' earned'] = f"${d_resp['usd_total']:.2f}"
+
             str_r = '\n '.join([str(k)+': '+str(d_resp_sel[k]) for k in d_resp_sel.keys()])
             msg_txt = f"Shill has been approved for payment ...\n {str_r}\n\nPayments: use '/trinity_request_cashout'"            
             await update.callback_query.message.reply_text(msg_txt) # reply to message sender
