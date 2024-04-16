@@ -8,20 +8,22 @@ from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKe
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from telegram.ext import CallbackQueryHandler, CallbackContext
 # from telegram import ChatAction
-import time
+import time, threading
 import random
 from datetime import datetime
 import json, time, os, traceback, sys
 import webbrowser
 # os.environ["BING_COOKIES"] = cook
 from BingImageCreator import ImageGen, ImageGenAsync
-import tweepy, requests, os
+from openai import OpenAI # pip install openai
+import tweepy, requests, os, url_short
 # from testing import gen_img.BingImgGenerator
 # from testing import BingImgGenerator
 from _test.gen_img import BingImgGenerator
 from _env import env
 # Now you can use BingImgGenerator in teddy_bot.py
 
+DEBUG_PRINT_LEVEL = 1
 
 # NOTE: browser inspector says cookies expire in ~14 days (2 weeks)
 #   cookies below created: 02.17.24 or earlier
@@ -105,14 +107,17 @@ IDX_LAST_COOKIE = -1
 # Dictionary to keep track of users who have been greeted
 greeted_users = {}
 
+USE_OPEN_AI = False
 OPENAI_KEY = 'nil_key'
 USE_HD_GEN = False
 RESP_RECEIVED = False
+USE_SHORT_URL = True
 
 WHITELIST_TG_CHAT_IDS = [
     '-1002041092613', # $BearShares
     '-1002049491115', # $BearShares - testing
     '-4139183080', # TeddyShares - testing
+    '581475171', # @housing37
     ]
 BLACKLIST_TEXT = [
     'smart vault', 'smart-vault', 'smart_vault', # @JstKidn
@@ -149,7 +154,7 @@ def set_twitter_promo_text():
     global PROMO_TWEET_TEXT
     PROMO_TWEET_TEXT = 'Test auto tweet w/ image\n\nFind this souce code @ t.me/SolAudits0\nOnly on #PulseChain'
     if USE_PROD:
-        PROMO_TWEET_TEXT = 'New $BearShares NFT image created!\n\nGenerate your own @ t.me/BearShares\nOnly on #PulseChain'
+        PROMO_TWEET_TEXT = 'New #BearShares NFT image created!\n\nGenerate your own @ t.me/BearShares\nOnly on #PulseChain'
 
 async def test(update, context):
     funcname = 'test'
@@ -346,6 +351,7 @@ def filter_prompt(_prompt):
     return _prompt
 
 async def gen_ai_img_1(update: Update, context):
+    global USE_OPEN_AI
     funcname = 'gen_ai_img_1'
     print(cStrDivider_1, f'ENTER - {funcname} _ {get_time_now()}', sep='\n')
     group_name = update.message.chat.title if update.message.chat.type == 'supergroup' else None
@@ -365,7 +371,7 @@ async def gen_ai_img_1(update: Update, context):
     # check if TG group is allowed to use the bot
     if str(_chat_id) not in WHITELIST_TG_CHAT_IDS:
         print("*** WARNING ***: non-whitelist TG group trying to use the bot; sending deny message...")
-        str_conf = f"@{str_uname} (aka. {str_handle}) -> FUCK OFF! ... don't steal : /"
+        str_conf = f"@{str_uname} (aka. {str_handle}) -> NOPE!"
         print(str_conf)
         await context.bot.send_message(chat_id=update.message.chat_id, text=str_conf)    
         print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
@@ -378,17 +384,23 @@ async def gen_ai_img_1(update: Update, context):
 
     str_conf = f'@{str_uname} (aka. {str_handle}) -> please wait, generating image ...\n    "{str_prompt}"'
     print(str_conf)
+    # await context.bot.send_message(chat_id=update.message.chat_id, text=str_conf)
+    await update.message.reply_text(f" ... i'll give it a shot 👍️️ ")
 
-    await context.bot.send_message(chat_id=update.message.chat_id, text=str_conf)
-
-    lst_imgs, err = gen_ai_image(str_prompt)
-
+    if USE_OPEN_AI:
+        lst_imgs, err = gen_ai_image_openAI(str_prompt)
+    else:
+        lst_imgs, err = gen_ai_image(str_prompt)
+    
     if err > 0:
         str_err = f"@{str_uname} (aka. {str_handle}) -> BING said NO!\n   change it up & try again : /"
+        str_err_reply = f" ... BING said NO, try changing it up 🤷️️️️️️"
         if err == 1:
             str_err = f"@{str_uname} (aka. {str_handle}) -> description TOO SHORT, need at least {MIN_DESCR_CHAR_CNT} chars (~{MIN_DESCR_WORD_CNT} words or so)"
+            str_err_reply = f" ... description TOO SHORT, need about {MIN_DESCR_WORD_CNT} words"
         str_err = str_err + f'\n    "{str_prompt}"'
-        await context.bot.send_message(chat_id=update.message.chat_id, text=str_err)
+        # await context.bot.send_message(chat_id=update.message.chat_id, text=str_err)
+        await update.message.reply_text(str_err_reply)
         print(str_err)
         print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
         return
@@ -406,27 +418,106 @@ async def gen_ai_img_1(update: Update, context):
             url = lst_imgs[r_idx]
             break
 
+    if USE_SHORT_URL:
+        url = url_short.make_tiny(url)
+
     # Create an inline keyboard markup with a button
     inline_keyboard = [
         [InlineKeyboardButton("Request Tweet", callback_data=f'@{str_uname} (aka. {str_handle})')]
     ]
     reply_markup = InlineKeyboardMarkup(inline_keyboard)
     try:
-        await context.bot.send_message(
-            chat_id=update.message.chat_id, 
-            text=f'@{str_uname} (aka. {str_handle}) -> here is your image\n  "{str_prompt}" ...\n {url}',
-            # reply_markup = ReplyKeyboardMarkup([['Your Button Text']])
-            reply_markup = reply_markup
-            )
+        # await context.bot.send_message(
+        #     chat_id=update.message.chat_id, 
+        #     text=f'@{str_uname} (aka. {str_handle}) -> here is your image\n  "{str_prompt}" ...\n {url}',
+        #     # reply_markup = ReplyKeyboardMarkup([['Your Button Text']])
+        #     reply_markup = reply_markup
+        #     )
+        await update.message.reply_text(f" ... your image ...\n {url}", reply_markup = reply_markup)
     except Exception as e:
         # note_021724: exception added for TG: @enriquebambo (aka. 🍊 👾 𝐄η𝐑𝕚ⓀẸⓑᗩｍ𝕓ㄖ 👾🍊 {I DM First, I'm Impostor})
         #   sending response with TG button was causing a crash (but images were indeed successfully received from BING)
-        print_except(e, debugLvl=1)
+        print_except(e, debugLvl=DEBUG_PRINT_LEVEL)
         print('Sending to TG w/o tweet button... ')
-        await context.bot.send_message(
-            chat_id=update.message.chat_id, 
-            text=f'@{str_uname} (aka. {str_handle}) -> here is your image\n  "{str_prompt}" ...\n {url}')
+        # await context.bot.send_message(
+        #     chat_id=update.message.chat_id, 
+        #     text=f'@{str_uname} (aka. {str_handle}) -> here is your image\n  "{str_prompt}" ...\n {url}')
+        await update.message.reply_text(f" ... your image ...\n {url}")
     print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
+
+def gen_ai_image_openAI(str_prompt):
+    global IMG_REQUEST_CNT, IMG_REQUEST_SUCCESS_CNT, USE_HD_GEN
+    funcname = 'gen_ai_image_openAI'
+    IMG_REQUEST_CNT += 1
+    print(f'\nENTER - {funcname} _ IMG_REQUEST_CNT: {IMG_REQUEST_CNT}')
+    print(f'str_prompt: {str_prompt}')
+
+    lst_imgs = []
+    err = 0
+
+    if not validate_input(str_prompt):
+        err = 1
+        return lst_imgs, err
+
+    try:
+        lst_imgs = exe_request_openAI(str_prompt, USE_HD_GEN) # True = HD (False = standard)
+        IMG_REQUEST_SUCCESS_CNT += 1
+
+    except Exception as e:
+        print_except(e, debugLvl=1)
+        print(f'img request cnt: {IMG_REQUEST_CNT}')
+        print(f'img request success ratio: {IMG_REQUEST_SUCCESS_CNT}/{IMG_REQUEST_CNT}')
+        # print("Exception caught:", e)
+        err = 2
+        time.sleep(2) # force user to wait for next attempt
+        return lst_imgs, err
+        
+    print(f'img request cnt: {IMG_REQUEST_CNT}')
+    print(f'img request success ratio: {IMG_REQUEST_SUCCESS_CNT}/{IMG_REQUEST_CNT}')
+    print('', f'EXIT - {funcname} _ IMG_REQUEST_CNT: {IMG_REQUEST_CNT}', sep='\n')
+    return lst_imgs, err
+
+def exe_request_openAI(descr, use_hd=False):
+    global OPENAI_KEY, RESP_RECEIVED
+    print(f'ENTER - exe_request_openAI')
+    
+    quality = 'hd' if use_hd else 'standard'
+    print(f'Sending request... openAI (quality: {quality}) _ {get_time_now()}')
+    print('waiting for results... openAI')
+
+    try:
+        # start 'print_wait_dots' waiting thread
+        RESP_RECEIVED = False
+        dot_thread = threading.Thread(target=print_wait_dots)
+        dot_thread.start()
+
+        # execute request to openAI
+        client = OpenAI(api_key=OPENAI_KEY)
+        response = client.images.generate(
+            model="dall-e-3",
+            prompt=descr,
+            size="1024x1024",
+            quality=quality,
+            n=1,
+        )
+
+    except Exception as e:
+        print_except(e, debugLvl=1)
+        raise
+    finally:
+        # end/join print 'dot' thread for waiting
+        RESP_RECEIVED = True
+        dot_thread.join()
+    
+    print(f'\nresponse recieved _ {get_time_now()}')
+    # print(response.data)
+    revised_prompt = response.data[0].revised_prompt
+    image_url = response.data[0].url
+    print(f'revised_prompt...\n {revised_prompt}')
+    print(f'image_url...\n {image_url}')
+
+    print(f'\nEXIT - exe_request_openAI _ {get_time_now()}')
+    return [image_url]
 
 async def gen_ai_img_x(update: Update, context):
     funcname = 'gen_ai_img_x'
@@ -523,7 +614,7 @@ def gen_ai_image(str_prompt):
         IMG_REQUEST_SUCCESS_CNT += 1
 
     except Exception as e:
-        print_except(e, debugLvl=1)
+        print_except(e, debugLvl=DEBUG_PRINT_LEVEL)
         print(f'cookie idx: {_idx}\ncookie key: {_key}')
         print(f'img request cnt: {IMG_REQUEST_CNT}')
         print(f'img request success ratio: {IMG_REQUEST_SUCCESS_CNT}/{IMG_REQUEST_CNT}')
@@ -539,6 +630,22 @@ def gen_ai_image(str_prompt):
     print(f'img request success ratio: {IMG_REQUEST_SUCCESS_CNT}/{IMG_REQUEST_CNT}')
     print('', f'EXIT - {funcname} _ IMG_REQUEST_CNT: {IMG_REQUEST_CNT}', sep='\n')
     return lst_imgs, err
+
+async def log_activity(update: Update, context):
+    if update.message == None:
+        print(f'{get_time_now()} _ action : found .message == None; returning')
+        return
+
+    chat_type = str(update.message.chat.type)
+    chat_id = update.message.chat_id
+    user = update.message.from_user
+    uid = str(user.id)
+    usr_at_name = f'@{user.username}'
+    usr_handle = user.first_name
+    inp = update.message.text
+    lst_user_data = [uid, usr_at_name, usr_handle]
+    lst_chat_data = [chat_id, chat_type]
+    print(f'{get_time_now()} _ action: {lst_user_data}, {lst_chat_data}')
 
 def main():
     # global TOKEN
@@ -562,7 +669,12 @@ def main():
 
     # Register message handler for all other messages
     # dp.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo)) # ~ = negate (ie. AND NOT)
-    dp.add_handler(MessageHandler(filters.Command, bad_command))
+    # dp.add_handler(MessageHandler(filters.Command, bad_command))
+
+    # Add message handler for ALL messages
+    #   ref: https://docs.python-telegram-bot.org/en/stable/telegram.ext.filters.html#filters-module
+    dp.add_handler(MessageHandler(filters.ALL, log_activity))
+    print('added handler ALL: log_activity')
 
     # Start the Bot
     print('\nbot running ...\n')
@@ -605,6 +717,13 @@ def print_except(e, debugLvl=0):
         strTrace = traceback.format_exc()
         print('', cStrDivider, f' type: {exc_type}', f' file: {fname}', f' line_no: {exc_tb.tb_lineno}', f' traceback: {strTrace}', cStrDivider, sep='\n')
 
+def print_wait_dots():
+    global RESP_RECEIVED
+    while not RESP_RECEIVED:
+        sys.stdout.write('.')
+        sys.stdout.flush()
+        time.sleep(1)  # Adjust sleep duration as needed
+        
 def wait_sleep(wait_sec : int, b_print=True, bp_one_line=True): # sleep 'wait_sec'
     print(f'waiting... {wait_sec} sec')
     for s in range(wait_sec, 0, -1):
@@ -637,19 +756,26 @@ if __name__ == "__main__":
         USE_PROD = True if inp == '0' else False
         print(f'  input = {inp} _ USE_PROD = {USE_PROD}')
 
-        # select to use gen_img.py or no (not = using BingImageCreator.py)
-        inp = input("\nUse selenium gen_img.py? [y/n]\n  > ")
-        USE_GEN_IMG = True if inp == 'y' or inp == '1' else False
-        print(f'  input = {inp} _ USE_GEN_IMG (selenium) = {USE_GEN_IMG}')
+        ans = input('\nUse openAI? [y/n]:\n  > ')
+        USE_OPEN_AI = True if ans == 'y' or ans == '1' else False
+        print(f'  input = {ans} _ USE_OPEN_AI = {USE_OPEN_AI}')
+        if USE_OPEN_AI:
+            ans = input('\nUse HD image generating? [y/n]:\n  > ')
+            USE_HD_GEN = True if ans == 'y' or ans == '1' else False
+            print(f'  input = {ans} _ USE_HD_GEN = {USE_HD_GEN}')
+        else:
+            # select to use gen_img.py or no (not = using BingImageCreator.py)
+            inp = input("\nUse selenium gen_img.py? [y/n]\n  > ")
+            USE_GEN_IMG = True if inp == 'y' or inp == '1' else False
+            print(f'  input = {inp} _ USE_GEN_IMG (selenium) = {USE_GEN_IMG}')
 
-        # if not using selenium (ie. indeed using cookies & not emails)
-        if not USE_GEN_IMG:
-            # select to use random cookie
-            inp = input("\nCycle through cookies randomly? [y/n]\n  > ")
-            USE_RAND_COOKIE = True if inp == 'y' or inp == '1' else False
-            print(f'  input = {inp} _ USE_RAND_COOKIE = {USE_RAND_COOKIE}')
+            # if not using selenium (ie. indeed using cookies & not emails)
+            if not USE_GEN_IMG:
+                # select to use random cookie
+                inp = input("\nCycle through cookies randomly? [y/n]\n  > ")
+                USE_RAND_COOKIE = True if inp == 'y' or inp == '1' else False
+                print(f'  input = {inp} _ USE_RAND_COOKIE = {USE_RAND_COOKIE}')
         
-
         # TOKEN = TOKEN_prod if USE_PROD else TOKEN_dev
         set_tg_token()
         init_openAI_client()
@@ -662,7 +788,7 @@ if __name__ == "__main__":
         print(f'PROMO_TWEET_TEXT:\n{PROMO_TWEET_TEXT}\n') 
         main()
     except Exception as e:
-        print_except(e, debugLvl=0)
+        print_except(e, debugLvl=DEBUG_PRINT_LEVEL)
     
     ## end ##
     print(f'\n\nRUN_TIME_START: {RUN_TIME_START}\nRUN_TIME_END:   {get_time_now()}\n')
