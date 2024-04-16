@@ -34,6 +34,7 @@ BLACKLIST_SCAM_TEXT = [
     'BlastPulsechain', # 7017221881, @AlexSandros6, Alex sandros
     '$BLAST', # 7017221881, @AlexSandros6, Alex sandros
     '$Wen', # ['5486688786', '@Genstlell', 'Teller']
+    '$BRETT'
 ]
 BLACKLIST_SCAM_COMBO_TEXT = [
     ['$','t.me'], # trying to catch '$whatever' w/ 't.me/whatever'
@@ -204,15 +205,20 @@ async def check_scammer(update: Update, context):
             b_scam_text = True
 
     # check inp_text for individual blacklisted text
+    lst_scam_txt_found = []
     for t in lst_text:
         if t in inp_text.lower():
             print(f'FOUND scam text: {t} _ inp_text:\n  {inp_text}')
             b_scam_text = True
+            lst_scam_txt_found.append(t)
 
+    lst_scam_txt_found = [i.upper() for i in lst_scam_txt_found if '$' in i]
     # checks blacklist of @user and tg_uid and tg_handle
     if b_scam_text or uid.lower() in lst_uid or usr_at_name.lower() in lst_uname or usr_handle.lower() in lst_handle:
         print(f'FOUND scammer: {lst_user_data}')
-        await update.message.reply_text(f"inside The Matrix, {usr_at_name} is known as a scammer 👆️️️️️️")
+        # await update.message.reply_text(f"inside The Matrix, {usr_at_name} is known as a scammer 👆️️️️️️")
+        await update.message.reply_text(f"{usr_at_name} is known as a scammer 👆️️️️️️ and purchasing his tokens has been known to go towards supporting pedophiles 😔️️️️️️ ... {' '.join(lst_scam_txt_found)}")
+        
 
 async def new_member(update: Update, context):
     user = update.message.new_chat_members[0]
