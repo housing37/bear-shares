@@ -17,216 +17,209 @@ cStrDivider_1 = '#--------------------------------------------------------------
                         uint256 amount,
                         uint256 feeAmount)
 '''
-from web3 import Web3, HTTPProvider
-# from web3.contract import ConciseContract
-import time
+#------------------------------------------------------------#
+# IMPORTS
+#------------------------------------------------------------#
+import _bst_keeper, _abi, _web3
+from web3 import Web3
 from _env import env
-# #------------------------------------------------------------#
-# #------------------------------------------------------------#
-# #print('getting keys and setting globals ...')
-# ### SETTINGS ##
-# #abi_file = "../contracts/BalancerFLR.json"
-# #bin_file = "../contracts/BalancerFLR.bin"
-# #------------------------------------------------------------#
-# sel_chain = input('\nSelect chain:\n  0 = ethereum mainnet\n  1 = pulsechain mainnet\n  > ')
-# assert 0 <= int(sel_chain) <= 1, 'Invalid entry, abort'
-# (RPC_URL, CHAIN_ID) = (env.eth_main, env.eth_main_cid) if int(sel_chain) == 0 else (env.pc_main, env.pc_main_cid)
+from datetime import datetime
+import sys, os, traceback, time, pprint, json
+from ethereum.abi import encode_abi, decode_abi # pip install ethereum
 
-# sel_send = input(f'\nSelect sender: (_event_listener: n/a)\n  0 = {env.sender_address_3}\n  1 = {env.sender_address_1}\n  > ')
-# assert 0 <= int(sel_send) <= 1, 'Invalid entry, abort'
-# (SENDER_ADDRESS, SENDER_SECRET) = (env.sender_address_3, env.sender_secret_3) if int(sel_send) == 0 else (env.sender_address_1, env.sender_secret_1)
-# #------------------------------------------------------------#
-# #LST_CONTR_ARB_ADDR = [
-# #    "0x59012124c297757639e4ab9b9e875ec80a5c51da", # deployed eth main 102823_1550
-# #    "0x48af7d501bca526171b322ac2d8387a8cf085850", # deployed eth main 102823_2140
-# #    "0x0B3f73687A5F78ACbdEccF860cEd0d8A5630F806", # deployed pc main 103023_2128
-# #    "0xc2fa6dF341b18AE3c283CE3E7C0f1b4F5F6cabBb", # deployed pc main 110123_1953
-# #    "0x42b2dDF6cd1C4c269785a228D40307a1e0441c77", # deployed pc main 110323_1649
-# #    "0xF02e6E28E250073583766D77e161f67C21aEe388", # deployed pc main 110323_1715
-# #    "0xc3B031914Ef19E32859fbe72b52e1240335B60da", # deployed pc main 110323_1759
-# #    "0x4e24f4814306fd8cA4e63f342E8AF1675893c002", # deployed pc main 110323_1902 (TEST)
-# #    "0x8cC1fa4FA6aB21D25f07a69f8bBbCbEAE7AD150d", # deployed pc main 110323_1937 (TEST)
-# #    "0x5605ca222d290dFf31C4174AbCDFadc7DED90915", # deployed pc main 110323_2301 (TEST)
-# #]
-# print(f'\nSelect arbitrage contract to use:')
-# for i, v in enumerate(LST_CONTR_ARB_ADDR): print(' ',i, '=', v)
-# idx = input('  > ')
-# assert 0 <= int(idx) < len(LST_CONTR_ARB_ADDR), 'Invalid input, aborting...\n'
-# CONTR_ARB_ADDR = str(LST_CONTR_ARB_ADDR[int(idx)])
-# #------------------------------------------------------------#
-# print(f'''\nINITIALIZING web3 ...
-#     RPC: {RPC_URL}
-#     ChainID: {CHAIN_ID}
-#     SENDER: {SENDER_ADDRESS}
-#     ARB CONTRACT: {CONTR_ARB_ADDR}''')
-# W3 = Web3(HTTPProvider(RPC_URL))
+#------------------------------------------------------------#
+# GLOBALS
+#------------------------------------------------------------#
+BLOCK_WAIT_SEC = 10
+ADDR_BST = "0x7A580b7Cd9B48Ba729b48B8deb9F4D2cb216aEBC"
+ADDR_PDAI = "0x6B175474E89094C44Da98b954EedeAC495271d0F"
+ADDR_BEAR = "0xd6c31bA0754C4383A41c0e9DF042C62b5e918f6d"
+DEBUG_LVL = 3
 
-# print(f'\nreading abi file from contract {CONTR_ARB_ADDR} ...')
-# with open("../contracts/BalancerFLR.json", "r") as file: CONTR_ARB_ABI = file.read()
-# #------------------------------------------------------------#
+FUNC_SIGN_TRANS_FROM = "transferFrom(address,address,uint256)"
+FUNC_HASH_TRANS_FROM = "23b872dd"
+ERC20_FUNC_MAP_WRITE = {
+    # write functions
+    "allowance(address,address)": ["dd62ed3e", ["address","address"], []],
+    "approve(address,uint256)": ["095ea7b3", ["address","uint256"], []],
+    "transfer(address,uint256)": ["a9059cbb", ["address","uint256"], []],
+    FUNC_SIGN_TRANS_FROM: [FUNC_HASH_TRANS_FROM, ["address","address","uint256"], []],
+    "renounceOwnership()": ["715018a6", [], []],
+    "transferOwnership(address)": ["f2fde38b", ["address"], []],
+}
+#------------------------------------------------------------#
+# FUNCTIONS
+#------------------------------------------------------------#
+def parse_logs_for_tx_receipt(_tx_receipt, _func_hash, _w3:Web3=None):
+    # Get the logs from the transaction receipt
+    logs = _tx_receipt['logs']
+    d_ret_log = {'err':'no logs found'}
+    if _w3 == None: return d_ret_log
+    print(f' event logs (for func_hash: {_func_hash}) ...')
+    if _func_hash == ERC20_FUNC_MAP_WRITE[FUNC_SIGN_TRANS_FROM][0]:
+        # Define & filter logs based on the event signature
+        # event Transfer(address indexed from, address indexed to, uint256 value);
+        event_sign = _w3.keccak(text="Transfer(address,address,uint256)").hex()
+        transfer_logs = [log for log in logs if log['topics'][0].hex() == event_sign]
 
-# from web3 import Web3, HTTPProvider
-
-# Connect to an Ethereum node
-# w3 = Web3(HTTPProvider('http://localhost:8545'))  # Assuming you're running a local Ethereum node
-
-import _web3, _bst_keeper, _abi
-W3_ = _web3.myWEB3().init_nat(1, env.sender_addr_trinity, env.sender_secr_trinity, default_gas=True) # 1 = pulsechain
-def get_event_logs(tx_hash):
-    tx_receipt = W3_.W3.eth.get_transaction_receipt(tx_hash)
-    d_ret_log = _bst_keeper.parse_logs_for_func_hash(tx_receipt, _abi.BST_PAYOUT_FUNC_HASH, W3_)    
+        # Parse the event logs
+        for log in transfer_logs:
+            lst_evt_params = ['address','address','uint256']
+            evt_data = log['data']
+            decoded_data = decode_abi(lst_evt_params, evt_data)
+            d_ret_log = {'from':decoded_data[0],
+                         'to':decoded_data[1],
+                         'value':decoded_data[2]}
+        
+            # [print(f'   {key}: {val}') for key,val in d_ret_log.items()]
+            # print()
+            
     return d_ret_log
 
-# Example transaction hash
-# tx_hash = '0xee2d3d10cfc5fd4c1a42f0de2de96a41ddcbb43773248365815eb8d4c62c3fd5'
-tx_hash = '0x9bbc67b34aadcf6209a7fc795af7dc68ba44d6879b244b7f87db96806b244e09'
-event_logs = get_event_logs(tx_hash)
-# Print event logs
-# for log in event_logs:
-#     print(log)
+def parse_logs_for_block_num(_block_number, _event_sign, _contr_addr, _w3:Web3=None):
+    lst_ret_log = []
+    if _w3 == None: return lst_ret_log
+    lst_evt_params = ['address','address','uint256']
 
+    # Get logs for the specified block number and event signature
+    event_sign = _w3.keccak(text=_event_sign).hex()
+    transfer_logs = _w3.eth.get_logs({
+        'fromBlock': _block_number,
+        'toBlock': _block_number,
+        'address': _contr_addr,
+        'topics': [event_sign]            
+    })
+    
+    for logs in transfer_logs:
+        # Extract topics & data (ie. indexed & non-indexed params from ABI list)
+        topics = [topic for i,topic in enumerate(logs['topics']) if i > 0] # skip topic 0 (event sign)
+        data = logs['data']
+        log_idx = logs['logIndex']
 
+        # Concatenate topics + data & decode w/ abi params
+        event_data = b''.join(topics) + data # NOTE: b' required
+        decoded_data = decode_abi(lst_evt_params, event_data)
+        d_ret_log = {'log_idx':log_idx,
+                        'address (token)':transfer_logs[0]['address'],
+                        'from':decoded_data[0],
+                        'to':decoded_data[1],
+                        'value':float(decoded_data[2]) / 10**18}
+        lst_ret_log.append(d_ret_log)
+    if len(lst_ret_log) == 0: lst_ret_log = [{'err':'no logs found'}]
+    return lst_ret_log
 
+def main(_w3:Web3=None, _tx_hash=None):
+    if _tx_hash != None:
+        tx_receipt = _w3.eth.get_transaction_receipt(_tx_hash)
+        d_ret_log = parse_logs_for_tx_receipt(tx_receipt, FUNC_HASH_TRANS_FROM, _w3)
+        [print(f'   {key}: {val}') for key,val in d_ret_log.items()]
+        print()
+    else:
+        ca = ADDR_PDAI
+        # ca = ADDR_BST
+        while True: # live...
+            block_num = _w3.eth.block_number # blockNumber
+            print(cStrDivider_1, f'block# {block_num} _ {get_time_now()}', sep='\n')
+            # ret_log = parse_logs_for_block_num(block_num, FUNC_HASH_TRANS_FROM, ADDR_PDAI, W3_)
+            # event Transfer(address indexed from, address indexed to, uint256 value);
+            event_sign = "Transfer(address,address,uint256)"
+            print(f"fetching logs for ...\n event: {event_sign}\n address: {ca}\n")
+            ret_log = parse_logs_for_block_num(block_num, event_sign, ca, _w3)
+            pprint.pprint(ret_log)
+            print('', f'block# {block_num} _ {get_time_now()} _ sleep({BLOCK_WAIT_SEC})', cStrDivider_1, sep='\n')
+            time.sleep(BLOCK_WAIT_SEC) # ~10sec block times (pc)
 
+def main_BST(_tx_hash='', _func_hash=''):
+    if not _tx_hash or len(_tx_hash) == 0:
+        # _tx_hash = '0xee2d3d10cfc5fd4c1a42f0de2de96a41ddcbb43773248365815eb8d4c62c3fd5'
+        _tx_hash = '0x9bbc67b34aadcf6209a7fc795af7dc68ba44d6879b244b7f87db96806b244e09'
+    if not _func_hash or len(_func_hash) == 0:
+        _func_hash = _abi.BST_PAYOUT_FUNC_HASH
+    print(f'executing ...\n _tx_hash: {_tx_hash}\n func_hash: {_func_hash}')
+    tx_receipt = W3_.W3.eth.get_transaction_receipt(_tx_hash)
+    d_ret_log = _bst_keeper.parse_logs_for_func_hash(tx_receipt, _func_hash, W3_) # performs print
 
+#------------------------------------------------------------#
+#   DEFAULT SUPPORT                                          #
+#------------------------------------------------------------#
+READ_ME = f'''
+    *DESCRIPTION*
+        nil
 
+    *NOTE* INPUT PARAMS...
+        nil
+        
+    *EXAMPLE EXECUTION*
+        $ python3 {__filename} -<nil> <nil>
+        $ python3 {__filename}
+'''
 
+#ref: https://stackoverflow.com/a/1278740/2298002
+def print_except(e, debugLvl=0):
+    #print(type(e), e.args, e)
+    if debugLvl >= 0:
+        print('', cStrDivider, f' Exception Caught _ e: {e}', cStrDivider, sep='\n')
+    if debugLvl >= 1:
+        print('', cStrDivider, f' Exception Caught _ type(e): {type(e)}', cStrDivider, sep='\n')
+    if debugLvl >= 2:
+        print('', cStrDivider, f' Exception Caught _ e.args: {e.args}', cStrDivider, sep='\n')
+    if debugLvl >= 3:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        strTrace = traceback.format_exc()
+        print('', cStrDivider, f' type: {exc_type}', f' file: {fname}', f' line_no: {exc_tb.tb_lineno}', f' traceback: {strTrace}', cStrDivider, sep='\n')
 
+def wait_sleep(wait_sec : int, b_print=True, bp_one_line=True): # sleep 'wait_sec'
+    print(f'waiting... {wait_sec} sec')
+    for s in range(wait_sec, 0, -1):
+        if b_print and bp_one_line: print(wait_sec-s+1, end=' ', flush=True)
+        if b_print and not bp_one_line: print('wait ', s, sep='', end='\n')
+        time.sleep(1)
+    if bp_one_line and b_print: print() # line break if needed
+    print(f'waiting... {wait_sec} sec _ DONE')
 
-# import _abi, _web3
-# import pprint
+def get_time_now(dt=True):
+    if dt: return '['+datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[0:-4]+']'
+    return '['+datetime.now().strftime("%H:%M:%S.%f")[0:-4]+']'
 
-# W3_ = _web3.myWEB3().init_inp(_set_gas=False)
-# CONTR_ARB_ABI = _abi.BST_ABI
-# # CONTR_ARB_ADDR = '0x528F9F50Ea0179aF66D0AC99cdc4E45E55120D92'
-# CONTR_ARB_ADDR = input('\n Enter BST contract address ...\n  > ')
-# # Create a contract instance
-# CONTR_ARB_ADDR = W3_.W3.to_checksum_address(CONTR_ARB_ADDR)
-# contract = W3_.W3.eth.contract(address=CONTR_ARB_ADDR, abi=CONTR_ARB_ABI)
+def read_cli_args():
+    print(f'\nread_cli_args...\n # of args: {len(sys.argv)}\n argv lst: {str(sys.argv)}')
+    for idx, val in enumerate(sys.argv): print(f' argv[{idx}]: {val}')
+    print('read_cli_args _ DONE\n')
+    return sys.argv, len(sys.argv)
 
-# # Event listener
-# def event_callback(event):
-#     print(f"Event {event['event']} triggered with arguments: {event['args']}")
+if __name__ == "__main__":
+    ## start ##
+    RUN_TIME_START = get_time_now()
+    print(f'\n\nRUN_TIME_START: {RUN_TIME_START}\n'+READ_ME)
+    lst_argv_OG, argv_cnt = read_cli_args()
+    
+    ## exe ##
+    try:
+        # execute CLI input
+        W3_ = _web3.myWEB3().init_nat(1, env.sender_addr_trinity, env.sender_secr_trinity) # 1 = pulsechain
+        # W3_.set_gas_params(W3_.W3)
 
-# # Listen for events
-# print(f'\nwaiting for events from contract {CONTR_ARB_ADDR} ...')
-# while True:
-#     time.sleep(5) # wait 5 sec
-#     print('.', end=' ', flush=True)
-#     # Start listening for all events
-#     for event_abi in CONTR_ARB_ABI:
-#         if event_abi['type'] == 'event':
-#             event_name = event_abi['name']
-#             event_filter = contract.events[event_name].create_filter(fromBlock='latest')
-#             event_logs = event_filter.get_all_entries()
-#             for event in event_logs:
-#                 event_callback(event)
+        # select to use prod bot or dev bot
+        inp = input('\nSelect run mode:\n  0 = BST events logs \n  1 = Other \n  > ')
+        RUN_MODE_BST = True if inp == '0' else False
+        print(f'  input = {inp} _ RUN_MODE_BST = {RUN_MODE_BST}\n')
 
+        if RUN_MODE_BST:
+            tx_hash = input('Input BST tx hash (leave blank for default testing):\n > ')
+            print(f'  input = {tx_hash}\n')
+            _func_hash = _abi.BST_PAYOUT_FUNC_HASH
+            main_BST(tx_hash, _func_hash)
+        else:
+            main(_w3=W3_.W3, _tx_hash=None)
 
+            # NOTE: 041724 _ does not work yet ... specifiying tx_hash
+            # tx_hash = '0x7ac97de7444bd5f65739e71c20a3962589ce832cba263ccd3aa6a027c6cc02e7'
+            # main(_w3=W3_.W3, _tx_hash=tx_hash)
+    except Exception as e:
+        print_except(e, debugLvl=DEBUG_LVL)
+    
+    ## end ##
+    print(f'\n\nRUN_TIME_START: {RUN_TIME_START}\nRUN_TIME_END:   {get_time_now()}\n')
 
-
-
-
-
-
-
-# def handle_event(event):
-#     # c = event["args"]["contr"]
-#     # s = event["args"]["sender"]
-#     # m = event["args"]["message"]
-#     bnum = event["blockNumber"]
-#     # print(f'\n[EVT] _ b|{bnum} _ ',"Contract: ", c, "Sender: ", s, "Msg: ", m)
-
-#     return_print = pprint.PrettyPrinter().pformat(event)
-#     print(f'\n[EVT] _ b|{bnum} _ ',return_print, sep='\n')
-# #    print("Event received:")
-# #    print("Contract:", event["args"]["contr"])
-# #    print("Sender:", event["args"]["sender"])
-# #    print("Message:", event["args"]["message"])
-# #    print("Block Number:", event["blockNumber"])
-
-# # Set up an event filter
-# # event_filter_0 = contract.events.logX.create_filter(fromBlock="latest")
-# # event_filter_1 = contract.events.logMFL.create_filter(fromBlock="latest")
-# # event_filter_2 = contract.events.logRFL.create_filter(fromBlock="latest")
-# # event_filter_0 = contract.events.KeeperTransfer.create_filter(fromBlock="latest")
-
-# # event_filter_1 = contract.events.ServiceFeeUpdate.create_filter(fromBlock="latest")
-# # event_filter_2 = contract.events.ServiceBurnUpdate.create_filter(fromBlock="latest")
-# # event_filter_3 = contract.events.TradeInFeeUpdate.create_filter(fromBlock="latest")
-
-# # event_filter_4 = contract.events.MarketBuyEnabled.create_filter(fromBlock="latest")
-# # event_filter_5 = contract.events.MarketQuoteEnabled.create_filter(fromBlock="latest")
-# # event_filter_6 = contract.events.DepositReceived.create_filter(fromBlock="latest")
-
-# # event_filter_7 = contract.events.PayOutProcessed.create_filter(fromBlock="latest")
-# # event_filter_8 = contract.events.TradeInProcessed.create_filter(fromBlock="latest")
-
-# # Listen for events
-# print(f'\nwaiting for events from contract {CONTR_ARB_ADDR} ...')
-# while True:
-#     time.sleep(5) # wait 5 sec
-#     print('.', end=' ', flush=True)
-#     events = contract.events.Transfer().get_logs(fromBlock='latest', toBlock='latest') # toBlock='latest' (default)
-#     for i, event in enumerate(events):
-#         handle_event(event)
-
-    # for event in event_filter_0.get_new_entries():
-    #     handle_event(event)
-    # for event in event_filter_1.get_new_entries():
-    #     handle_event(event)
-    # for event in event_filter_2.get_new_entries():
-    #     handle_event(event)
-    # for event in event_filter_3.get_new_entries():
-    #     handle_event(event)
-    # for event in event_filter_4.get_new_entries():
-    #     handle_event(event)
-    # for event in event_filter_5.get_new_entries():
-    #     handle_event(event)
-    # for event in event_filter_6.get_new_entries():
-    #     handle_event(event)
-    # for event in event_filter_7.get_new_entries():
-    #     handle_event(event)
-    # for event in event_filter_8.get_new_entries():
-    #     handle_event(event)
-#########
-
-## Replace with the event signature (topic) of the event you want to listen for
-#event_signature = W3.keccak(text="FlashLoan(IFlashLoanRecipient,IERC20,uint256,uint256)").hex()
-#
-## Create a function to handle the event
-#def handle_event(event):
-#    print("FlashLoan event received:")
-#    print("Recipient:", event['args']['recipient'])
-#    print("Token:", event['args']['token'])
-#    print("Amount:", event['args']['amount'])
-#    print("Fee Amount:", event['args']['feeAmount'])
-#
-## Set up the event filter
-#event_filter = W3.eth.filter({'address': CONTR_ARB_ADDR, 'topics': [event_signature]})
-#
-#print('Started listening for events ... ')
-#while True:
-#    for event in event_filter.get_new_entries():
-#        handle_event(event)
-
-
-####
-
-## Create a contract object
-#contract = W3.eth.contract(address=CONTR_ARB_ADDR, abi=CONTR_ARB_ABI)
-#
-#def handle_event(event):
-#    print("FlashLoan event received:")
-#    print("Recipient:", event['args']['recipient'])
-#    print("Token:", event['args']['token'])
-#    print("Amount:", event['args']['amount'])
-#    print("Fee Amount:", event['args']['feeAmount'])
-#
-## Define the event filter
-#event_filter = contract.events.FlashLoan.create_filter(fromBlock="latest")
-#
-## Start listening for events
-#while True:
-#    for event in event_filter.get_new_entries():
-#        handle_event(event)
+print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')

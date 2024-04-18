@@ -44,6 +44,22 @@ class myWEB3:
         tx_pool = response.json()['result']
         return tx_pool
         # return json.dumps(tx_pool, indent=4)
+
+    def init_web3(self, with_sender=True, empty=False):
+        if empty: 
+            self.W3 = Web3()
+            return self.W3, None
+        
+        print(f'''\nINITIALIZING web3 ...
+        RPC: {self.RPC_URL} _ w/ timeout: {self.rpc_req_timeout}
+        ChainID: {self.CHAIN_ID}
+        SENDER: {self.SENDER_ADDRESS}
+        CONTRACTS: {self.LST_CONTRACTS}''')
+
+        self.W3 = Web3(HTTPProvider(self.RPC_URL, request_kwargs={'timeout': self.rpc_req_timeout}))
+        #self.W3.middleware_stack.inject(geth_poa_middleware, layer=0) # chatGPT: for PoA chains; for gas or something
+        if with_sender: self.ACCOUNT = Account.from_key(self.SENDER_SECRET)
+        return self.W3, self.ACCOUNT
     
     def init_nat(self, _chain_sel, _sender_addr, sender_secret, default_gas=False):
         rpc_url, chain_id, chain_sel    = self.set_chain(_chain_sel)
@@ -118,22 +134,6 @@ class myWEB3:
         self.SENDER_ADDRESS, self.SENDER_SECRET = (env.sender_address_3, env.sender_secret_3) if int(sel_send) == 0 else (env.sender_address_1, env.sender_secret_1)
         print(f'  selected {self.SENDER_ADDRESS}')
         return self.SENDER_ADDRESS, self.SENDER_SECRET
-    
-    def init_web3(self, with_sender=True, empty=False):
-        if empty: 
-            self.W3 = Web3()
-            return self.W3, None
-        
-        print(f'''\nINITIALIZING web3 ...
-        RPC: {self.RPC_URL} _ w/ timeout: {self.rpc_req_timeout}
-        ChainID: {self.CHAIN_ID}
-        SENDER: {self.SENDER_ADDRESS}
-        CONTRACTS: {self.LST_CONTRACTS}''')
-
-        self.W3 = Web3(HTTPProvider(self.RPC_URL, request_kwargs={'timeout': self.rpc_req_timeout}))
-        #self.W3.middleware_stack.inject(geth_poa_middleware, layer=0) # chatGPT: for PoA chains; for gas or something
-        if with_sender: self.ACCOUNT = Account.from_key(self.SENDER_SECRET)
-        return self.W3, self.ACCOUNT
     
     def set_gas_params(self, w3, _gas_limit=937_000, _fee_perc_markup=0.55):
         print(f' setting default gas params ... (w/ fee % markup: {_fee_perc_markup})')
