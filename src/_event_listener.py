@@ -4,7 +4,11 @@ cStrDivider = '#================================================================
 print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globals', cStrDivider, sep='\n')
 cStrDivider_1 = '#----------------------------------------------------------------#'
 
-''' house_102823
+''' house_041824
+    ref: https://github.com/tradingstrategy-ai/web3-ethereum-defi/blob/master/scripts/uniswap-v2-swaps-live.py
+        uniswap example for decoding swap events
+
+    house_102823
     ref: https://docs.balancer.fi/reference/contracts/apis/vault.html#flashloan
         flashLoan(
             IFlashLoanRecipient recipient,
@@ -115,8 +119,8 @@ def main(_w3:Web3=None, _tx_hash=None):
         [print(f'   {key}: {val}') for key,val in d_ret_log.items()]
         print()
     else:
-        ca = ADDR_PDAI
-        # ca = ADDR_BST
+        # ca = ADDR_PDAI
+        ca = ADDR_BST
         while True: # live...
             block_num = _w3.eth.block_number # blockNumber
             print(cStrDivider_1, f'block# {block_num} _ {get_time_now()}', sep='\n')
