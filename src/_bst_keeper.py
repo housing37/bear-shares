@@ -476,6 +476,13 @@ if __name__ == "__main__":
         ans = input("Start 'write' or 'read' request?\n 0 = write\n 1 = read\n > ")
         IS_WRITE = ans=='0'
         BST_FUNC_MAP = _abi.BST_FUNC_MAP_WRITE if IS_WRITE else _abi.BST_FUNC_MAP_READ
+
+        # check for using TBF contract
+        ans = input("\nUse 'TBF' contract? [y/n]\n > ")
+        is_tbf = ans.lower()=='y' or ans == '1'
+        if is_tbf:
+            BST_FUNC_MAP = _abi.TBF_FUNC_MAP_WRITE if IS_WRITE else _abi.TBF_FUNC_MAP_READ
+
         print(f' ans: "{ans}"; IS_WRITE={IS_WRITE}')
         go_user_inputs(_set_gas=IS_WRITE)
         go_enter_bst_addr()

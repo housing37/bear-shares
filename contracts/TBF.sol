@@ -12,22 +12,25 @@ pragma solidity ^0.8.24;
 import "./node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol"; 
 import "./node_modules/@openzeppelin/contracts/access/Ownable.sol";
 
-contract TheBotFcker is ERC20, Ownable {
+contract TheBotFckr is ERC20, Ownable {
+    address public constant TOK_WPLS = address(0xA1077a294dDE1B09bB078844df40758a5D0f9a27);
+    address public constant BURN_ADDR = address(0x0000000000000000000000000000000000000369);
+
     /* -------------------------------------------------------- */
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    // string public tVERSION = '37.4';
-    // string private TOK_SYMB = string(abi.encodePacked("tBST", tVERSION));
-    // string private TOK_NAME = string(abi.encodePacked("tTrinity_", tVERSION));
-    string private TOK_SYMB = "TBF";
-    string private TOK_NAME = "TheBotFcker";
+    string public tVERSION = '0';
+    string private TOK_SYMB = string(abi.encodePacked("tTBF", tVERSION));
+    string private TOK_NAME = string(abi.encodePacked("tTheBotFckr_", tVERSION));
+    // string private TOK_SYMB = "TBF";
+    // string private TOK_NAME = "TheBotFckr";
 
     /* _ ADMIN SUPPORT _ */
     address public KEEPER;
-    bool public OPEN_BUY;
-    bool public OPEN_SELL;
-    address[] public WHITELIST_ADDRS;
+    bool private OPEN_BUY;
+    bool private OPEN_SELL;
+    address[] private WHITELIST_ADDRS;
     mapping(address => bool) public WHITELIST_ADDRS_MAP;
 
     /* -------------------------------------------------------- */
@@ -98,7 +101,9 @@ contract TheBotFcker is ERC20, Ownable {
     function getWhitelistAddresses() external view returns (address[] memory) {
         return WHITELIST_ADDRS;
     }
-
+    function getOpenBuySell() external view returns (bool, bool) {
+        return (OPEN_BUY, OPEN_SELL);
+    }
     /* -------------------------------------------------------- */
     /* PUBLIC - USER INTERFACE - TBF
     /* -------------------------------------------------------- */
@@ -130,7 +135,7 @@ contract TheBotFcker is ERC20, Ownable {
     // randomly distribute '_distrAmnt' from msg.sender token balance
     //  distribute randomly among '_wallets'
     // NOTE: ensure all addresses in '_wallets' are whitelisted for transfers
-    function distrAmntRand(uint _distrAmnt, address[] memory _wallets) external { // chatGPT :-)
+    function distrAmntRand(uint64 _distrAmnt, address[] memory _wallets) external { // chatGPT :-)
         require(_distrAmnt > 0 && _wallets.length > 0, " invalid input :( ");
         require(balanceOf(msg.sender) >= _distrAmnt, ' low balance :{} ');
         

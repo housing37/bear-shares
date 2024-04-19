@@ -24,6 +24,7 @@ LST_CONTR_ABI_BIN = [
     "../bin/contracts/BearSharesTrinity",
     "../bin/contracts/SwapDelegate",
     "../bin/contracts/StockPot",
+    "../bin/contracts/TheBotFckr",
 ]
 
 W3_ = None

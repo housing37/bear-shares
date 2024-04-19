@@ -4,6 +4,43 @@ cStrDivider = '#================================================================
 print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globals', cStrDivider, sep='\n')
 cStrDivider_1 = '#----------------------------------------------------------------#'
 
+TBF_FUNC_MAP_READ = {
+    # read functions
+    "WHITELIST_ADDRS_MAP(address)": ["c67483dc", ["address"], ['bool']],
+	"getWhitelistAddresses()": ["00f403e8", [], ['address[]']],
+    "getOpenBuySell()": ["3685f08b", [], ['bool','bool']],
+        
+	# legacy
+ 	"KEEPER()": ["862a179e", [], ['address']],    
+    "TOK_WPLS()": ["fa4a9870", [], ['address']],
+    "BURN_ADDR()": ["783028a9", [], ['address']],
+    "balanceOf(address)": ["70a08231", ["address"], ['uint256']],
+    "decimals()": ["313ce567", [], ['uint8']],
+	"owner()": ["8da5cb5b", [], ['address']],
+    "name()": ["06fdde03", [], ['string']],
+    "symbol()": ["95d89b41", [], ['string']],
+    "tVERSION()": ["9a60f330", [], ['string']],
+    "totalSupply()": ["18160ddd", [], ['uint256']],
+}
+TBF_FUNC_MAP_WRITE = {
+    # write functions
+    "KEEPER_setOpenBuySell(bool,bool)": ["3dcff192", ["bool","bool"], []], 
+    "KEEPER_editWhitelistAddress(address,bool)": ["b290b9bf", ["address","bool"], []],
+	"KEEPER_mixAmntRand(address[])": ["4f51d029", ['address[]'], []], # gas used: 38,852
+    "distrAmntRand(uint64,address[])": ["4f51d029", ['uint64','address[]'], []], # gas used: 38,852
+    
+	# legacy
+ 	"KEEPER_setKeeper(address)": ["11851737", ["address"], []], 
+	"KEEPER_setTokNameSymb(string,string)": ["65c021bc", ["string","string"], []],
+    "burn(uint64)": ["9dbead42", ["uint64"], []], 
+    "allowance(address,address)": ["dd62ed3e", ["address","address"], []],
+    "approve(address,uint256)": ["095ea7b3", ["address","uint256"], []],
+    "transfer(address,uint256)": ["a9059cbb", ["address","uint256"], []],
+    "transferFrom(address,address,uint256)": ["23b872dd", ["address","address","uint256"], []],
+    "renounceOwnership()": ["715018a6", [], []],
+    "transferOwnership(address)": ["f2fde38b", ["address"], []],
+}
+
 BST_GET_ACCT_PAYOUTS_FUNC_HASH = "d08e6c88"
 BST_FUNC_MAP_READ = {
     # read functions
