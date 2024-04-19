@@ -33,6 +33,7 @@ CONTRACT_ABI = None
 BST_ADDRESS = None
 BST_FUNC_MAP = {}
 IS_WRITE = False
+USE_TBF = False
 
 # def init_web3():
 #     global W3_, ABI_FILE, BIN_FILE, CONTRACT
@@ -378,12 +379,14 @@ def go_user_inputs(_set_gas=True):
     # print(' using CONTRACT_ABI = _abi.BST_ABI')
 
 def go_enter_bst_addr():
-    global BST_ADDRESS
+    global BST_ADDRESS, USE_TBF
     while BST_ADDRESS == None or BST_ADDRESS == '':
-        BST_ADDRESS = input('\n Enter BST contract address:\n  > ')
+        symb = 'BST'
+        if USE_TBF: symb = 'TBF'
+        BST_ADDRESS = input(f'\n Enter {symb} contract address:\n  > ')
 
     BST_ADDRESS = W3_.W3.to_checksum_address(BST_ADDRESS)
-    print(f'  using BST_ADDRESS: {BST_ADDRESS}')
+    print(f'  using {symb}_ADDRESS: {BST_ADDRESS}')
 
 def go_select_func():
     global BST_FUNC_MAP, IS_WRITE
@@ -471,19 +474,23 @@ if __name__ == "__main__":
     lst_argv_OG, argv_cnt = read_cli_args()
     
     ## exe ##
-    try:        
+    try:
+        symb = 'BST'
+        
         # read requests: _set_gas=False
         ans = input("Start 'write' or 'read' request?\n 0 = write\n 1 = read\n > ")
         IS_WRITE = ans=='0'
         BST_FUNC_MAP = _abi.BST_FUNC_MAP_WRITE if IS_WRITE else _abi.BST_FUNC_MAP_READ
-
+        print(f' ans: "{ans}"; IS_WRITE={IS_WRITE}, set BST_FUNC_MAP')
+        
         # check for using TBF contract
         ans = input("\nUse 'TBF' contract? [y/n]\n > ")
-        is_tbf = ans.lower()=='y' or ans == '1'
-        if is_tbf:
-            BST_FUNC_MAP = _abi.TBF_FUNC_MAP_WRITE if IS_WRITE else _abi.TBF_FUNC_MAP_READ
-
-        print(f' ans: "{ans}"; IS_WRITE={IS_WRITE}')
+        USE_TBF = ans.lower()=='y' or ans == '1'
+        if USE_TBF:
+            symb = 'TBF'
+            BST_FUNC_MAP = _abi.TBF_FUNC_MAP_WRITE if USE_TBF else _abi.TBF_FUNC_MAP_READ
+            print(f' ans: "{ans}"; USE_TBF={USE_TBF}, reset BST_FUNC_MAP')
+        
         go_user_inputs(_set_gas=IS_WRITE)
         go_enter_bst_addr()
         
@@ -508,7 +515,7 @@ if __name__ == "__main__":
                         write_with_hash(*tup_params)
                 except Exception as e:
                     print_except(e, debugLvl=DEBUG_LEVEL)
-                print(f'\nBST_ADDRESS: {BST_ADDRESS}\nfunc_select: {func_select}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}')
+                print(f'\n{symb}_ADDRESS: {BST_ADDRESS}\nfunc_select: {func_select}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}')
                 # assert input('\n (^) proceed? [y/n]\n  > ') == 'y', f"aborted... _ {get_time_now()}\n\n"
         else:
             # loop through all functions in BST_FUNC_MAP
@@ -531,23 +538,10 @@ if __name__ == "__main__":
                         write_with_hash(*tup_params)
                 except Exception as e:
                     print_except(e, debugLvl=DEBUG_LEVEL)
-                print(f'\nBST_ADDRESS: {BST_ADDRESS}\nfunc_select: {func_select}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}')
+                print(f'\n{symb}_ADDRESS: {BST_ADDRESS}\nfunc_select: {func_select}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}')
             return_print = pprint.PrettyPrinter().pformat(dict_returns)
             print(f'all returns... cnt={len(dict_returns.keys())}')
             print(return_print)
-
-        # LEFT OFF HERE ... can't get return working...
-        #   for 'mapping(address => ACCT_PAYOUT[]) public ACCT_USD_PAYOUTS;'
-        # tuple_ = 'tuple(address,uint64,uint64,uint64,uint64,uint64,uint64)[]'
-        # read_with_hash(BST_ADDRESS, "8b47da26", ['address'], [W3_.SENDER_ADDRESS], ['address',tuple_]) # "ACCT_USD_PAYOUTS(address,uint256)": "8b47da26",
-
-
-        # write requests: _set_gas=True
-        # go_user_inputs(_set_gas=True)
-        # # # // weUSDT
-        # usdStable = '0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f' 
-        # amnt = int(0.012155 * 10**6)
-        # write_with_hash(BST_ADDRESS, "3015d747", ['uint64','address'], [amnt,usdStable], []) # "KEEPER_maintenance(uint64,address)": "3015d747",
 
     except Exception as e:
         print_except(e, debugLvl=DEBUG_LEVEL)
