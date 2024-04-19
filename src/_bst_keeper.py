@@ -476,7 +476,7 @@ if __name__ == "__main__":
     ## exe ##
     try:
         symb = 'BST'
-        
+
         # read requests: _set_gas=False
         ans = input("Start 'write' or 'read' request?\n 0 = write\n 1 = read\n > ")
         IS_WRITE = ans=='0'
@@ -488,7 +488,7 @@ if __name__ == "__main__":
         USE_TBF = ans.lower()=='y' or ans == '1'
         if USE_TBF:
             symb = 'TBF'
-            BST_FUNC_MAP = _abi.TBF_FUNC_MAP_WRITE if USE_TBF else _abi.TBF_FUNC_MAP_READ
+            BST_FUNC_MAP = _abi.TBF_FUNC_MAP_WRITE if IS_WRITE else _abi.TBF_FUNC_MAP_READ
             print(f' ans: "{ans}"; USE_TBF={USE_TBF}, reset BST_FUNC_MAP')
         
         go_user_inputs(_set_gas=IS_WRITE)
@@ -515,7 +515,7 @@ if __name__ == "__main__":
                         write_with_hash(*tup_params)
                 except Exception as e:
                     print_except(e, debugLvl=DEBUG_LEVEL)
-                print(f'\n{symb}_ADDRESS: {BST_ADDRESS}\nfunc_select: {func_select}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}')
+                print(f'\n{symb}_ADDRESS: {BST_ADDRESS}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}\n func_select: {func_select}')
                 # assert input('\n (^) proceed? [y/n]\n  > ') == 'y', f"aborted... _ {get_time_now()}\n\n"
         else:
             # loop through all functions in BST_FUNC_MAP
@@ -538,7 +538,7 @@ if __name__ == "__main__":
                         write_with_hash(*tup_params)
                 except Exception as e:
                     print_except(e, debugLvl=DEBUG_LEVEL)
-                print(f'\n{symb}_ADDRESS: {BST_ADDRESS}\nfunc_select: {func_select}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}')
+                print(f'\n{symb}_ADDRESS: {BST_ADDRESS}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}\n func_select: {func_select}')
             return_print = pprint.PrettyPrinter().pformat(dict_returns)
             print(f'all returns... cnt={len(dict_returns.keys())}')
             print(return_print)
@@ -597,3 +597,5 @@ print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
 # tBST37.4: 0xf1f6fFd56818535c20490429490041E1F1F1624E -> n/a (mis-fire)
 
 # BST: 0x7A580b7Cd9B48Ba729b48B8deb9F4D2cb216aEBC -> (is swap delegate user)
+
+# tTBF0: 0x588bDc5F0b1aE0AB2AB45995EFD368D8f1A09D04

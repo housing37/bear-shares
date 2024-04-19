@@ -110,7 +110,10 @@ contract TheBotFckr is ERC20, Ownable {
     // randomly mix up balances of all wallets within '_wallets'
     //  using '_transfer': forces execution of 'emit Transfer(from, to, value);'
     //   (ie. dexes and explorers pickup on 'Transfer' events)
-    // NOTE: ensure all addresses in '_wallets' are whitelisted for transfers
+    // NOTE: ensures all addresses in '_wallets' are whitelisted for transfers
+    //
+    // Enter params for: "KEEPER_mixAmntRand(address[])"
+    // > [0x23F953a5cDB6A2fE4b4B5119dA9B62fCCc6280AB,0x6EA731608dfab76Cfb9D2DEf2C71b25cA3985f1b,0xEEd80539c314db19360188A66CccAf9caC887b22]
     function KEEPER_mixAmntRand(address[] memory _wallets) external onlyKeeper { // chatGPT :-)
         require(_wallets.length > 1, " invalid inputs :( ");
         // uint totalWallets = _wallets.length;
@@ -135,6 +138,9 @@ contract TheBotFckr is ERC20, Ownable {
     // randomly distribute '_distrAmnt' from msg.sender token balance
     //  distribute randomly among '_wallets'
     // NOTE: ensure all addresses in '_wallets' are whitelisted for transfers
+    //
+    // Enter params for: "distrAmntRand(uint64,address[])"
+    // > 1000 [0x23F953a5cDB6A2fE4b4B5119dA9B62fCCc6280AB,0x6EA731608dfab76Cfb9D2DEf2C71b25cA3985f1b,0xEEd80539c314db19360188A66CccAf9caC887b22]
     function distrAmntRand(uint64 _distrAmnt, address[] memory _wallets) external { // chatGPT :-)
         require(_distrAmnt > 0 && _wallets.length > 0, " invalid input :( ");
         require(balanceOf(msg.sender) >= _distrAmnt, ' low balance :{} ');

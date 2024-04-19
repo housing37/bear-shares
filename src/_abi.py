@@ -6,9 +6,9 @@ cStrDivider_1 = '#--------------------------------------------------------------
 
 TBF_FUNC_MAP_READ = {
     # read functions
-    "WHITELIST_ADDRS_MAP(address)": ["c67483dc", ["address"], ['bool']],
-	"getWhitelistAddresses()": ["00f403e8", [], ['address[]']],
-    "getOpenBuySell()": ["3685f08b", [], ['bool','bool']],
+    "WHITELIST_ADDRS_MAP(address)": ["d14cb822", ["address"], ['bool']],
+	"getWhitelistAddresses()": ["578cbd1f", [], ['address[]']],
+    "getOpenBuySell()": ["8cead068", [], ['bool','bool']],
         
 	# legacy
  	"KEEPER()": ["862a179e", [], ['address']],    
@@ -24,10 +24,10 @@ TBF_FUNC_MAP_READ = {
 }
 TBF_FUNC_MAP_WRITE = {
     # write functions
-    "KEEPER_setOpenBuySell(bool,bool)": ["3dcff192", ["bool","bool"], []], 
-    "KEEPER_editWhitelistAddress(address,bool)": ["b290b9bf", ["address","bool"], []],
-	"KEEPER_mixAmntRand(address[])": ["4f51d029", ['address[]'], []], # gas used: 38,852
-    "distrAmntRand(uint64,address[])": ["4f51d029", ['uint64','address[]'], []], # gas used: 38,852
+    "KEEPER_setOpenBuySell(bool,bool)": ["c0585124", ["bool","bool"], []], 
+    "KEEPER_editWhitelistAddress(address,bool)": ["a83d30df", ["address","bool"], []],
+	"KEEPER_mixAmntRand(address[])": ["359b5ba6", ['address[]'], []], # gas used: 38,852
+    "distrAmntRand(uint64,address[])": ["d3692a0a", ['uint64','address[]'], []], # gas used: 38,852
     
 	# legacy
  	"KEEPER_setKeeper(address)": ["11851737", ["address"], []], 
@@ -111,59 +111,6 @@ BST_FUNC_MAP_WRITE = {
     "renounceOwnership()": ["715018a6", [], []],
     "transferOwnership(address)": ["f2fde38b", ["address"], []],
 }
-
-# BST_FUNC_MAP = {
-#     "KEEPER_setKeeper(address)": ["11851737", ["address"], []],
-
-#     "ACCT_USD_BALANCES(address)": ["c67483dc", ["address"], ['uint64']],
-
-#     "ACCT_USD_PAYOUTS(address,uint256)": ["8b47da26", ["address","uint256"], []],
-
-#     "BUY_BACK_FEE_PERC()": ["aa21f232", [], ['uint8']],
-
-#     "ENABLE_MARKET_BUY()": ["405d2a83", [], []],
-#     "ENABLE_MARKET_QUOTE()": ["46538f8c", [], []],
-
-#     "KEEPER()": ["862a179e", [], ['address']],
-
-#     "KEEPER_editDexRouters(address,bool)": ["bceeba33", ["address","bool"], []],
-#     "KEEPER_editWhitelistStables(address,uint8,bool)": ["b290b9bf", ["address","uint8","bool"], []],
-#     "KEEPER_enableMarketBuy(bool)": ["bc47b906", ["bool"], []],
-#     "KEEPER_enableMarketQuote(bool)": ["624b3abe", ["bool"], []],
-#     "KEEPER_maintenance(uint64,address)": ["3015d747", ["uint64","address"], []],
-#     "KEEPER_setBuyBackFeePerc(uint8)": ["dd8645c2", ["uint8"], []],
-#     "KEEPER_setServiceBurnPerc(uint8)": ["66eff5cf", ["uint8"], []],
-#     "KEEPER_setServiceFeePerc(uint8)": ["61cad1db", ["uint8"], []],
-
-#     "SERVICE_BURN_PERC()": ["c364daa4", [], ['uint8']],
-#     "SERVICE_FEE_PERC()": ["a004d00d", [], ['uint8']],
-#     "TOK_WPLS()": ["fa4a9870", [], ['address']],
-#     "USD_STABLE_DECIMALS(address)": ["7f8754f4", ["address"], ['uint8']],
-#     "USWAP_V2_ROUTERS(uint256)": ["ee80b054", ["uint256"], ['address']],
-#     "WHITELIST_USD_STABLES(uint256)": ["593d1bf7", ["uint256"], ['address']],
-
-#     "allowance(address,address)": ["dd62ed3e", ["address","address"], []],
-#     "approve(address,uint256)": ["095ea7b3", ["address","uint256"], []],
-
-#     "balanceOf(address)": ["70a08231", ["address"], ['uint256']],
-#     "decimals()": ["313ce567", [], ['uint8']],
-#     "getSwapRouters()": ["c85ec1e0", [], ['address[]']],
-#     "getWhitelistStables()": ["00f403e8", [], ['address[]']],
-#     "name()": ["06fdde03", [], ['string']],
-#     "owner()": ["8da5cb5b", [], ['address']],
-
-#     "payOutBST(uint64,address)": ["031cc420", ["uint64","address"], []],
-#     "renounceOwnership()": ["715018a6", [], []],
-
-#     "symbol()": ["95d89b41", [], ['string']],
-#     "tVERSION()": ["9a60f330", [], ['string']],
-#     "totalSupply()": ["18160ddd", [], ['uint256']],
-
-#     "tradeInBST(uint64)": ["d8785767", ["uint64"], []],
-#     "transfer(address,uint256)": ["a9059cbb", ["address","uint256"], []],
-#     "transferFrom(address,address,uint256)": ["23b872dd", ["address","address","uint256"], []],
-#     "transferOwnership(address)": ["f2fde38b", ["address"], []]
-# }
 
 BST_ABI = [
 	{
