@@ -6,9 +6,10 @@ cStrDivider_1 = '#--------------------------------------------------------------
 
 TBF_FUNC_MAP_READ = {
     # read functions
-    "WHITELIST_ADDRS_MAP(address)": ["d14cb822", ["address"], ['bool']],
-	"getWhitelistAddresses()": ["578cbd1f", [], ['address[]']],
     "getOpenBuySell()": ["8cead068", [], ['bool','bool']],
+	"getWhitelistAddresses()": ["578cbd1f", [], ['address[]']],
+    "WHITELIST_ADDRS_MAP(address)": ["d14cb822", ["address"], ['bool']],
+    
         
 	# legacy
  	"KEEPER()": ["862a179e", [], ['address']],    
@@ -24,10 +25,10 @@ TBF_FUNC_MAP_READ = {
 }
 TBF_FUNC_MAP_WRITE = {
     # write functions
-    "KEEPER_setOpenBuySell(bool,bool)": ["c0585124", ["bool","bool"], []], 
+    "KEEPER_setOpenBuySell(bool,bool)": ["c0585124", ["bool","bool"], []], # fee: 18.21297 pls
     "KEEPER_editWhitelistAddress(address,bool)": ["a83d30df", ["address","bool"], []],
-	"KEEPER_mixAmntRand(address[])": ["359b5ba6", ['address[]'], []], # gas used: 38,852
-    "distrAmntRand(uint64,address[])": ["d3692a0a", ['uint64','address[]'], []], # gas used: 38,852
+	"KEEPER_mixAmntRand(address[])": ["359b5ba6", ['address[]'], []], # fee: 62.769365 pls
+    "distrAmntRand(uint64,address[])": ["d3692a0a", ['uint64','address[]'], []], # fee: 69.956423 pls
     
 	# legacy
  	"KEEPER_setKeeper(address)": ["11851737", ["address"], []], 
