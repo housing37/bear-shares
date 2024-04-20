@@ -20,7 +20,7 @@ contract TheBotFckr is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '0';
+    string public tVERSION = '1';
     string private TOK_SYMB = string(abi.encodePacked("tTBF", tVERSION));
     string private TOK_NAME = string(abi.encodePacked("tTheBotFckr_", tVERSION));
     // string private TOK_SYMB = "TBF";
@@ -31,7 +31,9 @@ contract TheBotFckr is ERC20, Ownable {
     bool private OPEN_BUY;
     bool private OPEN_SELL;
     address[] private WHITELIST_ADDRS;
-    mapping(address => bool) public WHITELIST_ADDRS_MAP;
+    address[] private WHITELIST_LPS;
+    mapping(address => bool) public WHITELIST_ADDR_MAP;
+    mapping(address => bool) public WHITELIST_LP_MAP;
 
     /* -------------------------------------------------------- */
     /* STRUCTS                                        
@@ -44,6 +46,7 @@ contract TheBotFckr is ERC20, Ownable {
     event TokenNameSymbolUpdated(string TOK_NAME, string TOK_SYMB);
     event OpenBuySellUpdated(bool _prev_0, bool _prev_1, bool _new_0, bool _new_1);
     event WhitelistAddressUpdated(address _address, bool _add);
+    event WhitelistAddressUpdatedLP(address _address, bool _add);
 
     /* -------------------------------------------------------- */
     /* CONSTRUCTOR                                              */
@@ -56,6 +59,10 @@ contract TheBotFckr is ERC20, Ownable {
         KEEPER = msg.sender;
         _editWhitelistAddress(KEEPER, true); // true = _add
         _mint(KEEPER, _initSupply * 10**uint8(decimals())); // 'emit Transfer'
+
+        // add default routers: pulsex x2 (for creating LPs)
+        _editWhitelistAddress(address(0x98bf93ebf5c380C0e6Ae8e192A7e2AE08edAcc02), true); // pulseX v1, true = add
+        _editWhitelistAddress(address(0x165C3410fC91EF562C50559f7d2289fEbed552d9), true); // pulseX v2, true = add        
     }
 
     /* -------------------------------------------------------- */
@@ -94,16 +101,26 @@ contract TheBotFckr is ERC20, Ownable {
         _editWhitelistAddress(_address, _add);
         emit WhitelistAddressUpdated(_address, _add);
     }
+    function KEEPER_editWhitelistAddressLP(address _address, bool _add) external onlyKeeper() {
+        require(_address != address(0), ' 0 address :/ ');
+        _editWhitelistAddressLP(_address, _add);
+        emit WhitelistAddressUpdatedLP(_address, _add);
+    }
+    
 
     /* -------------------------------------------------------- */
     /* PUBLIC - ACCESSORS
     /* -------------------------------------------------------- */
+    function getWhitelistAddressesLP() external view returns (address[] memory) {
+        return WHITELIST_LPS;
+    }
     function getWhitelistAddresses() external view returns (address[] memory) {
         return WHITELIST_ADDRS;
     }
     function getOpenBuySell() external view returns (bool, bool) {
         return (OPEN_BUY, OPEN_SELL);
     }
+
     /* -------------------------------------------------------- */
     /* PUBLIC - USER INTERFACE - TBF
     /* -------------------------------------------------------- */
@@ -188,31 +205,21 @@ contract TheBotFckr is ERC20, Ownable {
     /* -------------------------------------------------------- */
     /* PRIVATE - SUPPORTING                                     */
     /* -------------------------------------------------------- */
+    function _editWhitelistAddressLP(address _address, bool _add) private { // allows duplicates
+        WHITELIST_LP_MAP[_address] = _add;
+        if (_add) {
+            WHITELIST_LPS = _addAddressToArraySafe(_address, WHITELIST_LPS, true); // true = no dups            
+        } else {
+            WHITELIST_LPS = _remAddressFromArray(_address, WHITELIST_LPS);
+        }
+    }
     function _editWhitelistAddress(address _address, bool _add) private { // allows duplicates
-        WHITELIST_ADDRS_MAP[_address] = _add;
+        WHITELIST_ADDR_MAP[_address] = _add;
         if (_add) {
             WHITELIST_ADDRS = _addAddressToArraySafe(_address, WHITELIST_ADDRS, true); // true = no dups            
         } else {
             WHITELIST_ADDRS = _remAddressFromArray(_address, WHITELIST_ADDRS);
         }
-    }
-    function _perc_of_uint64(uint32 _perc, uint64 _num) private pure returns (uint64) {
-        require(_perc <= 10000, 'err: invalid percent');
-        return _perc_of_uint64_unchecked(_perc, _num);
-    }
-    function _perc_of_uint64_unchecked(uint32 _perc, uint64 _num) private pure returns (uint64) {
-        // require(_perc <= 10000, 'err: invalid percent');
-        uint32 aux_perc = _perc * 100; // Multiply by 100 to accommodate decimals
-        uint64 result = (_num * uint64(aux_perc)) / 1000000; // chatGPT equation
-        return result; // uint64 max USD: ~18T -> 18,446,744,073,709.551615 (6 decimals)
-
-        // NOTE: more efficient with no local vars allocated
-        // return (_num * uint64(uint32(_perc) * 100)) / 1000000; // chatGPT equation
-    }
-    function _uint64_from_uint256(uint256 value) private pure returns (uint64) {
-        require(value <= type(uint64).max, "Value exceeds uint64 range");
-        uint64 convertedValue = uint64(value);
-        return convertedValue;
     }
     function _addAddressToArraySafe(address _addr, address[] memory _arr, bool _safe) private pure returns (address[] memory) {
         if (_addr == address(0)) { return _arr; }
@@ -243,6 +250,24 @@ contract TheBotFckr is ERC20, Ownable {
         }
         return _arr;
     }
+    // function _perc_of_uint64(uint32 _perc, uint64 _num) private pure returns (uint64) {
+    //     require(_perc <= 10000, 'err: invalid percent');
+    //     return _perc_of_uint64_unchecked(_perc, _num);
+    // }
+    // function _perc_of_uint64_unchecked(uint32 _perc, uint64 _num) private pure returns (uint64) {
+    //     // require(_perc <= 10000, 'err: invalid percent');
+    //     uint32 aux_perc = _perc * 100; // Multiply by 100 to accommodate decimals
+    //     uint64 result = (_num * uint64(aux_perc)) / 1000000; // chatGPT equation
+    //     return result; // uint64 max USD: ~18T -> 18,446,744,073,709.551615 (6 decimals)
+
+    //     // NOTE: more efficient with no local vars allocated
+    //     // return (_num * uint64(uint32(_perc) * 100)) / 1000000; // chatGPT equation
+    // }
+    // function _uint64_from_uint256(uint256 value) private pure returns (uint64) {
+    //     require(value <= type(uint64).max, "Value exceeds uint64 range");
+    //     uint64 convertedValue = uint64(value);
+    //     return convertedValue;
+    // }
 
     /* -------------------------------------------------------- */
     /* ERC20 - OVERRIDES                                        */
@@ -273,13 +298,30 @@ contract TheBotFckr is ERC20, Ownable {
     //      (ie. is 'buy' | transfer from LP)
     //  'msg.sender' = LP address
     //          'to' = buyer address
+    //
+    // NOTE: live testing ... a sell w/ 'transfer'
+    //   'msg.sender' = non-whitelist address
+    //           'to' = whitelist LP address
     function transfer(address to, uint256 value) public override returns (bool) {
-        // allow if buyer is white listed | OPEN_BUY enabled
-        if (WHITELIST_ADDRS_MAP[to] || OPEN_BUY) {
+
+        // if involving a whitelisted address, let it always go through
+        if (WHITELIST_ADDR_MAP[msg.sender] || WHITELIST_ADDR_MAP[to]) {
             return super.transfer(to, value);
         }
 
-        // else, simulate error: invalid LP address
+        // if transfer 'to' is an LP, then its a 'sell'
+        //  if OPEN_SELL enabled, let it go through
+        if (WHITELIST_LP_MAP[to] && OPEN_SELL) {
+            return super.transfer(to, value);
+        }
+
+        // if transfer 'msg.sender' is an LP, then its a 'buy'
+        //  if OPEN_BUY enabled, let it go through
+        if (WHITELIST_LP_MAP[msg.sender] && OPEN_BUY) {
+            return super.transfer(to, value);
+        }
+
+        // else, simulate error
         revert ERC20InvalidSender(msg.sender); // _transfer
     }
 
@@ -288,12 +330,25 @@ contract TheBotFckr is ERC20, Ownable {
     //  'from' = seller address
     //    'to' = LP address
     function transferFrom(address from, address to, uint256 value) public override returns (bool) {
-        // allow if sell is whitelisted | OPEN_SELL enabled
-        if (WHITELIST_ADDRS_MAP[from] || OPEN_SELL) {
-            return super.transferFrom(from, to, value);
+
+        // if involving a whitelisted address, let it always go through
+        if (WHITELIST_ADDR_MAP[from] || WHITELIST_ADDR_MAP[to]) {
+            return super.transfer(to, value);
         }
 
-        // else, simulate error: invalid LP address
+        // if transferFrom 'to' is an LP, then its a 'sell'
+        //  if OPEN_SELL enabled, let it go through
+        if (WHITELIST_LP_MAP[to] && OPEN_SELL) {
+            return super.transfer(to, value);
+        }
+
+        // if transferFrom 'from' is an LP, then its a 'buy'
+        //  if OPEN_BUY enabled, let it go through
+        if (WHITELIST_LP_MAP[from] && OPEN_BUY) {
+            return super.transfer(to, value);
+        }
+
+        // else, simulate error
         revert ERC20InvalidReceiver(to); // _transfer
     }
 }
