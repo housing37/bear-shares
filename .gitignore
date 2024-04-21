@@ -34,6 +34,8 @@ logs/
 ## hide posts ##
 posts/
 
+## hide wallets ##
+_wallets/
 ## hide environmentals
 .env*
 

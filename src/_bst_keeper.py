@@ -17,10 +17,10 @@ from datetime import datetime
 import pprint
 from attributedict.collections import AttributeDict # tx_receipt requirement
 import _web3 # from web3 import Account, Web3, HTTPProvider
-import _abi
+import _abi, _gen_pls_key
 from ethereum.abi import encode_abi, decode_abi # pip install ethereum
 
-DEBUG_LEVEL = 0
+DEBUG_LEVEL = 3
 LST_CONTR_ABI_BIN = [
     "../bin/contracts/BearSharesTrinity",
 ]
@@ -417,6 +417,27 @@ def go_enter_func_params(_func_select):
     print(f'  executing "{_func_select}" w/ params: {lst_func_params} ...\n')
     return lst_func_params
 
+def gen_random_wallets(_wallet_cnt, _gen_new=True):
+    if not _gen_new:
+        return _abi.RAND_WALLETS, _abi.RAND_WALLET_CLI_INPUT
+    else:
+        lst_rand_wallets = []
+        lst_wallet_addr = []
+        for acct_num in range(0,_wallet_cnt): # generate '_wallet_cnt' number of wallets
+            d_wallet = _gen_pls_key.gen_pls_key(str("english"), int(256), acct_num, False) # language, entropyStrength, num, _plog
+            lst_rand_wallets.append(dict(d_wallet))
+            lst_wallet_addr.append(d_wallet['address'])
+
+        # pprint.pprint(lst_rand_wallets)
+        file_cnt = len(os.listdir('./_wallets'))
+        with open(f"./_wallets/wallets_{file_cnt}_{get_time_now()}.txt", "w") as file:
+            pprint.pprint(lst_rand_wallets, stream=file)
+            pprint.pprint(lst_rand_wallets)
+
+        # generate formatted string for CLI input
+        str_rand_wallet_cli_input = '[' + ','.join(map(str, lst_wallet_addr)) + ']'
+        return lst_rand_wallets, str_rand_wallet_cli_input
+
 #------------------------------------------------------------#
 #   DEFAULT SUPPORT                                          #
 #------------------------------------------------------------#
@@ -490,7 +511,16 @@ if __name__ == "__main__":
             symb = 'TBF'
             BST_FUNC_MAP = _abi.TBF_FUNC_MAP_WRITE if IS_WRITE else _abi.TBF_FUNC_MAP_READ
             print(f' ans: "{ans}"; USE_TBF={USE_TBF}, reset BST_FUNC_MAP')
-        
+
+            # NOTE: gen/fetch/print CLI input string needed to 
+            #   manually feed into 'KEEPER_mixAmntRand' & 'distrAmntRand'
+            wallet_cnt = 10
+            gen_new = False # False = use _abi.RAND_WALLETS & _abi.RAND_WALLET_CLI_INPUT
+            print(f' fetching {wallet_cnt} random wallets (gen_new={gen_new}) ...')
+            lst_rand_wallets, str_rand_wallet_cli_input = gen_random_wallets(wallet_cnt, gen_new)
+            print(f' fetching {len(lst_rand_wallets)} random wallets (gen_new={gen_new}) ... DONE')
+            print(f' ... fetched wallets CLI input ...\n {str_rand_wallet_cli_input}')  # This will print the formatted string    
+
         go_user_inputs(_set_gas=IS_WRITE)
         go_enter_bst_addr()
         

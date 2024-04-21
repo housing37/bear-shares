@@ -35,9 +35,9 @@ STR_HELP = f'''
     $ python3 gen_pls_key.py -gc
 '''
 
-def gen_from_seed(entropyStrength, seedPhrase, account_num=0):
-    print(f"\n{DIV}")
-    print(f"ACCOUNT # {x}")
+def gen_from_seed(seedPhrase, account_num=0, _plog=True):
+    if _plog: print(f"\n{DIV}")
+    if _plog: print(f"ACCOUNT # {account_num}")
     
     seedPhraseLength = len(seedPhrase.split(" "))
     
@@ -50,7 +50,7 @@ def gen_from_seed(entropyStrength, seedPhrase, account_num=0):
     
     # coincurve instance validation
     if secretKey.public_key.format() != publicKey:
-        print(f"\n** WARNING **: secretKey derived from coincurve DOES NOT match publicKey dervived from bip44; _ act#: {x}")
+        print(f"\n** WARNING **: secretKey derived from coincurve DOES NOT match publicKey dervived from bip44; _ act#: {account_num}")
     else:
         pass
         #print(f"\n... note: coincurve validation success! _ act# {x}")
@@ -58,18 +58,21 @@ def gen_from_seed(entropyStrength, seedPhrase, account_num=0):
     # derive publc address from public key?
     address = bip44.utils.get_eth_addr(publicKey)
 
-    listHoldAddress.append(address)
-    
-    # print everything
-    print("\nSeed Phrase ({} words):\n {}" .format(seedPhraseLength, seedPhrase))
-    print("\naddress: {}" .format(address))
-    print("secret: {}".format(secretKey.to_hex()))
+    # listHoldAddress.append(address)
 
-def gen_pls_key(language, entropyStrength, account_num=0):
+    # print everything
+    if _plog: print("\nSeed Phrase ({} words):\n {}" .format(seedPhraseLength, seedPhrase))
+    if _plog: print("\naddress: {}" .format(address))
+    if _plog: print("secret: {}".format(secretKey.to_hex()))
+
+    dict_wallet_key = {'address':address, 'secretKey':secretKey.to_hex(), 'seedPhrase':seedPhrase, 'seedPhraseLength':seedPhraseLength}
+    return dict_wallet_key
+
+def gen_pls_key(language, entropyStrength, account_num=0, _plog=True):
     # generate seed phrase
     mnemo = mnemonic.Mnemonic(language)
     seedPhrase = mnemo.generate(entropyStrength)
-    gen_from_seed(entropyStrength, seedPhrase, account_num)
+    return gen_from_seed(seedPhrase, account_num, _plog)
 
 def help_me():
     print(STR_HELP)
@@ -88,7 +91,7 @@ if __name__ == "__main__":
         elif command == str("--generate") or command == str("-g"):
             print(f"\n** FOUND flag '-g' ** \n\n generating {NUM_ACTS} account keys from {NUM_ACTS} random seed-phrases ...")
             for x in range(0,NUM_ACTS):
-                execute = gen_pls_key(language, entropyStrength, x)
+                dict_wallet_key = gen_pls_key(language, entropyStrength, x)
             break
         elif command == str("--generate-custom") or command == str("-gc"):
             if not len(CUST_SEED):
@@ -96,7 +99,7 @@ if __name__ == "__main__":
             else:
                 print(f'\n** FOUND flag "-gs" ** \n\n generating {NUM_ACTS} account keys from 1 custom seed-phrase ... \n   "{CUST_SEED}"')
                 for x in range(0,NUM_ACTS):
-                    execute = gen_from_seed(entropyStrength, CUST_SEED, x)
+                    dict_wallet_key = gen_from_seed(CUST_SEED, x)
             break
         else:
             print("\n** ERROR **: invalid or no flag found, please try again (printing help)")
