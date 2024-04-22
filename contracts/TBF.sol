@@ -369,6 +369,10 @@ contract TheBotFckr is ERC20, Ownable {
 
     /** LEGACY re-tested_042124: 
         # tTBF3.0: 0x8fd10330363C85F6a2bE61EbDeCB66894f545Be7 -> LP created
+        - note_042224: https://otter.pulsechain.com/tx/0x36409ccc2c693b02ee7c75158f51c321ef11664aa6ac40b6b42a34afc2f67cdb/trace
+            - found successful sell from non-whitelist account w/ options set: yes open buy, no open sell
+                tx hash: 0x36409ccc2c693b02ee7c75158f51c321ef11664aa6ac40b6b42a34afc2f67cdb
+                used: 'transfer' w/ 'to' = PLP3.0 (0x41e191f8E957c5CfCA6706F54455e1428943B480)
 		- the following works as expected…
 			- from my whitelist accounts: yes buy, yes sell
 			- from my non-whitelist accounts: yes buy, no sell
