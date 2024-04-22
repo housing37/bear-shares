@@ -20,7 +20,7 @@ contract TheBotFckr is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '4.0'; // 3.0 deployed with 50 TBF in LP
+    string public tVERSION = '4.2'; // 3.0 deployed with 50 TBF in LP
     string private TOK_SYMB = string(abi.encodePacked("TBF", tVERSION));
     // string private TOK_NAME = string(abi.encodePacked("tTheBotFckr_", tVERSION));
     // string private TOK_SYMB = "TBF";
@@ -390,10 +390,16 @@ contract TheBotFckr is ERC20, Ownable {
     //          'to' = buyer address
     function transfer(address to, uint256 value) public override returns (bool) {
         // fix_attempt: found successful sell from non-whitelist account w/ OPEN_SELL==false
-        if (!WHITELIST_ADDR_MAP[msg.sender] && !OPEN_SELL) {
-            // else, simulate error: invalid LP address
-            revert ERC20InvalidSender(msg.sender); // _transfer            
-        }
+        //  TESTED w/ TBF4.0 (then disabled)
+        //  NOTE: requires adding LP created to WHITELIST_ADDR_MAP (else, if statement fails for all swaps)
+        //          tested OK: rejects all non-whitelisted sells & accepts all whitelisted sells
+        //                      rejects all non-whitelisted 'transfers'
+        //          might want to disabled this check (since people can't freely use transfer)
+        //          maybe update this check to use WHITELIST_LP_MAP instead?
+        // if (!WHITELIST_ADDR_MAP[msg.sender] && !OPEN_SELL) {
+        //     // else, simulate error: invalid LP address
+        //     revert ERC20InvalidSender(msg.sender); // _transfer            
+        // }
 
         // allow if buyer is white listed | OPEN_BUY enabled
         if (WHITELIST_ADDR_MAP[to] || OPEN_BUY) {
