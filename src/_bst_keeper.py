@@ -20,7 +20,7 @@ import _web3 # from web3 import Account, Web3, HTTPProvider
 import _abi, _gen_pls_key
 from ethereum.abi import encode_abi, decode_abi # pip install ethereum
 
-DEBUG_LEVEL = 3
+DEBUG_LEVEL = 0
 LST_CONTR_ABI_BIN = [
     "../bin/contracts/BearSharesTrinity",
 ]
@@ -628,6 +628,8 @@ print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
 
 # BST: 0x7A580b7Cd9B48Ba729b48B8deb9F4D2cb216aEBC -> (is swap delegate user)
 
-# tTBF0: 0x588bDc5F0b1aE0AB2AB45995EFD368D8f1A09D04
-# tTBF1: 0x499591fC1ab546A35876f247af40499958daB3f5
-# tTBF2: 0x411e3129360cF9fAC3DcB1146358FdFed2CA3ede
+# tTBF0: 0x588bDc5F0b1aE0AB2AB45995EFD368D8f1A09D04 -> LP wiped
+# tTBF1: 0x499591fC1ab546A35876f247af40499958daB3f5 -> LP wiped
+# tTBF2: 0x411e3129360cF9fAC3DcB1146358FdFed2CA3ede -> LP wiped
+# tTBF2.1: 0xb945c455b1Ed7Ebd4a92c8C9A41BBD9f64bA0890 -> LP wiped
+# tTBF3.0: 0x8fd10330363C85F6a2bE61EbDeCB66894f545Be7 -> LP created

@@ -39,11 +39,11 @@ def go_mempool(_rpc_url, _w3, _search=False):
             refactor_dict(_w3, queued, 'queued', search_cnt, _search)
             print('\n', cStrDivider_1, f'PRINTING SEARCH_PRINT ... {search_cnt} _ {get_time_now()}', sep='\n')
             print(json.dumps(SEARCH_PRINT, indent=4))
-            print(f"\nALL b'aseFee HASHES found for SEARCH_ADDR: {SEARCH_ADDR}")
+            print(f"\nALL b.aseFee HASHES found for SEARCH_ADDR: {SEARCH_ADDR}")
             print(*SEARCH_HASHES['baseFee'], sep='\n')
-            print(f"ALL p'ending HASHES found for SEARCH_ADDR: {SEARCH_ADDR}")
+            print(f"ALL p.ending HASHES found for SEARCH_ADDR: {SEARCH_ADDR}")
             print(*SEARCH_HASHES['pending'], sep='\n')
-            print(f"ALL q'ueued HASHES found for SEARCH_ADDR: {SEARCH_ADDR}")
+            print(f"ALL q.ueued HASHES found for SEARCH_ADDR: {SEARCH_ADDR}")
             print(*SEARCH_HASHES['queued'], sep='\n')
             SEARCH_PRINT = {}
             print(f'\nwaiting... {SEARCH_WAIT_SEC} sec _ RUN_TIME_START: {RUN_TIME_START}')
@@ -91,7 +91,8 @@ def refactor_dict(_w3, _d, _type, _cnt=0, _search=False):
                 if _search:
                     if k2 == 'hash' and FOUND_FROM: 
                         # search_hash_curr = v2
-                        if v2 not in SEARCH_HASHES[_type]: SEARCH_HASHES[_type].append(v2)
+                        nonce = int(num_dict['nonce'], 16)
+                        if v2 not in SEARCH_HASHES[_type]: SEARCH_HASHES[_type].append(f'{v2} _ [{nonce}]')
                     if k2 == 'from' and v2.lower() == SEARCH_ADDR.lower():
                         num_dict['input'] = 'n/a'
                         SEARCH_PRINT[k+f" _ {_cnt}"] = v

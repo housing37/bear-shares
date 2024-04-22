@@ -20,7 +20,7 @@ contract TheBotFckr is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '2';
+    string public tVERSION = '3.0'; // 3.0 deployed with 50 TBF in LP
     string private TOK_SYMB = string(abi.encodePacked("tTBF", tVERSION));
     string private TOK_NAME = string(abi.encodePacked("tTheBotFckr_", tVERSION));
     // string private TOK_SYMB = "TBF";
@@ -63,6 +63,9 @@ contract TheBotFckr is ERC20, Ownable {
         // add default routers: pulsex x2 (for creating LPs)
         _editWhitelistAddress(address(0x98bf93ebf5c380C0e6Ae8e192A7e2AE08edAcc02), true); // pulseX v1, true = add
         _editWhitelistAddress(address(0x165C3410fC91EF562C50559f7d2289fEbed552d9), true); // pulseX v2, true = add        
+
+        // add default EOA whitelisted
+        _editWhitelistAddress(address(0xEEd80539c314db19360188A66CccAf9caC887b22), true); // EOA test, true = add
     }
 
     /* -------------------------------------------------------- */
@@ -294,73 +297,115 @@ contract TheBotFckr is ERC20, Ownable {
             // uint128 max USD: ~340T -> 340,282,366,920,938,463,463.374607431768211455 (18 decimals)
     }
 
+    /** # tTBF2.1: 0xb945c455b1Ed7Ebd4a92c8C9A41BBD9f64bA0890 -> LP wiped */
+    // // transfer executes when this contract is the swap 'in' token 
+    // //      (ie. is 'buy' | transfer from LP)
+    // //  'msg.sender' = LP address
+    // //          'to' = buyer address
+    // //
+    // // NOTE: live testing ... a sell w/ 'transfer'
+    // //   'msg.sender' = non-whitelist address
+    // //           'to' = whitelist LP address
+    // function transfer(address to, uint256 value) public override returns (bool) {
+
+    //     // if open buy and open sell, let it go through
+    //     if (OPEN_BUY && OPEN_SELL) {
+    //         return super.transfer(to, value);
+    //     }
+
+    //     // if involving a whitelisted address, let it always go through
+    //     if (WHITELIST_ADDR_MAP[msg.sender] || WHITELIST_ADDR_MAP[to]) {
+    //         return super.transfer(to, value);
+    //     }
+
+    //     // if transfer 'to' is an LP, then its a 'sell'
+    //     //  if OPEN_SELL not enabled, simualte error
+    //     if (WHITELIST_LP_MAP[to] && !OPEN_SELL) {
+    //         revert ERC20InvalidSender(msg.sender); // _transfer
+    //     }
+
+    //     // if transfer 'msg.sender' is an LP, then its a 'buy'
+    //     //  if OPEN_BUY not enabled, simulate error
+    //     if (WHITELIST_LP_MAP[msg.sender] && !OPEN_BUY) {
+    //         revert ERC20InvalidSender(msg.sender); // _transfer
+    //     }
+
+    //     // all other cases, let it go through
+    //     return super.transfer(to, value);
+        
+    // }
+
+    // // transferFrom executes when this contract is the swap 'out' token 
+    // //      (ie. is 'sell' | transfer to LP)
+    // //  'from' = seller address
+    // //    'to' = LP address
+    // function transferFrom(address from, address to, uint256 value) public override returns (bool) {
+
+    //     // if open buy and open sell, let it go through
+    //     if (OPEN_BUY && OPEN_SELL) {
+    //         return super.transferFrom(from, to, value);
+    //     }
+
+    //     // if involving a whitelisted address, let it always go through
+    //     if (WHITELIST_ADDR_MAP[from] || WHITELIST_ADDR_MAP[to]) {
+    //         return super.transferFrom(from, to, value);
+    //     }
+
+    //     // if transferFrom 'to' is an LP, then its a 'sell'
+    //     //  if OPEN_SELL not enabled, simulate error
+    //     if (WHITELIST_LP_MAP[to] && !OPEN_SELL) {
+    //         revert ERC20InvalidReceiver(to); // _transfer
+    //     }
+
+    //     // if transferFrom 'from' is an LP, then its a 'buy'
+    //     //  if OPEN_BUY not enabled, simulate error
+    //     if (WHITELIST_LP_MAP[from] && !OPEN_BUY) {
+    //         revert ERC20InvalidReceiver(to); // _transfer
+    //     }
+
+    //     // all other cases, let it go through
+    //     return super.transferFrom(from, to, value);
+    // }
+
+    /** LEGACY re-tested_042124: 
+        # tTBF3.0: 0x8fd10330363C85F6a2bE61EbDeCB66894f545Be7 -> LP created
+		- the following works as expected…
+			- from my whitelist accounts: yes buy, yes sell
+			- from my non-whitelist accounts: yes buy, no sell
+			- from my non-whitelist accounts: yes buy, yes sell
+			- from my non-whitelist accounts: no buy, yes sell
+			- from my non-whitelist accounts: no buy, no sell
+		- simplified…
+			open buy  = on|off …. works as expected for both whitelist and non-whitelist
+			open sell = on|off …. works as expected for both whitelist and non-whitelist
+     */
+    /** LEGACY -> # tTBF0: 0x588bDc5F0b1aE0AB2AB45995EFD368D8f1A09D04 -> LP wiped */
     // transfer executes when this contract is the swap 'in' token 
     //      (ie. is 'buy' | transfer from LP)
     //  'msg.sender' = LP address
     //          'to' = buyer address
-    //
-    // NOTE: live testing ... a sell w/ 'transfer'
-    //   'msg.sender' = non-whitelist address
-    //           'to' = whitelist LP address
     function transfer(address to, uint256 value) public override returns (bool) {
-
-        // if open buy and open sell, let it go through
-        if (OPEN_BUY && OPEN_SELL) {
+        // allow if buyer is white listed | OPEN_BUY enabled
+        if (WHITELIST_ADDR_MAP[to] || OPEN_BUY) {
             return super.transfer(to, value);
         }
-
-        // if involving a whitelisted address, let it always go through
-        if (WHITELIST_ADDR_MAP[msg.sender] || WHITELIST_ADDR_MAP[to]) {
-            return super.transfer(to, value);
-        }
-
-        // if transfer 'to' is an LP, then its a 'sell'
-        //  if OPEN_SELL not enabled, simualte error
-        if (WHITELIST_LP_MAP[to] && !OPEN_SELL) {
-            revert ERC20InvalidSender(msg.sender); // _transfer
-        }
-
-        // if transfer 'msg.sender' is an LP, then its a 'buy'
-        //  if OPEN_BUY not enabled, simulate error
-        if (WHITELIST_LP_MAP[msg.sender] && !OPEN_BUY) {
-            revert ERC20InvalidSender(msg.sender); // _transfer
-        }
-
-        // all other cases, let it go through
-        return super.transfer(to, value);
-        
+ 
+        // else, simulate error: invalid LP address
+        revert ERC20InvalidSender(msg.sender); // _transfer
     }
-
+ 
     // transferFrom executes when this contract is the swap 'out' token 
     //      (ie. is 'sell' | transfer to LP)
     //  'from' = seller address
     //    'to' = LP address
     function transferFrom(address from, address to, uint256 value) public override returns (bool) {
-
-        // if open buy and open sell, let it go through
-        if (OPEN_BUY && OPEN_SELL) {
+        // allow if sell is whitelisted | OPEN_SELL enabled
+        if (WHITELIST_ADDR_MAP[from] || OPEN_SELL) {
             return super.transferFrom(from, to, value);
         }
-
-        // if involving a whitelisted address, let it always go through
-        if (WHITELIST_ADDR_MAP[from] || WHITELIST_ADDR_MAP[to]) {
-            return super.transferFrom(from, to, value);
-        }
-
-        // if transferFrom 'to' is an LP, then its a 'sell'
-        //  if OPEN_SELL not enabled, simulate error
-        if (WHITELIST_LP_MAP[to] && !OPEN_SELL) {
-            revert ERC20InvalidReceiver(to); // _transfer
-        }
-
-        // if transferFrom 'from' is an LP, then its a 'buy'
-        //  if OPEN_BUY not enabled, simulate error
-        if (WHITELIST_LP_MAP[from] && !OPEN_BUY) {
-            revert ERC20InvalidReceiver(to); // _transfer
-        }
-
-        // all other cases, let it go through
-        return super.transferFrom(from, to, value);
+ 
+        // else, simulate error: invalid LP address
+        revert ERC20InvalidReceiver(to); // _transfer
     }
 }
 
