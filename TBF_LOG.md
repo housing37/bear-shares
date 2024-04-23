@@ -1,6 +1,28 @@
 # bear-shares TBF testing log
 
 ## testing results for…
+### TBF4.4: 0x5302F41B377862983aaEbab9050184eC95839363 -> LP added $500 (250:250 USD)
+	(ignoring successful sell w/ OPEN_SELL==false, for now, continue testing settings below)
+		init supply: 1000 TBF
+		mixing supply amount 20 to 25 wallets: 500 TBF
+		starting with OPEN_BUY|SELL = true|false
+		added ~$500 LP @ 1:1 USD (250 TBF : $250 in PLS)
+		starting market cap: $1.0k = $1.00 * 1000 TBF
+		….
+		performed manual market action to show activity
+			BUYS: 
+				2 buys = + ~$6.00 in LP
+			SELLS:
+				NONE
+		observed market activity … ~6hrs after LP deploy
+			BUYS: 
+				...
+			SELLS (slipped through w/ OPEN_SELL=false):
+				...
+		new market cap: ...
+		changed options to: …
+		observed market activity: …
+
 ### TBF4.3: 0x5f9fa75803a5695437d77066E6678fE56ab124F1 -> LP added $200 (100:100 USD)
 	(ignoring successful sell w/ OPEN_SELL==false, for now, continue testing settings below)
 		init supply: 1000 TBF

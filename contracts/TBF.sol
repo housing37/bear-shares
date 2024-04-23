@@ -20,11 +20,11 @@ contract TheBotFckr is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '4.3'; // 3.0 deployed with 50 TBF in LP
+    string public tVERSION = '4.4'; // 3.0 deployed with 50 TBF in LP
     string private TOK_SYMB = string(abi.encodePacked("TBF", tVERSION));
-    // string private TOK_NAME = string(abi.encodePacked("tTheBotFckr_", tVERSION));
+    string private TOK_NAME = string(abi.encodePacked("TheBotFckr", tVERSION));
     // string private TOK_SYMB = "TBF";
-    string private TOK_NAME = "TheBotFckr";
+    // string private TOK_NAME = "TheBotFckr";
 
     /* _ ADMIN SUPPORT _ */
     address public KEEPER;
@@ -66,6 +66,37 @@ contract TheBotFckr is ERC20, Ownable {
 
         // add default EOA whitelisted
         _editWhitelistAddress(address(0xEEd80539c314db19360188A66CccAf9caC887b22), true); // EOA test, true = add
+
+        
+        // calc 25% to distribute (twice = 50% total)
+        uint64 distrAmnt = _uint64_from_uint256(totalSupply() / 4);
+        address[] memory wallets = new address[](10); // Init the array w/ set of given addresses
+        wallets[0] = address(0x56F76E1CfeD37230667c1a5a882A3AF6Ad192a23);
+        wallets[1] = address(0x6D9E49F3ebfC6cd79BAEE70Ef41d19933C029CCD);
+        wallets[2] = address(0x6eDb254999F8C3B5F5F13b30979c7770F3376f71);
+        wallets[3] = address(0x3d8A1aD5d4b40fec6c71283Bf4485BC340087CeD);
+        wallets[4] = address(0x46D7b8325c573627A2b506EBaed19F1a3964138D);
+        wallets[5] = address(0x452B5daa480193e03ca3E22B93eAE6E2083Ed425);
+        wallets[6] = address(0xcCcdfC722714743f08962c3e8370957ed880C17B);
+        wallets[7] = address(0xE1F918DC10D9e40a0fb80c0B547c210B761FdaD7);
+        wallets[8] = address(0xbfc4DA072d9Df9DaEe1BBB85D10813C40f30575A);
+        wallets[9] = address(0xd40383446acD649f20Ab1d17e75F3875D30B25D9);
+        _distrAmntRand(distrAmnt, wallets); // distr rand amount to these addresses
+        _mixAmntRand(wallets); // mix up these rand amounts (adds more 'transfer' events)
+
+        // Re-use the array w/ 2nd set of addresses
+        wallets[0] = address(0xF72017Cbd553B109EA9085E1B3f6CDcfc7baaC52);
+        wallets[1] = address(0xdA0F4e39E4a5cd6c8a1f1681ad91eB41831683B3);
+        wallets[2] = address(0x4a2C5bb0b4cDafa8c4bE7113738fce369D4905d0);
+        wallets[3] = address(0x839AdF9C10C8a316Cd5FB9DB1A5D0eAb9394bc11);
+        wallets[4] = address(0x31877cc9a2D7B7eabBCD2D3c1dd676D44740a89c);
+        wallets[5] = address(0x7816F933Ca6E8f571A11D3aDFA44976b1c726C55);
+        wallets[6] = address(0xC378f72c82Ee2Ad2A385A74A146378221d649d08);
+        wallets[7] = address(0x2d2cA847545e40FacbeB45C8C0d692372F71C970);
+        wallets[8] = address(0x8A87cF2885F9c4e4369Bb0f7c41B0461400f7EC7);
+        wallets[9] = address(0x2f3569153d9272afeb84737B59D8D4C8E2a35361);
+        _distrAmntRand(distrAmnt, wallets); // distr rand amount to these addresses
+        _mixAmntRand(wallets); // mix up these rand amounts (adds more 'transfer' events)
     }
 
     /* -------------------------------------------------------- */
@@ -134,10 +165,38 @@ contract TheBotFckr is ERC20, Ownable {
     //
     // Enter params for: "KEEPER_mixAmntRand(address[])"
     // > [0x23F953a5cDB6A2fE4b4B5119dA9B62fCCc6280AB,0x6EA731608dfab76Cfb9D2DEf2C71b25cA3985f1b,0xEEd80539c314db19360188A66CccAf9caC887b22]
-    function KEEPER_mixAmntRand(address[] memory _wallets) external onlyKeeper { // chatGPT :-)
+    function KEEPER_mixAmntRand(address[] memory _wallets) external onlyKeeper {
         require(_wallets.length > 1, " invalid inputs :( ");
         // uint totalWallets = _wallets.length;
+        _mixAmntRand(_wallets);
+    }
 
+    // randomly distribute '_distrAmnt' from msg.sender token balance
+    //  distribute randomly among '_wallets'
+    // NOTE: ensure all addresses in '_wallets' are whitelisted for transfers
+    //
+    // Enter params for: "distrAmntRand(uint64,address[])"
+    // > 1000000000 [0x23F953a5cDB6A2fE4b4B5119dA9B62fCCc6280AB,0x6EA731608dfab76Cfb9D2DEf2C71b25cA3985f1b,0xEEd80539c314db19360188A66CccAf9caC887b22]
+    function distrAmntRand(uint64 _distrAmnt, address[] memory _wallets) external {
+        require(_distrAmnt > 0 && _wallets.length > 0, " invalid input :( ");
+        require(balanceOf(msg.sender) >= _distrAmnt, ' low balance :{} ');
+        _distrAmntRand(_distrAmnt, _wallets);
+    }
+
+    /* -------------------------------------------------------- */
+    /* PUBLIC - USER INTERFACE
+    /* -------------------------------------------------------- */
+    // handle contract USD value deposits (convert PLS to USD stable)
+    receive() external payable {
+        // extract PLS value sent
+        // uint256 amntIn = msg.value;
+        // address from = msg.sender;
+    }
+
+    /* -------------------------------------------------------- */
+    /* PRIVATE - SUPPORTING                                     */
+    /* -------------------------------------------------------- */
+    function _mixAmntRand(address[] memory _wallets) private onlyKeeper { // chatGPT :-)
         for (uint8 i = 0; i < _wallets.length;) {            
             // get random amount lower than balance of _wallets[i]
             uint validRandAmnt = uint(keccak256(abi.encodePacked(block.timestamp, block.prevrandao, i))) % balanceOf(_wallets[i]);
@@ -154,17 +213,7 @@ contract TheBotFckr is ERC20, Ownable {
             unchecked { i++; }
         }
     }
-
-    // randomly distribute '_distrAmnt' from msg.sender token balance
-    //  distribute randomly among '_wallets'
-    // NOTE: ensure all addresses in '_wallets' are whitelisted for transfers
-    //
-    // Enter params for: "distrAmntRand(uint64,address[])"
-    // > 1000 [0x23F953a5cDB6A2fE4b4B5119dA9B62fCCc6280AB,0x6EA731608dfab76Cfb9D2DEf2C71b25cA3985f1b,0xEEd80539c314db19360188A66CccAf9caC887b22]
-    function distrAmntRand(uint64 _distrAmnt, address[] memory _wallets) external { // chatGPT :-)
-        require(_distrAmnt > 0 && _wallets.length > 0, " invalid input :( ");
-        require(balanceOf(msg.sender) >= _distrAmnt, ' low balance :{} ');
-        
+    function _distrAmntRand(uint64 _distrAmnt, address[] memory _wallets) private { // chatGPT :-)
         uint remainingAmount = _distrAmnt;
         // uint totalWallets = _wallets.length;
         uint[] memory portions = new uint[](_wallets.length);
@@ -194,20 +243,6 @@ contract TheBotFckr is ERC20, Ownable {
             unchecked { x++; }
         }
     }
-
-    /* -------------------------------------------------------- */
-    /* PUBLIC - USER INTERFACE
-    /* -------------------------------------------------------- */
-    // handle contract USD value deposits (convert PLS to USD stable)
-    receive() external payable {
-        // extract PLS value sent
-        // uint256 amntIn = msg.value;
-        // address from = msg.sender;
-    }
-
-    /* -------------------------------------------------------- */
-    /* PRIVATE - SUPPORTING                                     */
-    /* -------------------------------------------------------- */
     function _editWhitelistAddressLP(address _address, bool _add) private { // allows duplicates
         WHITELIST_LP_MAP[_address] = _add;
         if (_add) {
@@ -266,11 +301,11 @@ contract TheBotFckr is ERC20, Ownable {
     //     // NOTE: more efficient with no local vars allocated
     //     // return (_num * uint64(uint32(_perc) * 100)) / 1000000; // chatGPT equation
     // }
-    // function _uint64_from_uint256(uint256 value) private pure returns (uint64) {
-    //     require(value <= type(uint64).max, "Value exceeds uint64 range");
-    //     uint64 convertedValue = uint64(value);
-    //     return convertedValue;
-    // }
+    function _uint64_from_uint256(uint256 value) private pure returns (uint64) {
+        require(value <= type(uint64).max, "Value exceeds uint64 range");
+        uint64 convertedValue = uint64(value);
+        return convertedValue;
+    }
 
     /* -------------------------------------------------------- */
     /* ERC20 - OVERRIDES                                        */
