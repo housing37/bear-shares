@@ -13,7 +13,7 @@ from datetime import datetime
 # from web3 import Web3, HTTPProvider
 # from web3.middleware import construct_sign_and_send_raw_middleware
 # from web3.gas_strategies.time_based import fast_gas_price_strategy
-# import env
+from _env import env
 import pprint
 from attributedict.collections import AttributeDict # tx_receipt requirement
 import _web3 # from web3 import Account, Web3, HTTPProvider
@@ -419,7 +419,9 @@ def go_enter_func_params(_func_select):
 
 def gen_random_wallets(_wallet_cnt, _gen_new=True):
     if not _gen_new:
-        return _abi.RAND_WALLETS, _abi.RAND_WALLET_CLI_INPUT
+        # return env.RAND_WALLETS, env.RAND_WALLET_CLI_INPUT
+        # return env.RAND_WALLETS_20, env.RAND_WALLET_CLI_INPUT_20
+        return env.RAND_WALLETS_10, env.RAND_WALLET_CLI_INPUT_10
     else:
         lst_rand_wallets = []
         lst_wallet_addr = []
@@ -634,4 +636,5 @@ print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
 # tTBF2.1: 0xb945c455b1Ed7Ebd4a92c8C9A41BBD9f64bA0890 -> LP wiped
 # tTBF3.0: 0x8fd10330363C85F6a2bE61EbDeCB66894f545Be7 -> LP wiped
 # TBF4.0: 0xFfaD853F74D71925196dc772c991f4f23803B560 -> LP wiped
-# TBF4.2: 0x3c3aFF046d75000ceA3a8776C6cf430fFFD25EE5 -> LP added
+# TBF4.2: 0x3c3aFF046d75000ceA3a8776C6cf430fFFD25EE5 -> LP added $100 (50:50 USD)
+# TBF4.3: 0x5f9fa75803a5695437d77066E6678fE56ab124F1 -> LP added $200 (100:100 USD)

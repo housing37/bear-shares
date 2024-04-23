@@ -48,7 +48,8 @@ def go_mempool(_rpc_url, _w3, _search=False):
             SEARCH_PRINT = {}
             print(f'\nwaiting... {SEARCH_WAIT_SEC} sec _ RUN_TIME_START: {RUN_TIME_START}')
             for s in range(0, SEARCH_WAIT_SEC, 1):
-                print(s, end=' ', flush=True)
+                # print(s, end=' ', flush=True)
+                print(' .', end=' ', flush=True)
                 time.sleep(1)
             search_cnt += 1
     else:

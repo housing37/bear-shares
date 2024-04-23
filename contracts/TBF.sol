@@ -20,7 +20,7 @@ contract TheBotFckr is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '4.2'; // 3.0 deployed with 50 TBF in LP
+    string public tVERSION = '4.3'; // 3.0 deployed with 50 TBF in LP
     string private TOK_SYMB = string(abi.encodePacked("TBF", tVERSION));
     // string private TOK_NAME = string(abi.encodePacked("tTheBotFckr_", tVERSION));
     // string private TOK_SYMB = "TBF";

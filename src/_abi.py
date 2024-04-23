@@ -30,7 +30,7 @@ TBF_FUNC_MAP_WRITE = {
     "KEEPER_setOpenBuySell(bool,bool)": ["c0585124", ["bool","bool"], []], # fee: 18.21297 pls
     "KEEPER_editWhitelistAddress(address,bool)": ["a83d30df", ["address","bool"], []],
     "KEEPER_editWhitelistAddressLP(address,bool)": ["663d4e42", ["address","bool"], []],
-	"KEEPER_mixAmntRand(address[])": ["359b5ba6", ['address[]'], []], # fee: 62.769365 pls
+	"KEEPER_mixAmntRand(address[])": ["359b5ba6", ['address[]'], []], # has failed at 937_000 max units (451.806+ pls)
     "distrAmntRand(uint64,address[])": ["d3692a0a", ['uint64','address[]'], []], # fee: 69.956423 pls
     
 	# legacy
