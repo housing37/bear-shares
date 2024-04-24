@@ -11,14 +11,15 @@
 		….
 		performed manual market action to show activity
 			BUYS: 
-				2 buys = + ~$6.00 in LP
+				8 buys = + ~$80.00 in LP
 			SELLS:
-				NONE
-		observed market activity … ~6hrs after LP deploy
+                None
+		observed market activity … ~18+ hrs after LP deploy
 			BUYS: 
-				...
+				None
 			SELLS (slipped through w/ OPEN_SELL=false):
-				...
+				1 sell = - ~18.00 in LP ('skim' fault from sending TBF4.4 to LP contract address)
+                1 sell = - ~9.00 in LP (slipped through via 'front-running' a $36 buy of mine)
 		new market cap: ...
 		changed options to: …
 		observed market activity: …

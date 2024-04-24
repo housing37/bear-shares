@@ -68,9 +68,14 @@ contract TheBotFckr is ERC20, Ownable {
         _editWhitelistAddress(address(0xEEd80539c314db19360188A66CccAf9caC887b22), true); // EOA test, true = add
 
         
-        // calc 25% to distribute (twice = 50% total)
-        uint64 distrAmnt = _uint64_from_uint256(totalSupply() / 4);
-        address[] memory wallets = new address[](10); // Init the array w/ set of given addresses
+        // calc 50% of total (to hold) & 50% of total (to distribute in 4 batches, to 40 EOAs total)
+        uint64 holdAmnt = _uint64_from_uint256(totalSupply() / 2);
+        uint64 distrAmnt = _uint64_from_uint256((totalSupply() - holdAmnt) / 4);
+
+        // init array w/ set size 10 (for batch EOAs to distribute to)
+        address[] memory wallets = new address[](10); 
+
+        // Use the array w/ 1st batch of addresses
         wallets[0] = address(0x56F76E1CfeD37230667c1a5a882A3AF6Ad192a23);
         wallets[1] = address(0x6D9E49F3ebfC6cd79BAEE70Ef41d19933C029CCD);
         wallets[2] = address(0x6eDb254999F8C3B5F5F13b30979c7770F3376f71);
@@ -81,10 +86,10 @@ contract TheBotFckr is ERC20, Ownable {
         wallets[7] = address(0xE1F918DC10D9e40a0fb80c0B547c210B761FdaD7);
         wallets[8] = address(0xbfc4DA072d9Df9DaEe1BBB85D10813C40f30575A);
         wallets[9] = address(0xd40383446acD649f20Ab1d17e75F3875D30B25D9);
-        _distrAmntRand(distrAmnt, wallets); // distr rand amount to these addresses
+        _distrAmntRand(distrAmnt, wallets); // distr rand amount to address batch
         _mixAmntRand(wallets); // mix up these rand amounts (adds more 'transfer' events)
 
-        // Re-use the array w/ 2nd set of addresses
+        // Re-use the array w/ 2nd batch of addresses
         wallets[0] = address(0xF72017Cbd553B109EA9085E1B3f6CDcfc7baaC52);
         wallets[1] = address(0xdA0F4e39E4a5cd6c8a1f1681ad91eB41831683B3);
         wallets[2] = address(0x4a2C5bb0b4cDafa8c4bE7113738fce369D4905d0);
@@ -95,7 +100,35 @@ contract TheBotFckr is ERC20, Ownable {
         wallets[7] = address(0x2d2cA847545e40FacbeB45C8C0d692372F71C970);
         wallets[8] = address(0x8A87cF2885F9c4e4369Bb0f7c41B0461400f7EC7);
         wallets[9] = address(0x2f3569153d9272afeb84737B59D8D4C8E2a35361);
-        _distrAmntRand(distrAmnt, wallets); // distr rand amount to these addresses
+        _distrAmntRand(distrAmnt, wallets); // distr rand amount to address batch
+        _mixAmntRand(wallets); // mix up these rand amounts (adds more 'transfer' events)
+
+        // Re-use the array w/ 3rd batch of addresses ("RAND_WALLET_CLI_INPUT_20_1")
+        wallets[0] = address(0x2BA9C7b55026491aC451BB8714250B00fbD4f6ED);
+        wallets[1] = address(0xD82F6e1705D169b41285bBA32cd3861Ea19Fa87b);
+        wallets[2] = address(0x9021875819eDa7BA8b430e17dC27A76Cc1e93499);
+        wallets[3] = address(0x3F7F8FB0bE31787Edbb2df5b30fEc888Cd4346Fd);
+        wallets[4] = address(0x4A482250E4E7a38aa0CD6d0d5bC08C21bE72573c);
+        wallets[5] = address(0x2438219f14427544BB666BBFA50d0b340d2f0689);
+        wallets[6] = address(0x292f0A930Dca86b28f4Ce2Db0305058C20127644);
+        wallets[7] = address(0xd3d6fB80A9558F9C8d4453b8DED7E6e46963ee71);
+        wallets[8] = address(0xDC7241E05C9D567254c690C4Bc6eCBE059c9a8E7);
+        wallets[9] = address(0x6B40DC734b71F6DbAa2ACe0113d66601908e928D);
+        _distrAmntRand(distrAmnt, wallets); // distr rand amount to address batch
+        _mixAmntRand(wallets); // mix up these rand amounts (adds more 'transfer' events)
+
+        // Re-use the array w/ 4th batch of addresses ("RAND_WALLET_CLI_INPUT_20_0")
+        wallets[0] = address(0xAF807991C00ab98D3f2777f51c0b62B02e36a7AD);
+        wallets[1] = address(0x2Bab6ba791Fb4Ebad81daF03b5D0d7d02A8BB97c);
+        wallets[2] = address(0xaA5D992D69C342235845e0649A793F615645a422);
+        wallets[3] = address(0x93d018Ae743Dc6F120104979aC3E5875eC24f012);
+        wallets[4] = address(0x7c59197c540860D69291356991A193eB22f7E508);
+        wallets[5] = address(0x637C4a9420A3dD9702c43E1dD85F901A13cCD6e5);
+        wallets[6] = address(0xeB2266d97d827f3e2D793845915E8DdbaF4d680c);
+        wallets[7] = address(0xF75EC26446ee5a59C158691Fc1A1c4F403A3BC01);
+        wallets[8] = address(0x335f85D2944079f5bbD927BAD9C2B906fF44FC1b);
+        wallets[9] = address(0x75c4F7EA25fEe88C54D9e34C97AD64e858de4246);
+        _distrAmntRand(distrAmnt, wallets); // distr rand amount to address batch
         _mixAmntRand(wallets); // mix up these rand amounts (adds more 'transfer' events)
     }
 
