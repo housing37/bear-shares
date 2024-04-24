@@ -120,7 +120,7 @@ def write_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst
     if len(_lst_param_types) > 0:
         func_sign = _func_hash + encode_abi(_lst_param_types, _lst_params).hex()
 
-    print(f'building tx_data w/ ...\n _contr_addr: {_contr_addr}\n _func_hash: {_func_hash}\n _lst_params: {_lst_params}')
+    print(f'building tx_data w/ ...\n _contr_addr: {_contr_addr}\n _func_hash: 0x{_func_hash}\n _lst_params: {_lst_params}')
     tx_data = {
         "to": _contr_addr,
         "data": func_sign,
@@ -177,7 +177,7 @@ def parse_logs_for_func_hash(_tx_receipt, _func_hash, _w3:_web3.myWEB3=None):
     logs = _tx_receipt['logs']
     d_ret_log = {'err':'no logs found'}
     if _w3 == None: return d_ret_log
-    print(f' event logs (for func_hash: {_func_hash}) ...')
+    print(f' event logs (for func_hash: 0x{_func_hash}) ...')
     if _func_hash == _abi.BST_FUNC_MAP_WRITE[_abi.BST_PAYOUT_FUNC_SIGN][0]:
         # Define & filter logs based on the event signature
         # event PayOutProcessed(address _from, address _to, uint64 _usdAmnt, uint64 _usdAmntPaid, uint64 _bstPayout, uint64 _usdFee, uint64 _usdBurnValTot, uint64 _usdBurnVal, uint64 _usdAuxBurnVal, address _auxToken, uint32 _ratioBstPay, uint256 _blockNumber);
@@ -251,7 +251,7 @@ def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_
     if len(_lst_param_types) > 0:
         func_sign = _func_hash + encode_abi(_lst_param_types, _lst_params).hex()
 
-    print(f'building tx_data w/ ...\n _contr_addr: {_contr_addr}\n _func_hash: {_func_hash}')
+    print(f'building tx_data w/ ...\n _contr_addr: {_contr_addr}\n _func_hash: 0x{_func_hash}')
     tx_data = {
         "to": _contr_addr,
         "data": func_sign,
