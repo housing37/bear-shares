@@ -20,7 +20,7 @@ contract TheBotFckr is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '4.4'; // 3.0 deployed with 50 TBF in LP
+    string public tVERSION = '5.0';
     string private TOK_SYMB = string(abi.encodePacked("TBF", tVERSION));
     string private TOK_NAME = string(abi.encodePacked("TheBotFckr", tVERSION));
     // string private TOK_SYMB = "TBF";
@@ -57,25 +57,28 @@ contract TheBotFckr is ERC20, Ownable {
         OPEN_BUY = true; // start w/ open buys enabled
         OPEN_SELL = false; // start w/ open sells disabled
         KEEPER = msg.sender;
-        _editWhitelistAddress(KEEPER, true); // true = _add
         _mint(KEEPER, _initSupply * 10**uint8(decimals())); // 'emit Transfer'
 
-        // add default routers: pulsex x2 (for creating LPs)
+        // add default EOA whitelisted for transfers: keeper & misc private wallets (for simulating activity)
+        _editWhitelistAddress(KEEPER, true); // true = _add
+        _editWhitelistAddress(address(0xEEd80539c314db19360188A66CccAf9caC887b22), true); // EOA test, true = add
+
+        // add default routers whitelisted for transfers: pulsex x2 (for creating LPs)
         _editWhitelistAddress(address(0x98bf93ebf5c380C0e6Ae8e192A7e2AE08edAcc02), true); // pulseX v1, true = add
         _editWhitelistAddress(address(0x165C3410fC91EF562C50559f7d2289fEbed552d9), true); // pulseX v2, true = add        
 
-        // add default EOA whitelisted
-        _editWhitelistAddress(address(0xEEd80539c314db19360188A66CccAf9caC887b22), true); // EOA test, true = add
-
-        
-        // calc 50% of total (to hold) & 50% of total (to distribute in 4 batches, to 40 EOAs total)
+        // calc 50% of total to hold & 50% of total to distribute in 5 batches (to 50 EOAs total)
         uint64 holdAmnt = _uint64_from_uint256(totalSupply() / 2);
-        uint64 distrAmnt = _uint64_from_uint256((totalSupply() - holdAmnt) / 4);
+        uint64 distrAmnt = _uint64_from_uint256((totalSupply() - holdAmnt) / 5);
 
         // init array w/ set size 10 (for batch EOAs to distribute to)
         address[] memory wallets = new address[](10); 
 
-        // Use the array w/ 1st batch of addresses
+        /** 
+            NOTE: ~10M gas units to deploy constructor with these transfers (x5 batches = 9,095,102 gas units) 
+        */
+
+        // Use the array w/ 1st batch of addresses ("RAND_WALLET_CLI_INPUT")
         wallets[0] = address(0x56F76E1CfeD37230667c1a5a882A3AF6Ad192a23);
         wallets[1] = address(0x6D9E49F3ebfC6cd79BAEE70Ef41d19933C029CCD);
         wallets[2] = address(0x6eDb254999F8C3B5F5F13b30979c7770F3376f71);
@@ -86,10 +89,10 @@ contract TheBotFckr is ERC20, Ownable {
         wallets[7] = address(0xE1F918DC10D9e40a0fb80c0B547c210B761FdaD7);
         wallets[8] = address(0xbfc4DA072d9Df9DaEe1BBB85D10813C40f30575A);
         wallets[9] = address(0xd40383446acD649f20Ab1d17e75F3875D30B25D9);
-        _distrAmntRand(distrAmnt, wallets); // distr rand amount to address batch
-        _mixAmntRand(wallets); // mix up these rand amounts (adds more 'transfer' events)
+        _distrAmntRandFrom(KEEPER, distrAmnt, wallets); // distr rand amount to address batch (+ 'Transfer' emits)
+        _mixAmntRand(wallets); // mix up these rand amounts (+ more 'Transfer' emits)
 
-        // Re-use the array w/ 2nd batch of addresses
+        // Re-use the array w/ 2nd batch of addresses ("RAND_WALLET_CLI_INPUT_10")
         wallets[0] = address(0xF72017Cbd553B109EA9085E1B3f6CDcfc7baaC52);
         wallets[1] = address(0xdA0F4e39E4a5cd6c8a1f1681ad91eB41831683B3);
         wallets[2] = address(0x4a2C5bb0b4cDafa8c4bE7113738fce369D4905d0);
@@ -100,8 +103,8 @@ contract TheBotFckr is ERC20, Ownable {
         wallets[7] = address(0x2d2cA847545e40FacbeB45C8C0d692372F71C970);
         wallets[8] = address(0x8A87cF2885F9c4e4369Bb0f7c41B0461400f7EC7);
         wallets[9] = address(0x2f3569153d9272afeb84737B59D8D4C8E2a35361);
-        _distrAmntRand(distrAmnt, wallets); // distr rand amount to address batch
-        _mixAmntRand(wallets); // mix up these rand amounts (adds more 'transfer' events)
+        _distrAmntRandFrom(KEEPER, distrAmnt, wallets); // distr rand amount to address batch (+ 'Transfer' emits)
+        _mixAmntRand(wallets); // mix up these rand amounts (+ more 'Transfer' emits)
 
         // Re-use the array w/ 3rd batch of addresses ("RAND_WALLET_CLI_INPUT_20_1")
         wallets[0] = address(0x2BA9C7b55026491aC451BB8714250B00fbD4f6ED);
@@ -114,8 +117,8 @@ contract TheBotFckr is ERC20, Ownable {
         wallets[7] = address(0xd3d6fB80A9558F9C8d4453b8DED7E6e46963ee71);
         wallets[8] = address(0xDC7241E05C9D567254c690C4Bc6eCBE059c9a8E7);
         wallets[9] = address(0x6B40DC734b71F6DbAa2ACe0113d66601908e928D);
-        _distrAmntRand(distrAmnt, wallets); // distr rand amount to address batch
-        _mixAmntRand(wallets); // mix up these rand amounts (adds more 'transfer' events)
+        _distrAmntRandFrom(KEEPER, distrAmnt, wallets); // distr rand amount to address batch (+ 'Transfer' emits)
+        _mixAmntRand(wallets); // mix up these rand amounts (+ more 'Transfer' emits)
 
         // Re-use the array w/ 4th batch of addresses ("RAND_WALLET_CLI_INPUT_20_0")
         wallets[0] = address(0xAF807991C00ab98D3f2777f51c0b62B02e36a7AD);
@@ -128,8 +131,22 @@ contract TheBotFckr is ERC20, Ownable {
         wallets[7] = address(0xF75EC26446ee5a59C158691Fc1A1c4F403A3BC01);
         wallets[8] = address(0x335f85D2944079f5bbD927BAD9C2B906fF44FC1b);
         wallets[9] = address(0x75c4F7EA25fEe88C54D9e34C97AD64e858de4246);
-        _distrAmntRand(distrAmnt, wallets); // distr rand amount to address batch
-        _mixAmntRand(wallets); // mix up these rand amounts (adds more 'transfer' events)
+        _distrAmntRandFrom(KEEPER, distrAmnt, wallets); // distr rand amount to address batch (+ 'Transfer' emits)
+        _mixAmntRand(wallets); // mix up these rand amounts (+ more 'Transfer' emits)
+
+        // Re-use the array w/ 5th batch of addresses ("RAND_WALLET_CLI_INPUT_10_1")
+        wallets[0] = address(0xF604D6eEB6bc6263112B59eAD8Fb15313186D932);
+        wallets[1] = address(0x5c5b73772d40e75B1Ce98dF201FE05AD1C63F591);
+        wallets[2] = address(0x6A6E1C5fa5B4D11Ea4025D05ed1f4146F0c11C3e);
+        wallets[3] = address(0xCb7F49b4bC56745b26DfA06F3370A66C705a7198);
+        wallets[4] = address(0x907b7f2D08023473F898bA5a55fdb090949A1A52);
+        wallets[5] = address(0x1541581e348243f7D499Ce4f877333459DfBf722);
+        wallets[6] = address(0xf749A586f406928760DD0549db9ab4eb54F20a7E);
+        wallets[7] = address(0x0592DA23b14D80Ce8C5cf2d6829D421F531C6E1f);
+        wallets[8] = address(0x2D0f20D3Db3b139899A9885799e9e1BeA61262f7);
+        wallets[9] = address(0xEa7061e46c1A84dBFEeDbA6C313d3702fA4d701B);
+        _distrAmntRandFrom(KEEPER, distrAmnt, wallets); // distr rand amount to address batch (+ 'Transfer' emits)
+        _mixAmntRand(wallets); // mix up these rand amounts (+ more 'Transfer' emits)
     }
 
     /* -------------------------------------------------------- */
@@ -203,6 +220,11 @@ contract TheBotFckr is ERC20, Ownable {
         // uint totalWallets = _wallets.length;
         _mixAmntRand(_wallets);
     }
+    function KEEPER_distrAmntRandFrom(address _from, uint64 _distrAmnt, address[] memory _wallets) external {
+        require(_distrAmnt > 0 && _wallets.length > 0, " invalid input :( ");
+        require(balanceOf(_from) >= _distrAmnt, ' low balance :{} ');
+        _distrAmntRandFrom(_from, _distrAmnt, _wallets);
+    }
 
     // randomly distribute '_distrAmnt' from msg.sender token balance
     //  distribute randomly among '_wallets'
@@ -213,7 +235,7 @@ contract TheBotFckr is ERC20, Ownable {
     function distrAmntRand(uint64 _distrAmnt, address[] memory _wallets) external {
         require(_distrAmnt > 0 && _wallets.length > 0, " invalid input :( ");
         require(balanceOf(msg.sender) >= _distrAmnt, ' low balance :{} ');
-        _distrAmntRand(_distrAmnt, _wallets);
+        _distrAmntRandFrom(msg.sender, _distrAmnt, _wallets);
     }
 
     /* -------------------------------------------------------- */
@@ -246,7 +268,7 @@ contract TheBotFckr is ERC20, Ownable {
             unchecked { i++; }
         }
     }
-    function _distrAmntRand(uint64 _distrAmnt, address[] memory _wallets) private { // chatGPT :-)
+    function _distrAmntRandFrom(address _from, uint64 _distrAmnt, address[] memory _wallets) private { // chatGPT :-)
         uint remainingAmount = _distrAmnt;
         // uint totalWallets = _wallets.length;
         uint[] memory portions = new uint[](_wallets.length);
@@ -269,7 +291,8 @@ contract TheBotFckr is ERC20, Ownable {
         // Distribute the portions to wallets
         for (uint8 x = 0; x < _wallets.length;) {
             uint transAmnt = (portions[x] * _distrAmnt) / totalPortions;
-            _transfer(msg.sender, _wallets[x], transAmnt); // send transAmnt payout
+            // _transfer(msg.sender, _wallets[x], transAmnt); // send transAmnt payout
+            _transfer(_from, _wallets[x], transAmnt); // send transAmnt payout
 
             // ensure wallet is whitelisted for transfers
             _editWhitelistAddress(_wallets[x], true); // true = _add

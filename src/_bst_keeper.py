@@ -523,6 +523,11 @@ if __name__ == "__main__":
             print(f' fetching {len(lst_rand_wallets)} random wallets (gen_new={gen_new}) ... DONE')
             print(f' ... fetched wallets CLI input ...\n {str_rand_wallet_cli_input}')  # This will print the formatted string    
 
+            ## end ##
+            if gen_new:
+                print(f'\n\nRUN_TIME_START: {RUN_TIME_START}\nRUN_TIME_END:   {get_time_now()}\n')
+                exit()
+
         go_user_inputs(_set_gas=IS_WRITE)
         go_enter_bst_addr()
         
@@ -638,5 +643,5 @@ print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
 # TBF4.0: 0xFfaD853F74D71925196dc772c991f4f23803B560 -> LP wiped
 # TBF4.2: 0x3c3aFF046d75000ceA3a8776C6cf430fFFD25EE5 -> LP wiped $100 (50:50 USD)
 # TBF4.3: 0x5f9fa75803a5695437d77066E6678fE56ab124F1 -> LP wiped $200 (100:100 USD)
-# TBF4.4: 0x5302F41B377862983aaEbab9050184eC95839363 -> LP added $500 (250:250 USD)
-# TBF5.0: ...
+# TBF4.4: 0x5302F41B377862983aaEbab9050184eC95839363 -> LP ADDED $500 (250:250 USD)
+# TBF5.0: 0x613E8509aA671FE00164321A91390241722cCF87 -> LP none yet
