@@ -1,6 +1,30 @@
 # bear-shares TBF testing log
 
 ## testing results for…
+### TBF6.0: 0x76d0b9953dd7587578562CaCC75ac4A793852F7A -> LP added $200 (100:100 USD)
+	(ignoring successful sell w/ OPEN_SELL==false | 'skim(…)' fault, for now, continue testing settings below)
+    (added 'transfer' check for selling 'to' LP; requires whitelisting LP after its created)
+		init supply: 1000 TBF
+		mixing supply amount 50 to 55 wallets: 500 TBF
+		starting with OPEN_BUY|SELL = true|false
+        added ~$200 LP @ 1:1 USD (100 TBF : $100 in PLS)
+            PLP6.0: 0x5cDA6c079F34510E75dfe03929866CB4e5b933B5
+		starting market cap: $1.0k = $1.00 * 1000 TBF
+		…
+		performed manual market action to show activity
+			BUYS: 
+				x2 10k PLS market buys
+			SELLS:
+                None
+		observed market activity … ~x hrs after LP deploy
+			BUYS: 
+				None
+			SELLS (slipped through w/ OPEN_SELL=false -OR- 'skim(…)' fault):
+                None
+		new market cap: …
+		changed options to: …
+		observed market activity: …
+
 ### TBF5.0: 0x613E8509aA671FE00164321A91390241722cCF87 -> LP added $200 (100:100 USD)
 	(ignoring successful sell w/ OPEN_SELL==false | 'skim(…)' fault, for now, continue testing settings below)
 		init supply: 1000 TBF
@@ -12,19 +36,19 @@
 		…
 		performed manual market action to show activity
 			BUYS: 
-				1 buy = + ~$0.70 in LP
+				2 buy = + ~$0.70 in LP
 			SELLS:
                 None
 		observed market activity … ~x hrs after LP deploy
 			BUYS: 
-				2 buys = + ~$2.12 in LP
+				3 buys = + ~$2.12 in LP
 			SELLS (slipped through w/ OPEN_SELL=false -OR- 'skim(…)' fault):
-                None
+                1 sell ... failure: snipe got through  it looks like
 		new market cap: …
 		changed options to: …
 		observed market activity: …
 
-### TBF4.4: 0x5302F41B377862983aaEbab9050184eC95839363 -> LP added $500 (250:250 USD)
+### TBF4.4: 0x5302F41B377862983aaEbab9050184eC95839363 -> LP added $500 (250:250 USD) -> LP wiped
 	(ignoring successful sell w/ OPEN_SELL==false, for now, continue testing settings below)
 		init supply: 1000 TBF
 		mixing supply amount 20 to 25 wallets: 500 TBF

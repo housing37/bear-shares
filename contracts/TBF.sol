@@ -493,6 +493,8 @@ contract TheBotFckr is ERC20, Ownable {
         //     revert ERC20InvalidSender(msg.sender); // _transfer            
         // }
 
+        // testing with v6.0
+        //  fix attempt: 1 sell ... failure: snipe got through  it looks like (v5.0)
         // if sending this token to the LP, then msg.sender is 'selling'
         //  hence, let it go through ... 
         //      if msg.sender is whitelisted, or OPEN_SELL == true
