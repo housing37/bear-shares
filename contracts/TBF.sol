@@ -20,7 +20,7 @@ contract TheBotFckr is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '5.0';
+    string public tVERSION = '6.0';
     string private TOK_SYMB = string(abi.encodePacked("TBF", tVERSION));
     string private TOK_NAME = string(abi.encodePacked("TheBotFckr", tVERSION));
     // string private TOK_SYMB = "TBF";
@@ -65,7 +65,8 @@ contract TheBotFckr is ERC20, Ownable {
 
         // add default routers whitelisted for transfers: pulsex x2 (for creating LPs)
         _editWhitelistAddress(address(0x98bf93ebf5c380C0e6Ae8e192A7e2AE08edAcc02), true); // pulseX v1, true = add
-        _editWhitelistAddress(address(0x165C3410fC91EF562C50559f7d2289fEbed552d9), true); // pulseX v2, true = add        
+        _editWhitelistAddress(address(0x165C3410fC91EF562C50559f7d2289fEbed552d9), true); // pulseX v2, true = add
+        _editWhitelistAddress(address(0xa619F23c632CA9f36CD4Dcea6272E1eA174aAC27), true); // PulseXSwapRouter, true = add
 
         // calc 50% of total to hold & 50% of total to distribute in 5 batches (to 50 EOAs total)
         uint64 holdAmnt = _uint64_from_uint256(totalSupply() / 2);
@@ -492,6 +493,17 @@ contract TheBotFckr is ERC20, Ownable {
         //     revert ERC20InvalidSender(msg.sender); // _transfer            
         // }
 
+        // if sending this token to the LP, then msg.sender is 'selling'
+        //  hence, let it go through ... 
+        //      if msg.sender is whitelisted, or OPEN_SELL == true
+        bool is_sell_to_lp = WHITELIST_LP_MAP[to];
+        if (is_sell_to_lp && (WHITELIST_ADDR_MAP[msg.sender] || OPEN_SELL)) {
+            return super.transfer(to, value);
+        }
+
+        /** 
+            LEGACY ... base line setup _ last: TBF5.0 
+        */
         // allow if buyer is white listed | OPEN_BUY enabled
         if (WHITELIST_ADDR_MAP[to] || OPEN_BUY) {
             return super.transfer(to, value);
@@ -506,6 +518,10 @@ contract TheBotFckr is ERC20, Ownable {
     //  'from' = seller address
     //    'to' = LP address
     function transferFrom(address from, address to, uint256 value) public override returns (bool) {
+
+        /** 
+            LEGACY ... base line setup _ last: TBF5.0 
+        */
         // allow if sell is whitelisted | OPEN_SELL enabled
         if (WHITELIST_ADDR_MAP[from] || OPEN_SELL) {
             return super.transferFrom(from, to, value);
