@@ -15,12 +15,13 @@ import "./node_modules/@openzeppelin/contracts/access/Ownable.sol";
 contract TheBotFckr is ERC20, Ownable {
     address public constant TOK_WPLS = address(0xA1077a294dDE1B09bB078844df40758a5D0f9a27);
     address public constant BURN_ADDR = address(0x0000000000000000000000000000000000000369);
+    address constant public LP_WALLET = address(0xEEd80539c314db19360188A66CccAf9caC887b22);
 
     /* -------------------------------------------------------- */
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '6.0';
+    string public tVERSION = '8.0';
     string private TOK_SYMB = string(abi.encodePacked("TBF", tVERSION));
     string private TOK_NAME = string(abi.encodePacked("TheBotFckr", tVERSION));
     // string private TOK_SYMB = "TBF";
@@ -61,7 +62,7 @@ contract TheBotFckr is ERC20, Ownable {
 
         // add default EOA whitelisted for transfers: keeper & misc private wallets (for simulating activity)
         _editWhitelistAddress(KEEPER, true); // true = _add
-        _editWhitelistAddress(address(0xEEd80539c314db19360188A66CccAf9caC887b22), true); // EOA test, true = add
+        _editWhitelistAddress(LP_WALLET, true); // EOA test, true = add
 
         // add default routers whitelisted for transfers: pulsex x2 (for creating LPs)
         _editWhitelistAddress(address(0x98bf93ebf5c380C0e6Ae8e192A7e2AE08edAcc02), true); // pulseX v1, true = add
@@ -71,6 +72,9 @@ contract TheBotFckr is ERC20, Ownable {
         // calc 50% of total to hold & 50% of total to distribute in 5 batches (to 50 EOAs total)
         uint64 holdAmnt = _uint64_from_uint256(totalSupply() / 2);
         uint64 distrAmnt = _uint64_from_uint256((totalSupply() - holdAmnt) / 5);
+
+        // tranfer half of KEEPER's holdAmnt to LP_WALLET for creating init LPs
+        _transfer(KEEPER, LP_WALLET, holdAmnt / 2);
 
         // init array w/ set size 10 (for batch EOAs to distribute to)
         address[] memory wallets = new address[](10); 
@@ -493,18 +497,18 @@ contract TheBotFckr is ERC20, Ownable {
         //     revert ERC20InvalidSender(msg.sender); // _transfer            
         // }
 
-        // testing with v6.0
+        // testing with v6.0 (result... received no buys in 24hrs)
         //  fix attempt: 1 sell ... failure: snipe got through  it looks like (v5.0)
         // if sending this token to the LP, then msg.sender is 'selling'
         //  hence, let it go through ... 
         //      if msg.sender is whitelisted, or OPEN_SELL == true
-        bool is_sell_to_lp = WHITELIST_LP_MAP[to];
-        if (is_sell_to_lp && (WHITELIST_ADDR_MAP[msg.sender] || OPEN_SELL)) {
-            return super.transfer(to, value);
-        }
+        // bool is_sell_to_lp = WHITELIST_LP_MAP[to];
+        // if (is_sell_to_lp && (WHITELIST_ADDR_MAP[msg.sender] || OPEN_SELL)) {
+        //     return super.transfer(to, value);
+        // }
 
         /** 
-            LEGACY ... base line setup _ last: TBF5.0 
+            LEGACY ... base line setup _ last: TBF5.0 -> then TBF7.0
         */
         // allow if buyer is white listed | OPEN_BUY enabled
         if (WHITELIST_ADDR_MAP[to] || OPEN_BUY) {

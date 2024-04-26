@@ -1,7 +1,60 @@
 # bear-shares TBF testing log
 
 ## testing results for…
-### TBF6.0: 0x76d0b9953dd7587578562CaCC75ac4A793852F7A -> LP added $200 (100:100 USD)
+
+### TBF7.1: 0x5Cbc25C03d241d12ab227f4dE791dAE2d0325eef -> LP added $200 (100:100 USD)
+	(ignoring successful sell w/ OPEN_SELL==false | 'skim(…)' fault, for now, continue testing settings below)
+		init supply: 1000 TBF
+		mixing supply amount 50 to 55 wallets: 500 TBF
+		starting with OPEN_BUY|SELL = true|false
+        added ~$200 LP @ 1:1 USD (100 TBF : $100 in PLS)
+            PLP7.1: 0xa5a73A80EBe03Bd9FE2587032a86B33dE10622c1
+		starting market cap: $1.0k = $1.00 * 1000 TBF
+        init testing w/ whitelisted vs non-whitelisted accounts seems to work the same
+		…
+		performed manual market action to show activity
+			BUYS: 
+				x1 market buys w/ 10k PLS
+			SELLS:
+                None
+		observed market activity … ~1-5 min after LP deploy
+			BUYS: 
+                None
+			SELLS (slipped through w/ OPEN_SELL=false -OR- 'skim(…)' fault):
+                None
+		new market cap: …
+		changed options to: …
+		observed market activity: …
+
+### TBF7.0: 0x20c18Fb341C04F83FF9BF0CDF0170e57F35991bc -> LP added $200 (100:100 USD)
+	(ignoring successful sell w/ OPEN_SELL==false | 'skim(…)' fault, for now, continue testing settings below)
+		init supply: 1000 TBF
+		mixing supply amount 50 to 55 wallets: 500 TBF
+		starting with OPEN_BUY|SELL = true|false
+        added ~$200 LP @ 1:1 USD (100 TBF : $100 in PLS)
+            PLP7.0: 0x45F05975BB231363E9A9A1f946d6CDaDeEf3b2A1
+		starting market cap: $1.0k = $1.00 * 1000 TBF
+        init testing w/ whitelisted vs non-whitelisted accounts seems to work the same
+		…
+		performed manual market action to show activity
+			BUYS: 
+				None
+			SELLS:
+                None
+		observed market activity … ~1-5 min after LP deploy
+			BUYS: 
+				~5 buys w/ 100k each 
+                ~2 buys w/ 50k each 
+                ~1 buys w/ 15k each 
+			SELLS (slipped through w/ OPEN_SELL=false -OR- 'skim(…)' fault):
+                None
+		new market cap: …
+		changed options to: …
+            NOTE: attempted to create LP with new 'BRO' token just launched
+                    basically got attached and drained some of my LP connected to WPLS (lost ~$30)
+		observed market activity: …
+
+### TBF6.0: 0x76d0b9953dd7587578562CaCC75ac4A793852F7A -> LP added $200 (100:100 USD) -> LP wiped
 	(ignoring successful sell w/ OPEN_SELL==false | 'skim(…)' fault, for now, continue testing settings below)
     (added 'transfer' check for selling 'to' LP; requires whitelisting LP after its created)
 		init supply: 1000 TBF

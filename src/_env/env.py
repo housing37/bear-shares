@@ -5,8 +5,8 @@ cStrDivider_1 = '#--------------------------------------------------------------
 print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globals', cStrDivider, sep='\n')
 #============================================================================#
 ## log paths (should use same 'log' folder as access & error logs from nginx config)
-#GLOBAL_PATH_DEV_LOGS = "/var/log/gasptires/dev.log"
-#GLOBAL_PATH_ISE_LOGS = "/var/log/gasptires/ise.log"
+#GLOBAL_PATH_DEV_LOGS = "/var/log/<project>/dev.log"
+#GLOBAL_PATH_ISE_LOGS = "/var/log/<project>/ise.log"
 
 GLOBAL_PATH_DEV_LOGS = "../logs/dev.log"
 GLOBAL_PATH_ISE_LOGS = "../logs/ise.log"
