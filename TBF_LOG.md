@@ -9,14 +9,16 @@
 		starting with OPEN_BUY|SELL = true|false
         added ~$200 LP @ 1:1 USD (100 TBF : $100 in PLS)
             PLP6.0: 0x5cDA6c079F34510E75dfe03929866CB4e5b933B5
+             added ^ to whitelisted LPs in TBF contract
 		starting market cap: $1.0k = $1.00 * 1000 TBF
+        init testing w/ whitelisted vs non-whitelisted accounts seems to work the same
 		…
 		performed manual market action to show activity
 			BUYS: 
-				x2 10k PLS market buys
+				x2 market buys w/ 10k PLS
 			SELLS:
                 None
-		observed market activity … ~x hrs after LP deploy
+		observed market activity … ~21 hrs after LP deploy
 			BUYS: 
 				None
 			SELLS (slipped through w/ OPEN_SELL=false -OR- 'skim(…)' fault):
@@ -25,7 +27,7 @@
 		changed options to: …
 		observed market activity: …
 
-### TBF5.0: 0x613E8509aA671FE00164321A91390241722cCF87 -> LP added $200 (100:100 USD)
+### TBF5.0: 0x613E8509aA671FE00164321A91390241722cCF87 -> LP added $200 (100:100 USD) -> LP wiped
 	(ignoring successful sell w/ OPEN_SELL==false | 'skim(…)' fault, for now, continue testing settings below)
 		init supply: 1000 TBF
 		mixing supply amount 50 to 55 wallets: 500 TBF
