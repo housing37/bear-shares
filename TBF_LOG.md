@@ -1,7 +1,6 @@
 # bear-shares TBF testing log
 
 ## testing results for…
-
 ### TBF7.1: 0x5Cbc25C03d241d12ab227f4dE791dAE2d0325eef -> LP added $200 (100:100 USD)
 	(ignoring successful sell w/ OPEN_SELL==false | 'skim(…)' fault, for now, continue testing settings below)
 		init supply: 1000 TBF
@@ -52,6 +51,12 @@
 		changed options to: …
             NOTE: attempted to create LP with new 'BRO' token just launched
                     basically got attached and drained some of my LP connected to WPLS (lost ~$30)
+			SELLS (slipped through w/ OPEN_SELL=false -OR- 'skim(…)' fault):
+                NOTE: the following occurred because of pairing v7.0 LP w/ 'BRO' (activity stopped, when LP removed)
+                    1 sell w/ ~28.37: due to creting another LP with 7.0 and new 'BRO' token
+                        one of my LPs (successfully) called 'transfer' on my other LP
+                    1 sell w/ ~3.46: due to creting another LP with 7.0 and new 'BRO' token
+                        one of my LPs (successfully) called 'transfer' on my other LP
 		observed market activity: …
 
 ### TBF6.0: 0x76d0b9953dd7587578562CaCC75ac4A793852F7A -> LP added $200 (100:100 USD) -> LP wiped
