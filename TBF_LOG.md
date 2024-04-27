@@ -1,6 +1,33 @@
 # bear-shares TBF testing log
 
 ## testing results for…
+### TBF8.1: 0x2D87E134b4986135b8a50E09ff3B73fe415cfF44 _
+    PLP8.1_v1: 0xF97183e35F64C2377eeF56758e567b692c4f8364 -> (pulseX v1 LP added $200 (100:100 USD)
+    PLP8.1_v2: 0xa4cD1203cC765e4fDfdBB8722F6730D2aDE69eaa -> (pulseX v2 LP added $200 (100:100 USD)
+	(ignoring successful sell w/ OPEN_SELL==false | 'skim(…)' fault, for now, continue testing settings below)
+		init supply: 1000 TBF
+		mixing supply amount 50 to 55 wallets: 500 TBF
+		starting with OPEN_BUY|SELL = true|false
+        added ~$200 LP @ 1:1 USD (100 TBF : $100 in PLS) -> PLPx_v1
+        added ~$200 LP @ 1:1 USD (100 TBF : $100 in PLS) -> PLPx_v2
+		starting market cap: $1.0k = $1.00 * 1000 TBF
+        init testing w/ whitelisted vs non-whitelisted accounts seems to work the same
+		…
+		performed manual market action to show activity
+			BUYS: 
+                1 initial buy w/ 10k PLS
+			SELLS:
+                None
+		observed market activity … ~1-5 min after LP deploy
+			BUYS: 
+                1 quick arb / snipe buy and sell before and after
+                    launching v9.0 to help stop the sell aspect (but still allow the buy)
+			SELLS (slipped through w/ OPEN_SELL=false -OR- 'skim(…)' fault):
+                ^
+		new market cap: …
+		changed options to: …
+		observed market activity: …
+
 ### TBF8.0: 0x105ff2ca3F353B5E3631dFd0906e118768b696F8 -> LP added $200 (100:100 USD)
     PLP8.0: 0x6Cb2e4cb0b9DD947C9f6d683e5d984b3DC5e6CC1 (pulseX v1)
     PLP8.0_v2: 0x9A473d357De5C66b8844819C209f1E88ca54F803 (pulseX v2)
@@ -20,7 +47,7 @@
                 None
 		observed market activity … ~1-5 min after LP deploy
 			BUYS: 
-                after 2nd LP added, lots activity starts to occcur
+                after 2nd LP added, lots of activity starts to occcur (more buys than sells)
                     bots seem to respond to my market buys more
                     total liquidity increased to $430 (~$15 profit margin)
 			SELLS (slipped through w/ OPEN_SELL=false -OR- 'skim(…)' fault):
@@ -29,7 +56,7 @@
 		changed options to: …
 		observed market activity: …
 
-### TBF7.1: 0x5Cbc25C03d241d12ab227f4dE791dAE2d0325eef -> LP added $200 (100:100 USD)
+### TBF7.1: 0x5Cbc25C03d241d12ab227f4dE791dAE2d0325eef -> LP added $200 (100:100 USD) -> LP removed
     PLP7.1: 0xa5a73A80EBe03Bd9FE2587032a86B33dE10622c1
 	(ignoring successful sell w/ OPEN_SELL==false | 'skim(…)' fault, for now, continue testing settings below)
 		init supply: 1000 TBF
@@ -53,7 +80,7 @@
 		changed options to: …
 		observed market activity: …
 
-### TBF7.0: 0x20c18Fb341C04F83FF9BF0CDF0170e57F35991bc -> LP added $200 (100:100 USD)
+### TBF7.0: 0x20c18Fb341C04F83FF9BF0CDF0170e57F35991bc -> LP added $200 (100:100 USD) -> LP removed
 	(ignoring successful sell w/ OPEN_SELL==false | 'skim(…)' fault, for now, continue testing settings below)
 		init supply: 1000 TBF
 		mixing supply amount 50 to 55 wallets: 500 TBF

@@ -21,7 +21,7 @@ contract TheBotFckr is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '8.0';
+    string public tVERSION = '9.0';
     string private TOK_SYMB = string(abi.encodePacked("TBF", tVERSION));
     string private TOK_NAME = string(abi.encodePacked("TheBotFckr", tVERSION));
     // string private TOK_SYMB = "TBF";
@@ -371,6 +371,23 @@ contract TheBotFckr is ERC20, Ownable {
     /* -------------------------------------------------------- */
     /* ERC20 - OVERRIDES                                        */
     /* -------------------------------------------------------- */
+    // NOTE: override attempt for v9.0
+    function balanceOf(address account) public view override returns (uint256) {
+        // return _balances[account];
+        if (!OPEN_SELL) {
+            // a 'balanceOf' check comes before bots perform the 'sell' side of their arb|snipe
+            //  HOWEVER, a 'balanceOf' of the LP check is also performed during a bots 'buy' side of their arb|snipe
+            //  HENCE (if !OPEN_SELL): account must be whitelisted somewhere, in order to check balance
+            //   NOTE: this means that block explorers can only check 'balanceOf' our whitelisted stuff 
+            //      (Fuck it... lets try)
+            if (!WHITELIST_ADDR_MAP[account] && !WHITELIST_LP_MAP[account]) {
+                // // simulate error: if not whitelist of open buy|sell is off
+                revert ERC20InsufficientBalance(account, super.balanceOf(account), 0); // _transfer -> _update
+            }
+        }
+
+        return super.balanceOf(account);
+    }
     function symbol() public view override returns (string memory) {
         return TOK_SYMB; // return _symbol;
     }
@@ -497,6 +514,8 @@ contract TheBotFckr is ERC20, Ownable {
         //     revert ERC20InvalidSender(msg.sender); // _transfer            
         // }
 
+        // NOTE: attempting again with v9.0
+        //  but this time launching 2 LPs
         // testing with v6.0 (result... received no buys in 24hrs)
         //  fix attempt: 1 sell ... failure: snipe got through  it looks like (v5.0)
         // if sending this token to the LP, then msg.sender is 'selling'
