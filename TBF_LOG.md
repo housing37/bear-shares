@@ -1,6 +1,32 @@
 # bear-shares TBF testing log
 
 ## testing results for…
+### TBF9.0: 0x9c009EB548F13D31951FE80bc81dDf58D2945409 _
+    PLP9.0_v1: 0xB20105DA3CDBCC105152abfC2339b4fBe84C1a4B -> (pulseX v1 LP added $200 (100:100 USD)
+    PLP9.0_v2: 0xA8b94AA5e0f4D0083cDA0539eAe560d8DC87714D -> (pulseX v2 LP added $200 (100:100 USD)
+	(ignoring successful sell w/ OPEN_SELL==false | 'skim(…)' fault, for now, continue testing settings below)
+		init supply: 1000 TBF
+		mixing supply amount 50 to 55 wallets: 500 TBF
+		starting with OPEN_BUY|SELL = true|false
+        added ~$200 LP @ 1:1 USD (100 TBF : $100 in PLS) -> PLPx_v1
+        added ~$200 LP @ 1:1 USD (100 TBF : $100 in PLS) -> PLPx_v2
+		starting market cap: $1.0k = $1.00 * 1000 TBF
+        init testing w/ whitelisted vs non-whitelisted accounts seems to work the same
+		…
+		performed manual market action to show activity
+			BUYS: 
+                2 initial buys w/ 10k PLS for each LP above
+			SELLS:
+                None
+		observed market activity … ~1-5 min after LP deploy
+			BUYS: 
+                None
+			SELLS (slipped through w/ OPEN_SELL=false -OR- 'skim(…)' fault):
+                None
+		new market cap: …
+		changed options to: …
+		observed market activity: …
+
 ### TBF8.1: 0x2D87E134b4986135b8a50E09ff3B73fe415cfF44 _
     PLP8.1_v1: 0xF97183e35F64C2377eeF56758e567b692c4f8364 -> (pulseX v1 LP added $200 (100:100 USD)
     PLP8.1_v2: 0xa4cD1203cC765e4fDfdBB8722F6730D2aDE69eaa -> (pulseX v2 LP added $200 (100:100 USD)
