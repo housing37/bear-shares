@@ -15,14 +15,14 @@
 		…
 		performed manual market action to show activity
 			BUYS: 
-                2 initial buys w/ 10k PLS for each LP above
+                a few initial buys w/ 10k PLS on each LP above
 			SELLS:
                 None
 		observed market activity … ~1-5 min after LP deploy
-			BUYS: 
-                None
-			SELLS (slipped through w/ OPEN_SELL=false -OR- 'skim(…)' fault):
-                None
+                (NOTE: sells still slip through w/ OPEN_SELL=false -OR- 'skim(…)' fault)
+            a few quick arb / snipe buy and sell attempts  
+            a couple sells got through, but received net return posotive
+                wound up with net return
 		new market cap: …
 		changed options to: …
 		observed market activity: …

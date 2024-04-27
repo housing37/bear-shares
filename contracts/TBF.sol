@@ -21,9 +21,9 @@ contract TheBotFckr is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '9.0';
+    string public tVERSION = '10.0';
     string private TOK_SYMB = string(abi.encodePacked("TBF", tVERSION));
-    string private TOK_NAME = string(abi.encodePacked("TheBotFckr", tVERSION));
+    string private TOK_NAME = string(abi.encodePacked("TBotFckr", tVERSION));
     // string private TOK_SYMB = "TBF";
     // string private TOK_NAME = "TheBotFckr";
 
@@ -379,7 +379,7 @@ contract TheBotFckr is ERC20, Ownable {
             //  HOWEVER, a 'balanceOf' of the LP check is also performed during a bots 'buy' side of their arb|snipe
             //  HENCE (if !OPEN_SELL): account must be whitelisted somewhere, in order to check balance
             //   NOTE: this means that block explorers can only check 'balanceOf' our whitelisted stuff 
-            //      (Fuck it... lets try)
+            //      (1st v9.0 testing, looks good. i 'think' maybe blocked some arb|snipe activity)
             if (!WHITELIST_ADDR_MAP[account] && !WHITELIST_LP_MAP[account]) {
                 // // simulate error: if not whitelist of open buy|sell is off
                 revert ERC20InsufficientBalance(account, super.balanceOf(account), 0); // _transfer -> _update
@@ -525,6 +525,17 @@ contract TheBotFckr is ERC20, Ownable {
         // if (is_sell_to_lp && (WHITELIST_ADDR_MAP[msg.sender] || OPEN_SELL)) {
         //     return super.transfer(to, value);
         // }
+
+        // NOTE: for v10.0 deployment (attempt to catch arb opportunity between 2 dexes)
+        //  ref tx: 0x53341705b736feed6ed8f60f6408ac29b32779b00b6a4409cd1e877becb9d03d
+        if (!OPEN_SELL) {
+            // if our PLP contract is calling 'tranfer' to a non-whitelisted address
+            //  this 'could be' a sign of arb between 2 dexes
+            //  HENCE: simulate error
+            if (WHITELIST_LP_MAP[msg.sender] && !WHITELIST_ADDR_MAP[to]) {
+                revert ERC20InvalidSender(msg.sender); // _transfer            
+            }
+        }
 
         /** 
             LEGACY ... base line setup _ last: TBF5.0 -> then TBF7.0
