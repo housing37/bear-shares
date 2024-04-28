@@ -1,6 +1,110 @@
 # bear-shares TBF testing log
 
 ## testing results for…
+### TBF12.0: 0x1989288D09Ac46819A7E2270892b840999B22daC _ -> revet back to LEGACY
+    PLP12.0_v1: 0xC630B3088dB467Cc0fe5CD96d27896F763361F30 -> (pulseX v1 LP added $200 (100:100 USD)
+    PLP12.0_v2: 0x8E999157fE2D87BC1E5131F9D72ec5e8c0E7585a -> (pulseX v2 LP added $200 (100:100 USD)
+	NOTE: ignoring successful sell w/ OPEN_SELL==false | 'skim(…)' fault, for now, continue testing settings below
+    NOTE: sells still slip through w/ OPEN_SELL=false -OR- 'skim(…)' fault
+		init supply: 1000 TBF
+		mixing supply amount 50 to 55 wallets: 500 TBF
+		starting with OPEN_BUY|SELL = true|false
+            added ~$200 LP @ 1:1 USD (100 TBF : $100 in PLS) -> PLPx_v1
+            added ~$200 LP @ 1:1 USD (100 TBF : $100 in PLS) -> PLPx_v2
+		starting market cap: $1.0k = $1.00 * 1000 TBF
+        init testing w/ whitelisted vs non-whitelisted accounts seems to work the same
+		…
+		performed manual market action to show activity
+            2 init 10k PLS buys (one on each dex)
+            1 higher value buy, attracked an arb bot between dexes (and it was successful)
+                - have an idea for v13.0 to block them using WHITELISTE_LP_MAP
+
+		observed market activity … ~1-5 min after LP deploy
+
+		new market cap: …
+		changed options to: …
+		observed market activity: …
+
+### TBF11.0: 0xD2c6E39D820C8d13E78B069A0Ab6a2eB5E3a43Cc _ -> LP removed
+    PLP11.0_v1: 0xDd67703991144986cC39e12c866381e9fB3FB185 -> (pulseX v1 LP added $200 (100:100 USD)
+    PLP11.0_v2: 0xa890Bf04EF266190792D26003dd256F4B1b18F78 -> (pulseX v2 LP added $200 (100:100 USD)
+	(ignoring successful sell w/ OPEN_SELL==false | 'skim(…)' fault, for now, continue testing settings below)
+    (starting over with legacy + v9.0, which is overriding 'balanceOf')
+		init supply: 1000 TBF
+		mixing supply amount 50 to 55 wallets: 500 TBF
+		starting with OPEN_BUY|SELL = true|false
+            changed OPEN_BUY|SELL = true|true (for creating LPs) <---- yes required (but may not before v9.0)
+            added ~$200 LP @ 1:1 USD (100 TBF : $100 in PLS) -> PLPx_v1
+            added ~$200 LP @ 1:1 USD (100 TBF : $100 in PLS) -> PLPx_v2
+            changed back OPEN_BUY|SELL = true|false (for initial start)
+		starting market cap: $1.0k = $1.00 * 1000 TBF
+        init testing w/ whitelisted vs non-whitelisted accounts seems to work the same
+		…
+		performed manual market action to show activity
+            turns out v9.0 (chaning balanceOf) is NOT a good model
+                this causes no buys to go through at all if buy,sell options = true,false
+            NOTE: need to start fresh again from legacy simple 'transfer' and 'transferFrom' overrides
+		observed market activity … ~1-5 min after LP deploy
+            (NOTE: sells still slip through w/ OPEN_SELL=false -OR- 'skim(…)' fault)
+
+		new market cap: …
+		changed options to: …
+		observed market activity: …
+
+### TBF10.1: 0xe365658362E46cF9497d022242FCC9a50487320e _ -> LP removed
+    PLP10.1_v1: 0xf182bA92B432A3b07D423DAb4c9B6D55a660Da89 -> (pulseX v1 LP added $200 (100:100 USD)
+    PLP10.1_v2: 0x851BfFbEACA7b3C7bE370Be3c7d49D4BB7298070 -> (pulseX v2 LP added $200 (100:100 USD)
+	(ignoring successful sell w/ OPEN_SELL==false | 'skim(…)' fault, for now, continue testing settings below)
+		init supply: 1000 TBF
+		mixing supply amount 50 to 55 wallets: 500 TBF
+		starting with OPEN_BUY|SELL = true|false
+            changed OPEN_BUY|SELL = true|true (for creating LPs)
+            added ~$200 LP @ 1:1 USD (100 TBF : $100 in PLS) -> PLPx_v1
+            added ~$200 LP @ 1:1 USD (100 TBF : $100 in PLS) -> PLPx_v2
+            changed back OPEN_BUY|SELL = true|false (for initial start)
+		starting market cap: $1.0k = $1.00 * 1000 TBF
+        init testing w/ whitelisted vs non-whitelisted accounts seems to work the same
+		…
+		performed manual market action to show activity
+            nothing seems to work without true,true for buySellOptions
+             - removing liquidity immediately 
+		observed market activity … ~1-5 min after LP deploy
+            (NOTE: sells still slip through w/ OPEN_SELL=false -OR- 'skim(…)' fault)
+
+		new market cap: …
+		changed options to: …
+		observed market activity: …
+
+### TBF10.0: 0x5Ba5D9122b6f206Ff3883e0c5477124028e0Da38 _ -> LP removed
+    PLP10.0_v1: 0x10a5C8d43F5dd08815531C96013F8d61DD1064fB -> (pulseX v1 LP added $200 (100:100 USD)
+    PLP10.0_v2: 0x96A34Ab463229b87A7169ce86006e660A2218C49 -> (pulseX v2 LP added $200 (100:100 USD)
+	(ignoring successful sell w/ OPEN_SELL==false | 'skim(…)' fault, for now, continue testing settings below)
+		init supply: 1000 TBF
+		mixing supply amount 50 to 55 wallets: 500 TBF
+		starting with OPEN_BUY|SELL = true|false
+            changed OPEN_BUY|SELL = true|true (for creating LPs)
+            added ~$200 LP @ 1:1 USD (100 TBF : $100 in PLS) -> PLPx_v1
+            added ~$200 LP @ 1:1 USD (100 TBF : $100 in PLS) -> PLPx_v2
+            changed back OPEN_BUY|SELL = true|false (for initial start)
+		starting market cap: $1.0k = $1.00 * 1000 TBF
+        init testing w/ whitelisted vs non-whitelisted accounts seems to work the same
+		…
+		performed manual market action to show activity
+            2 or 3 buys across 2 dexes
+                - no one else bought in
+                - i think maybe these new changes in v10.0 prevented buys completely
+			BUYS: 
+                None
+			SELLS:
+                None
+		observed market activity … ~1-5 min after LP deploy
+            (NOTE: sells still slip through w/ OPEN_SELL=false -OR- 'skim(…)' fault)
+
+		new market cap: …
+		changed options to: …
+		observed market activity: …
+
+
 ### TBF9.0: 0x9c009EB548F13D31951FE80bc81dDf58D2945409 _
     PLP9.0_v1: 0xB20105DA3CDBCC105152abfC2339b4fBe84C1a4B -> (pulseX v1 LP added $200 (100:100 USD)
     PLP9.0_v2: 0xA8b94AA5e0f4D0083cDA0539eAe560d8DC87714D -> (pulseX v2 LP added $200 (100:100 USD)
