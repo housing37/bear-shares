@@ -17,8 +17,8 @@
         init testing w/ whitelisted vs non-whitelisted accounts seems to work the same
 		…
 		performed manual market action to show activity
-            a couple initial buys
-            and then also a couple high volume buy to fish for arb bots
+            a couple initial buys on both LPs
+            and then also a couple high volume buys on v2 LP to fish for arb bots (to buy on v1 LP)
                 (doesn't look like i'm receiving any immediate attention from arb bots)
 
 		observed market activity … ~1-5 min after LP deploy
@@ -27,6 +27,12 @@
                 seems like maybe bots were just testing the waters or checking things out maybe... ?
                 ref tx: 0xe38706594b046db9d63f323e7e8bf7b66c3d90f3b2fa3a20b51f53c210c76ade 
                         0x414e94296215dbc4f7a2ef9ddf0385bc7b982b60fbf6993d684737f6d717e02b
+		observed market activity … ~20-30 min after LP deploy
+			some buys came in on both v1 and v2 LPs, however mostly on v2 LP
+				v2 LP shot up to $3.15 in price, with $356.00 in liquidity 
+				v1 LP went up to $1.12 in price, with $212.00 in liquidity 
+
+		NEXT: launch v13.2 'exactly' like this one
         
 
 ### TBF13.0: 0x8432418A8927a288A63034dC78329B84E80893d0 _ -> 
