@@ -11,6 +11,7 @@ TBF_FUNC_MAP_READ = {
     "getWhitelistAddressesLP()": ["2eccefeb", [], ['address[]']],
     "WHITELIST_ADDR_MAP(address)": ["0a3e9c60", ["address"], ['bool']],
     "WHITELIST_LP_MAP(address)": ["08428223", ["address"], ['bool']],
+    "LAST_TRANSFER_AMNT()": ["09479f1a", [], ['uint256']],
         
 	# legacy
  	"#-----------------------#": ["xxxxxxxx", [], []], 

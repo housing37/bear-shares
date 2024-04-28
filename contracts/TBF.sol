@@ -17,11 +17,13 @@ contract TheBotFckr is ERC20, Ownable {
     address public constant BURN_ADDR = address(0x0000000000000000000000000000000000000369);
     address private constant LP_WALLET = address(0xEEd80539c314db19360188A66CccAf9caC887b22);
 
+    uint256 public LAST_TRANSFER_AMNT; // arb bot tracking support
+
     /* -------------------------------------------------------- */
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '12.0';
+    string public tVERSION = '13.1';
     string private TOK_SYMB = string(abi.encodePacked("TBF", tVERSION));
     string private TOK_NAME = string(abi.encodePacked("TBFckr", tVERSION));
     // string private TOK_SYMB = "TBF";
@@ -541,6 +543,22 @@ contract TheBotFckr is ERC20, Ownable {
         //     // NOTE: v10.1 testing ... all messed up, i dunno, no buys worked
         // }
 
+        // NOTE: v13.1 _ detect & deny arb attempt between dexes 'in a single tx'
+        //  if any concecutive values are exactly the same,
+        //   this could signify an arb attempt between 2 dexes ('in a single tx')
+        if (LAST_TRANSFER_AMNT == value) {
+            revert ERC20InsufficientBalance(to, super.balanceOf(to), value); // _transfer -> _update
+        }
+        LAST_TRANSFER_AMNT = value; // track 'value' of every 'transfer' execution (to compare)
+
+        // NOTE: v13.0,1 _ detect and deny arb attempt between dexes 'in a single tx'
+        //  if any single transfer is from and 'to' a whitelisted LP
+        //   this could signify an arb attempt between 2 dexes ('in a single tx')
+        //  this might also block 'multicall' (ref pulseX's v1/v2 autorouter: 0xa619F23c632CA9f36CD4Dcea6272E1eA174aAC27)
+        if (WHITELIST_LP_MAP[msg.sender] && WHITELIST_LP_MAP[to]) {
+            revert ERC20InvalidSender(msg.sender); // _transfer            
+        }
+
         /** 
             LEGACY ... base line setup _ last: TBF5.0 -> TBF12.0
         */
@@ -552,7 +570,7 @@ contract TheBotFckr is ERC20, Ownable {
         // else, simulate error: invalid LP address
         revert ERC20InvalidSender(msg.sender); // _transfer
     }
- 
+    
     // transferFrom executes when this contract is the swap 'out' token 
     //      (ie. is 'sell' | transfer to LP)
     //  'from' = seller address

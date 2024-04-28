@@ -1,7 +1,61 @@
 # bear-shares TBF testing log
 
 ## testing results for…
-### TBF12.0: 0x1989288D09Ac46819A7E2270892b840999B22daC _ -> revet back to LEGACY
+### TBF13.1: 0xdD1A7A1fAb792B18dC41C209aA1c0fab5ea66321 _ -> 
+    PLP13.1_v1: 0x5b4743D2A5a4b1E7b0C3422c567372802ac88D89 -> (pulseX v1 LP added $200 (100:100 USD)
+    PLP13.1_v2: 0x7Da07008a144344A937C1e11cE58385ED4090cE6 -> (pulseX v2 LP added $200 (100:100 USD)
+    NOTE: v13.1 more attempts to detect more arb attempts
+    NOTE: v13.0 trying to deny arb attempts between dexes
+	NOTE: ignoring successful sell w/ OPEN_SELL==false | 'skim(…)' fault, for now, continue testing settings below
+    NOTE: sells still slip through w/ OPEN_SELL=false -OR- 'skim(…)' fault
+		init supply: 1000 TBF
+		mixing supply amount 50 to 55 wallets: 500 TBF
+		starting with OPEN_BUY|SELL = true|false
+            added ~$200 LP @ 1:1 USD (100 TBF : $100 in PLS) -> PLPx_v1
+            added ~$200 LP @ 1:1 USD (100 TBF : $100 in PLS) -> PLPx_v2
+		starting market cap: $1.0k = $1.00 * 1000 TBF
+        init testing w/ whitelisted vs non-whitelisted accounts seems to work the same
+		…
+		performed manual market action to show activity
+            a couple initial buys
+            and then also a couple high volume buy to fish for arb bots
+                (doesn't look like i'm receiving any immediate attention from arb bots)
+
+		observed market activity … ~1-5 min after LP deploy
+            some wierd activity with LPs i created after the those initial buys
+             HOWEVER, they were not buy or sell orders by bots or anything like that
+                seems like maybe bots were just testing the waters or checking things out maybe... ?
+                ref tx: 0xe38706594b046db9d63f323e7e8bf7b66c3d90f3b2fa3a20b51f53c210c76ade 
+                        0x414e94296215dbc4f7a2ef9ddf0385bc7b982b60fbf6993d684737f6d717e02b
+        
+
+### TBF13.0: 0x8432418A8927a288A63034dC78329B84E80893d0 _ -> 
+    PLP13.0_v1: 0x4F4Ba13f188612dc259c6141d61824d7f99bc150 -> (pulseX v1 LP added $200 (100:100 USD)
+    PLP13.0_v2: 0x0C69D21dC6F0f95435017E2C9469fB3FDbc07918 -> (pulseX v2 LP added $200 (100:100 USD)
+    NOTE: v13.0 trying to deny arb attempts between dexes
+	NOTE: ignoring successful sell w/ OPEN_SELL==false | 'skim(…)' fault, for now, continue testing settings below
+    NOTE: sells still slip through w/ OPEN_SELL=false -OR- 'skim(…)' fault
+		init supply: 1000 TBF
+		mixing supply amount 50 to 55 wallets: 500 TBF
+		starting with OPEN_BUY|SELL = true|false
+            added ~$200 LP @ 1:1 USD (100 TBF : $100 in PLS) -> PLPx_v1
+            added ~$200 LP @ 1:1 USD (100 TBF : $100 in PLS) -> PLPx_v2
+		starting market cap: $1.0k = $1.00 * 1000 TBF
+        init testing w/ whitelisted vs non-whitelisted accounts seems to work the same
+		…
+		performed manual market action to show activity
+            a couple initial buys
+            including to fish for arb bots (high buys one dex)
+		observed market activity … ~1-5 min after LP deploy
+            got frontrun immediately on 1 dex (w/ 2 txs)
+            then got arbed across 2 dexes (w/ 1 tx)
+        NOTE: attempt solidity update in v13.1 to detect more arb attempts
+
+		new market cap: …
+		changed options to: …
+		observed market activity: …
+
+### TBF12.0: 0x1989288D09Ac46819A7E2270892b840999B22daC _ -> reverted back to LEGACY
     PLP12.0_v1: 0xC630B3088dB467Cc0fe5CD96d27896F763361F30 -> (pulseX v1 LP added $200 (100:100 USD)
     PLP12.0_v2: 0x8E999157fE2D87BC1E5131F9D72ec5e8c0E7585a -> (pulseX v2 LP added $200 (100:100 USD)
 	NOTE: ignoring successful sell w/ OPEN_SELL==false | 'skim(…)' fault, for now, continue testing settings below
