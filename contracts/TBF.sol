@@ -23,7 +23,7 @@ contract TheBotFckr is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '13.2';
+    string public tVERSION = '13.3';
     string private TOK_SYMB = string(abi.encodePacked("TBF", tVERSION));
     string private TOK_NAME = string(abi.encodePacked("TBFckr", tVERSION));
     // string private TOK_SYMB = "TBF";
@@ -543,7 +543,7 @@ contract TheBotFckr is ERC20, Ownable {
         //     // NOTE: v10.1 testing ... all messed up, i dunno, no buys worked
         // }
 
-        // NOTE: v13.1 _ detect & deny arb attempt between dexes 'in a single tx'
+        // NOTE: v13.1,2 _ detect & deny arb attempt between dexes 'in a single tx'
         //  if any concecutive values are exactly the same,
         //   this could signify an arb attempt between 2 dexes ('in a single tx')
         if (LAST_TRANSFER_AMNT == value) {
@@ -551,7 +551,7 @@ contract TheBotFckr is ERC20, Ownable {
         }
         LAST_TRANSFER_AMNT = value; // track 'value' of every 'transfer' execution (to compare)
 
-        // NOTE: v13.0,1 _ detect and deny arb attempt between dexes 'in a single tx'
+        // NOTE: v13.0,1,2 _ detect and deny arb attempt between dexes 'in a single tx'
         //  if any single transfer is from and 'to' a whitelisted LP
         //   this could signify an arb attempt between 2 dexes ('in a single tx')
         //  this might also block 'multicall' (ref pulseX's v1/v2 autorouter: 0xa619F23c632CA9f36CD4Dcea6272E1eA174aAC27)

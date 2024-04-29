@@ -1,12 +1,40 @@
 # bear-shares TBF testing log
 
 ## testing results for…
-### TBF13.2: 0xFb9D5FC22815504819292cef81CB35b6745C06E2 _ -> 
+### TBF13.3: 0x47c3E4F3A26a58FE03B97D95ac8931172dEfD706 _ -> LP removed
+    PLP13.3_v1: 0xAFB590d7267fdeF2952a9e3455dA2bAe10BfD438 -> (pulseX v1 LP added $200 (100:100 USD)
+    PLP13.3_v2: 0x8A3068f18FbD29d63C674E8cFE4ed5e5491Dd5c0 -> (pulseX v2 LP added $200 (100:100 USD)
+	NOTE: indeed added PLPs above to whitelisted LPs in contract
+			ref: KEEPER_editWhitelistAddressLP(address,bool)
+    NOTE: v13.0,1 trying to deny arb attempts between dexes
+	NOTE: ignoring successful sell w/ OPEN_SELL==false | 'skim(…)' fault, for now, continue testing settings below
+    NOTE: sells still slip through w/ OPEN_SELL=false -OR- 'skim(…)' fault
+	NOTE: had to switch to use WPLS instead of PLS during the LP remove proccess (occurred in 13.1,2)
+		init supply: 1000 TBF; mixing 50% to 55 wallets
+		init settings: OPEN_BUY|SELL = true|false
+		starting market cap: $1.0k = $1.00 * 1000 TBF
+			added ~$200 LP @ 1:1 USD (100 TBF : $100 in PLS) -> PLPx_v1
+            added ~$200 LP @ 1:1 USD (100 TBF : $100 in PLS) -> PLPx_v2
+        init testing w/ whitelisted vs non-whitelisted accounts seems to work the same
+		…
+		performed manual market action to show activity
+            a couple initial buys on both LPs 
+				slightly different amounts for each, to avoid 'LAST_TRANSFER_AMNT' check
+            and then also a couple high volume buys on v2 LP to fish for arb bots (to buy on v1 LP)
+                (doesn't look like i'm receiving any immediate attention from arb bots)
+
+		observed market activity … ~1-5 min after LP deploy
+			not much activty, maybe a little
+		observed market activity … ~20-30 min after LP deploy
+			not much activty, maybe a little
+
+### TBF13.2: 0xFb9D5FC22815504819292cef81CB35b6745C06E2 _ -> LP removed
     PLP13.2_v1: 0x4dFd0559598E61935F5b6ed0A55A4D9419C04003 -> (pulseX v1 LP added $200 (100:100 USD)
     PLP13.2_v2: 0x35921610526FdFaa9b597Ec4395F4E1685c23558 -> (pulseX v2 LP added $200 (100:100 USD)
     NOTE: v13.0,1 trying to deny arb attempts between dexes
 	NOTE: ignoring successful sell w/ OPEN_SELL==false | 'skim(…)' fault, for now, continue testing settings below
     NOTE: sells still slip through w/ OPEN_SELL=false -OR- 'skim(…)' fault
+	NOTE: had to switch to use WPLS instead of PLS during the LP remove proccess (occurred in 13.1,2)
 		init supply: 1000 TBF
 		mixing supply amount 50 to 55 wallets: 500 TBF
 		starting with OPEN_BUY|SELL = true|false
@@ -24,13 +52,11 @@
                 (doesn't look like i'm receiving any immediate attention from arb bots)
 
 		observed market activity … ~1-5 min after LP deploy
-
+			not much activty, maybe a little
 		observed market activity … ~20-30 min after LP deploy
+			not much activty, maybe a little
 
-
-		NEXT: launch v13.2 'exactly' like this one
-
-### TBF13.1: 0xdD1A7A1fAb792B18dC41C209aA1c0fab5ea66321 _ -> 
+### TBF13.1: 0xdD1A7A1fAb792B18dC41C209aA1c0fab5ea66321 _ -> LP removed
     PLP13.1_v1: 0x5b4743D2A5a4b1E7b0C3422c567372802ac88D89 -> (pulseX v1 LP added $200 (100:100 USD)
     PLP13.1_v2: 0x7Da07008a144344A937C1e11cE58385ED4090cE6 -> (pulseX v2 LP added $200 (100:100 USD)
     NOTE: v13.0,1 trying to deny arb attempts between dexes
@@ -65,7 +91,7 @@
 		NEXT: launch v13.2 'exactly' like this one
         
 
-### TBF13.0: 0x8432418A8927a288A63034dC78329B84E80893d0 _ -> 
+### TBF13.0: 0x8432418A8927a288A63034dC78329B84E80893d0 _ -> LP removed
     PLP13.0_v1: 0x4F4Ba13f188612dc259c6141d61824d7f99bc150 -> (pulseX v1 LP added $200 (100:100 USD)
     PLP13.0_v2: 0x0C69D21dC6F0f95435017E2C9469fB3FDbc07918 -> (pulseX v2 LP added $200 (100:100 USD)
     NOTE: v13.0 trying to deny arb attempts between dexes
@@ -91,7 +117,7 @@
 		changed options to: …
 		observed market activity: …
 
-### TBF12.0: 0x1989288D09Ac46819A7E2270892b840999B22daC _ -> reverted back to LEGACY
+### TBF12.0: 0x1989288D09Ac46819A7E2270892b840999B22daC _ -> reverted back to LEGACY -> LP removed
     PLP12.0_v1: 0xC630B3088dB467Cc0fe5CD96d27896F763361F30 -> (pulseX v1 LP added $200 (100:100 USD)
     PLP12.0_v2: 0x8E999157fE2D87BC1E5131F9D72ec5e8c0E7585a -> (pulseX v2 LP added $200 (100:100 USD)
 	NOTE: ignoring successful sell w/ OPEN_SELL==false | 'skim(…)' fault, for now, continue testing settings below
