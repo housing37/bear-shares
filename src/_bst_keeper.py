@@ -112,7 +112,7 @@ def generate_contructor():
         constr_args.append(arg)
     return constr_args
 
-def write_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_ret_types, _w3:_web3.myWEB3=None, _tx_wait_sec=300):
+def write_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_ret_types, _value_in_wei=0, _w3:_web3.myWEB3=None, _tx_wait_sec=300):
     global W3_
     if _w3 == None: _w3 = W3_
 
@@ -125,6 +125,7 @@ def write_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst
     tx_data = {
         "to": _contr_addr,
         "data": func_sign,
+        "value":_value_in_wei,
     }
 
     print('setting tx_params ...')
@@ -406,6 +407,7 @@ def go_select_func():
 
 def go_enter_func_params(_func_select):
     lst_func_params = []
+    value_in_wei = 0
     ans = input(f'\n  Enter params for: "{_func_select}"\n  > ')
     for v in list(ans.split()):
         if v.lower() == 'true': lst_func_params.append(True)
@@ -418,17 +420,21 @@ def go_enter_func_params(_func_select):
 
     # handle edge case: uniswap 'addLiquidityETH'
     if _func_select == _abi.USWAPv2_ROUTER_FUNC_ADD_LIQ_ETH:
-        print(f'  found edge case in "{_func_select}" ... inserting & appending additional params to lst_func_params ...\n')
+        print(f'\n  found edge case in "{_func_select}"')
+        print(f'   inserting & appending additional params to lst_func_params ...\n')
         # lst_func_params[0] = 'token'
         # lst_func_params[1] = 'amountTokenDesired'
         lst_func_params.insert(2, int(lst_func_params[1])) # = 'amountTokenMin'
         # lst_func_params[3] = 'amountETHMin'
+        lst_func_params[3] = W3_.Web3.to_wei(lst_func_params[3], 'ether')
         lst_func_params.append(W3_.SENDER_ADDRESS) # = 'to'
-        # lst_func_params.append(1714352345) # = 'deadline'
-        lst_func_params.append(1714359345) # = 'deadline'
+        # lst_func_params.append(W3_.W3.eth.block_number + 100) # = 'deadline'
+        lst_func_params.append(int(time.time()) + 3600) # = 'deadline' == now + 3600 seconds = 1 hour from now
+
+        value_in_wei = lst_func_params[3]
 
     print(f'  executing "{_func_select}" w/ params: {lst_func_params} ...\n')
-    return lst_func_params
+    return lst_func_params, value_in_wei
 
 def gen_random_wallets(_wallet_cnt, _gen_new=True):
     if not _gen_new:
@@ -560,7 +566,7 @@ if __name__ == "__main__":
             while func_sel:
                 print('', cStrDivider_1, f"here we go! _ IS_WRITE={IS_WRITE}", sep='\n')
                 func_select = go_select_func()
-                lst_func_params = go_enter_func_params(func_select)
+                lst_func_params, value_in_wei = go_enter_func_params(func_select)
                 lst_params = list(BST_FUNC_MAP[func_select])
                 lst_params.insert(2, lst_func_params)
                 tup_params = (BST_ADDRESS,lst_params[0],lst_params[1],lst_params[2],lst_params[3])
@@ -571,6 +577,7 @@ if __name__ == "__main__":
                         else:
                             read_with_hash(*tup_params)
                     else:
+                        tup_params = tup_params + (value_in_wei,)
                         write_with_hash(*tup_params)
                 except Exception as e:
                     print_except(e, debugLvl=DEBUG_LEVEL)
@@ -582,7 +589,7 @@ if __name__ == "__main__":
             for key in list(BST_FUNC_MAP.keys()):
                 print('', cStrDivider_1, f"time for {key}", sep='\n')
                 func_select = key
-                lst_func_params = go_enter_func_params(func_select)
+                lst_func_params, value_in_wei = go_enter_func_params(func_select)
                 lst_params = list(BST_FUNC_MAP[func_select])
                 lst_params.insert(2, lst_func_params)
                 tup_params = (BST_ADDRESS,lst_params[0],lst_params[1],lst_params[2],lst_params[3])

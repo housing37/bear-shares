@@ -13,16 +13,20 @@ USWAPv2_ROUTER_FUNC_MAP_READ = {
 }
 USWAPv2_ROUTER_FUNC_ADD_LIQ_ETH = "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)"
 USWAPv2_ROUTER_FUNC_MAP_WRITE = {
+    
+	# "e8e33700": "addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)",
+    # "f305d719": "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)",
+    
 	# function addLiquidity(tokenA,tokenB,amountADesired,amountBDesired,amountAMin,amountBMin,to,deadline)
 	"addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)": [
-        "f305d719",
+        "e8e33700",
         ["address","address","uint256","uint256","uint256","uint256","address","uint256"],
         ['uint','uint','uint']
 	],
     # function addLiquidityETH(token,amountTokenDesired,amountTokenMin,amountETHMin,to,deadline)
     # 	ref: https://otter.pulsechain.com/tx/0x42983dc90a69f026629ccc237546ec9e6d4bc9352797141890e8f53fcd528327/trace
 	USWAPv2_ROUTER_FUNC_ADD_LIQ_ETH: [
-        "6a627842",
+        "f305d719",
         ["address","uint256","uint256","uint256","address","uint256"],
         ['uint','uint','uint']
 	],
