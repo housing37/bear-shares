@@ -34,6 +34,7 @@ BST_ADDRESS = None
 BST_FUNC_MAP = {}
 IS_WRITE = False
 USE_TBF = False
+USE_ROUTER = False
 
 # def init_web3():
 #     global W3_, ABI_FILE, BIN_FILE, CONTRACT
@@ -379,10 +380,11 @@ def go_user_inputs(_set_gas=True):
     # print(' using CONTRACT_ABI = _abi.BST_ABI')
 
 def go_enter_bst_addr():
-    global BST_ADDRESS, USE_TBF
+    global BST_ADDRESS, USE_TBF, USE_ROUTER
     while BST_ADDRESS == None or BST_ADDRESS == '':
         symb = 'BST'
         if USE_TBF: symb = 'TBF'
+        if USE_ROUTER: symb = 'ROUTER'
         BST_ADDRESS = input(f'\n Enter {symb} contract address:\n  > ')
 
     BST_ADDRESS = W3_.W3.to_checksum_address(BST_ADDRESS)
@@ -413,6 +415,17 @@ def go_enter_func_params(_func_select):
         elif v.startswith('['): lst_func_params.append([W3_.W3.to_checksum_address(i.strip()) for i in v[1:-1].split(',')])
         elif v.startswith('0x'): lst_func_params.append(W3_.W3.to_checksum_address(v))
         else: lst_func_params.append(v)
+
+    # handle edge case: uniswap 'addLiquidityETH'
+    if _func_select == _abi.USWAPv2_ROUTER_FUNC_ADD_LIQ_ETH:
+        print(f'  found edge case in "{_func_select}" ... inserting & appending additional params to lst_func_params ...\n')
+        # lst_func_params[0] = 'token'
+        # lst_func_params[1] = 'amountTokenDesired'
+        lst_func_params.insert(2, int(lst_func_params[1])) # = 'amountTokenMin'
+        # lst_func_params[3] = 'amountETHMin'
+        lst_func_params.append(W3_.SENDER_ADDRESS) # = 'to'
+        # lst_func_params.append(1714352345) # = 'deadline'
+        lst_func_params.append(1714359345) # = 'deadline'
 
     print(f'  executing "{_func_select}" w/ params: {lst_func_params} ...\n')
     return lst_func_params
@@ -505,15 +518,11 @@ if __name__ == "__main__":
         IS_WRITE = ans=='0'
         BST_FUNC_MAP = _abi.BST_FUNC_MAP_WRITE if IS_WRITE else _abi.BST_FUNC_MAP_READ
         print(f' ans: "{ans}"; IS_WRITE={IS_WRITE}, set BST_FUNC_MAP')
-        
-        # check for using TBF contract
-        ans = input("\nUse 'TBF' contract? [y/n]\n > ")
-        USE_TBF = ans.lower()=='y' or ans == '1'
-        if USE_TBF:
-            symb = 'TBF'
-            BST_FUNC_MAP = _abi.TBF_FUNC_MAP_WRITE if IS_WRITE else _abi.TBF_FUNC_MAP_READ
-            print(f' ans: "{ans}"; USE_TBF={USE_TBF}, reset BST_FUNC_MAP')
 
+        # check to show or generate new wallets
+        ans = input("\nGenerate / show random wallets? [y(1)/n]\n > ")
+        gen_addies = ans.lower()=='y' or ans == '1'
+        if gen_addies:
             # NOTE: gen/fetch/print CLI input string needed to 
             #   manually feed into 'KEEPER_mixAmntRand' & 'distrAmntRand'
             wallet_cnt = 10
@@ -527,6 +536,19 @@ if __name__ == "__main__":
             if gen_new:
                 print(f'\n\nRUN_TIME_START: {RUN_TIME_START}\nRUN_TIME_END:   {get_time_now()}\n')
                 exit()
+
+        # check for using TBF or uniswap v2 ROUTER contract
+        ans = input("\nSelect contract func list to use ...\n 0 = 'BST'\n 1 = 'TBF'\n 2 = 'UswapV2Router'\n > ")
+        USE_TBF = ans == '1'
+        USE_ROUTER = ans == '2'
+        if USE_TBF:
+            symb = 'TBF'
+            BST_FUNC_MAP = _abi.TBF_FUNC_MAP_WRITE if IS_WRITE else _abi.TBF_FUNC_MAP_READ
+            print(f' ans: "{ans}"; USE_TBF={USE_TBF}, reset BST_FUNC_MAP')
+        if USE_ROUTER:
+            symb = 'ROUTER'
+            BST_FUNC_MAP = _abi.USWAPv2_ROUTER_FUNC_MAP_WRITE if IS_WRITE else _abi.USWAPv2_ROUTER_FUNC_MAP_READ
+            print(f' ans: "{ans}"; USE_ROUTER={USE_ROUTER}, reset BST_FUNC_MAP')
 
         go_user_inputs(_set_gas=IS_WRITE)
         go_enter_bst_addr()

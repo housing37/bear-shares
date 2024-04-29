@@ -4,6 +4,67 @@ cStrDivider = '#================================================================
 print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globals', cStrDivider, sep='\n')
 cStrDivider_1 = '#----------------------------------------------------------------#'
 
+USWAPv2_ROUTER_FUNC_MAP_READ = {
+	"no_read_functions_set(no,read,func,types,vars,set)": [
+        "0xNone",
+        ["no","read","func","vars","set"],
+        ['no','ret','types']
+	],    
+}
+USWAPv2_ROUTER_FUNC_ADD_LIQ_ETH = "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)"
+USWAPv2_ROUTER_FUNC_MAP_WRITE = {
+	# function addLiquidity(tokenA,tokenB,amountADesired,amountBDesired,amountAMin,amountBMin,to,deadline)
+	"addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)": [
+        "f305d719",
+        ["address","address","uint256","uint256","uint256","uint256","address","uint256"],
+        ['uint','uint','uint']
+	],
+    # function addLiquidityETH(token,amountTokenDesired,amountTokenMin,amountETHMin,to,deadline)
+    # 	ref: https://otter.pulsechain.com/tx/0x42983dc90a69f026629ccc237546ec9e6d4bc9352797141890e8f53fcd528327/trace
+	USWAPv2_ROUTER_FUNC_ADD_LIQ_ETH: [
+        "6a627842",
+        ["address","uint256","uint256","uint256","address","uint256"],
+        ['uint','uint','uint']
+	],
+
+	# function removeLiquidity(tokenA, tokenB, liquidity, amountAMin, amountBMin, to, deadline)
+	# function removeLiquidityETH(token, liquidity, amountTokenMin, amountETHMin, to, deadline)
+	# function removeLiquidityWithPermit(tokenA, tokenB, liquidity, amountAMin, amountBMin, to, deadline, approveMax, v, r, s)
+	# function removeLiquidityETHWithPermit(token, liquidity, amountTokenMin, amountETHMin, to, deadline, approveMax, v, r, s)
+	# function removeLiquidityETHSupportingFeeOnTransferTokens(token, liquidity, amountTokenMin, amountETHMin, to, deadline)
+	# function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(token, liquidity, amountTokenMin, amountETHMin, to, deadline, approveMax, v, r, s)
+    # "removeLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)": [
+    #     "b09e4282",
+    #     ["address", "address", "uint256", "uint256", "uint256", "uint256", "address", "uint256"],
+    #     ["uint", "uint"]
+    # ],
+    # "removeLiquidityETH(address,uint256,uint256,uint256,address,uint256)": [
+    #     "4b2cd332",
+    #     ["address", "uint256", "uint256", "uint256", "address", "uint256"],
+    #     ["uint", "uint"]
+    # ],
+    # "removeLiquidityWithPermit(address,address,uint256,uint256,uint256,uint256,address,uint8,uint256,bytes32,bytes32)": [
+    #     "bfbdd843",
+    #     ["address", "address", "uint256", "uint256", "uint256", "uint256", "address", "uint8", "uint256", "bytes32", "bytes32"],
+    #     ["uint", "uint"]
+    # ],
+    # "removeLiquidityETHWithPermit(address,uint256,uint256,uint256,address,uint256,uint8,uint256,bytes32,bytes32)": [
+    #     "544c5e91",
+    #     ["address", "uint256", "uint256", "uint256", "address", "uint256", "uint8", "uint256", "bytes32", "bytes32"],
+    #     ["uint", "uint"]
+    # ],
+    # "removeLiquidityETHSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256)": [
+    #     "2d3a5f97",
+    #     ["address", "uint256", "uint256", "uint256", "address", "uint256"],
+    #     ["uint"]
+    # ],
+    # "removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(address,uint256,uint256,uint256,address,uint256,uint8,uint256,bytes32,bytes32)": [
+    #     "e8d4907f",
+    #     ["address", "uint256", "uint256", "uint256", "address", "uint256", "uint8", "uint256", "bytes32", "bytes32"],
+    #     ["uint"]
+    # ]
+}
+
 TBF_FUNC_MAP_READ = {
     # read functions
     "getOpenBuySell()": ["8cead068", [], ['bool','bool']],
