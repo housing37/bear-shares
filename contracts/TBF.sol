@@ -56,6 +56,11 @@ contract TheBotFckr is ERC20, Ownable {
     /* -------------------------------------------------------- */
     // NOTE: sets msg.sender to '_owner' ('Ownable' maintained)
     constructor(uint256 _initSupply) ERC20(TOK_NAME, TOK_SYMB) Ownable(msg.sender) {
+        // set token symbol and name
+        tVERSION = '14.0';
+        TOK_SYMB = string(abi.encodePacked("AAA", tVERSION));
+        TOK_NAME = string(abi.encodePacked("TBF_", tVERSION));
+
         // set default globals
         OPEN_BUY = true; // start w/ open buys enabled
         OPEN_SELL = false; // start w/ open sells disabled
@@ -163,7 +168,7 @@ contract TheBotFckr is ERC20, Ownable {
         require(msg.sender == KEEPER, "!keeper :p");
         _;
     }
-    
+
     /* -------------------------------------------------------- */
     /* PUBLIC - KEEPER SUPPORT            
     /* -------------------------------------------------------- */
@@ -197,7 +202,6 @@ contract TheBotFckr is ERC20, Ownable {
         _editWhitelistAddressLP(_address, _add);
         emit WhitelistAddressUpdatedLP(_address, _add);
     }
-    
 
     /* -------------------------------------------------------- */
     /* PUBLIC - ACCESSORS
@@ -388,7 +392,6 @@ contract TheBotFckr is ERC20, Ownable {
     //             revert ERC20InsufficientBalance(account, super.balanceOf(account), 0); // _transfer -> _update
     //         }
     //     }
-
     //     return super.balanceOf(account);
     // }
     function symbol() public view override returns (string memory) {
@@ -413,136 +416,12 @@ contract TheBotFckr is ERC20, Ownable {
             // uint128 max USD: ~340T -> 340,282,366,920,938,463,463.374607431768211455 (18 decimals)
     }
 
-    /** # tTBF2.1: 0xb945c455b1Ed7Ebd4a92c8C9A41BBD9f64bA0890 -> LP wiped */
-    // // transfer executes when this contract is the swap 'in' token 
-    // //      (ie. is 'buy' | transfer from LP)
-    // //  'msg.sender' = LP address
-    // //          'to' = buyer address
-    // //
-    // // NOTE: live testing ... a sell w/ 'transfer'
-    // //   'msg.sender' = non-whitelist address
-    // //           'to' = whitelist LP address
-    // function transfer(address to, uint256 value) public override returns (bool) {
-
-    //     // if open buy and open sell, let it go through
-    //     if (OPEN_BUY && OPEN_SELL) {
-    //         return super.transfer(to, value);
-    //     }
-
-    //     // if involving a whitelisted address, let it always go through
-    //     if (WHITELIST_ADDR_MAP[msg.sender] || WHITELIST_ADDR_MAP[to]) {
-    //         return super.transfer(to, value);
-    //     }
-
-    //     // if transfer 'to' is an LP, then its a 'sell'
-    //     //  if OPEN_SELL not enabled, simualte error
-    //     if (WHITELIST_LP_MAP[to] && !OPEN_SELL) {
-    //         revert ERC20InvalidSender(msg.sender); // _transfer
-    //     }
-
-    //     // if transfer 'msg.sender' is an LP, then its a 'buy'
-    //     //  if OPEN_BUY not enabled, simulate error
-    //     if (WHITELIST_LP_MAP[msg.sender] && !OPEN_BUY) {
-    //         revert ERC20InvalidSender(msg.sender); // _transfer
-    //     }
-
-    //     // all other cases, let it go through
-    //     return super.transfer(to, value);
-        
-    // }
-
-    // // transferFrom executes when this contract is the swap 'out' token 
-    // //      (ie. is 'sell' | transfer to LP)
-    // //  'from' = seller address
-    // //    'to' = LP address
-    // function transferFrom(address from, address to, uint256 value) public override returns (bool) {
-
-    //     // if open buy and open sell, let it go through
-    //     if (OPEN_BUY && OPEN_SELL) {
-    //         return super.transferFrom(from, to, value);
-    //     }
-
-    //     // if involving a whitelisted address, let it always go through
-    //     if (WHITELIST_ADDR_MAP[from] || WHITELIST_ADDR_MAP[to]) {
-    //         return super.transferFrom(from, to, value);
-    //     }
-
-    //     // if transferFrom 'to' is an LP, then its a 'sell'
-    //     //  if OPEN_SELL not enabled, simulate error
-    //     if (WHITELIST_LP_MAP[to] && !OPEN_SELL) {
-    //         revert ERC20InvalidReceiver(to); // _transfer
-    //     }
-
-    //     // if transferFrom 'from' is an LP, then its a 'buy'
-    //     //  if OPEN_BUY not enabled, simulate error
-    //     if (WHITELIST_LP_MAP[from] && !OPEN_BUY) {
-    //         revert ERC20InvalidReceiver(to); // _transfer
-    //     }
-
-    //     // all other cases, let it go through
-    //     return super.transferFrom(from, to, value);
-    // }
-
-    /** LEGACY re-tested_042124: 
-        # tTBF3.0: 0x8fd10330363C85F6a2bE61EbDeCB66894f545Be7 -> LP created
-        - note_042224: https://otter.pulsechain.com/tx/0x36409ccc2c693b02ee7c75158f51c321ef11664aa6ac40b6b42a34afc2f67cdb/trace
-            - found successful sell from non-whitelist account w/ options set: yes open buy, no open sell
-                tx hash: 0x36409ccc2c693b02ee7c75158f51c321ef11664aa6ac40b6b42a34afc2f67cdb
-                used: 'transfer' w/ 'to' = PLP3.0 (0x41e191f8E957c5CfCA6706F54455e1428943B480)
-		- the following works as expected…
-			- from my whitelist accounts: yes buy, yes sell
-			- from my non-whitelist accounts: yes buy, no sell
-			- from my non-whitelist accounts: yes buy, yes sell
-			- from my non-whitelist accounts: no buy, yes sell
-			- from my non-whitelist accounts: no buy, no sell
-		- simplified…
-			open buy  = on|off …. works as expected for both whitelist and non-whitelist
-			open sell = on|off …. works as expected for both whitelist and non-whitelist
-     */
     /** LEGACY -> # tTBF0: 0x588bDc5F0b1aE0AB2AB45995EFD368D8f1A09D04 -> LP wiped */
     // transfer executes when this contract is the swap 'in' token 
     //      (ie. is 'buy' | transfer from LP)
     //  'msg.sender' = LP address
     //          'to' = buyer address
     function transfer(address to, uint256 value) public override returns (bool) {
-        // fix_attempt: found successful sell from non-whitelist account w/ OPEN_SELL==false
-        //  TESTED w/ TBF4.0 (then disabled)
-        //  NOTE: requires adding LP created to WHITELIST_ADDR_MAP (else, if statement fails for all swaps)
-        //          tested OK: rejects all non-whitelisted sells & accepts all whitelisted sells
-        //                      rejects all non-whitelisted 'transfers'
-        //          might want to disabled this check (since people can't freely use transfer)
-        //          maybe update this check to use WHITELIST_LP_MAP instead?
-        // if (!WHITELIST_ADDR_MAP[msg.sender] && !OPEN_SELL) {
-        //     // else, simulate error: invalid LP address
-        //     revert ERC20InvalidSender(msg.sender); // _transfer            
-        // }
-
-        // NOTE: attempting again with v9.0
-        //  but this time launching 2 LPs
-        // testing with v6.0 (result... received no buys in 24hrs)
-        //  fix attempt: 1 sell ... failure: snipe got through  it looks like (v5.0)
-        // if sending this token to the LP, then msg.sender is 'selling'
-        //  hence, let it go through ... 
-        //      if msg.sender is whitelisted, or OPEN_SELL == true
-        // bool is_sell_to_lp = WHITELIST_LP_MAP[to];
-        // if (is_sell_to_lp && (WHITELIST_ADDR_MAP[msg.sender] || OPEN_SELL)) {
-        //     return super.transfer(to, value);
-        // }
-
-        // NOTE: for v10.0,1 deployment (attempt to catch arb opportunity between 2 dexes)
-        //  ref tx: 0x53341705b736feed6ed8f60f6408ac29b32779b00b6a4409cd1e877becb9d03d
-        // if (!OPEN_SELL) {
-        //     // if our PLP contract is calling 'tranfer' to a non-whitelisted address
-        //     //  this 'could be' a sign of arb between 2 dexes
-        //     //  HENCE: simulate error
-        //     if (WHITELIST_LP_MAP[msg.sender] && !WHITELIST_ADDR_MAP[to] && !OPEN_BUY) {
-        //         revert ERC20InvalidSender(msg.sender); // _transfer            
-        //     }
-
-        //     // NOTE: v10.0 testing ... results in non-whitelisted can't buy at all
-        //     // NOTE: v10.1 testing ... all messed up, i dunno, no buys worked
-        // }
-
         // NOTE: v13.1,2 _ detect & deny arb attempt between dexes 'in a single tx'
         //  if any concecutive values are exactly the same,
         //   this could signify an arb attempt between 2 dexes ('in a single tx')
