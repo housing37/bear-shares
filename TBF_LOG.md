@@ -1,7 +1,39 @@
 # bear-shares TBF testing log
 
 ## testing results for…
-### TBF14.0: 0xed0f5605fCcaeF3797F27C6f1b6e56E4a847dc60 _ -> 
+### TBF15.1:  _ -> LP 
+	NOTE: if transfers start failing: check/reset 'LAST_TRANSFER_AMNT()'
+	swap routers... needs wallet approval 
+			v1: 0x98bf93ebf5c380C0e6Ae8e192A7e2AE08edAcc02
+			v2: 0x165C3410fC91EF562C50559f7d2289fEbed552d9
+		 multi: 0xa619F23c632CA9f36CD4Dcea6272E1eA174aAC27
+	PulseX v1 -> (pulseX v1 LP added $200 (100:100 USD)
+    	PLP_PLS: 
+    PulseX v2 -> (pulseX v2 LP added $200 (100:100 USD)
+		PLP_PLS:  
+	newly included...
+		KEEPER_editWhitelistAddressMulti
+		KEEPER_editWhitelistAddressMultiLP
+
+### TBF15.0: 0xA7E91bb313afA1F4FA820BeE896fE0E7c76192ae _ -> LP removed
+	NOTE: if transfers start failing: check/reset 'LAST_TRANSFER_AMNT()'
+	swap routers... needs wallet approval 
+			v1: 0x98bf93ebf5c380C0e6Ae8e192A7e2AE08edAcc02
+			v2: 0x165C3410fC91EF562C50559f7d2289fEbed552d9
+		 multi: 0xa619F23c632CA9f36CD4Dcea6272E1eA174aAC27
+	PulseX v1 -> (pulseX v1 LP added $200 (100:100 USD)
+    	PLP_PLS: 0xD4f45cFd3B5f8CADA56e13c024Eb2a65e5737205
+		PLP_pDAI: 
+		PLP_SOLIDX: 
+    PulseX v2 -> (pulseX v2 LP added $200 (100:100 USD)
+		PLP_PLS: 0xea26D93D858Da28218266E94A75082116b7495D3
+		PLP_pDAI: 
+		PLP_SOLIDX: 
+	newly included...
+		KEEPER_editWhitelistAddressMulti
+		KEEPER_editWhitelistAddressMultiLP
+
+### TBF14.0: 0xed0f5605fCcaeF3797F27C6f1b6e56E4a847dc60 _ -> LP removed
 	PulseX v1 -> (pulseX v1 LP added $200 (100:100 USD)
     	PLP_PLS: 0x886E0fCaA55Ab3cC1eF5627824dB0605C49FCFCE 
 		PLP_pDAI: 0x2F55D060221e0506E125aE690962C59aA2712415
@@ -19,7 +51,7 @@
 	
 	*NOTE* -> need to whitelist ALL PLPs created! ASAP! As Soon As They Are Created!
 
-### TBF13.3: 0x47c3E4F3A26a58FE03B97D95ac8931172dEfD706 _ -> 
+### TBF13.3: 0x47c3E4F3A26a58FE03B97D95ac8931172dEfD706 _ -> LP removed
     PLP13.3_v1: 0xAFB590d7267fdeF2952a9e3455dA2bAe10BfD438 -> (pulseX v1 LP added $200 (100:100 USD)
     PLP13.3_v2: 0x8A3068f18FbD29d63C674E8cFE4ed5e5491Dd5c0 -> (pulseX v2 LP added $200 (100:100 USD)
 	NOTE: indeed added PLPs above to whitelisted LPs in contract

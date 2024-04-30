@@ -57,7 +57,7 @@ contract TheBotFckr is ERC20, Ownable {
     // NOTE: sets msg.sender to '_owner' ('Ownable' maintained)
     constructor(uint256 _initSupply) ERC20(TOK_NAME, TOK_SYMB) Ownable(msg.sender) {
         // set token symbol and name
-        tVERSION = '15.0';
+        tVERSION = '15.1';
         TOK_SYMB = string(abi.encodePacked("AAB", tVERSION));
         TOK_NAME = string(abi.encodePacked("TBF_", tVERSION));
 
@@ -201,14 +201,14 @@ contract TheBotFckr is ERC20, Ownable {
         _editWhitelistAddressLP(_address, _add);
     }
     function KEEPER_editWhitelistAddressMulti(bool _add, address[] memory _addresses) external onlyKeeper() {
-        require(_addresses.length < 0, ' 0 addresses found :/ ');
+        require(_addresses.length > 0, ' 0 addresses found :/ ');
         for (uint8 i=0; i < _addresses.length;) {
             _editWhitelistAddress(_addresses[i], _add);
             unchecked { i++; }
         }
     }
     function KEEPER_editWhitelistAddressMultiLP(bool _add, address[] memory _addresses) external onlyKeeper() {
-        require(_addresses.length < 0, ' 0 addresses found :/ ');
+        require(_addresses.length > 0, ' 0 addresses found :/ ');
         for (uint8 i=0; i < _addresses.length;) {
             _editWhitelistAddressLP(_addresses[i], _add);
             unchecked { i++; }
