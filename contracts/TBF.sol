@@ -57,8 +57,8 @@ contract TheBotFckr is ERC20, Ownable {
     // NOTE: sets msg.sender to '_owner' ('Ownable' maintained)
     constructor(uint256 _initSupply) ERC20(TOK_NAME, TOK_SYMB) Ownable(msg.sender) {
         // set token symbol and name
-        tVERSION = '14.0';
-        TOK_SYMB = string(abi.encodePacked("AAA", tVERSION));
+        tVERSION = '15.0';
+        TOK_SYMB = string(abi.encodePacked("AAB", tVERSION));
         TOK_NAME = string(abi.encodePacked("TBF_", tVERSION));
 
         // set default globals
@@ -195,12 +195,24 @@ contract TheBotFckr is ERC20, Ownable {
     function KEEPER_editWhitelistAddress(address _address, bool _add) external onlyKeeper() {
         require(_address != address(0), ' 0 address :/ ');
         _editWhitelistAddress(_address, _add);
-        emit WhitelistAddressUpdated(_address, _add);
     }
     function KEEPER_editWhitelistAddressLP(address _address, bool _add) external onlyKeeper() {
         require(_address != address(0), ' 0 address :/ ');
         _editWhitelistAddressLP(_address, _add);
-        emit WhitelistAddressUpdatedLP(_address, _add);
+    }
+    function KEEPER_editWhitelistAddressMulti(bool _add, address[] memory _addresses) external onlyKeeper() {
+        require(_addresses.length < 0, ' 0 addresses found :/ ');
+        for (uint8 i=0; i < _addresses.length;) {
+            _editWhitelistAddress(_addresses[i], _add);
+            unchecked { i++; }
+        }
+    }
+    function KEEPER_editWhitelistAddressMultiLP(bool _add, address[] memory _addresses) external onlyKeeper() {
+        require(_addresses.length < 0, ' 0 addresses found :/ ');
+        for (uint8 i=0; i < _addresses.length;) {
+            _editWhitelistAddressLP(_addresses[i], _add);
+            unchecked { i++; }
+        }
     }
 
     /* -------------------------------------------------------- */
@@ -317,6 +329,7 @@ contract TheBotFckr is ERC20, Ownable {
         } else {
             WHITELIST_LPS = _remAddressFromArray(_address, WHITELIST_LPS);
         }
+        emit WhitelistAddressUpdatedLP(_address, _add);
     }
     function _editWhitelistAddress(address _address, bool _add) private { // allows duplicates
         WHITELIST_ADDR_MAP[_address] = _add;
@@ -325,6 +338,7 @@ contract TheBotFckr is ERC20, Ownable {
         } else {
             WHITELIST_ADDRS = _remAddressFromArray(_address, WHITELIST_ADDRS);
         }
+        emit WhitelistAddressUpdated(_address, _add);
     }
     function _addAddressToArraySafe(address _addr, address[] memory _arr, bool _safe) private pure returns (address[] memory) {
         if (_addr == address(0)) { return _arr; }
