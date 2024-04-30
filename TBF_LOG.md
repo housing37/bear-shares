@@ -1,7 +1,25 @@
 # bear-shares TBF testing log
 
 ## testing results for…
-### TBF13.3: 0x47c3E4F3A26a58FE03B97D95ac8931172dEfD706 _ -> LP removed
+### TBF14.0: 0xed0f5605fCcaeF3797F27C6f1b6e56E4a847dc60 _ -> 
+	PulseX v1 -> (pulseX v1 LP added $200 (100:100 USD)
+    	PLP_PLS: 0x886E0fCaA55Ab3cC1eF5627824dB0605C49FCFCE 
+		PLP_pDAI: 0x2F55D060221e0506E125aE690962C59aA2712415
+		PLP_SOLIDX: 0xA5C2D87d8D119965A2be3C6F79f3D4A070D4F09c
+    PulseX v2 -> (pulseX v2 LP added $200 (100:100 USD)
+		PLP_PLS: 0x0a46548D54caccBd88cd9EF3246a3CD292DC31EB 
+		PLP_pDAI: 0x733592b032e378bCA2F404F176E4055c223ceeED
+		PLP_SOLIDX: 0x1C1D258327E7591788237ea62bD8b7479b4bBD6c
+	NOTE: indeed added ALL PLPs above to whitelisted LPs in contract ("KEEPER_editWhitelistAddressLP(address,bool)")
+	NOTE: all same as 13.3, with  few additions...
+		added 2nd set of LPs (paired again pDAI)
+		and indeed noticed more activity
+		still seeing some sells slip through, but that might of been because i didn't whitelist a couple LPs fast enough
+		regardless, definitely noticing other acitivty on the positive net return front
+	
+	*NOTE* -> need to whitelist ALL PLPs created! ASAP! As Soon As They Are Created!
+
+### TBF13.3: 0x47c3E4F3A26a58FE03B97D95ac8931172dEfD706 _ -> 
     PLP13.3_v1: 0xAFB590d7267fdeF2952a9e3455dA2bAe10BfD438 -> (pulseX v1 LP added $200 (100:100 USD)
     PLP13.3_v2: 0x8A3068f18FbD29d63C674E8cFE4ed5e5491Dd5c0 -> (pulseX v2 LP added $200 (100:100 USD)
 	NOTE: indeed added PLPs above to whitelisted LPs in contract

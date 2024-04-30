@@ -422,16 +422,15 @@ def go_enter_func_params(_func_select):
     if _func_select == _abi.USWAPv2_ROUTER_FUNC_ADD_LIQ_ETH:
         print(f'\n  found edge case in "{_func_select}"')
         print(f'   inserting & appending additional params to lst_func_params ...\n')
-        # lst_func_params[0] = 'token'
-        # lst_func_params[1] = 'amountTokenDesired'
-        lst_func_params.insert(2, int(lst_func_params[1])) # = 'amountTokenMin'
-        # lst_func_params[3] = 'amountETHMin'
-        lst_func_params[3] = W3_.Web3.to_wei(lst_func_params[3], 'ether')
-        lst_func_params.append(W3_.SENDER_ADDRESS) # = 'to'
-        # lst_func_params.append(W3_.W3.eth.block_number + 100) # = 'deadline'
-        lst_func_params.append(int(time.time()) + 3600) # = 'deadline' == now + 3600 seconds = 1 hour from now
+        # lst_func_params[0] = 'token' -> input OG (static idx)
+        # lst_func_params[1] = 'amountTokenDesired' -> input OG (static idx)
+        # lst_func_params[2] = 'amountETHMin' -> input OG (dynamic idx)
+        lst_func_params.insert(2, int(lst_func_params[1])) # insert 'amountTokenMin' into idx #2 (push 'amountETHMin' to #3)
+        lst_func_params[3] = W3_.Web3.to_wei(int(float(lst_func_params[3])), 'ether') # update idx #3 'amountETHMin'
+        lst_func_params.append(W3_.SENDER_ADDRESS) # append idx #4 -> 'to' 
+        lst_func_params.append(int(time.time()) + 3600) # append idx #5 -> 'deadline' == now + 3600 seconds = 1 hour from now
 
-        value_in_wei = lst_func_params[3]
+        value_in_wei = lst_func_params[3] # get return value in wei (for write_with_hash)
 
     print(f'  executing "{_func_select}" w/ params: {lst_func_params} ...\n')
     return lst_func_params, value_in_wei
