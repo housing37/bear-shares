@@ -242,6 +242,25 @@ def parse_logs_for_func_hash(_tx_receipt, _func_hash, _w3:_web3.myWEB3=None):
         
             [print(f'   {key}: {val}') for key,val in d_ret_log.items()]
             print()
+
+    if _func_hash == _abi.ROUTERv2_FUNC_MAP_WRITE[_abi.ROUTERv2_FUNC_ADD_LIQ_ETH][0]:
+        # Define & filter logs based on the event signature
+        # PairCreated(address indexed token0, address indexed token1, address pair, uint256)
+        event_signature = _w3.W3.keccak(text="PairCreated(address,address,address,uint256)").hex()
+        pay_out_logs = [log for log in logs if log['topics'][0].hex() == event_signature]
+        
+        # Parse the event logs
+        for log in pay_out_logs:
+            lst_evt_params = ['address', 'address', 'address','uint256']
+            evt_data = log['data']
+            decoded_data = decode_abi(lst_evt_params, evt_data)
+            d_ret_log = {'_token0':decoded_data[0],
+                         '_token1':decoded_data[1],
+                         '_pair':decoded_data[2],
+                         '_param_3':decoded_data[3]}
+        
+            [print(f'   {key}: {val}') for key,val in d_ret_log.items()]
+            print()
             
     return d_ret_log
             
@@ -419,7 +438,7 @@ def go_enter_func_params(_func_select):
         else: lst_func_params.append(v)
 
     # handle edge case: uniswap 'addLiquidityETH'
-    if _func_select == _abi.USWAPv2_ROUTER_FUNC_ADD_LIQ_ETH:
+    if _func_select == _abi.ROUTERv2_FUNC_ADD_LIQ_ETH:
         print(f'\n  found edge case in "{_func_select}"')
         print(f'   inserting & appending additional params to lst_func_params ...\n')
         # lst_func_params[0] = 'token' -> input OG (static idx)
@@ -552,7 +571,7 @@ if __name__ == "__main__":
             print(f' ans: "{ans}"; USE_TBF={USE_TBF}, reset BST_FUNC_MAP')
         if USE_ROUTER:
             symb = 'ROUTER'
-            BST_FUNC_MAP = _abi.USWAPv2_ROUTER_FUNC_MAP_WRITE if IS_WRITE else _abi.USWAPv2_ROUTER_FUNC_MAP_READ
+            BST_FUNC_MAP = _abi.ROUTERv2_FUNC_MAP_WRITE if IS_WRITE else _abi.USWAPv2_ROUTER_FUNC_MAP_READ
             print(f' ans: "{ans}"; USE_ROUTER={USE_ROUTER}, reset BST_FUNC_MAP')
 
         go_user_inputs(_set_gas=IS_WRITE)

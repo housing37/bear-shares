@@ -1,19 +1,16 @@
 # bear-shares TBF testing log
 
 ## testing results for…
-### TBF15.1:  _ -> LP 
-	NOTE: if transfers start failing: check/reset 'LAST_TRANSFER_AMNT()'
+### TBF15.1: 0x8FeeDc5252A5f812BC1e92269bf3ec44E09A252d _ -> LP 
+	*NOTE*: check/reset 'LAST_TRANSFER_AMNT()' ... if transfers start failing
 	swap routers... needs wallet approval 
 			v1: 0x98bf93ebf5c380C0e6Ae8e192A7e2AE08edAcc02
 			v2: 0x165C3410fC91EF562C50559f7d2289fEbed552d9
 		 multi: 0xa619F23c632CA9f36CD4Dcea6272E1eA174aAC27
 	PulseX v1 -> (pulseX v1 LP added $200 (100:100 USD)
-    	PLP_PLS: 
+    	PLP_PLS: 0x22Cc17faB5361d2B67817E852d4aADCA80e20B0B
     PulseX v2 -> (pulseX v2 LP added $200 (100:100 USD)
-		PLP_PLS:  
-	newly included...
-		KEEPER_editWhitelistAddressMulti
-		KEEPER_editWhitelistAddressMultiLP
+		PLP_PLS: 0x918598867b1a31E897B02d64e5eEe2A1c566bCD9 
 
 ### TBF15.0: 0xA7E91bb313afA1F4FA820BeE896fE0E7c76192ae _ -> LP removed
 	NOTE: if transfers start failing: check/reset 'LAST_TRANSFER_AMNT()'
@@ -29,7 +26,7 @@
 		PLP_PLS: 0xea26D93D858Da28218266E94A75082116b7495D3
 		PLP_pDAI: 
 		PLP_SOLIDX: 
-	newly included...
+	newly included... tested and works just fine
 		KEEPER_editWhitelistAddressMulti
 		KEEPER_editWhitelistAddressMultiLP
 
