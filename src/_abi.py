@@ -96,6 +96,10 @@ TBF_FUNC_MAP_WRITE = {
     "KEEPER_setOpenBuySell(bool,bool)": ["c0585124", ["bool","bool"], []], # fee: 18.21297 pls
     "KEEPER_editWhitelistAddress(address,bool)": ["a83d30df", ["address","bool"], []],
     "KEEPER_editWhitelistAddressLP(address,bool)": ["663d4e42", ["address","bool"], []],
+    
+    "KEEPER_editWhitelistAddressMulti(bool,address[])": ["dfa01380", ["bool","address[]"], []],
+    "KEEPER_editWhitelistAddressMultiLP(bool,address[])": ["127a8bf8", ["bool","address[]"], []],
+    
 	"KEEPER_mixAmntRand(address[])": ["359b5ba6", ['address[]'], []], # has failed at 937_000 max units (451.806+ pls)
     "KEEPER_distrAmntRandFrom(address,uint64,address[])": ["08d7b8df", ['address','uint64','address[]'], []],
     "distrAmntRand(uint64,address[])": ["d3692a0a", ['uint64','address[]'], []], # fee: 69.956423 pls
