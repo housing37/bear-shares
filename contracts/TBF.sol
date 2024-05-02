@@ -57,7 +57,7 @@ contract TheBotFckr is ERC20, Ownable {
     // NOTE: sets msg.sender to '_owner' ('Ownable' maintained)
     constructor(uint256 _initSupply) ERC20(TOK_NAME, TOK_SYMB) Ownable(msg.sender) {
         // set token symbol and name
-        tVERSION = '15.1';
+        tVERSION = '15.2';
         TOK_SYMB = string(abi.encodePacked("AAB", tVERSION));
         TOK_NAME = string(abi.encodePacked("TBF_", tVERSION));
 
