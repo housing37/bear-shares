@@ -26,9 +26,19 @@ contract FLRBalancerBEAR9 is IFlashLoanRecipient {
     // pBAL: 0xba100000625a3754423978a60c9317c58a424e3D ->  3946496821522180948639451 / 10**18 == 3946496.821522181 ~= $41,153.679623988
     // prETH: 0xae78736cd615f374d3085123a210448e74fc6393 -> 27843230642023975590639 / 10**18 ~= $8,067.713537987
 
-    address public constant TOK_BEAR9 = address(0x1f737F7994811fE994Fe72957C374e5cD5D5418A);
-    address public constant TOK_WPLS = address(0xA1077a294dDE1B09bB078844df40758a5D0f9a27);
     address public constant BURN_ADDR = address(0x0000000000000000000000000000000000000369);
+    address public constant TOK_WPLS = address(0xA1077a294dDE1B09bB078844df40758a5D0f9a27);
+    
+    address public constant TOK_ATROPA = address(0xCc78A0acDF847A2C1714D2A925bB4477df5d48a6);
+    address public constant TOK_TSFi = address(0x4243568Fa2bbad327ee36e06c16824cAd8B37819);
+    address public constant TOK_R = address(0x557F7e30aA6D909Cfe8a229A4CB178ab186EC622);
+    address public constant TOK_BEAR9 = address(0x1f737F7994811fE994Fe72957C374e5cD5D5418A);
+
+    address public constant TOK_pWBTC = address(0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599);
+    address public constant TOK_pUSDC = address(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
+    address public constant TOK_pWETH = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+    address public constant TOK_pUSDT = address(0xdAC17F958D2ee523a2206206994597C13D831ec7);
+    
     // address private constant LP_WALLET = address(0xEEd80539c314db19360188A66CccAf9caC887b22);
 
     /* -------------------------------------------------------- */
@@ -99,22 +109,20 @@ contract FLRBalancerBEAR9 is IFlashLoanRecipient {
     function receiveFlashLoan(IERC20[] memory tokens, uint256[] memory amounts, uint256[] memory feeAmounts, bytes memory userData) external override {
         emit FlashLoansReceived(tokens, amounts, feeAmounts, userData);
         require(msg.sender == address(vault), " loan from vault only :o ");
+        require(tokens.length == amounts.length && amounts.length == feeAmounts.length, ' array lengths mismatch :/ ');
         // (address router_0, address router_1, address[] memory path_0, address[] memory path_1, uint256 amntIn_0, uint256 amntOutMin_1) = abi.decode(userData, (address, address, address[], address[], uint256, uint256));
         
-        uint256 bal = tokens[0].balanceOf(address(this));
-        
-        // approve for payback when execution finished
-        //  init testing: return immediately (payback right away; req funds in this contract)
-        //uint256 amountOwed = amounts[0] + feeAmounts[0];
-        // IERC20(asset).approve(address(vault), amountOwed);
-        //tokens[0].approve(address(vault), amountOwed);
+        uint256 bal = IERC20(tokens[0]).balanceOf(address(this));
         
         // payback loans
         uint256[] memory amountsOwed = new uint256[](amounts.length); 
-        amountsOwed[0] = amounts[0] + feeAmounts[0];
-        // uint256 amountOwed = amounts[0] + feeAmounts[0];
-        //tokens[0].approve(address(vault), amountOwed);
-        IERC20(tokens[0]).transfer(address(vault), amountsOwed[0]);
+        for (uint8 i=0; i < amountsOwed.length;) {
+            amountsOwed[i] = amounts[i] + feeAmounts[i];
+            IERC20(tokens[i]).transfer(address(vault), amountsOwed[i]);
+            unchecked { i++; }
+        }
+        // amountsOwed[0] = amounts[0] + feeAmounts[0];
+        // IERC20(tokens[0]).transfer(address(vault), amountsOwed[0]);
         emit FlashLoansReturned(tokens, amounts, feeAmounts, amountsOwed);
     }
     
