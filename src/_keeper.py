@@ -1,4 +1,4 @@
-__fname = '_bst_keeper'
+__fname = '_keeper'
 __filename = __fname + '.py'
 cStrDivider = '#================================================================#'
 print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globals', cStrDivider, sep='\n')
@@ -19,6 +19,7 @@ from attributedict.collections import AttributeDict # tx_receipt requirement
 import _web3 # from web3 import Account, Web3, HTTPProvider
 import _abi, _gen_pls_key
 from ethereum.abi import encode_abi, decode_abi # pip install ethereum
+# from _constants import *
 
 DEBUG_LEVEL = 0
 LST_CONTR_ABI_BIN = [
@@ -33,8 +34,9 @@ CONTRACT_ABI = None
 BST_ADDRESS = None
 BST_FUNC_MAP = {}
 IS_WRITE = False
-USE_TBF = False
-USE_ROUTER = False
+USE_TBF = False # TBFckr contract
+USE_ROUTER = False # uniswap v2 router type contract
+USE_FLR = False # balancer Flash Loan Recipient contract
 
 # def init_web3():
 #     global W3_, ABI_FILE, BIN_FILE, CONTRACT
@@ -399,16 +401,13 @@ def go_user_inputs(_set_gas=True):
     # CONTRACT_ABI = _abi.BST_ABI
     # print(' using CONTRACT_ABI = _abi.BST_ABI')
 
-def go_enter_bst_addr():
-    global BST_ADDRESS, USE_TBF, USE_ROUTER
+def go_enter_bst_addr(_symb='nil_symb'):
+    global BST_ADDRESS
     while BST_ADDRESS == None or BST_ADDRESS == '':
-        symb = 'BST'
-        if USE_TBF: symb = 'TBF'
-        if USE_ROUTER: symb = 'ROUTER'
-        BST_ADDRESS = input(f'\n Enter {symb} contract address:\n  > ')
+        BST_ADDRESS = input(f'\n Enter {_symb} contract address:\n  > ')
 
     BST_ADDRESS = W3_.W3.to_checksum_address(BST_ADDRESS)
-    print(f'  using {symb}_ADDRESS: {BST_ADDRESS}')
+    print(f'  using {_symb}_ADDRESS: {BST_ADDRESS}')
 
 def go_select_func():
     global BST_FUNC_MAP, IS_WRITE
@@ -433,8 +432,18 @@ def go_enter_func_params(_func_select):
         elif v.lower() == 'false': lst_func_params.append(False)
         elif v.isdigit(): lst_func_params.append(int(v))
         # elif v.startswith('['): lst_func_params.append([i.strip() for i in v[1:-1].split(',')])
-        elif v.startswith('['): lst_func_params.append([W3_.W3.to_checksum_address(i.strip()) for i in v[1:-1].split(',')])
-        elif v.startswith('0x'): lst_func_params.append(W3_.W3.to_checksum_address(v))
+        # elif v.startswith('['): lst_func_params.append([W3_.W3.to_checksum_address(i.strip()) for i in v[1:-1].split(',')])
+        elif v.startswith('['):
+            lst_str = [i.strip() for i in v[1:-1].split(',')]
+            if lst_str[0][1:3] == '0x':
+                # appned list of addresses
+                lst_func_params.append([W3_.W3.to_checksum_address(i) for i in lst_str])
+            elif lst_str[0].isdigit():
+                # append list of ints                
+                lst_func_params.append([int(i) for i in lst_str])
+            else:
+                # fall back to appending list of strings
+                lst_func_params.append(lst_str)
         else: lst_func_params.append(v)
 
     # handle edge case: uniswap 'addLiquidityETH'
@@ -562,20 +571,31 @@ if __name__ == "__main__":
                 exit()
 
         # check for using TBF or uniswap v2 ROUTER contract
-        ans = input("\nSelect contract func list to use ...\n 0 = 'BST'\n 1 = 'TBF'\n 2 = 'UswapV2Router'\n > ")
+        ans = input("\nSelect contract func list to use ...\n 0 = 'BST'\n 1 = 'TBF (or standard ERC20)'\n 2 = 'UswapV2Router'\n 3 = 'FLR (FlashLoanRecipient)'\n > ")
+        opt_sel_str = 'nil_sel_str'
+        symb = 'nil_symb_init'
         USE_TBF = ans == '1'
         USE_ROUTER = ans == '2'
+        USE_FLR = ans == '3'
+        
         if USE_TBF:
-            symb = 'TBF'
+            symb = 'TBF|ERC20'
             BST_FUNC_MAP = _abi.TBF_FUNC_MAP_WRITE if IS_WRITE else _abi.TBF_FUNC_MAP_READ
-            print(f' ans: "{ans}"; USE_TBF={USE_TBF}, reset BST_FUNC_MAP')
+            opt_sel_str = f"USE_TBF={USE_TBF}"
+            # print(f' ans: "{ans}"; USE_TBF={USE_TBF}, reset BST_FUNC_MAP')
         if USE_ROUTER:
             symb = 'ROUTER'
             BST_FUNC_MAP = _abi.ROUTERv2_FUNC_MAP_WRITE if IS_WRITE else _abi.USWAPv2_ROUTER_FUNC_MAP_READ
-            print(f' ans: "{ans}"; USE_ROUTER={USE_ROUTER}, reset BST_FUNC_MAP')
-
+            opt_sel_str = f"USE_ROUTER={USE_ROUTER}"
+            # print(f' ans: "{ans}"; USE_ROUTER={USE_ROUTER}, reseting BST_FUNC_MAP')
+        if USE_FLR:
+            symb = 'FLR'
+            BST_FUNC_MAP = _abi.BALANCER_FLR_FUNC_MAP_WRITE if IS_WRITE else _abi.BALANCER_FLR_FUNC_MAP_READ
+            opt_sel_str = f"USE_FLR={USE_FLR}"
+        print(f' ans: "{ans}"; {opt_sel_str}, reseting BST_FUNC_MAP')
+        
         go_user_inputs(_set_gas=IS_WRITE)
-        go_enter_bst_addr()
+        go_enter_bst_addr(symb)
         
         ans = input(f'\n Run Mode...(for IS_WRITE={IS_WRITE})\n  0 = traverse all functions\n  1 = function select loop\n  > ')
         func_sel = ans == '1'

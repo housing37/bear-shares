@@ -4,6 +4,28 @@ cStrDivider = '#================================================================
 print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globals', cStrDivider, sep='\n')
 cStrDivider_1 = '#----------------------------------------------------------------#'
 
+BALANCER_FLR_FUNC_MAP_READ = {
+    # read functions        
+    # "b2bdfa7b": "_owner()",
+	"_owner()": ["b2bdfa7b", [], ['address']],
+}
+
+BALANCER_FLR_FUNC_MAP_WRITE = {
+    # remix compiled...
+	# 	"c9a69562": "makeFlashLoan(address[],uint256[],bytes)",
+	# 	"f04f2707": "receiveFlashLoan(address[],uint256[],uint256[],bytes)",
+	# 	"a64b6e5f": "transferTokens(address,address,uint256)",
+	# 	"2e1a7d4d": "withdraw(uint256)"
+
+	# > [0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2] [114983659000000000000000000] -37x
+ 	# > [0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2] [194103941428399548827251766] -37x
+	"makeFlashLoan(address[],uint256[],bytes)": ["c9a69562", ["address[]","uint256[]","bytes"], []], # fee: 43.97 pls
+    "receiveFlashLoan(address[],uint256[],uint256[],bytes)": ["f04f2707", ["address[]","uint256[]","uint256[]","bytes"], []], # shouldn't need to use (for flashload provider only)
+		# "makeFlashLoan(IERC20[],uint256[],bytes)": ["c9a69562", ["address[]","uint256[]","bytes"], []], # fee: ? pls
+		# "receiveFlashLoan(IERC20[],uint256[],uint256[],bytes)": ["f04f2707", ["address[]","uint256[]","uint256[]","bytes"], []], # shouldn't need to use (for flashload provider only)
+    "transferTokens(address,address,uint256)": ["a64b6e5f", ["address","address","uint256"], []], # fee: ? pls
+    "withdraw(uint256)": ["2e1a7d4d", ["uint256"], []], # fee: ? pls
+}
 USWAPv2_ROUTER_FUNC_MAP_READ = {
 	"no_read_functions_set(no,read,func,types,vars,set)": [
         "0xNone",
