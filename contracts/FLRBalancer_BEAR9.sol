@@ -22,7 +22,7 @@ contract FLRBalancerBEAR9 is IFlashLoanRecipient {
     address public KEEPER;
 
     /* -------------------------------------------------------- */
-    /* PRIVATE - GLOBALS                                          
+    /* PRIVATE - FLASHLOANS SUPPORT                                 
     /* -------------------------------------------------------- */
     // ref: https://docs.balancer.fi/reference/contracts/flash-loans.html#example-code
     IVault private constant BALANCER_VAULT = IVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
@@ -37,7 +37,6 @@ contract FLRBalancerBEAR9 is IFlashLoanRecipient {
         // ERROR: LIQUIDITY < BALANCE
         // pBAL: 0xba100000625a3754423978a60c9317c58a424e3D ->  3946496821522180948639451 / 10**18 == 3946496.821522181 ~= $41,153.679623988
         // prETH: 0xae78736cd615f374d3085123a210448e74fc6393 -> 27843230642023975590639 / 10**18 ~= $8,067.713537987
-
     address private constant BURN_ADDR = address(0x0000000000000000000000000000000000000369);
     address private constant TOK_WPLS = address(0xA1077a294dDE1B09bB078844df40758a5D0f9a27);
     
@@ -50,6 +49,16 @@ contract FLRBalancerBEAR9 is IFlashLoanRecipient {
     address private constant TOK_pUSDC = address(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
     address private constant TOK_pWETH = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
     address private constant TOK_pUSDT = address(0xdAC17F958D2ee523a2206206994597C13D831ec7);
+
+    /* -------------------------------------------------------- */
+    /* PRIVATE - TRADE REQUIREMENTS (to mint BEAR9)                                 
+    /* -------------------------------------------------------- */
+    // ref: .../git/atropa-kb-priv/_tools/calc_returns/req_bear9.py
+    address private constant TOK_YING = address(0x271197EFe41073681577CdbBFD6Ee1DA259BAa3c); // # 100 籯 (YingContract) _ (ç±¯ = E7B1AF)
+    address private constant TOK_YU = address(0x52a4682880E990ebed5309764C7BD29c4aE22deB); // # 500 유 (YuContract) _ (ì = EC9CA0)
+    address private constant TOK_BUL8 = address(0x2959221675bdF0e59D0cC3dE834a998FA5fFb9F4); // # 9 ⑧ (Bullion8Contract) _ (â§ = E291A7)
+    address private constant TOK_HAR = address(0x557F7e30aA6D909Cfe8a229A4CB178ab186EC622); // # 1 ʁ (HarContract) _ (Ê = CA81)
+    address private constant TOK_BEAR_OG = address(0xd6c31bA0754C4383A41c0e9DF042C62b5e918f6d); // # 1,111,111,111 TEDDY BEAR (TeddyBearContract) _ 'BEAR' OG
 
     /* -------------------------------------------------------- */
     /* STRUCTS                                        
