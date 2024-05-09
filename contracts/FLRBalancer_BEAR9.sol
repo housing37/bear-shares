@@ -1,11 +1,17 @@
-// house_102523 _ ref: https://docs.balancer.fi/reference/contracts/flash-loans.html#example-code
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity ^0.8.22;
+// house_102523 _ ref: https://docs.balancer.fi/reference/contracts/flash-loans.html#example-code
+// house_050924 _ ref: .../git/defi-arb/contracts/BalancerFLR_test.sol
+pragma solidity ^0.8.24;
 
-import "@balancer-labs/v2-interfaces/contracts/vault/IVault.sol";
-import "@balancer-labs/v2-interfaces/contracts/vault/IFlashLoanRecipient.sol";
+// remix compile _ 
+// import "@balancer-labs/v2-interfaces/contracts/vault/IVault.sol";
+// import "@balancer-labs/v2-interfaces/contracts/vault/IFlashLoanRecipient.sol";
 
-contract BalancerFLR_test is IFlashLoanRecipient {
+// local compile _ $ git clone https://github.com/balancer/balancer-v2-monorepo.git
+import "./pkg-balancer/interfaces/contracts/vault/IVault.sol";
+import "./pkg-balancer/interfaces/contracts/vault/IFlashLoanRecipient.sol";
+
+contract FLRBalancerBEAR9 is IFlashLoanRecipient {
     // ref: https://docs.balancer.fi/reference/contracts/flash-loans.html#example-code
     IVault private constant vault = IVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
     // pWETH: 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 -> 203658647860394116213752201 / 10**18 == 203658647.86039412 ~= $12,228.2445082
@@ -20,89 +26,97 @@ contract BalancerFLR_test is IFlashLoanRecipient {
     // pBAL: 0xba100000625a3754423978a60c9317c58a424e3D ->  3946496821522180948639451 / 10**18 == 3946496.821522181 ~= $41,153.679623988
     // prETH: 0xae78736cd615f374d3085123a210448e74fc6393 -> 27843230642023975590639 / 10**18 ~= $8,067.713537987
 
-    address private constant balancerRouter = address(0x37);
-    address public _owner;
+    address public constant TOK_BEAR9 = address(0x1f737F7994811fE994Fe72957C374e5cD5D5418A);
+    address public constant TOK_WPLS = address(0xA1077a294dDE1B09bB078844df40758a5D0f9a27);
+    address public constant BURN_ADDR = address(0x0000000000000000000000000000000000000369);
+    // address private constant LP_WALLET = address(0xEEd80539c314db19360188A66CccAf9caC887b22);
 
-    event logX(address indexed contr, address sender, string message);
-    event logRFL(address indexed contr, address sender, string message);
-    event logMFL(address indexed contr, address sender, string message);
+    /* -------------------------------------------------------- */
+    /* GLOBALS                                                  */
+    /* -------------------------------------------------------- */
+    /* _ ADMIN SUPPORT _ */
+    string public tVERSION = '0.0';
+    address public KEEPER;
 
-    modifier onlyOwner() {
-        require(msg.sender == _owner, "Only owner");
+    /* -------------------------------------------------------- */
+    /* STRUCTS                                        
+    /* -------------------------------------------------------- */
+
+    /* -------------------------------------------------------- */
+    /* EVENTS                                        
+    /* -------------------------------------------------------- */    
+    event KeeperMaintenance(address _tokAddr, uint256 _tokAmnt);
+    event KeeperWithdrawel(uint256 _natAmnt);
+    event KeeperTransfered(address _prev, address _new);
+    event FlashLoansRequested(IERC20[] _tokens, uint256[] _amounts, bytes _userData);
+    event FlashLoansReceived(IERC20[] tokens, uint256[] amounts, uint256[] feeAmounts, bytes userData);
+    event FlashLoansReturned(IERC20[] _tokens, uint256[] _amounts, uint256[] _feeAmounts, uint256[] _amountsOwed);
+
+    constructor() {
+        KEEPER = msg.sender;
+    }
+
+    /* -------------------------------------------------------- */
+    /* MODIFIERS                                                
+    /* -------------------------------------------------------- */
+    modifier onlyKeeper() {
+        require(msg.sender == KEEPER, " !keeper :p ");
         _;
     }
     
-    constructor() {
-        emit logX(address(this), msg.sender, "logX 0");
-        _owner = msg.sender;
+    /* -------------------------------------------------------- */
+    /* PUBLIC - KEEPER SUPPORT            
+    /* -------------------------------------------------------- */
+    //  NOTE: _tokAmnt must be in uint precision to _tokAddr.decimals()
+    function KEEPER_maintenance(address _tokAddr, uint256 _tokAmnt) external onlyKeeper() {
+        require(IERC20(_tokAddr).balanceOf(address(this)) >= _tokAmnt, ' not enough amount for token :O ');
+        IERC20(_tokAddr).transfer(KEEPER, _tokAmnt);
+        emit KeeperMaintenance(_tokAddr, _tokAmnt);
+    }
+    function KEEPER_withdraw(uint256 _natAmnt) external onlyKeeper {
+        require(address(this).balance >= _natAmnt, " Insufficient native PLS balance :[ ");
+        payable(KEEPER).transfer(_natAmnt); // cast to a 'payable' address to receive ETH
+        emit KeeperWithdrawel(_natAmnt);
+    }
+    function KEEPER_setKeeper(address _newKeeper) external onlyKeeper {
+        require(_newKeeper != address(0), ' invalid address :) ');
+        address prev = address(KEEPER);
+        KEEPER = _newKeeper;
+        emit KeeperTransfered(prev, KEEPER);
     }
 
-    function makeFlashLoan(
-        IERC20[] memory tokens,
-        uint256[] memory amounts,
-        bytes memory userData
-    ) external {
-        emit logMFL(address(this), msg.sender, "logMFL 0");
-        require(msg.sender == _owner, "loan to owner only");
-        emit logMFL(address(this), msg.sender, "logMFL 1");
-        vault.flashLoan(this, tokens, amounts, userData);
-        emit logMFL(address(this), msg.sender, "logMFL -1");
+    /* -------------------------------------------------------- */
+    /* PUBLIC - USER INTERFACE
+    /* -------------------------------------------------------- */
+    // front-facing UI to initialize flash-loan
+    function makeFlashLoan(IERC20[] memory _tokens, uint256[] memory _amounts, bytes memory _userData) external onlyKeeper {
+        // require(msg.sender == owner(), "loan to owner only");
+        vault.flashLoan(this, _tokens, _amounts, _userData);
+        emit FlashLoansRequested(_tokens, _amounts, _userData);
     }
 
-    function receiveFlashLoan(
-        IERC20[] memory tokens,
-        uint256[] memory amounts,
-        uint256[] memory feeAmounts,
-        bytes memory userData
-    ) external override {
-        emit logRFL(address(this), msg.sender, "logRFL 0");
-        require(msg.sender == address(vault), "loan from vault only");
-        
-        emit logRFL(address(this), msg.sender, "logRFL 1");
+    // callback from vault with loaned funds
+    function receiveFlashLoan(IERC20[] memory tokens, uint256[] memory amounts, uint256[] memory feeAmounts, bytes memory userData) external override {
+        emit FlashLoansReceived(tokens, amounts, feeAmounts, userData);
+        require(msg.sender == address(vault), " loan from vault only :o ");
         // (address router_0, address router_1, address[] memory path_0, address[] memory path_1, uint256 amntIn_0, uint256 amntOutMin_1) = abi.decode(userData, (address, address, address[], address[], uint256, uint256));
         
-        emit logRFL(address(this), msg.sender, "logRFL 2");
         uint256 bal = tokens[0].balanceOf(address(this));
         
-        emit logRFL(address(this), msg.sender, "logRFL 3");
         // approve for payback when execution finished
         //  init testing: return immediately (payback right away; req funds in this contract)
         //uint256 amountOwed = amounts[0] + feeAmounts[0];
         // IERC20(asset).approve(address(vault), amountOwed);
         //tokens[0].approve(address(vault), amountOwed);
         
-        // payback loan
-        uint256 amountOwed = amounts[0] + feeAmounts[0];
+        // payback loans
+        uint256[] memory amountsOwed = new uint256[](amounts.length); 
+        amountsOwed[0] = amounts[0] + feeAmounts[0];
+        // uint256 amountOwed = amounts[0] + feeAmounts[0];
         //tokens[0].approve(address(vault), amountOwed);
-        IERC20(tokens[0]).transfer(address(vault), amountOwed);
-        
-        // Approve the LendingPool contract allowance to *pull* the owed amount
-        // i.e. AAVE V2's way of repaying the flash loan
-        //for (uint i = 0; i < tokens.length; i++) {
-        //    uint amountOwing = amounts[i].add(feeAmounts[i]);
-        //    IERC20(tokens[i]).transfer(address(vault), amountOwing);
-        //}
-    }
-
-    function withdraw(uint256 amount) external onlyOwner {
-        require(address(this).balance >= amount, "Insufficient native token balance");
-        
-        // cast owner address to a 'payable' address so it can receive ETH
-        payable(_owner).transfer(amount);
+        IERC20(tokens[0]).transfer(address(vault), amountsOwed[0]);
+        emit FlashLoansReturned(tokens, amounts, feeAmounts, amountsOwed);
     }
     
     receive() external payable {}
-    
-    // Function to transfer ERC20 tokens to a target address
-    function transferTokens(address token, address to, uint256 amount) external onlyOwner {
-        // Create an instance of the ERC20 token
-        IERC20 tok = IERC20(token);
-
-        // Check the contract's balance of the token
-        uint256 contractBalance = tok.balanceOf(address(this));
-        require(contractBalance >= amount, "Insufficient balance in the contract");
-
-        // Transfer tokens to the target address
-        tok.transfer(to, amount);
-    }
 }

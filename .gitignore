@@ -38,6 +38,7 @@ posts/
 _wallets/
 ## hide environmentals
 .env*
+pkg-*/
 
 ## hide legacy helpers
 _legacy/
