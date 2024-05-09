@@ -6,10 +6,12 @@ pragma solidity ^0.8.24;
 // remix compile _ 
 // import "@balancer-labs/v2-interfaces/contracts/vault/IVault.sol";
 // import "@balancer-labs/v2-interfaces/contracts/vault/IFlashLoanRecipient.sol";
+// import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol"; // deploy
 
 // local compile _ $ git clone https://github.com/balancer/balancer-v2-monorepo.git
 import "./pkg-balancer/interfaces/contracts/vault/IVault.sol";
 import "./pkg-balancer/interfaces/contracts/vault/IFlashLoanRecipient.sol";
+import "./node_modules/@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 
 contract FLRBalancerBEAR9 is IFlashLoanRecipient {
     /* -------------------------------------------------------- */
@@ -109,6 +111,8 @@ contract FLRBalancerBEAR9 is IFlashLoanRecipient {
         emit FlashLoansRequested(_tokens, _amounts, _userData);
     }
 
+    receive() external payable {}
+
     /* -------------------------------------------------------- */
     /* PUBLIC - IFlashLoanRecipient OVERRIDES
     /* -------------------------------------------------------- */
@@ -120,8 +124,33 @@ contract FLRBalancerBEAR9 is IFlashLoanRecipient {
         // (address router_0, address router_1, address[] memory path_0, address[] memory path_1, uint256 amntIn_0, uint256 amntOutMin_1) = abi.decode(userData, (address, address, address[], address[], uint256, uint256));
         
         uint256 bal = IERC20(tokens[0]).balanceOf(address(this));
-        
-        // payback loans
+
+        /** ALGORITHMIC DESIGN */
+        // 1) loop through loaned 'tokens'
+        //      for each, execute swap paths to TOK_ATROPA
+        //      need to map out path arrays for each: 
+        //          TOK_pUSDC, TOK_pUSDT, TOK_pWETH, TOK_pWBTC -> TOK_ATROPA
+
+        // 2) execute redundent swap algorithm for TOK_ATROPA -> TOK_TSFi -> TOK_R
+        //      required to ensure minimal loss on slippage
+        //      need to verify 'amountsOut' after each swap executed (check for slippage in USD value)
+
+        // 3) invoke trade-in|mint function from 'ITokenBear9(TOK_BEAR9)'
+        //      TOK_BEAR9 needs to be manually declared above: 
+        //          'interface ITokenBear9 { ... }'
+        //      trade-in includes: TOK_R + 4 other tokens
+        //      should result in receiving 1 TOK_BEAR9
+
+        // 4) loop through loaned 'tokens'
+        //      for each, execute swap paths from TOK_BEAR9
+        //      swap amounts are respective to their flash-loan received 'amounts'
+        //      everything that remains, is our profit
+        //      need to map out path arrays for each: 
+        //          TOK_BEAR9 -> TOK_pWBTC -> TOK_pUSDC, TOK_pUSDT, TOK_pWETH
+
+        // 5) loop through loaned 'tokens'
+        //      for each, payback their respective loan
+        //      everything that remains, is our profit
         uint256[] memory amountsOwed = new uint256[](amounts.length); 
         for (uint8 i=0; i < amountsOwed.length;) {
             amountsOwed[i] = amounts[i] + feeAmounts[i];
@@ -131,6 +160,107 @@ contract FLRBalancerBEAR9 is IFlashLoanRecipient {
 
         emit FlashLoansReturned(tokens, amounts, feeAmounts, amountsOwed);
     }
+
+    /* -------------------------------------------------------- */
+    /* PRIVATE - DEX SUPPORT                                    
+    /* -------------------------------------------------------- */
+    function _normalizeStableAmnt(uint8 _fromDecimals, uint256 _usdAmnt, uint8 _toDecimals) private pure returns (uint256) {
+        require(_fromDecimals > 0 && _toDecimals > 0, 'err: invalid _from|toDecimals');
+        if (_fromDecimals == _toDecimals) {
+            return _usdAmnt;
+        } else {
+            if (_fromDecimals > _toDecimals) { // _fromDecimals has more 0's
+                uint256 scalingFactor = 10 ** (_fromDecimals - _toDecimals); // get the diff
+                return _usdAmnt / scalingFactor; // decrease # of 0's in _usdAmnt
+            }
+            else { // _fromDecimals has less 0's
+                uint256 scalingFactor = 10 ** (_toDecimals - _fromDecimals); // get the diff
+                return _usdAmnt * scalingFactor; // increase # of 0's in _usdAmnt
+            }
+        }
+    }
+    function _exeSwapPlsForStable(uint256 _plsAmnt, address _usdStable) private returns (uint256) {
+        address[] memory pls_stab_path = new address[](2);
+        pls_stab_path[0] = TOK_WPLS;
+        pls_stab_path[1] = _usdStable;
+        (uint8 rtrIdx, uint256 stab_amnt) = _best_swap_v2_router_idx_quote(pls_stab_path, _plsAmnt, USWAP_V2_ROUTERS);
+        uint256 stab_amnt_out = _swap_v2_wrap(pls_stab_path, USWAP_V2_ROUTERS[rtrIdx], _plsAmnt, address(this), true); // true = fromETH
+        stab_amnt_out = _normalizeStableAmnt(USD_STABLE_DECIMALS[_usdStable], stab_amnt_out, decimals());
+        return stab_amnt_out;
+    }
+    function _exeSwapStableForTok(uint256 _usdAmnt, address[] memory _stab_tok_path) private returns (uint256) {
+        address usdStable = _stab_tok_path[0]; // required: _stab_tok_path[0] must be a stable
+        uint256 usdAmnt_ = _normalizeStableAmnt(decimals(), _usdAmnt, USD_STABLE_DECIMALS[usdStable]);
+        (uint8 rtrIdx, uint256 tok_amnt) = _best_swap_v2_router_idx_quote(_stab_tok_path, usdAmnt_, USWAP_V2_ROUTERS);
+
+        // NOTE: algo to account for contracts unable to be a receiver of its own token in UniswapV2Pool.sol
+        // if out token in _stab_tok_path is BST, then swap w/ SWAP_DELEGATE as reciever,
+        //   and then get tok_amnt_out from delegate (USER_maintenance)
+        // else, swap with BST address(this) as receiver 
+        if (_stab_tok_path[_stab_tok_path.length-1] == address(this))  {
+            uint256 tok_amnt_out = _swap_v2_wrap(_stab_tok_path, USWAP_V2_ROUTERS[rtrIdx], usdAmnt_, SWAP_DELEGATE, false); // true = fromETH
+            SWAPD.USER_maintenance(tok_amnt_out, _stab_tok_path[_stab_tok_path.length-1]);
+            return tok_amnt_out;
+        } else {
+            uint256 tok_amnt_out = _swap_v2_wrap(_stab_tok_path, USWAP_V2_ROUTERS[rtrIdx], usdAmnt_, address(this), false); // true = fromETH
+            return tok_amnt_out;
+        }
+    }
+    // uniswap v2 protocol based: get router w/ best quote in 'uswapV2routers'
+    function _best_swap_v2_router_idx_quote(address[] memory path, uint256 amount, address[] memory _routers) private view returns (uint8, uint256) {
+        uint8 currHighIdx = 37;
+        uint256 currHigh = 0;
+        for (uint8 i = 0; i < _routers.length;) {
+            uint256[] memory amountsOut = IUniswapV2Router02(_routers[i]).getAmountsOut(amount, path); // quote swap
+            if (amountsOut[amountsOut.length-1] > currHigh) {
+                currHigh = amountsOut[amountsOut.length-1];
+                currHighIdx = i;
+            }
+
+            // NOTE: unchecked, never more than 255 (_routers)
+            unchecked {
+                i++;
+            }
+        }
+
+        return (currHighIdx, currHigh);
+    }
+    // uniwswap v2 protocol based: get quote and execute swap
+    function _swap_v2_wrap(address[] memory path, address router, uint256 amntIn, address outReceiver, bool fromETH) private returns (uint256) {
+        require(path.length >= 2, 'err: path.length :/');
+        uint256[] memory amountsOut = IUniswapV2Router02(router).getAmountsOut(amntIn, path); // quote swap
+        uint256 amntOut = _swap_v2(router, path, amntIn, amountsOut[amountsOut.length -1], outReceiver, fromETH); // approve & execute swap
+                
+        // verifiy new balance of token received
+        uint256 new_bal = IERC20(path[path.length -1]).balanceOf(outReceiver);
+        require(new_bal >= amntOut, " _swap: receiver bal too low :{ ");
+        
+        return amntOut;
+    }
     
-    receive() external payable {}
+    // v2: solidlycom, kyberswap, pancakeswap, sushiswap, uniswap v2, pulsex v1|v2, 9inch
+    function _swap_v2(address router, address[] memory path, uint256 amntIn, uint256 amntOutMin, address outReceiver, bool fromETH) private returns (uint256) {
+        IUniswapV2Router02 swapRouter = IUniswapV2Router02(router);
+        
+        IERC20(address(path[0])).approve(address(swapRouter), amntIn);
+        uint deadline = block.timestamp + 300;
+        uint[] memory amntOut;
+        if (fromETH) {
+            amntOut = swapRouter.swapExactETHForTokens{value: amntIn}(
+                            amntOutMin,
+                            path, //address[] calldata path,
+                            outReceiver, // to
+                            deadline
+                        );
+        } else {
+            amntOut = swapRouter.swapExactTokensForTokens(
+                            amntIn,
+                            amntOutMin,
+                            path, //address[] calldata path,
+                            outReceiver, //  The address that will receive the output tokens after the swap. 
+                            deadline
+                        );
+        }
+        return uint256(amntOut[amntOut.length - 1]); // idx 0=path[0].amntOut, 1=path[1].amntOut, etc.
+    }
 }
