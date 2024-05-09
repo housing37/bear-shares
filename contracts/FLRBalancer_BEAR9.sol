@@ -13,7 +13,7 @@ import "./pkg-balancer/interfaces/contracts/vault/IFlashLoanRecipient.sol";
 
 contract FLRBalancerBEAR9 is IFlashLoanRecipient {
     // ref: https://docs.balancer.fi/reference/contracts/flash-loans.html#example-code
-    IVault private constant vault = IVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
+    IVault private constant BALANCER_VAULT = IVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
     // pWETH: 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 -> 203658647860394116213752201 / 10**18 == 203658647.86039412 ~= $12,228.2445082
     // pUSDC: 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48 -> 23937491402753 / 10**6 == 23937491.402753 ~= $74,767.781978741
     // pWBTC: 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599 -> 5994742939 / 10**8 == 59.94742939 ~= $13,208.5705829
@@ -59,7 +59,7 @@ contract FLRBalancerBEAR9 is IFlashLoanRecipient {
     event KeeperWithdrawel(uint256 _natAmnt);
     event KeeperTransfered(address _prev, address _new);
     event FlashLoansRequested(IERC20[] _tokens, uint256[] _amounts, bytes _userData);
-    event FlashLoansReceived(IERC20[] tokens, uint256[] amounts, uint256[] feeAmounts, bytes userData);
+    event FlashLoansReceived(IERC20[] _tokens, uint256[] _amounts, uint256[] _feeAmounts, bytes _userData);
     event FlashLoansReturned(IERC20[] _tokens, uint256[] _amounts, uint256[] _feeAmounts, uint256[] _amountsOwed);
 
     constructor() {
@@ -101,14 +101,14 @@ contract FLRBalancerBEAR9 is IFlashLoanRecipient {
     // front-facing UI to initialize flash-loan
     function makeFlashLoan(IERC20[] memory _tokens, uint256[] memory _amounts, bytes memory _userData) external onlyKeeper {
         // require(msg.sender == owner(), "loan to owner only");
-        vault.flashLoan(this, _tokens, _amounts, _userData);
+        BALANCER_VAULT.flashLoan(this, _tokens, _amounts, _userData);
         emit FlashLoansRequested(_tokens, _amounts, _userData);
     }
 
-    // callback from vault with loaned funds
+    // callback from BALANCER_VAULT with loaned funds
     function receiveFlashLoan(IERC20[] memory tokens, uint256[] memory amounts, uint256[] memory feeAmounts, bytes memory userData) external override {
         emit FlashLoansReceived(tokens, amounts, feeAmounts, userData);
-        require(msg.sender == address(vault), " loan from vault only :o ");
+        require(msg.sender == address(BALANCER_VAULT), " loan from BALANCER_VAULT only :o ");
         require(tokens.length == amounts.length && amounts.length == feeAmounts.length, ' array lengths mismatch :/ ');
         // (address router_0, address router_1, address[] memory path_0, address[] memory path_1, uint256 amntIn_0, uint256 amntOutMin_1) = abi.decode(userData, (address, address, address[], address[], uint256, uint256));
         
@@ -118,11 +118,10 @@ contract FLRBalancerBEAR9 is IFlashLoanRecipient {
         uint256[] memory amountsOwed = new uint256[](amounts.length); 
         for (uint8 i=0; i < amountsOwed.length;) {
             amountsOwed[i] = amounts[i] + feeAmounts[i];
-            IERC20(tokens[i]).transfer(address(vault), amountsOwed[i]);
+            IERC20(tokens[i]).transfer(address(BALANCER_VAULT), amountsOwed[i]);
             unchecked { i++; }
         }
-        // amountsOwed[0] = amounts[0] + feeAmounts[0];
-        // IERC20(tokens[0]).transfer(address(vault), amountsOwed[0]);
+
         emit FlashLoansReturned(tokens, amounts, feeAmounts, amountsOwed);
     }
     
