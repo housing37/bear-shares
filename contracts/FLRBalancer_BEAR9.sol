@@ -105,11 +105,14 @@ contract FLRBalancerBEAR9 is IFlashLoanRecipient {
         emit FlashLoansRequested(_tokens, _amounts, _userData);
     }
 
+    /* -------------------------------------------------------- */
+    /* PUBLIC - IFlashLoanRecipient OVERRIDES
+    /* -------------------------------------------------------- */
     // callback from BALANCER_VAULT with loaned funds
     function receiveFlashLoan(IERC20[] memory tokens, uint256[] memory amounts, uint256[] memory feeAmounts, bytes memory userData) external override {
         emit FlashLoansReceived(tokens, amounts, feeAmounts, userData);
         require(msg.sender == address(BALANCER_VAULT), " loan from BALANCER_VAULT only :o ");
-        require(tokens.length == amounts.length && amounts.length == feeAmounts.length, ' array lengths mismatch :/ ');
+        require(tokens.length == amounts.length && amounts.length == feeAmounts.length, ' param array lengths mismatch :/ ');
         // (address router_0, address router_1, address[] memory path_0, address[] memory path_1, uint256 amntIn_0, uint256 amntOutMin_1) = abi.decode(userData, (address, address, address[], address[], uint256, uint256));
         
         uint256 bal = IERC20(tokens[0]).balanceOf(address(this));
