@@ -4,6 +4,27 @@ cStrDivider = '#================================================================
 print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globals', cStrDivider, sep='\n')
 cStrDivider_1 = '#----------------------------------------------------------------#'
 
+LPCleaner_FUNC_MAP_READ = {
+    # read functions        
+	# legacy
+ 	"#-----------------------#": ["xxxxxxxx", [], []], 
+ 	"KEEPER()": ["862a179e", [], ['address']],    
+    "TOK_WPLS()": ["fa4a9870", [], ['address']],
+    "BURN_ADDR()": ["783028a9", [], ['address']],
+    "tVERSION()": ["9a60f330", [], ['string']],
+}
+LPCleaner_FUNC_MAP_WRITE = {
+    # write functions    
+	"cleanLiquidityPool()": ["566391ff", [], []], 
+    "uniswapV2Call(address,uint256,uint256,bytes)": ["10d1e85c", ["address",'uint256','uint256','bytes'], []], 
+
+	# legacy
+ 	"#-----------------------#": ["xxxxxxxx", [], []], 
+ 	"KEEPER_setKeeper(address)": ["11851737", ["address"], []], 
+    "KEEPER_maintenance(uint256,address)": ["4dd534c0", ["uint256","address"], []], # gas used: 62,434 
+    "KEEPER_withdraw(uint256)": ["cbf0d0d4", ["uint256"], []], 
+}
+
 BALANCER_FLR_FUNC_MAP_READ = {
     # read functions        
     # "b2bdfa7b": "_owner()",
@@ -26,12 +47,20 @@ BALANCER_FLR_FUNC_MAP_WRITE = {
     "transferTokens(address,address,uint256)": ["a64b6e5f", ["address","address","uint256"], []], # fee: ? pls
     "withdraw(uint256)": ["2e1a7d4d", ["uint256"], []], # fee: ? pls
 }
+USWAPv2_PAIR_FUNC_MAP_READ = {
+    "token0()": ["0dfe1681", [], ['address']],
+    "token1()": ["d21220a7", [], ['address']],
+    "getReserves()": ["0902f1ac", [], ['uint112','uint112','uint32']],
+}
+USWAPv2_PAIR_FUNC_MAP_WRITE = {
+    "NO_WRITE_FUNC_MAPPED()": ["0xNone", [], []],
+}
+
 USWAPv2_ROUTER_FUNC_MAP_READ = {
-	"no_read_functions_set(no,read,func,types,vars,set)": [
-        "0xNone",
-        ["no","read","func","vars","set"],
-        ['no','ret','types']
-	],    
+    "getAmountIn(uint256,uint256,uint256)": ["85f8c259", ["uint256","uint256","uint256"], ['uint256']],
+    "getAmountOut(uint256,uint256,uint256)": ["054d50d4", ["uint256","uint256","uint256"], ['uint256']],
+	"getAmountsIn(uint256,address[])": ["1f00ca74", ["uint256","address[]"], ['uint256[]']],
+	"getAmountsOut(uint256,address[])": ["d06ca61f", ["uint256","address[]"], ['uint256[]']],
 }
 ROUTERv2_FUNC_ADD_LIQ_ETH = "addLiquidityETH(address,uint256,uint256,uint256,address,uint256)"
 ROUTERv2_FUNC_MAP_WRITE = {

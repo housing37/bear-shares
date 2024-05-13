@@ -21,7 +21,7 @@ import _abi, _gen_pls_key
 from ethereum.abi import encode_abi, decode_abi # pip install ethereum
 # from _constants import *
 
-DEBUG_LEVEL = 0
+DEBUG_LEVEL = 3
 LST_CONTR_ABI_BIN = [
     "../bin/contracts/BearSharesTrinity",
 ]
@@ -288,6 +288,23 @@ def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_
     print('\nparsing & printing response ...')
     # print(f'return_val: {return_val}')
     # print(f'return_val.hex(): {return_val.hex()}')
+
+    # > 45885100000 [0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599,0x1f737F7994811fE994Fe72957C374e5cD5D5418A]
+    # > 1 [0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599,0x1f737F7994811fE994Fe72957C374e5cD5D5418A]
+    # > 1000000000000000000 [0x1f737F7994811fE994Fe72957C374e5cD5D5418A,0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599]
+    # > 23748314274 [0x1f737F7994811fE994Fe72957C374e5cD5D5418A,0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599]
+    # > 15369042180 [0x1f737F7994811fE994Fe72957C374e5cD5D5418A,0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599]
+
+    # # Decode the return values from the raw output
+    # decoded_return_val = W3_.W3.to_hex(return_val)
+
+    # # Convert the hexadecimal output to a list of integers
+    # uint_values = [int(decoded_return_val[i:i+64], 16) for i in range(0, len(decoded_return_val), 64)]
+
+    # # Pretty print the uint values
+    # for i, val in enumerate(uint_values):
+    #     print(f"uint[{i}]: {val}")
+
     decoded_value_return = decode_abi(_lst_ret_types, return_val)
     print(f'decoded_value_return', *decoded_value_return, sep='\n ')
     hex_bytes = decoded_value_return[0]
@@ -301,8 +318,9 @@ def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_
     for i in range(len(decoded_value_return)):
         # if isinstance(decoded_value_return[i], str):
         if isinstance(decoded_value_return[i], int):
-            f_val = float(decoded_value_return[i]) / 10 ** 6
-            print(f' {f_val}')
+            # f_val = float(decoded_value_return[i]) / 10 ** 6
+            f_val = float(decoded_value_return[i]) / 10 ** 18
+            print(f' {f_val:,.3f}')
         # else:
         #     print(decoded_value_return[i])
     pprint.pprint(decoded_value_return)
@@ -571,12 +589,14 @@ if __name__ == "__main__":
                 exit()
 
         # check for using TBF or uniswap v2 ROUTER contract
-        ans = input("\nSelect contract func list to use ...\n 0 = 'BST'\n 1 = 'TBF (or standard ERC20)'\n 2 = 'UswapV2Router'\n 3 = 'FLR (FlashLoanRecipient)'\n > ")
+        ans = input("\nSelect contract func list to use ...\n 0 = 'BST'\n 1 = 'TBF (or standard ERC20)'\n 2 = 'UswapV2Router'\n 3 = 'FLR (FlashLoanRecipient)'\n 4 = 'UswapV2Pair'\n 5 = 'LPCleaner'\n > ")
         opt_sel_str = 'nil_sel_str'
         symb = 'nil_symb_init'
         USE_TBF = ans == '1'
         USE_ROUTER = ans == '2'
         USE_FLR = ans == '3'
+        use_pair = ans == '4'
+        use_lpcleaner = ans == '5'
         
         if USE_TBF:
             symb = 'TBF|ERC20'
@@ -584,7 +604,7 @@ if __name__ == "__main__":
             opt_sel_str = f"USE_TBF={USE_TBF}"
             # print(f' ans: "{ans}"; USE_TBF={USE_TBF}, reset BST_FUNC_MAP')
         if USE_ROUTER:
-            symb = 'ROUTER'
+            symb = 'ROUTER|USWAPv2'
             BST_FUNC_MAP = _abi.ROUTERv2_FUNC_MAP_WRITE if IS_WRITE else _abi.USWAPv2_ROUTER_FUNC_MAP_READ
             opt_sel_str = f"USE_ROUTER={USE_ROUTER}"
             # print(f' ans: "{ans}"; USE_ROUTER={USE_ROUTER}, reseting BST_FUNC_MAP')
@@ -592,6 +612,15 @@ if __name__ == "__main__":
             symb = 'FLR'
             BST_FUNC_MAP = _abi.BALANCER_FLR_FUNC_MAP_WRITE if IS_WRITE else _abi.BALANCER_FLR_FUNC_MAP_READ
             opt_sel_str = f"USE_FLR={USE_FLR}"
+        if use_pair:
+            symb = 'PAIR|USWAPv2'
+            BST_FUNC_MAP = _abi.USWAPv2_PAIR_FUNC_MAP_WRITE if IS_WRITE else _abi.USWAPv2_PAIR_FUNC_MAP_READ
+            opt_sel_str = f"use_pair={use_pair}"
+        if use_lpcleaner:
+            symb = 'LPCleaner'
+            BST_FUNC_MAP = _abi.LPCleaner_FUNC_MAP_WRITE if IS_WRITE else _abi.LPCleaner_FUNC_MAP_READ
+            opt_sel_str = f"use_lpcleaner={use_lpcleaner}"
+            
         print(f' ans: "{ans}"; {opt_sel_str}, reseting BST_FUNC_MAP')
         
         go_user_inputs(_set_gas=IS_WRITE)

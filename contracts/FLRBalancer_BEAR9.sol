@@ -7,19 +7,27 @@ pragma solidity ^0.8.24;
 // import "@balancer-labs/v2-interfaces/contracts/vault/IVault.sol";
 // import "@balancer-labs/v2-interfaces/contracts/vault/IFlashLoanRecipient.sol";
 // import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol"; // deploy
+// import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Callee.sol';
+// import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
+// import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol';
+
 
 // local compile _ $ git clone https://github.com/balancer/balancer-v2-monorepo.git
 import "./pkg-balancer/interfaces/contracts/vault/IVault.sol";
 import "./pkg-balancer/interfaces/contracts/vault/IFlashLoanRecipient.sol";
 import "./node_modules/@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
+import './node_modules/@uniswap/v2-core/contracts/interfaces/IUniswapV2Callee.sol';
+import './node_modules/@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
+import './node_modules/@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol';
 
-contract FLRBalancerBEAR9 is IFlashLoanRecipient {
+contract FLRBalancerBEAR9 is IFlashLoanRecipient, IUniswapV2Callee {
     /* -------------------------------------------------------- */
     /* PUBLIC - GLOBALS                                          
     /* -------------------------------------------------------- */
     /* _ ADMIN SUPPORT _ */
     string public tVERSION = '0.0';
     address public KEEPER;
+    address[] public USWAP_V2_ROUTERS;
 
     /* -------------------------------------------------------- */
     /* PRIVATE - FLASHLOANS SUPPORT                                 
@@ -73,6 +81,20 @@ contract FLRBalancerBEAR9 is IFlashLoanRecipient {
     event FlashLoansRequested(IERC20[] _tokens, uint256[] _amounts, bytes _userData);
     event FlashLoansReceived(IERC20[] _tokens, uint256[] _amounts, uint256[] _feeAmounts, bytes _userData);
     event FlashLoansReturned(IERC20[] _tokens, uint256[] _amounts, uint256[] _feeAmounts, uint256[] _amountsOwed);
+    event DexRouterUpdated(address _router, bool _add);
+
+    mapping(address => address) public TOKEN_ROUTER_MAP;
+    mapping(address => address[]) public TOKEN_SWAP_PATH_MAP;
+    mapping(address => uint16) public TOKEN_REDUND_SWAP_CNT_MAP;
+    function _editTokenRouterMap(address _token, address _router) private {
+        TOKEN_ROUTER_MAP[_token] = _router;
+    }
+    function _editTokenSwapPathMap(address _token, address[] memory _path) private {
+        TOKEN_SWAP_PATH_MAP[_token] = _path;
+    }
+    function _editTokenRedundSwapCntMap(address _token, uint16 _swapCnt) private {
+        TOKEN_REDUND_SWAP_CNT_MAP[_token] = _swapCnt;
+    }
 
     /* -------------------------------------------------------- */
     /* CONTRUCTOR                                        
@@ -109,6 +131,17 @@ contract FLRBalancerBEAR9 is IFlashLoanRecipient {
         KEEPER = _newKeeper;
         emit KeeperTransfered(prev, KEEPER);
     }
+    function KEEPER_editDexRouters(address _router, bool _add) external onlyKeeper {
+        require(_router != address(0x0), "0 address");
+        _editDexRouters(_router, _add);
+        emit DexRouterUpdated(_router, _add);
+    }
+    /* -------------------------------------------------------- */
+    /* PUBLIC - ACCESSORS
+    /* -------------------------------------------------------- */
+    function getDexRouters() external view returns (address[] memory) {
+        return USWAP_V2_ROUTERS;
+    }
 
     /* -------------------------------------------------------- */
     /* PUBLIC - USER INTERFACE
@@ -125,6 +158,14 @@ contract FLRBalancerBEAR9 is IFlashLoanRecipient {
     /* -------------------------------------------------------- */
     /* PUBLIC - IFlashLoanRecipient OVERRIDES
     /* -------------------------------------------------------- */
+    function _redundentSwap(address _dexRouter, address _tokenIn, address[] _swapPath, uint256 _swapAmntIn, uint16 _swapCnt) private {
+        uint256 ind_swapAmntIn = _swapAmntIn / _swapCnt;
+        for (uint8 i = 0; i < _swapCnt;) {
+            uint256 amnt_out_quote =  _swap_v2_quote(_dexRouter, _swapPath, ind_swapAmntIn);
+            // LEFT OFF HERE ... need to somehow verify if slippage would occur
+            unchecked { i++; }
+        }
+    }
     // callback from BALANCER_VAULT with loaned funds
     function receiveFlashLoan(IERC20[] memory tokens, uint256[] memory amounts, uint256[] memory feeAmounts, bytes memory userData) external override {
         emit FlashLoansReceived(tokens, amounts, feeAmounts, userData);
@@ -134,24 +175,31 @@ contract FLRBalancerBEAR9 is IFlashLoanRecipient {
         
         uint256 bal = IERC20(tokens[0]).balanceOf(address(this));
 
+        /** ALGORITHMIC DESIGN - FLASH SWAP */
+        bytes memory data = new bytes(1); // 1 = invoke 'uniswapV2Call' callback to manually pay|return tokens owed
+        // _swap_v2_flashSwap(address tokenA, address tokenB, uint amount0Out, uint amount1Out, address to, bytes calldata data);
+
         /** ALGORITHMIC DESIGN */
-        // 1) loop through loaned 'tokens'
-        //      for each, execute swap paths to TOK_ATROPA
+        // 1) loop through loaned 'tokens', for each ...
+        //      execute redundent swap algorithm for TOK_pUSDC, TOK_pUSDT, TOK_pWETH, TOK_pWBTC -> TOK_ATROPA
         //      need to map out path arrays for each: 
         //          TOK_pUSDC, TOK_pUSDT, TOK_pWETH, TOK_pWBTC -> TOK_ATROPA
-
+        for (uint8 i = 0; i < tokens.length;) {
+            _redundentSwap(TOKEN_ROUTER_MAP[tokens[i]], tokens[i], TOKEN_SWAP_PATH_MAP[tokens[i]], amounts[i], TOKEN_REDUND_SWAP_CNT_MAP[tokens[i]]);
+            unchecked { i++; }
+        }
         // 2) execute redundent swap algorithm for TOK_ATROPA -> TOK_TSFi -> TOK_R
         //      required to ensure minimal loss on slippage
         //      need to verify 'amountsOut' after each swap executed (check for slippage in USD value)
 
         // 3) invoke trade-in|mint function from 'ITokenBear9(TOK_BEAR9)'
-        //      TOK_BEAR9 needs to be manually declared above: 
+        //      TOK_BEAR9 interface needs to be manually declared above: 
         //          'interface ITokenBear9 { ... }'
         //      trade-in includes: TOK_R + 4 other tokens
         //      should result in receiving 1 TOK_BEAR9
 
-        // 4) loop through loaned 'tokens'
-        //      for each, execute swap paths from TOK_BEAR9
+        // 4) loop through loaned 'tokens', for each ...
+        //      execute redundent swap algorithm for TOK_BEAR9 -> TOK_pWBTC -> TOK_pUSDC, TOK_pUSDT, TOK_pWETH
         //      swap amounts are respective to their flash-loan received 'amounts'
         //      everything that remains, is our profit
         //      need to map out path arrays for each: 
@@ -166,8 +214,73 @@ contract FLRBalancerBEAR9 is IFlashLoanRecipient {
             IERC20(tokens[i]).transfer(address(BALANCER_VAULT), amountsOwed[i]);
             unchecked { i++; }
         }
-
         emit FlashLoansReturned(tokens, amounts, feeAmounts, amountsOwed);
+    }
+
+    /* -------------------------------------------------------- */
+    /* PUBLIC - DEX SUPPORTING                                   
+    /* -------------------------------------------------------- */
+    // ref: https://docs.uniswap.org/contracts/v2/guides/smart-contract-integration/using-flash-swaps
+    //  NOTE: 'sender' = 'msg.sender' that called 'IUniswapV2Pair(pair).swap'
+    function uniswapV2Call(address sender, uint amount0, uint amount1, bytes calldata data) external {
+        address token0 = IUniswapV2Pair(msg.sender).token0(); // fetch the address of token0
+        address token1 = IUniswapV2Pair(msg.sender).token1(); // fetch the address of token1
+        assert(msg.sender == IUniswapV2Factory(factoryV2).getPair(token0, token1)); // ensure that msg.sender is a V2 pair
+        // rest of the function goes here!
+
+        // NOTE: at this point, address(this) should have indeed received token0 & token1 amounts
+        //  from pair requested in 'IUniswapV2Pair(pair).swap', and tokens are freely available to use
+        
+        // LEFT OFF HERE ... need to finish the deal (transfer tokens to LP msg.sender) return tokens taken | pay tokens owed)
+        // return token taken ...
+        //  ref: https://docs.uniswap.org/contracts/v2/guides/smart-contract-integration/using-flash-swaps#single-token
+        //  use: DAIReservePre - DAIWithdrawn + (DAIReturned * .997) >= DAIReservePre
+        //      ie. (DAIReturned * .997) - DAIWithdrawn >= 0
+        //      ie. DAIReturned >= DAIWithdrawn / .997
+        // pay tokens owed ...
+        //  ref: https://docs.uniswap.org/contracts/v2/guides/smart-contract-integration/using-flash-swaps#multi-token
+        //  use: 'getAmountIn'
+    }
+
+    /* -------------------------------------------------------- */
+    /* PRIVATE - SUPPORTING                                     */
+    /* -------------------------------------------------------- */
+    function _editDexRouters(address _router, bool _add) private {
+        require(_router != address(0x0), "0 address");
+        if (_add) {
+            USWAP_V2_ROUTERS = _addAddressToArraySafe(_router, USWAP_V2_ROUTERS, true); // true = no dups
+        } else {
+            USWAP_V2_ROUTERS = _remAddressFromArray(_router, USWAP_V2_ROUTERS); // removes only one & order NOT maintained
+        }
+    }
+    function _addAddressToArraySafe(address _addr, address[] memory _arr, bool _safe) private pure returns (address[] memory) {
+        if (_addr == address(0)) { return _arr; }
+
+        // safe = remove first (no duplicates)
+        if (_safe) { _arr = _remAddressFromArray(_addr, _arr); }
+
+        // perform add to memory array type w/ static size
+        address[] memory _ret = new address[](_arr.length+1);
+        for (uint i=0; i < _arr.length;) { _ret[i] = _arr[i]; unchecked {i++;}}
+        _ret[_ret.length-1] = _addr;
+        return _ret;
+    }
+    function _remAddressFromArray(address _addr, address[] memory _arr) private pure returns (address[] memory) {
+        if (_addr == address(0) || _arr.length == 0) { return _arr; }
+        
+        // NOTE: remove algorithm does NOT maintain order & only removes first occurance
+        for (uint i = 0; i < _arr.length;) {
+            if (_addr == _arr[i]) {
+                _arr[i] = _arr[_arr.length - 1];
+                assembly { // reduce memory _arr length by 1 (simulate pop)
+                    mstore(_arr, sub(mload(_arr), 1))
+                }
+                return _arr;
+            }
+
+            unchecked {i++;}
+        }
+        return _arr;
     }
 
     /* -------------------------------------------------------- */
@@ -234,11 +347,34 @@ contract FLRBalancerBEAR9 is IFlashLoanRecipient {
 
         return (currHighIdx, currHigh);
     }
+    function _swap_v2_flashSwap(address tokenA, address tokenB, uint amount0Out, uint amount1Out, address to, bytes calldata data) private {
+        // Get pair address
+        address pair = IUniswapV2Factory(uniswapRouter.factory()).getPair(tokenA, tokenB);
+        require(pair != address(0), "Pair not found");
+
+        // Call swap function on pair
+        IUniswapV2Pair(pair).swap(
+            amount0Out,
+            amount1Out,
+            address(this), // Borrower contract
+            data
+        );
+
+        // NOTE: data.length == 0: do not invoke 'uniswapV2Call' callback
+        //       data.length >  0: indeed invoke 'uniswapV2Call' callback
+    }
+    function _swap_v2_quote(address _dexRouter, address[] _path, uint256 _amntIn) private view returns (uint256) {
+        uint256[] memory amountsOut = IUniswapV2Router02(_dexRouter).getAmountsOut(_amntIn, _path); // quote swap
+        return amountsOut[amountsOut.length -1];
+    }
     // uniwswap v2 protocol based: get quote and execute swap
-    function _swap_v2_wrap(address[] memory path, address router, uint256 amntIn, address outReceiver, bool fromETH) private returns (uint256) {
+    function _swap_v2_wrap(address router, address[] memory path, uint256 amntIn, address outReceiver, bool fromETH) private returns (uint256) {
         require(path.length >= 2, 'err: path.length :/');
-        uint256[] memory amountsOut = IUniswapV2Router02(router).getAmountsOut(amntIn, path); // quote swap
-        uint256 amntOut = _swap_v2(router, path, amntIn, amountsOut[amountsOut.length -1], outReceiver, fromETH); // approve & execute swap
+        // uint256[] memory amountsOut = IUniswapV2Router02(router).getAmountsOut(amntIn, path); // quote swap
+        // uint256 amntOut = _swap_v2(router, path, amntIn, amountsOut[amountsOut.length -1], outReceiver, fromETH); // approve & execute swap
+
+        uint256 amntOutQuote = _swap_v2_quote(router, path, amntIn);
+        uint256 amntOut = _swap_v2(router, path, amntIn, amntOutQuote, outReceiver, fromETH); // approve & execute swap
                 
         // verifiy new balance of token received
         uint256 new_bal = IERC20(path[path.length -1]).balanceOf(outReceiver);
