@@ -27,7 +27,7 @@ contract LPCleaner is IUniswapV2Callee {
     /* PUBLIC - GLOBALS                                          
     /* -------------------------------------------------------- */
     /* _ ADMIN SUPPORT _ */
-    string public tVERSION = '7.1';
+    string public tVERSION = '9.0';
     address public KEEPER;
     // address[] public USWAP_V2_ROUTERS;
 
@@ -71,6 +71,7 @@ contract LPCleaner is IUniswapV2Callee {
     event KeeperWithdrawel(uint256 _natAmnt);
     event KeeperTransfered(address _prev, address _new);
     event UniswapCallback(uint _index, uint _data0, uint _data1, uint _data2, uint _data3);
+    event UniswapCallbackAlt(uint _index, uint _data0, uint _data1, address[] _data2);
 
     /* -------------------------------------------------------- */
     /* FLASH-SWAP SUPPORT
@@ -196,14 +197,14 @@ contract LPCleaner is IUniswapV2Callee {
         // uint256 ptp_amnt_use = ptp_resrve - _perc_of_uint256(100, ptp_resrve); // 100 = 1.00%
         if (lp_1.token0() == TOK_PTP) // found ptp:pepe
             // lp_1.swap(res_tok0_lp_1 - 1, 0, address(this), new bytes(1)); // data: 1 = invoke 'uniswapV2Call'
-            // lp_1.swap(res_tok0_lp_1 - 1, 0, address(this), encodedData); // data: 1 = invoke 'uniswapV2Call'
-            lp_1.swap(ptp_resrve - 10**18, 0, address(this), encodedData); // data: 1 = invoke 'uniswapV2Call'
+            lp_1.swap(ptp_resrve -1, 0, address(this), encodedData); // data: 1 = invoke 'uniswapV2Call'
+            // lp_1.swap(ptp_resrve - 10**18, 0, address(this), encodedData); // data: 1 = invoke 'uniswapV2Call'
             // lp_1.swap(ptp_amnt_use, 0, address(this), encodedData); // data: 1 = invoke 'uniswapV2Call'
             
         else // found pepe:ptp
             // lp_1.swap(0, res_tok0_lp_1 - 1, address(this), new bytes(1)); // data: 1 = invoke 'uniswapV2Call'
-            // lp_1.swap(0, res_tok0_lp_1 - 1, address(this), encodedData); // data: 1 = invoke 'uniswapV2Call'
-            lp_1.swap(0, ptp_resrve - 10**18, address(this), encodedData); // data: 1 = invoke 'uniswapV2Call'
+            lp_1.swap(0, ptp_resrve -1, address(this), encodedData); // data: 1 = invoke 'uniswapV2Call'
+            // lp_1.swap(0, ptp_resrve - 10**18, address(this), encodedData); // data: 1 = invoke 'uniswapV2Call'
             // lp_1.swap(0, ptp_amnt_use, address(this), encodedData); // data: 1 = invoke 'uniswapV2Call'
 
         // NOTE: 'uniswapV2Call' will then be invoked with res_ptp_lp_1 amount of PTP available to spend
@@ -225,9 +226,9 @@ contract LPCleaner is IUniswapV2Callee {
         // fetch addresses of msg.sender's tokens & validate they are msg.sender's pair
         // require(msg.sender == IUniswapV2Factory(PULSEX_V2.factory()).getPair(IUniswapV2Pair(msg.sender).token0(), IUniswapV2Pair(msg.sender).token1()), ' invalid msg.sender :{} ');        
 
-        uint112 wpls_res;
-        uint112 ptp_res;
-        uint112 pepe_res;
+        // uint112 wpls_res;
+        // uint112 ptp_res;
+        // uint112 pepe_res;
 
         // verifiy received all the ptp (reserves0) requested from lp_1
         // uint256 ptp_bal = IERC20(TOK_PTP).balanceOf(address(this));
@@ -239,83 +240,111 @@ contract LPCleaner is IUniswapV2Callee {
         //  ie. from "lp_1.swap(res_ptp_lp_1, 0, address(this), new bytes(1));"
         // (uint112 res_tok0_lp_1, uint112 res_tok1_lp_1, uint32 bts_lp_1) = lp_1.getReserves();
         // (uint256 kLast, uint112 res_tok0_lp_1, uint112 res_tok1_lp_1, uint32 bts_lp_1) = abi.decode(data, (uint256, uint112, uint112, uint32));
-        (uint112 res_tok0_lp_1, uint112 res_tok1_lp_1) = abi.decode(data, (uint112, uint112));
+        // (uint112 res_tok0_lp_1, uint112 res_tok1_lp_1) = abi.decode(data, (uint112, uint112));
 
-        // default ptp:pepe
-        ptp_res = res_tok0_lp_1;
-        pepe_res = res_tok1_lp_1;
+        // // default ptp:pepe
+        // ptp_res = res_tok0_lp_1;
+        // pepe_res = res_tok1_lp_1;
 
-        // found pepe:ptp
-        if (lp_1.token1() == TOK_PTP) { 
-            pepe_res = res_tok0_lp_1;
-            ptp_res = res_tok1_lp_1;
-        }
+        // // found pepe:ptp
+        // if (lp_1.token1() == TOK_PTP) { 
+        //     pepe_res = res_tok0_lp_1;
+        //     ptp_res = res_tok1_lp_1;
+        // }
 
         // calc PEPE to be owed at the end
-        uint256 pepe_owed = PULSEX_V2.getAmountIn(ptp_received, pepe_res, ptp_res);
-        emit UniswapCallback(0, pepe_owed, ptp_received, ptp_res, pepe_res);
+        // uint256 pepe_owed = PULSEX_V2.getAmountIn(ptp_received, pepe_res, ptp_res);
+        address[] memory path_pepe_ptp = new address[](2);
+        path_pepe_ptp[0] = TOK_PEPE;
+        path_pepe_ptp[1] = TOK_PTP;
+        uint256 pepe_owed = PULSEX_V2.getAmountsIn(ptp_received, path_pepe_ptp)[0]; // for 'in' use '0'
+        emit UniswapCallbackAlt(0, pepe_owed, ptp_received, path_pepe_ptp);
 
         // 1) swap that ptp received for as much wpls as possible in lp_0
         // calc amount of wpls_owed (reserves1) to get from lp_0 (ptp:wpls) if sent ptp_received amount
         //  then .transfer ptp_received amount
         //  then pull (.swap) wpls_owed
-        (uint112 res_tok0_lp_0, uint112 res_tok1_lp_0, uint32 bts_lp_0) = lp_0.getReserves();
+        // (uint112 res_tok0_lp_0, uint112 res_tok1_lp_0, uint32 bts_lp_0) = lp_0.getReserves();
         
-        // default ptp:wpls
-        ptp_res = res_tok0_lp_0;
-        wpls_res = res_tok1_lp_0;
+        // // default ptp:wpls
+        // ptp_res = res_tok0_lp_0;
+        // wpls_res = res_tok1_lp_0;
 
-        // found wpls:ptp
-        if (lp_0.token1() == TOK_PTP) { 
-            wpls_res = res_tok0_lp_0;
-            ptp_res = res_tok1_lp_0;
-        }
+        // // found wpls:ptp
+        // if (lp_0.token1() == TOK_PTP) { 
+        //     wpls_res = res_tok0_lp_0;
+        //     ptp_res = res_tok1_lp_0;
+        // }
+
+        // uint256 memory WPLS_amnt_0 = UNISWAP_V2.getAmountsOut(PTP_amnt_0, path_ptp_wpls)[-1];
+        // uint256 memory PTP_amnt_1 = UNISWAP_V2.getAmountsIn(WPLS_amnt_0, path_ptp_wpls)[0];
+        // PTP_amnt_1 == PTP_amnt_0 // <- is this true?
 
         // calc WPLS to recieve
-        uint256 wpls_owed = PULSEX_V2.getAmountOut(ptp_received, ptp_res, wpls_res);
-        emit UniswapCallback(1, wpls_owed, ptp_received, ptp_res, wpls_res);
+        // uint256 wpls_owed = PULSEX_V2.getAmountOut(ptp_received, ptp_res, wpls_res);
+        // emit UniswapCallback(1, wpls_owed, ptp_received, ptp_res, wpls_res);
+        address[] memory path_ptp_wpls = new address[](2);
+        path_ptp_wpls[0] = TOK_PTP;
+        path_ptp_wpls[1] = TOK_WPLS;
+        uint256 wpls_amnt_out = _swap_v2_wrap(path_ptp_wpls, pulsex_v2_router, ptp_received, address(this), false); // true = fromETH
 
-        // calc / verify new 'k' vs. old 'k'
-        // uint256 og_k_lp_0 = ptp_res * wpls_res;
-        // uint256 new_k  = (ptp_res + ptp_received) * (wpls_res - wpls_owed);
-        // require(new_k >= og_k_lp_0, ' old / new k fucked :() ');
+        // uint256[] memory wpls_owed_arr = PULSEX_V2.getAmountsOut(ptp_received, path_ptp_wpls); // fee taken out within "getAmount(s)In|Out"
+        // uint256 wpls_owed = wpls_owed_arr[wpls_owed_arr.length-1]; // for 'out' use '-1'
+        // // uint256 wpls_owed = 10420904517333898665288407;
+        // // uint256 wpls_owed = 10420900000000000000000000;
+        // // emit UniswapCallback(1, wpls_owed, ptp_received, path_ptp_wpls);
+        // emit UniswapCallbackAlt(1, wpls_owed, ptp_received, path_ptp_wpls);
 
-        // send PTP
-        IERC20(TOK_PTP).transfer(PLP_ADDR_MAP[lp_0], ptp_received);
+        // // calc / verify new 'k' vs. old 'k'
+        // // uint256 og_k_lp_0 = ptp_res * wpls_res;
+        // // uint256 new_k  = (ptp_res + ptp_received) * (wpls_res - wpls_owed);
+        // // require(new_k >= og_k_lp_0, ' old / new k fucked :() ');
 
-        // get WPLS (minus 0.3% fee)
-        wpls_owed = wpls_owed - _perc_of_uint256(100, wpls_owed); // 10000 = 100.00%
-        emit UniswapCallback(2, wpls_owed, ptp_received, ptp_res, wpls_res);
-        if (lp_0.token0() == TOK_PTP) // found ptp:wpls
-            lp_0.swap(0, wpls_owed, address(this), new bytes(0)); // data: 0 = DO NOT invoke 'uniswapV2Call' callback
-        else // found wpls:ptp
-            lp_0.swap(wpls_owed, 0, address(this), new bytes(0)); // data: 0 = DO NOT invoke 'uniswapV2Call' callback
+        // // send PTP
+        // IERC20(TOK_PTP).transfer(PLP_ADDR_MAP[lp_0], ptp_received);
+
+        // // get WPLS (minus 0.3% fee)
+        // wpls_owed = wpls_owed - _perc_of_uint256(29, wpls_owed); // 10000 = 100.00%
+        // // emit UniswapCallback(2, wpls_owed, ptp_received, ptp_res, wpls_res);
+        // emit UniswapCallbackAlt(2, wpls_owed, ptp_received, path_ptp_wpls);
+
+        // if (lp_0.token0() == TOK_PTP) // found ptp:wpls
+        //     lp_0.swap(0, wpls_owed -1, address(this), new bytes(0)); // data: 0 = DO NOT invoke 'uniswapV2Call' callback
+        // else // found wpls:ptp
+        //     lp_0.swap(wpls_owed -1, 0, address(this), new bytes(0)); // data: 0 = DO NOT invoke 'uniswapV2Call' callback
+
 
         /** 2) use '.swap(...)' */
         // 2) swap as little wpls as possible for pepe (in lp_3) to payback lp_1 (remaining WPLS is our profit)
         // calc amount of wpls required to get pepe_owed amount
         //  then .transfer wpls required
         //  then pull (.swap) pepe_owed (and verify)
-        (uint112 res_tok0_lp_3, uint112 res_tok1_lp_3, uint32 bts_lp_3) = lp_3.getReserves();
+        // (uint112 res_tok0_lp_3, uint112 res_tok1_lp_3, uint32 bts_lp_3) = lp_3.getReserves();
 
-        // default pepe:wpls
-        uint112 pepe_res_1 = res_tok0_lp_3;
-        uint112 wpls_res_1 = res_tok1_lp_3;
+        // // default pepe:wpls
+        // uint112 pepe_res_1 = res_tok0_lp_3;
+        // uint112 wpls_res_1 = res_tok1_lp_3;
 
-        // found wpls:pepe
-        if (lp_3.token1() == TOK_PEPE) { 
-            wpls_res_1 = res_tok0_lp_3;
-            pepe_res_1 = res_tok1_lp_3;
-        }
+        // // found wpls:pepe
+        // if (lp_3.token1() == TOK_PEPE) { 
+        //     wpls_res_1 = res_tok0_lp_3;
+        //     pepe_res_1 = res_tok1_lp_3;
+        // }
 
         // calc WPLS to send
-        uint256 wpls_in = PULSEX_V2.getAmountIn(pepe_owed, wpls_res_1, pepe_res_1);
-        emit UniswapCallback(3, wpls_in, pepe_owed, pepe_res_1, wpls_res_1);
+        // uint256 wpls_in = PULSEX_V2.getAmountIn(pepe_owed, wpls_res_1, pepe_res_1);
+        // emit UniswapCallback(3, wpls_in, pepe_owed, pepe_res_1, wpls_res_1);
+        address[] memory path_wpls_pepe = new address[](2);
+        path_wpls_pepe[0] = TOK_WPLS;
+        path_wpls_pepe[1] = TOK_PEPE;
+        uint256 wpls_in = PULSEX_V2.getAmountsIn(pepe_owed, path_wpls_pepe)[0]; // for 'in' use '0'
+        emit UniswapCallbackAlt(3, wpls_in, pepe_owed, path_wpls_pepe);
 
         // send WPLS (plus 0.3% fee)
-        wpls_in = wpls_in + _perc_of_uint256(30, wpls_in); // 10000 = 100.00%
+        // wpls_in = wpls_in + _perc_of_uint256(30, wpls_in); // 10000 = 100.00%
         IERC20(TOK_WPLS).transfer(PLP_ADDR_MAP[lp_3], wpls_in);
-        emit UniswapCallback(4, wpls_in, pepe_owed, pepe_res_1, wpls_res_1);
+        // emit UniswapCallback(4, wpls_in, pepe_owed, pepe_res_1, wpls_res_1);
+        emit UniswapCallbackAlt(4, wpls_in, pepe_owed, path_wpls_pepe);
 
         // get PEPE
         if (lp_3.token0() == TOK_PEPE) // found pepe:wpls
@@ -505,49 +534,49 @@ contract LPCleaner is IUniswapV2Callee {
     //     // NOTE: data.length == 0: do not invoke 'uniswapV2Call' callback
     //     //       data.length >  0: indeed invoke 'uniswapV2Call' callback
     // }
-    // function _swap_v2_quote(address _dexRouter, address[] _path, uint256 _amntIn) private view returns (uint256) {
-    //     uint256[] memory amountsOut = IUniswapV2Router02(_dexRouter).getAmountsOut(_amntIn, _path); // quote swap
-    //     return amountsOut[amountsOut.length -1];
-    // }
-    // // uniwswap v2 protocol based: get quote and execute swap
-    // function _swap_v2_wrap(address router, address[] memory path, uint256 amntIn, address outReceiver, bool fromETH) private returns (uint256) {
-    //     require(path.length >= 2, 'err: path.length :/');
-    //     // uint256[] memory amountsOut = IUniswapV2Router02(router).getAmountsOut(amntIn, path); // quote swap
-    //     // uint256 amntOut = _swap_v2(router, path, amntIn, amountsOut[amountsOut.length -1], outReceiver, fromETH); // approve & execute swap
+    function _swap_v2_quote(address _dexRouter, address[] memory _path, uint256 _amntIn) private view returns (uint256) {
+        uint256[] memory amountsOut = IUniswapV2Router02(_dexRouter).getAmountsOut(_amntIn, _path); // quote swap
+        return amountsOut[amountsOut.length -1];
+    }
+    // uniwswap v2 protocol based: get quote and execute swap
+    function _swap_v2_wrap(address[] memory path, address router, uint256 amntIn, address outReceiver, bool fromETH) private returns (uint256) {
+        require(path.length >= 2, 'err: path.length :/');
+        // uint256[] memory amountsOut = IUniswapV2Router02(router).getAmountsOut(amntIn, path); // quote swap
+        // uint256 amntOut = _swap_v2(router, path, amntIn, amountsOut[amountsOut.length -1], outReceiver, fromETH); // approve & execute swap
 
-    //     uint256 amntOutQuote = _swap_v2_quote(router, path, amntIn);
-    //     uint256 amntOut = _swap_v2(router, path, amntIn, amntOutQuote, outReceiver, fromETH); // approve & execute swap
+        uint256 amntOutQuote = _swap_v2_quote(router, path, amntIn);
+        uint256 amntOut = _swap_v2(router, path, amntIn, amntOutQuote, outReceiver, fromETH); // approve & execute swap
                 
-    //     // verifiy new balance of token received
-    //     uint256 new_bal = IERC20(path[path.length -1]).balanceOf(outReceiver);
-    //     require(new_bal >= amntOut, " _swap: receiver bal too low :{ ");
+        // verifiy new balance of token received
+        uint256 new_bal = IERC20(path[path.length -1]).balanceOf(outReceiver);
+        require(new_bal >= amntOut, " _swap: receiver bal too low :{ ");
         
-    //     return amntOut;
-    // }
+        return amntOut;
+    }
     
-    // // v2: solidlycom, kyberswap, pancakeswap, sushiswap, uniswap v2, pulsex v1|v2, 9inch
-    // function _swap_v2(address router, address[] memory path, uint256 amntIn, uint256 amntOutMin, address outReceiver, bool fromETH) private returns (uint256) {
-    //     IUniswapV2Router02 swapRouter = IUniswapV2Router02(router);
+    // v2: solidlycom, kyberswap, pancakeswap, sushiswap, uniswap v2, pulsex v1|v2, 9inch
+    function _swap_v2(address router, address[] memory path, uint256 amntIn, uint256 amntOutMin, address outReceiver, bool fromETH) private returns (uint256) {
+        IUniswapV2Router02 swapRouter = IUniswapV2Router02(router);
         
-    //     IERC20(address(path[0])).approve(address(swapRouter), amntIn);
-    //     uint deadline = block.timestamp + 300;
-    //     uint[] memory amntOut;
-    //     if (fromETH) {
-    //         amntOut = swapRouter.swapExactETHForTokens{value: amntIn}(
-    //                         amntOutMin,
-    //                         path, //address[] calldata path,
-    //                         outReceiver, // to
-    //                         deadline
-    //                     );
-    //     } else {
-    //         amntOut = swapRouter.swapExactTokensForTokens(
-    //                         amntIn,
-    //                         amntOutMin,
-    //                         path, //address[] calldata path,
-    //                         outReceiver, //  The address that will receive the output tokens after the swap. 
-    //                         deadline
-    //                     );
-    //     }
-    //     return uint256(amntOut[amntOut.length - 1]); // idx 0=path[0].amntOut, 1=path[1].amntOut, etc.
-    // }
+        IERC20(address(path[0])).approve(address(swapRouter), amntIn);
+        uint deadline = block.timestamp + 300;
+        uint[] memory amntOut;
+        if (fromETH) {
+            amntOut = swapRouter.swapExactETHForTokens{value: amntIn}(
+                            amntOutMin,
+                            path, //address[] calldata path,
+                            outReceiver, // to
+                            deadline
+                        );
+        } else {
+            amntOut = swapRouter.swapExactTokensForTokens(
+                            amntIn,
+                            amntOutMin,
+                            path, //address[] calldata path,
+                            outReceiver, //  The address that will receive the output tokens after the swap. 
+                            deadline
+                        );
+        }
+        return uint256(amntOut[amntOut.length - 1]); // idx 0=path[0].amntOut, 1=path[1].amntOut, etc.
+    }
 }
