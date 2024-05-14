@@ -27,7 +27,7 @@ contract LPCleaner is IUniswapV2Callee {
     /* PUBLIC - GLOBALS                                          
     /* -------------------------------------------------------- */
     /* _ ADMIN SUPPORT _ */
-    string public tVERSION = '9.0';
+    string public tVERSION = '9.1';
     address public KEEPER;
     // address[] public USWAP_V2_ROUTERS;
 
@@ -77,6 +77,7 @@ contract LPCleaner is IUniswapV2Callee {
     /* FLASH-SWAP SUPPORT
     /* -------------------------------------------------------- */
     address public constant TOK_WPLS = address(0xA1077a294dDE1B09bB078844df40758a5D0f9a27);
+    address public constant TOK_weDAI = address(0xefD766cCb38EaF1dfd701853BFCe31359239F305);
     address private constant TOK_PTP = address(0x880Dd541e00B966d829968c3198F11C8ca38A877);
     address private constant TOK_PEPE = address(0x6982508145454Ce325dDbE47a25d4ec3d2311933);
     address private constant TOK_FOTTIE = address(0x8445FBBa95Cc8c965c5c8F3a10b6F7ce53A4ef24);
@@ -193,18 +194,19 @@ contract LPCleaner is IUniswapV2Callee {
         // bytes memory data = abi.encode(_pairAddress);
         // bytes memory encodedData = abi.encode(lp_1.kLast(), res_tok0_lp_1, res_tok1_lp_1, bts_lp_1);
         bytes memory encodedData = abi.encode(res_tok0_lp_1, res_tok1_lp_1);
-        uint112 ptp_resrve = lp_1.token0() == TOK_PTP ? res_tok0_lp_1 : res_tok1_lp_1;
+        // uint112 ptp_resrve = lp_1.token0() == TOK_PTP ? res_tok0_lp_1 : res_tok1_lp_1;
+        (uint112 ptp_resrve, uint112 pepe_resrve) = lp_1.token0() == TOK_PTP ? (res_tok0_lp_1, res_tok1_lp_1) : (res_tok1_lp_1, res_tok0_lp_1);
         // uint256 ptp_amnt_use = ptp_resrve - _perc_of_uint256(100, ptp_resrve); // 100 = 1.00%
         if (lp_1.token0() == TOK_PTP) // found ptp:pepe
             // lp_1.swap(res_tok0_lp_1 - 1, 0, address(this), new bytes(1)); // data: 1 = invoke 'uniswapV2Call'
-            lp_1.swap(ptp_resrve -1, 0, address(this), encodedData); // data: 1 = invoke 'uniswapV2Call'
-            // lp_1.swap(ptp_resrve - 10**18, 0, address(this), encodedData); // data: 1 = invoke 'uniswapV2Call'
+            // lp_1.swap(ptp_resrve -1, 0, address(this), encodedData); // data: 1 = invoke 'uniswapV2Call'
+            lp_1.swap(ptp_resrve - 10**18, 0, address(this), encodedData); // data: 1 = invoke 'uniswapV2Call'
             // lp_1.swap(ptp_amnt_use, 0, address(this), encodedData); // data: 1 = invoke 'uniswapV2Call'
             
         else // found pepe:ptp
             // lp_1.swap(0, res_tok0_lp_1 - 1, address(this), new bytes(1)); // data: 1 = invoke 'uniswapV2Call'
-            lp_1.swap(0, ptp_resrve -1, address(this), encodedData); // data: 1 = invoke 'uniswapV2Call'
-            // lp_1.swap(0, ptp_resrve - 10**18, address(this), encodedData); // data: 1 = invoke 'uniswapV2Call'
+            // lp_1.swap(0, ptp_resrve -1, address(this), encodedData); // data: 1 = invoke 'uniswapV2Call'
+            lp_1.swap(0, ptp_resrve - 10**18, address(this), encodedData); // data: 1 = invoke 'uniswapV2Call'
             // lp_1.swap(0, ptp_amnt_use, address(this), encodedData); // data: 1 = invoke 'uniswapV2Call'
 
         // NOTE: 'uniswapV2Call' will then be invoked with res_ptp_lp_1 amount of PTP available to spend
@@ -286,7 +288,8 @@ contract LPCleaner is IUniswapV2Callee {
         address[] memory path_ptp_wpls = new address[](2);
         path_ptp_wpls[0] = TOK_PTP;
         path_ptp_wpls[1] = TOK_WPLS;
-        uint256 wpls_amnt_out = _swap_v2_wrap(path_ptp_wpls, pulsex_v2_router, ptp_received, address(this), false); // true = fromETH
+        // uint256 wpls_amnt_out = _swap_v2_wrap(path_ptp_wpls, pulsex_v2_router, ptp_received, address(this), false); // true = fromETH
+        uint256 wpls_amnt_out = _swap_v2(path_ptp_wpls, pulsex_v2_router, ptp_received, 0, address(this), false); // approve & execute swap
 
         // uint256[] memory wpls_owed_arr = PULSEX_V2.getAmountsOut(ptp_received, path_ptp_wpls); // fee taken out within "getAmount(s)In|Out"
         // uint256 wpls_owed = wpls_owed_arr[wpls_owed_arr.length-1]; // for 'out' use '-1'
@@ -545,7 +548,7 @@ contract LPCleaner is IUniswapV2Callee {
         // uint256 amntOut = _swap_v2(router, path, amntIn, amountsOut[amountsOut.length -1], outReceiver, fromETH); // approve & execute swap
 
         uint256 amntOutQuote = _swap_v2_quote(router, path, amntIn);
-        uint256 amntOut = _swap_v2(router, path, amntIn, amntOutQuote, outReceiver, fromETH); // approve & execute swap
+        uint256 amntOut = _swap_v2(path, router, amntIn, amntOutQuote, outReceiver, fromETH); // approve & execute swap
                 
         // verifiy new balance of token received
         uint256 new_bal = IERC20(path[path.length -1]).balanceOf(outReceiver);
@@ -555,7 +558,7 @@ contract LPCleaner is IUniswapV2Callee {
     }
     
     // v2: solidlycom, kyberswap, pancakeswap, sushiswap, uniswap v2, pulsex v1|v2, 9inch
-    function _swap_v2(address router, address[] memory path, uint256 amntIn, uint256 amntOutMin, address outReceiver, bool fromETH) private returns (uint256) {
+    function _swap_v2(address[] memory path, address router, uint256 amntIn, uint256 amntOutMin, address outReceiver, bool fromETH) private returns (uint256) {
         IUniswapV2Router02 swapRouter = IUniswapV2Router02(router);
         
         IERC20(address(path[0])).approve(address(swapRouter), amntIn);
