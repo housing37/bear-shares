@@ -27,29 +27,14 @@ contract LPCleaner is IUniswapV2Callee {
     /* PUBLIC - GLOBALS                                          
     /* -------------------------------------------------------- */
     /* _ ADMIN SUPPORT _ */
-    string public tVERSION = '9.1';
+    string public tVERSION = '10.0';
     address public KEEPER;
     // address[] public USWAP_V2_ROUTERS;
+    address public constant BURN_ADDR = address(0x0000000000000000000000000000000000000369);
 
     /* -------------------------------------------------------- */
     /* PRIVATE - FLASHLOANS SUPPORT                                 
-    /* -------------------------------------------------------- */
-    // ref: https://docs.balancer.fi/reference/contracts/flash-loans.html#example-code
-    // IVault private constant BALANCER_VAULT = IVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
-        // pWETH: 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 -> 203658647860394116213752201 / 10**18 == 203658647.86039412 ~= $12,228.2445082
-        // pUSDC: 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48 -> 23937491402753 / 10**6 == 23937491.402753 ~= $74,767.781978741
-        // pWBTC: 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599 -> 5994742939 / 10**8 == 59.94742939 ~= $13,208.5705829
-        // pUSDT: 0xdAC17F958D2ee523a2206206994597C13D831ec7 -> 13296690613518 / 10**6 == 13296690.613518 ~= $39,213.741269448
-
-        // pDOLA: 0x865377367054516e17014CcdED1e7d814EDC9ce4 -> 30614508079920854526255527 / 10**18 ~= $236.198849851
-        // pAAVE: 0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9 -> 2114928347848533872595 / 10**18 ~= $280.453860038
-
-        // ERROR: LIQUIDITY < BALANCE
-        // pBAL: 0xba100000625a3754423978a60c9317c58a424e3D ->  3946496821522180948639451 / 10**18 == 3946496.821522181 ~= $41,153.679623988
-        // prETH: 0xae78736cd615f374d3085123a210448e74fc6393 -> 27843230642023975590639 / 10**18 ~= $8,067.713537987
-    address public constant BURN_ADDR = address(0x0000000000000000000000000000000000000369);
-    // address private constant TOK_WPLS = address(0xA1077a294dDE1B09bB078844df40758a5D0f9a27);
-    
+    /* -------------------------------------------------------- */    
     // address private constant TOK_ATROPA = address(0xCc78A0acDF847A2C1714D2A925bB4477df5d48a6);
     // address private constant TOK_TSFi = address(0x4243568Fa2bbad327ee36e06c16824cAd8B37819);
     // address private constant TOK_R = address(0x557F7e30aA6D909Cfe8a229A4CB178ab186EC622);
@@ -78,6 +63,9 @@ contract LPCleaner is IUniswapV2Callee {
     /* -------------------------------------------------------- */
     address public constant TOK_WPLS = address(0xA1077a294dDE1B09bB078844df40758a5D0f9a27);
     address public constant TOK_weDAI = address(0xefD766cCb38EaF1dfd701853BFCe31359239F305);
+    address public constant TOK_PRDIP = address(0xeB2CEed77147893Ba8B250c796c2d4EF02a72B68);
+    address public constant TOK_BEAR = address(0xd6c31bA0754C4383A41c0e9DF042C62b5e918f6d);
+
     address private constant TOK_PTP = address(0x880Dd541e00B966d829968c3198F11C8ca38A877);
     address private constant TOK_PEPE = address(0x6982508145454Ce325dDbE47a25d4ec3d2311933);
     address private constant TOK_FOTTIE = address(0x8445FBBa95Cc8c965c5c8F3a10b6F7ce53A4ef24);
@@ -86,11 +74,6 @@ contract LPCleaner is IUniswapV2Callee {
     address private constant PLP_PTP_PEPE = address(0xb2E488CC039760F1efc886d4A8eB5b457BBE3060); // pulsex v2
     address private constant PLP_PEPE_WPLS = address(0x11659a752AC07452B9F139B897c917338e2dFB16); // pulsex v2
     address private constant PLP_PTP_FOTTIE = address(0xfCC81f1fA6C0B700d8D598a4f391f460fD9BD66C); // pulsex v2
-
-    // IUniswapV2Pair lp_0 = PLP_ADDR_MAP[PLP_PTP_WPLS];
-    // IUniswapV2Pair lp_1 = PLP_ADDR_MAP[PLP_PTP_PEPE];
-    // IUniswapV2Pair lp_2 = PLP_ADDR_MAP[PLP_PTP_FOTTIE];
-    // IUniswapV2Pair lp_3 = PLP_ADDR_MAP[PLP_PEPE_WPLS];
 
     IUniswapV2Pair lp_0 = IUniswapV2Pair(PLP_PTP_WPLS);
     IUniswapV2Pair lp_1 = IUniswapV2Pair(PLP_PTP_PEPE);
@@ -262,6 +245,13 @@ contract LPCleaner is IUniswapV2Callee {
         uint256 pepe_owed = PULSEX_V2.getAmountsIn(ptp_received, path_pepe_ptp)[0]; // for 'in' use '0'
         emit UniswapCallbackAlt(0, pepe_owed, ptp_received, path_pepe_ptp);
 
+        // TEST OG SWAPPING (inside flash swap callback, w/ non-related tokens & LP)
+        address[] memory path_dai_wpls = new address[](2);
+        path_dai_wpls[0] = TOK_weDAI;
+        path_dai_wpls[1] = TOK_WPLS;
+        uint256 amnt_dai_in = 10; // NOTE: required to send 10 TOK_weDAI to this contract | address(this) 
+        uint256 wpls_amnt_out_test = _swap_v2(path_dai_wpls, pulsex_v2_router, amnt_dai_in, 0, address(this), false); // approve & execute swap
+
         // 1) swap that ptp received for as much wpls as possible in lp_0
         // calc amount of wpls_owed (reserves1) to get from lp_0 (ptp:wpls) if sent ptp_received amount
         //  then .transfer ptp_received amount
@@ -377,45 +367,6 @@ contract LPCleaner is IUniswapV2Callee {
         IERC20(TOK_PEPE).transfer(PLP_ADDR_MAP[lp_1], pepe_owed);
     }
 
-    // uniwswap v2 protocol based: get quote and execute swap
-    // function _swap_v2_wrap(address[] memory path, address router, uint256 amntIn, address outReceiver, bool fromETH) private returns (uint256) {
-    //     require(path.length >= 2, 'err: path.length :/');
-    //     uint256[] memory amountsOut = IUniswapV2Router02(router).getAmountsOut(amntIn, path); // quote swap
-    //     uint256 amntOut = _swap_v2(router, path, amntIn, amountsOut[amountsOut.length -1], outReceiver, fromETH); // approve & execute swap
-                
-    //     // verifiy new balance of token received
-    //     uint256 new_bal = IERC20(path[path.length -1]).balanceOf(outReceiver);
-    //     require(new_bal >= amntOut, " _swap: receiver bal too low :{ ");
-        
-    //     return amntOut;
-    // }
-    
-    // // v2: solidlycom, kyberswap, pancakeswap, sushiswap, uniswap v2, pulsex v1|v2, 9inch
-    // function _swap_v2(address router, address[] memory path, uint256 amntIn, uint256 amntOutMin, address outReceiver, bool fromETH) private returns (uint256) {
-    //     IUniswapV2Router02 swapRouter = IUniswapV2Router02(router);
-        
-    //     IERC20(address(path[0])).approve(address(swapRouter), amntIn);
-    //     uint deadline = block.timestamp + 300;
-    //     uint[] memory amntOut;
-    //     if (fromETH) {
-    //         amntOut = swapRouter.swapExactETHForTokens{value: amntIn}(
-    //                         amntOutMin,
-    //                         path, //address[] calldata path,
-    //                         outReceiver, // to
-    //                         deadline
-    //                     );
-    //     } else {
-    //         amntOut = swapRouter.swapExactTokensForTokens(
-    //                         amntIn,
-    //                         amntOutMin,
-    //                         path, //address[] calldata path,
-    //                         outReceiver, //  The address that will receive the output tokens after the swap. 
-    //                         deadline
-    //                     );
-    //     }
-    //     return uint256(amntOut[amntOut.length - 1]); // idx 0=path[0].amntOut, 1=path[1].amntOut, etc.
-    // }
-
     /* -------------------------------------------------------- */
     /* PRIVATE - SUPPORTING                                     */
     /* -------------------------------------------------------- */
@@ -460,83 +411,6 @@ contract LPCleaner is IUniswapV2Callee {
     /* -------------------------------------------------------- */
     /* PRIVATE - DEX SUPPORT                                    
     /* -------------------------------------------------------- */
-    // function _normalizeStableAmnt(uint8 _fromDecimals, uint256 _usdAmnt, uint8 _toDecimals) private pure returns (uint256) {
-    //     require(_fromDecimals > 0 && _toDecimals > 0, 'err: invalid _from|toDecimals');
-    //     if (_fromDecimals == _toDecimals) {
-    //         return _usdAmnt;
-    //     } else {
-    //         if (_fromDecimals > _toDecimals) { // _fromDecimals has more 0's
-    //             uint256 scalingFactor = 10 ** (_fromDecimals - _toDecimals); // get the diff
-    //             return _usdAmnt / scalingFactor; // decrease # of 0's in _usdAmnt
-    //         }
-    //         else { // _fromDecimals has less 0's
-    //             uint256 scalingFactor = 10 ** (_toDecimals - _fromDecimals); // get the diff
-    //             return _usdAmnt * scalingFactor; // increase # of 0's in _usdAmnt
-    //         }
-    //     }
-    // }
-    // function _exeSwapPlsForStable(uint256 _plsAmnt, address _usdStable) private returns (uint256) {
-    //     address[] memory pls_stab_path = new address[](2);
-    //     pls_stab_path[0] = TOK_WPLS;
-    //     pls_stab_path[1] = _usdStable;
-    //     (uint8 rtrIdx, uint256 stab_amnt) = _best_swap_v2_router_idx_quote(pls_stab_path, _plsAmnt, USWAP_V2_ROUTERS);
-    //     uint256 stab_amnt_out = _swap_v2_wrap(pls_stab_path, USWAP_V2_ROUTERS[rtrIdx], _plsAmnt, address(this), true); // true = fromETH
-    //     stab_amnt_out = _normalizeStableAmnt(USD_STABLE_DECIMALS[_usdStable], stab_amnt_out, decimals());
-    //     return stab_amnt_out;
-    // }
-    // function _exeSwapStableForTok(uint256 _usdAmnt, address[] memory _stab_tok_path) private returns (uint256) {
-    //     address usdStable = _stab_tok_path[0]; // required: _stab_tok_path[0] must be a stable
-    //     uint256 usdAmnt_ = _normalizeStableAmnt(decimals(), _usdAmnt, USD_STABLE_DECIMALS[usdStable]);
-    //     (uint8 rtrIdx, uint256 tok_amnt) = _best_swap_v2_router_idx_quote(_stab_tok_path, usdAmnt_, USWAP_V2_ROUTERS);
-
-    //     // NOTE: algo to account for contracts unable to be a receiver of its own token in UniswapV2Pool.sol
-    //     // if out token in _stab_tok_path is BST, then swap w/ SWAP_DELEGATE as reciever,
-    //     //   and then get tok_amnt_out from delegate (USER_maintenance)
-    //     // else, swap with BST address(this) as receiver 
-    //     if (_stab_tok_path[_stab_tok_path.length-1] == address(this))  {
-    //         uint256 tok_amnt_out = _swap_v2_wrap(_stab_tok_path, USWAP_V2_ROUTERS[rtrIdx], usdAmnt_, SWAP_DELEGATE, false); // true = fromETH
-    //         SWAPD.USER_maintenance(tok_amnt_out, _stab_tok_path[_stab_tok_path.length-1]);
-    //         return tok_amnt_out;
-    //     } else {
-    //         uint256 tok_amnt_out = _swap_v2_wrap(_stab_tok_path, USWAP_V2_ROUTERS[rtrIdx], usdAmnt_, address(this), false); // true = fromETH
-    //         return tok_amnt_out;
-    //     }
-    // }
-    // // uniswap v2 protocol based: get router w/ best quote in 'uswapV2routers'
-    // function _best_swap_v2_router_idx_quote(address[] memory path, uint256 amount, address[] memory _routers) private view returns (uint8, uint256) {
-    //     uint8 currHighIdx = 37;
-    //     uint256 currHigh = 0;
-    //     for (uint8 i = 0; i < _routers.length;) {
-    //         uint256[] memory amountsOut = IUniswapV2Router02(_routers[i]).getAmountsOut(amount, path); // quote swap
-    //         if (amountsOut[amountsOut.length-1] > currHigh) {
-    //             currHigh = amountsOut[amountsOut.length-1];
-    //             currHighIdx = i;
-    //         }
-
-    //         // NOTE: unchecked, never more than 255 (_routers)
-    //         unchecked {
-    //             i++;
-    //         }
-    //     }
-
-    //     return (currHighIdx, currHigh);
-    // }
-    // function _swap_v2_flashSwap(address tokenA, address tokenB, uint amount0Out, uint amount1Out, address to, bytes calldata data) private {
-    //     // Get pair address
-    //     address pair = IUniswapV2Factory(uniswapRouter.factory()).getPair(tokenA, tokenB);
-    //     require(pair != address(0), "Pair not found");
-
-    //     // Call swap function on pair
-    //     IUniswapV2Pair(pair).swap(
-    //         amount0Out,
-    //         amount1Out,
-    //         address(this), // Borrower contract
-    //         data
-    //     );
-
-    //     // NOTE: data.length == 0: do not invoke 'uniswapV2Call' callback
-    //     //       data.length >  0: indeed invoke 'uniswapV2Call' callback
-    // }
     function _swap_v2_quote(address _dexRouter, address[] memory _path, uint256 _amntIn) private view returns (uint256) {
         uint256[] memory amountsOut = IUniswapV2Router02(_dexRouter).getAmountsOut(_amntIn, _path); // quote swap
         return amountsOut[amountsOut.length -1];
