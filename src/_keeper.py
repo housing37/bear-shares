@@ -21,7 +21,7 @@ import _abi, _gen_pls_key
 from ethereum.abi import encode_abi, decode_abi # pip install ethereum
 # from _constants import *
 
-DEBUG_LEVEL = 3
+DEBUG_LEVEL = 0
 LST_CONTR_ABI_BIN = [
     "../bin/contracts/BearSharesTrinity",
 ]
