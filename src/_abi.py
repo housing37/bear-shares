@@ -4,6 +4,25 @@ cStrDivider = '#================================================================
 print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globals', cStrDivider, sep='\n')
 cStrDivider_1 = '#----------------------------------------------------------------#'
 
+UniswapFlashQuery_FUNC_MAP_READ = {
+    # read functions     
+	"getPairsByIndexRange(address,address,uint256,uint256)": ["6149de9c", ['address','address','uint256','uint256'], ['address[3][]','uint256[5][]']],
+	"getPairsByIndexRange_OG(address,uint256,uint256)": ["a09bdbdc", ['address','uint256','uint256'], ['address[3][]']],   
+    "getReservesByPairs(address[])": ["4dbf0f39", ['address[]'], ['uint256[3][]']],
+    
+	# legacy
+ 	"#-----------------------#": ["xxxxxxxx", [], []], 
+ 	"KEEPER()": ["862a179e", [], ['address']],    
+    "TOK_WPLS()": ["fa4a9870", [], ['address']],
+    "BURN_ADDR()": ["783028a9", [], ['address']],
+    "tVERSION()": ["9a60f330", [], ['string']],
+}
+UniswapFlashQuery_FUNC_MAP_WRITE = {
+    # "getPairsByIndexRange(address,address,uint256,uint256)": ["6149de9c", ['address','address','uint256','uint256'], ['address[][]','uint256[][]']],
+	# "getPairsByIndexRange_OG(address,uint256,uint256)": ["a09bdbdc", ['address','uint256','uint256'], ['address[][]']],
+	"#-----------------------#": ["xxxxxxxx", [], []], 
+}
+    
 LPCleaner_FUNC_MAP_READ = {
     # read functions        
 	# legacy

@@ -306,7 +306,7 @@ def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_
     #     print(f"uint[{i}]: {val}")
 
     decoded_value_return = decode_abi(_lst_ret_types, return_val)
-    print(f'decoded_value_return', *decoded_value_return, sep='\n ')
+    # print(f'decoded_value_return', *decoded_value_return, sep='\n ')
     hex_bytes = decoded_value_return[0]
     decoded_string = hex_bytes
     if isinstance(hex_bytes, bytes):
@@ -315,15 +315,18 @@ def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_
         decoded_string = bytes_value.decode('utf-8') # Decode bytes to string
     # print(f'decoded_string: {decoded_string}')
     print(f'pretty print... cnt: {len(decoded_value_return)}')
+    # pprint.pprint(decoded_value_return)
     for i in range(len(decoded_value_return)):
         # if isinstance(decoded_value_return[i], str):
         if isinstance(decoded_value_return[i], int):
             # f_val = float(decoded_value_return[i]) / 10 ** 6
             f_val = float(decoded_value_return[i]) / 10 ** 18
             print(f' {f_val:,.3f}')
-        # else:
-        #     print(decoded_value_return[i])
-    pprint.pprint(decoded_value_return)
+        elif isinstance(decoded_value_return[i], list):
+            print(json.dumps(list(decoded_value_return[i]), indent=4))
+        else:
+            print(decoded_value_return[i])
+    
     if isinstance(decoded_value_return, list) and isinstance(decoded_value_return[0], list) :
         print(f'pretty print... cnt[0]: {len(decoded_value_return[0])}')
 
@@ -589,7 +592,7 @@ if __name__ == "__main__":
                 exit()
 
         # check for using TBF or uniswap v2 ROUTER contract
-        ans = input("\nSelect contract func list to use ...\n 0 = 'BST'\n 1 = 'TBF (or standard ERC20)'\n 2 = 'UswapV2Router'\n 3 = 'FLR (FlashLoanRecipient)'\n 4 = 'UswapV2Pair'\n 5 = 'LPCleaner'\n > ")
+        ans = input("\nSelect contract func list to use ...\n 0 = 'BST'\n 1 = 'TBF (or standard ERC20)'\n 2 = 'UswapV2Router'\n 3 = 'FLR (FlashLoanRecipient)'\n 4 = 'UswapV2Pair'\n 5 = 'LPCleaner'\n 6 = 'UniswapFlashQuery'\n > ")
         opt_sel_str = 'nil_sel_str'
         symb = 'nil_symb_init'
         USE_TBF = ans == '1'
@@ -597,6 +600,7 @@ if __name__ == "__main__":
         USE_FLR = ans == '3'
         use_pair = ans == '4'
         use_lpcleaner = ans == '5'
+        use_flashquery = ans == '6'
         
         if USE_TBF:
             symb = 'TBF|ERC20'
@@ -620,7 +624,11 @@ if __name__ == "__main__":
             symb = 'LPCleaner'
             BST_FUNC_MAP = _abi.LPCleaner_FUNC_MAP_WRITE if IS_WRITE else _abi.LPCleaner_FUNC_MAP_READ
             opt_sel_str = f"use_lpcleaner={use_lpcleaner}"
-            
+        if use_flashquery:
+            symb = 'UniswapFlashQuery'
+            BST_FUNC_MAP = _abi.UniswapFlashQuery_FUNC_MAP_WRITE if IS_WRITE else _abi.UniswapFlashQuery_FUNC_MAP_READ
+            opt_sel_str = f"use_flashquery={use_flashquery}"
+        
         print(f' ans: "{ans}"; {opt_sel_str}, reseting BST_FUNC_MAP')
         
         go_user_inputs(_set_gas=IS_WRITE)

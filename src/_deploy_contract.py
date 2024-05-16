@@ -27,6 +27,7 @@ LST_CONTR_ABI_BIN = [
     "../bin/contracts/TheBotFckr",
     "../bin/contracts/BalancerFLR_test",
     "../bin/contracts/LPCleaner",
+    "../bin/contracts/UniswapFlashQuery",
 ]
 
 W3_ = None
