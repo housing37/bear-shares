@@ -537,7 +537,7 @@ if __name__ == "__main__":
             lst_lps = lst_return[0] # get list of LPs (each LP = list of addresses)
             # print(json.dumps(list(lst_lps), indent=2))
             print(f'GETTING LIST OF LPs FROM UniswapFlashQuery _ {get_time_now()} _ DONE')
-            print(f'\nSEARCHING LPs FOR CANDIDATE PAIRS _ {get_time_now()}\n (ie. traversing {len(lst_lps)} LPs recieved from on-chain)')
+            print(f'\nSEARCHING LPs FOR CANDIDATE PAIRS _ {get_time_now()}\n (ie. traversing {len(lst_lps)} LPs recieved from on-chain) ...\n')
             lst_connected_lps = []
             for x in range(0, len(lst_lps)):
                 tokx_0, tokx_1, tokx_p = lst_lps[x][0], lst_lps[x][1], lst_lps[x][2]
@@ -566,17 +566,37 @@ if __name__ == "__main__":
                         symb_1 = 'pulsexv2factory'
                         contr_addr_1 = go_input_contr_addr(symb_1, _contr_addr=PULSEX_V2_FACTORY) # 'UniswapV2Factory'
                         func_sign_1 = "getPair(address,address)"
-                        inp_params = f"{lst_cand_pair[0]} {lst_cand_pair[1]}"
-                        tup_params_1 = go_enter_func_params(contr_addr_1, func_sign_1, list(contr_func_map[func_sign_1]), inp_params)
+                        inp_params_1 = f"{lst_cand_pair[0]} {lst_cand_pair[1]}"
+                        tup_params_1 = go_enter_func_params(contr_addr_1, func_sign_1, list(contr_func_map[func_sign_1]), inp_params_1)
                         try:
                             lst_return = read_with_hash(*tup_params_1)
                             lp_cand_addr = lst_return[0]
                             if DEBUG_LEVEL > 0: print(f'\n found candidate pair LP address: {lp_cand_addr}\n')
                             if len(lst_return) > 1: print(f'\n\n **WARNING**\n  func returned more than 1 cand pair address: {lst_return}\n\n')
 
+                            # at this point ... we found an LP trio to work with 
+                            #   (ie. we foud 3 tokens, all paired with each other)
                             lp_trio = [[tokx_0, tokx_1, tokx_p], [toky_0, toky_1, toky_p], [lst_cand_pair[0], lst_cand_pair[1], lp_cand_addr]]
+
+                            # now we need to get reserves for this LP trio
+                            symb_2 = symb_1
+                            contr_addr_2 = go_input_contr_addr(symb, _contr_addr=contr_addr) # 'UniswapV2Factory'
+                            func_sign_2 = "getReservesByPairs(address[])" # 'UniswapFlashQuery'
+                            inp_params_2 = f"[{lp_trio[0][2]},{lp_trio[1][2]},{lp_trio[2][2]}]"
+                            tup_params_2 = go_enter_func_params(contr_addr_2, func_sign_2, list(contr_func_map[func_sign_2]), inp_params_2)
+                            try:
+                                lst_return = read_with_hash(*tup_params_2)
+                                lst_reserves = lst_return[0]
+                                if DEBUG_LEVEL > 0: print(f'\n found current reserves ...')
+                                if DEBUG_LEVEL > 0: print(json.dumps(lst_reserves, indent=2))
+                                for i in range(0,len(lp_trio)): lp_trio[i].extend(lst_reserves[i])
+                            except Exception as e:
+                                print_except(e, debugLvl=DEBUG_LEVEL)
+                            if DEBUG_LEVEL > 0: print(f'\n{symb_2}_ADDRESS: {contr_addr_2}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}\n func_select: {func_sign_2}')
+                            
                             lst_lp_trio_algo_1.append(lp_trio)
                             lst_lp_trio_algo_2.append(lp_trio)
+
                         except Exception as e:
                             print_except(e, debugLvl=DEBUG_LEVEL)
                         if DEBUG_LEVEL > 0: print(f'\n{symb_1}_ADDRESS: {contr_addr_1}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}\n func_select: {func_sign_1}')
@@ -587,6 +607,7 @@ if __name__ == "__main__":
         print('lst_lp_trio_algo_1', json.dumps(lst_lp_trio_algo_1, indent=2), 'lst_lp_trio_algo_1', sep='\n')
         print(f'FOUND {len(lst_lp_trio_algo_1)} LP trio candidates for algo 1 _ {get_time_now()} _ DONE')
 
+        print(f'\n{symb_2}_ADDRESS: {contr_addr_2}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}\n func_select: {func_sign_2}')
         print(f'\n{symb_1}_ADDRESS: {contr_addr_1}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}\n func_select: {func_sign_1}')
         print(f'\n{symb}_ADDRESS: {contr_addr}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}\n func_select: {func_sign}')
         
