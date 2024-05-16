@@ -15,6 +15,7 @@ from attributedict.collections import AttributeDict # tx_receipt requirement
 import _web3 # from web3 import Account, Web3, HTTPProvider
 import _abi, _gen_pls_key
 from ethereum.abi import encode_abi, decode_abi # pip install ethereum
+from _constants import FACTORY_pulsex_router_02_v2 as PULSEX_V2_FACTORY
 
 DEBUG_LEVEL = 0
 LST_CONTR_ABI_BIN = [
@@ -214,12 +215,12 @@ def parse_logs_for_func_hash(_tx_receipt, _func_hash, _w3:_web3.myWEB3=None):
 def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_ret_types):
     global W3_
 
-    print('preparing function signature params ...')
+    if DEBUG_LEVEL > 1: print('preparing function signature params ...')
     func_sign = _func_hash
     if len(_lst_param_types) > 0:
         func_sign = _func_hash + encode_abi(_lst_param_types, _lst_params).hex()
 
-    print(f'building tx_data w/ ...\n _contr_addr: {_contr_addr}\n _func_hash: 0x{_func_hash}')
+    if DEBUG_LEVEL > 1: print(f'building tx_data w/ ...\n _contr_addr: {_contr_addr}\n _func_hash: 0x{_func_hash}')
     tx_data = {
         "to": _contr_addr,
         "data": func_sign,
@@ -227,10 +228,10 @@ def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_
     }
 
     # Call contract function to retrieve the value of the KEEPER state variable
-    print(f'calling contract function _ {get_time_now()}')
+    if DEBUG_LEVEL > 1: print(f'calling contract function _ {get_time_now()}')
     return_val = W3_.W3.eth.call(tx_data)
-    print(f'calling contract function _ {get_time_now()} ... DONE')
-    print('\nparsing & printing response ...')
+    if DEBUG_LEVEL > 1: print(f'calling contract function _ {get_time_now()} ... DONE')
+    if DEBUG_LEVEL > 1: print('\nparsing & printing response ...')
     # print(f'return_val: {return_val}')
     # print(f'return_val.hex(): {return_val.hex()}')
 
@@ -246,23 +247,24 @@ def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_
         bytes_value = bytes(hex_bytes) # Convert hex bytes to bytes
         decoded_string = bytes_value.decode('utf-8') # Decode bytes to string
     
-    print(f'pretty print... cnt: {len(decoded_value_return)}')
+    if DEBUG_LEVEL > 0: print(f'pretty print... cnt: {len(decoded_value_return)}')
     for i in range(len(decoded_value_return)):
         # if isinstance(decoded_value_return[i], str):
         if isinstance(decoded_value_return[i], int):
             # f_val = float(decoded_value_return[i]) / 10 ** 6
             f_val = float(decoded_value_return[i]) / 10 ** 18
-            print(f' {f_val:,.3f}')
+            if DEBUG_LEVEL > 1: print(f' {f_val:,.3f}')
         elif isinstance(decoded_value_return[i], list):
-            print(json.dumps(list(decoded_value_return[i]), indent=4))
+            if DEBUG_LEVEL > 1: print(json.dumps(list(decoded_value_return[i]), indent=4))
         else:
-            print(decoded_value_return[i])
+            if DEBUG_LEVEL > 1: print(decoded_value_return[i])
     
     if isinstance(decoded_value_return, list) and isinstance(decoded_value_return[0], list) :
-        print(f'pretty print... cnt[0]: {len(decoded_value_return[0])}')
+        if DEBUG_LEVEL > 0: print(f'pretty print... cnt[0]: {len(decoded_value_return[0])}')
 
     # print(f'decoded_value_return', *decoded_value_return, sep='\n ')
-    return decoded_string
+    # return decoded_string
+    return decoded_value_return
 
 def read_with_abi(_contr_addr, _func_hash, _lst_params):
     if _func_hash == _abi.BST_GET_ACCT_PAYOUTS_FUNC_HASH:
@@ -333,10 +335,10 @@ def go_user_inputs(_set_gas=True):
 
 def go_input_contr_addr(_symb='nil_symb', _contr_addr=None):
     while _contr_addr == None or _contr_addr == '':
-        _contr_addr = input(f'\n Enter {_symb} contract address:\n  > ')
+        _contr_addr = input(f'\n Enter {_symb} contract address:\n > ')
 
     _contr_addr = W3_.W3.to_checksum_address(_contr_addr)
-    print(f'  using {_symb}_ADDRESS: {_contr_addr}')
+    if DEBUG_LEVEL > 1: print(f'  using {_symb}_ADDRESS: {_contr_addr}')
     return _contr_addr
 
 def go_select_func(_bst_func_map=None):
@@ -352,11 +354,13 @@ def go_select_func(_bst_func_map=None):
     if str(ans).lower() not in lst_ans_go: func_select = go_select_func()
     return func_select
 
-def go_enter_func_params(_func_select):
+# NOTE: ex _ans = '0xc629e65d4d 0 true false [0x149b277ee166f9f,0x146e1a240ae32]'
+def go_enter_func_params(_contr_address, _func_select, _lst_abi_params=None, _str_inp_params=None):
     lst_func_params = []
     value_in_wei = 0
-    ans = input(f'\n  Enter params for: "{_func_select}"\n  > ')
-    for v in list(ans.split()):
+    if _str_inp_params == None:
+        _str_inp_params = input(f'\n  Enter params for: "{_func_select}"\n  > ')
+    for v in list(_str_inp_params.split()):
         if v.lower() == 'true': lst_func_params.append(True)
         elif v.lower() == 'false': lst_func_params.append(False)
         elif v.isdigit(): lst_func_params.append(int(v))
@@ -387,33 +391,23 @@ def go_enter_func_params(_func_select):
 
         value_in_wei = lst_func_params[3] # get return value in wei (for write_with_hash)
 
-    print(f'  executing "{_func_select}" w/ params: {lst_func_params} ...\n')
-    return lst_func_params, value_in_wei
+    if DEBUG_LEVEL > 1: print(f'  executing "{_func_select}" w/ params: {lst_func_params} ...\n')
+    # return lst_func_params, value_in_wei
 
-def gen_random_wallets(_wallet_cnt, _gen_new=True):
-    if not _gen_new:
-        # return env.RAND_WALLETS, env.RAND_WALLET_CLI_INPUT
-        # return env.RAND_WALLETS_20, env.RAND_WALLET_CLI_INPUT_20
-        return env.RAND_WALLETS_10, env.RAND_WALLET_CLI_INPUT_10
-    else:
-        lst_rand_wallets = []
-        lst_wallet_addr = []
-        for acct_num in range(0,_wallet_cnt): # generate '_wallet_cnt' number of wallets
-            d_wallet = _gen_pls_key.gen_pls_key(str("english"), int(256), acct_num, False) # language, entropyStrength, num, _plog
-            lst_rand_wallets.append(dict(d_wallet))
-            lst_wallet_addr.append(d_wallet['address'])
+    # update _lst_hash_params with everything and return tuple ready for 'read|write_with_hash'
+    _lst_abi_params.insert(2, lst_func_params)
+    tup_params = (_contr_address,_lst_abi_params[0],_lst_abi_params[1],_lst_abi_params[2],_lst_abi_params[3])
+    return tup_params
 
-        # pprint.pprint(lst_rand_wallets)
-        file_cnt = len(os.listdir('./_wallets'))
-        with open(f"./_wallets/wallets_{file_cnt}_{get_time_now()}.txt", "w") as file:
-            pprint.pprint(lst_rand_wallets, stream=file)
-            pprint.pprint(lst_rand_wallets)
-
-        # generate formatted string for CLI input
-        str_rand_wallet_cli_input = '[' + ','.join(map(str, lst_wallet_addr)) + ']'
-        return lst_rand_wallets, str_rand_wallet_cli_input
-
-def go_select_contract():
+def go_select_contract(_autofill=False, _is_write=False):
+    is_write = _is_write
+    if _autofill:
+        symb = 'UniswapFlashQuery'
+        contr_func_map = _abi.UniswapFlashQuery_FUNC_MAP_WRITE if is_write else _abi.UniswapFlashQuery_FUNC_MAP_READ
+        opt_sel_str = f"use_flashquery={True}"
+        print(f' auto-ans: "{symb}"; {opt_sel_str}, reset contr_func_map')
+        return symb, contr_func_map, opt_sel_str
+    
     # check for using TBF or uniswap v2 ROUTER contract
     ans = input("\nSelect contract func list to use ...\n 0 = 'BST'\n 1 = 'TBF (or standard ERC20)'\n 2 = 'UswapV2Router'\n 3 = 'FLR (FlashLoanRecipient)'\n 4 = 'UswapV2Pair'\n 5 = 'LPCleaner'\n 6 = 'UniswapFlashQuery'\n > ")
     opt_sel_str = 'nil_sel_str'
@@ -456,28 +450,6 @@ def go_select_contract():
         opt_sel_str = f"use_flashquery={use_flashquery}"
     print(f' ans: "{ans}"; {opt_sel_str}, reset contr_func_map')
     return symb, contr_func_map, opt_sel_str
-
-# _gen_new=False = use _abi.RAND_WALLETS & _abi.RAND_WALLET_CLI_INPUT
-def go_gen_addies(_enable=False, _gen_new=False): 
-    if not _enable: return
-
-    # check to show or generate new wallets
-    s = 'Generate new' if _gen_new else 'Show old'
-    ans = input(f"\n{s} random wallets? [y/n]\n > ")
-    if ans.lower()=='y' or ans == '1':
-        # NOTE: gen/fetch/print CLI input string needed to 
-        #   manually feed into 'KEEPER_mixAmntRand' & 'distrAmntRand'
-        wallet_cnt = 10
-        
-        print(f' fetching {wallet_cnt} random wallets (_gen_new={_gen_new}) ...')
-        lst_rand_wallets, str_rand_wallet_cli_input = gen_random_wallets(wallet_cnt, _gen_new)
-        print(f' fetching {len(lst_rand_wallets)} random wallets (_gen_new={_gen_new}) ... DONE')
-        print(f' ... fetched wallets CLI input ...\n {str_rand_wallet_cli_input}')  # This will print the formatted string    
-
-        ## end ##
-        if _gen_new:
-            print(f'\n\nRUN_TIME_START: {RUN_TIME_START}\nRUN_TIME_END:   {get_time_now()}\n')
-            exit()
 
 def go_select_read_write():
     # read requests: _set_gas=False
@@ -544,33 +516,80 @@ if __name__ == "__main__":
 
     ## exe ##
     try:
-        go_gen_addies(_enable=False, _gen_new=False)
-        is_write = go_select_read_write() # read requests -> _set_gas=False
-        go_user_inputs(_set_gas=is_write) # select chain, sender, gas (init web3)
-        symb, contr_func_map, opt_sel_str = go_select_contract()
-        contr_address = go_input_contr_addr(symb)
-        
-        print('\n Begin function select loop ...')
-        while True: # continue function selection progression until killed
-            print('', cStrDivider_1, f"here we go! _ is_write={is_write} _ (to exit use: ctl+c) _ {get_time_now()}", sep='\n')
-            func_select = go_select_func(contr_func_map)
-            lst_func_params, value_in_wei = go_enter_func_params(func_select)
-            lst_params = list(contr_func_map[func_select])
-            lst_params.insert(2, lst_func_params)
-            tup_params = (contr_address,lst_params[0],lst_params[1],lst_params[2],lst_params[3])
-            try:
-                if not is_write:
-                    if lst_params[0] == _abi.BST_GET_ACCT_PAYOUTS_FUNC_HASH:
-                        read_with_abi(contr_address, lst_params[0], lst_params[2])
-                    else:
-                        read_with_hash(*tup_params)
-                else:
-                    tup_params = tup_params + (value_in_wei,)
-                    write_with_hash(*tup_params)
-            except Exception as e:
-                print_except(e, debugLvl=DEBUG_LEVEL)
-            print(f'\n{symb}_ADDRESS: {contr_address}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}\n func_select: {func_select}')
+        # list holders for algo support values
+        #  to use in whiteboarded algo's 1 & 2
+        lst_lp_trio_algo_1 = []
+        lst_lp_trio_algo_2 = []
 
+        # 'UniswapFlashQuery' support
+        go_user_inputs(_set_gas=False) # select chain, sender, _set_gas=False (read request)
+        symb, contr_func_map, opt_sel_str = go_select_contract(_autofill=True, _is_write=False) # _autofill is 'UniswapFlashQuery' w/ read
+        contr_addr = go_input_contr_addr(symb, _contr_addr=None) # 'UniswapFlashQuery'
+
+        # get tuple ready for 'read|write_with_hash'
+        func_sign = "getPairsByIndexRange_OG(address,uint256,uint256)"
+        inp_params = f"{PULSEX_V2_FACTORY} 0 5"
+        tup_params = go_enter_func_params(contr_addr, func_sign, list(contr_func_map[func_sign]), inp_params)
+
+        try:
+            print(f'\nGETTING LIST OF LPs FROM UniswapFlashQuery _ {get_time_now()}')
+            lst_return = read_with_hash(*tup_params)
+            lst_lps = lst_return[0] # get list of LPs (each LP = list of addresses)
+            # print(json.dumps(list(lst_lps), indent=2))
+            print(f'GETTING LIST OF LPs FROM UniswapFlashQuery _ {get_time_now()} _ DONE')
+            print(f'\nSEARCHING LPs FOR CANDIDATE PAIRS _ {get_time_now()}\n (ie. traversing {len(lst_lps)} LPs recieved from on-chain)')
+            lst_connected_lps = []
+            for x in range(0, len(lst_lps)):
+                tokx_0, tokx_1, tokx_p = lst_lps[x][0], lst_lps[x][1], lst_lps[x][2]
+                if DEBUG_LEVEL > 0: print(cStrDivider_1, f'[{x}] checking {tokx_0, tokx_1} ...', cStrDivider_1, sep='\n')
+                for y in range(x+1, len(lst_lps)):
+                    toky_0, toky_1, toky_p = lst_lps[y][0], lst_lps[y][1], lst_lps[y][2]
+                    if DEBUG_LEVEL > 0:
+                        print(f'[{x}.{y}] checking {tokx_0, tokx_1}')
+                        print(f'          -> {toky_0, toky_1}')
+                        print('           ...')
+
+                    # search x & y pairs for matching tokens
+                    #   if found, add the non-matching tokens to lst_cand_pair
+                    lst_cand_pair = [toky_1 if x==toky_0 else toky_0 for x in [tokx_0, tokx_1] if x in [toky_0, toky_1]]
+                    lst_cand_pair.extend([tokx_1 if y==tokx_0 else tokx_0 for y in [toky_0, toky_1] if y in [tokx_0, tokx_1]])
+
+                    if DEBUG_LEVEL > 0: print(f'    lst_cand_pair: {lst_cand_pair}\n')
+                    if len(lst_cand_pair) == 2:
+                        if DEBUG_LEVEL > 0: 
+                            print('found a candidate pair ...')
+                            print(f'  -> {tokx_0, tokx_1}\n  -> {toky_0, toky_1}')
+                            print('\nsearching candidate pair adddress ...')
+                        # get tuple ready for 'read|write_with_hash'
+                        #   need pair from this candidate token combo)
+                        #    (use 'getPair' from factory)
+                        symb_1 = 'pulsexv2factory'
+                        contr_addr_1 = go_input_contr_addr(symb_1, _contr_addr=PULSEX_V2_FACTORY) # 'UniswapV2Factory'
+                        func_sign_1 = "getPair(address,address)"
+                        inp_params = f"{lst_cand_pair[0]} {lst_cand_pair[1]}"
+                        tup_params_1 = go_enter_func_params(contr_addr_1, func_sign_1, list(contr_func_map[func_sign_1]), inp_params)
+                        try:
+                            lst_return = read_with_hash(*tup_params_1)
+                            lp_cand_addr = lst_return[0]
+                            if DEBUG_LEVEL > 0: print(f'\n found candidate pair LP address: {lp_cand_addr}\n')
+                            if len(lst_return) > 1: print(f'\n\n **WARNING**\n  func returned more than 1 cand pair address: {lst_return}\n\n')
+
+                            lp_trio = [[tokx_0, tokx_1, tokx_p], [toky_0, toky_1, toky_p], [lst_cand_pair[0], lst_cand_pair[1], lp_cand_addr]]
+                            lst_lp_trio_algo_1.append(lp_trio)
+                            lst_lp_trio_algo_2.append(lp_trio)
+                        except Exception as e:
+                            print_except(e, debugLvl=DEBUG_LEVEL)
+                        if DEBUG_LEVEL > 0: print(f'\n{symb_1}_ADDRESS: {contr_addr_1}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}\n func_select: {func_sign_1}')
+        except Exception as e:
+            print_except(e, debugLvl=DEBUG_LEVEL)
+
+        print(f'\nFOUND {len(lst_lp_trio_algo_1)} LP trio candidates for algo 1 _ {get_time_now()}')
+        print('lst_lp_trio_algo_1', json.dumps(lst_lp_trio_algo_1, indent=2), 'lst_lp_trio_algo_1', sep='\n')
+        print(f'FOUND {len(lst_lp_trio_algo_1)} LP trio candidates for algo 1 _ {get_time_now()} _ DONE')
+
+        print(f'\n{symb_1}_ADDRESS: {contr_addr_1}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}\n func_select: {func_sign_1}')
+        print(f'\n{symb}_ADDRESS: {contr_addr}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}\n func_select: {func_sign}')
+        
     except Exception as e:
         print_except(e, debugLvl=DEBUG_LEVEL)
     
