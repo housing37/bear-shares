@@ -527,7 +527,7 @@ if __name__ == "__main__":
         contr_addr = go_input_contr_addr(symb, _contr_addr=None) # 'UniswapFlashQuery'
 
         # get tuple ready for 'read|write_with_hash'
-        func_sign = "getPairsByIndexRange_OG(address,uint256,uint256)"
+        func_sign = "getPairsByIndexRange_OG(address,uint256,uint256)" # 'UniswapFlashQuery'
         inp_params = f"{PULSEX_V2_FACTORY} 0 5"
         tup_params = go_enter_func_params(contr_addr, func_sign, list(contr_func_map[func_sign]), inp_params)
 
@@ -563,9 +563,9 @@ if __name__ == "__main__":
                         # get tuple ready for 'read|write_with_hash'
                         #   need pair from this candidate token combo)
                         #    (use 'getPair' from factory)
-                        symb_1 = 'pulsexv2factory'
+                        symb_1 = 'pulsexv2factory' # 'UniswapV2Factory'
                         contr_addr_1 = go_input_contr_addr(symb_1, _contr_addr=PULSEX_V2_FACTORY) # 'UniswapV2Factory'
-                        func_sign_1 = "getPair(address,address)"
+                        func_sign_1 = "getPair(address,address)" # 'UniswapV2Factory'
                         inp_params_1 = f"{lst_cand_pair[0]} {lst_cand_pair[1]}"
                         tup_params_1 = go_enter_func_params(contr_addr_1, func_sign_1, list(contr_func_map[func_sign_1]), inp_params_1)
                         try:
@@ -579,8 +579,8 @@ if __name__ == "__main__":
                             lp_trio = [[tokx_0, tokx_1, tokx_p], [toky_0, toky_1, toky_p], [lst_cand_pair[0], lst_cand_pair[1], lp_cand_addr]]
 
                             # now we need to get reserves for this LP trio
-                            symb_2 = symb_1
-                            contr_addr_2 = go_input_contr_addr(symb, _contr_addr=contr_addr) # 'UniswapV2Factory'
+                            symb_2 = symb # 'UniswapFlashQuery'
+                            contr_addr_2 = go_input_contr_addr(symb_2, _contr_addr=contr_addr) # 'UniswapFlashQuery'
                             func_sign_2 = "getReservesByPairs(address[])" # 'UniswapFlashQuery'
                             inp_params_2 = f"[{lp_trio[0][2]},{lp_trio[1][2]},{lp_trio[2][2]}]"
                             tup_params_2 = go_enter_func_params(contr_addr_2, func_sign_2, list(contr_func_map[func_sign_2]), inp_params_2)
