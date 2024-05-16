@@ -594,6 +594,15 @@ if __name__ == "__main__":
                                 print_except(e, debugLvl=DEBUG_LEVEL)
                             if DEBUG_LEVEL > 0: print(f'\n{symb_2}_ADDRESS: {contr_addr_2}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}\n func_select: {func_sign_2}')
                             
+                            # add generated trio to algo 1 & 2 lists
+                            #   ex: lp_trio = [
+                            #                 "0x95b303987a60c71504d99aa1b13b4da07b0790ab", # token0
+                            #                 "0xa1077a294dde1b09bb078844df40758a5d0f9a27", # token1
+                            #                 "0x149b2c629e652f2e89e11cd57e5d4d77ee166f9f", # pair
+                            #                 28704539784100611350783440879, # token0 reserves
+                            #                 12187118246744722302468490448, # token1 reserves
+                            #                 1715891735 # reserves timestamp
+                            #             ]
                             lst_lp_trio_algo_1.append(lp_trio)
                             lst_lp_trio_algo_2.append(lp_trio)
 
