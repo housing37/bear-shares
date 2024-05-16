@@ -1,4 +1,4 @@
-__fname = '_keeper' # -> 051522: copy of _keeper.py
+__fname = '_lpcleaner' # -> 051522: copy of _keeper.py
 __filename = __fname + '.py'
 cStrDivider = '#================================================================#'
 print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globals', cStrDivider, sep='\n')
@@ -9,17 +9,12 @@ cStrDivider_1 = '#--------------------------------------------------------------
 #------------------------------------------------------------#
 import sys, os, traceback, time, pprint, json
 from datetime import datetime
-
-# from web3 import Web3, HTTPProvider
-# from web3.middleware import construct_sign_and_send_raw_middleware
-# from web3.gas_strategies.time_based import fast_gas_price_strategy
 from _env import env
 import pprint
 from attributedict.collections import AttributeDict # tx_receipt requirement
 import _web3 # from web3 import Account, Web3, HTTPProvider
 import _abi, _gen_pls_key
 from ethereum.abi import encode_abi, decode_abi # pip install ethereum
-# from _constants import *
 
 DEBUG_LEVEL = 0
 LST_CONTR_ABI_BIN = [
@@ -32,54 +27,6 @@ BIN_FILE = None
 CONTRACT = None
 CONTRACT_ABI = None
 BST_ADDRESS = None
-BST_FUNC_MAP = {}
-IS_WRITE = False
-USE_TBF = False # TBFckr contract
-USE_ROUTER = False # uniswap v2 router type contract
-USE_FLR = False # balancer Flash Loan Recipient contract
-
-# def init_web3():
-#     global W3_, ABI_FILE, BIN_FILE, CONTRACT
-#     # init W3_, user select abi to deploy, generate contract & deploy
-#     W3_ = _web3.myWEB3().init_inp()
-#     # ABI_FILE, BIN_FILE = W3_.inp_sel_abi_bin(LST_CONTR_ABI_BIN) # returns .abi|bin
-#     # CONTRACT_ABI = W3_.read_abi_file(ABI_FILE)
-#     # CONTRACT = W3_.add_contract_deploy(ABI_FILE, BIN_FILE)
-
-def estimate_gas(contract, contract_args=[]):
-    global W3_, ABI_FILE, BIN_FILE, CONTRACT
-    # Replace with your contract's ABI and bytecode
-    # contract_abi = CONTR_ABI
-    # contract_bytecode = CONTR_BYTES
-    
-    # Replace with your wallet's private key
-    private_key = W3_.SENDER_SECRET
-
-    # Create a web3.py contract object
-    # contract = W3_.W3.eth.contract(abi=contract_abi, bytecode=contract_bytecode)
-
-    # Set the sender's address from the private key
-    sender_address = W3_.W3.eth.account.from_key(private_key).address
-
-    # Estimate gas for contract deployment
-    # gas_estimate = contract.constructor().estimateGas({'from': sender_address})
-    gas_estimate = contract.constructor(*contract_args).estimate_gas({'from': sender_address})
-
-    print(f"\nEstimated gas cost _ 0: {gas_estimate}")
-
-    import statistics
-    block = W3_.W3.eth.get_block("latest", full_transactions=True)
-    gas_estimate = int(statistics.median(t.gas for t in block.transactions))
-    gas_price = W3_.W3.eth.gas_price
-    gas_price_eth = W3_.W3.from_wei(gas_price, 'ether')
-    print(f"Estimated gas cost _ 1: {gas_estimate}")
-    print(f" Current gas price: {gas_price_eth} ether (PLS) == {gas_price} wei")
-    # Optionally, you can also estimate the gas price (in Gwei) using a gas price strategy
-    # Replace 'fast' with other strategies like 'medium' or 'slow' as needed
-    #gas_price = W3.eth.generateGasPrice(fast_gas_price_strategy)
-    #print(f"Estimated gas price (Gwei): {W3.fromWei(gas_price, 'gwei')}")
-    
-    return input('\n (3) procced? [y/n]\n  > ') == 'y'
 
 # note: params checked/set in priority order; 'def|max_params' uses 'mpf_ratio'
 #   if all params == False, falls back to 'min_params=True' (ie. just use 'gas_limit')
@@ -87,7 +34,6 @@ def get_gas_params_lst(rpc_url, min_params=False, max_params=False, def_params=T
     global W3_
     if _w3 == None: _w3 = W3_
     # Estimate the gas cost for the transaction
-    #gas_estimate = buy_tx.estimate_gas()
     gas_limit = _w3.GAS_LIMIT # max gas units to use for tx (required)
     gas_price = _w3.GAS_PRICE # price to pay for each unit of gas (optional?)
     max_fee = _w3.MAX_FEE # max fee per gas unit to pay (optional?)
@@ -365,18 +311,6 @@ def read_with_abi(_contr_addr, _func_hash, _lst_params):
 
         print('\nparsing & printing response ...')
         for payout in payouts:
-            # print(" Receiver (receiver):", payout[0])
-            # print(" USD Amount Debit (usdAmntDebit):", payout[1])
-            # print(" USD Payout (usdPayout):", payout[2])
-            # print(" BST Payout (bstPayout):", payout[3])
-            # print(" USD Fee Value (usdFeeVal):", payout[4])
-            # print(" USD Burn Value Total (usdBurnValTot):", payout[5])
-            # print(" BST Burned in USD Value (usdBurnVal):", payout[6])
-            # print(" Aux Token Burned in USD Value (auxUsdBurnVal):", payout[7])
-            # print(" Aux Token (auxTok):", payout[8])
-            # f_val = float(payout[0]) / 10 ** 6
-            # print(f' {f_val}')
-
             print(" receiver:", payout[0])
             print(" usdAmntDebit:", float(payout[1]) / 10 ** 6)
             print(" usdPayout:", float(payout[2]) / 10 ** 6)
@@ -386,16 +320,6 @@ def read_with_abi(_contr_addr, _func_hash, _lst_params):
             print(" usdBurnVal:", float(payout[6]) / 10 ** 6)
             print(" auxUsdBurnVal:", float(payout[7]) / 10 ** 6)
             print(" auxTok:", payout[8])
-
-            # print(" receiver:", payout[0])
-            # print(" usdAmntDebit:", payout[1])
-            # print(" usdPayout:", payout[2])
-            # print(" bstPayout:", payout[3])
-            # print(" usdFeeVal:", payout[4])
-            # print(" usdBurnValTot:", payout[5])
-            # print(" usdBurnVal:", payout[6])
-            # print(" auxUsdBurnVal:", payout[7])
-            # print(" auxTok:", payout[8])
             print()
         return payouts
 
@@ -416,15 +340,14 @@ def go_enter_bst_addr(_symb='nil_symb'):
     BST_ADDRESS = W3_.W3.to_checksum_address(BST_ADDRESS)
     print(f'  using {_symb}_ADDRESS: {BST_ADDRESS}')
 
-def go_select_func():
-    global BST_FUNC_MAP, IS_WRITE
-    print(f'\n Select function to invoke ... (IS_WRITE={IS_WRITE})')
-    lst_keys = list(BST_FUNC_MAP.keys())
+def go_select_func(_bst_func_map=None):
+    print(f'\n Select function to invoke ...')
+    lst_keys = list(_bst_func_map).keys()
     for i,k in enumerate(lst_keys):
         print(f'  {i} = {k}')
     ans_idx = input('  > ')
     assert ans_idx.isdigit() and int(ans_idx) >= 0 and int(ans_idx) < len(lst_keys), f'failed ... invalid input {ans_idx}'
-    func_select = list(BST_FUNC_MAP.keys())[int(ans_idx)]
+    func_select = list(_bst_func_map).keys()[int(ans_idx)]
     ans = input(f'\n  Confirm func [y/n]: {func_select}\n  > ')
     lst_ans_go = ['y','yes','']
     if str(ans).lower() not in lst_ans_go: func_select = go_select_func()
@@ -438,8 +361,6 @@ def go_enter_func_params(_func_select):
         if v.lower() == 'true': lst_func_params.append(True)
         elif v.lower() == 'false': lst_func_params.append(False)
         elif v.isdigit(): lst_func_params.append(int(v))
-        # elif v.startswith('['): lst_func_params.append([i.strip() for i in v[1:-1].split(',')])
-        # elif v.startswith('['): lst_func_params.append([W3_.W3.to_checksum_address(i.strip()) for i in v[1:-1].split(',')])
         elif v.startswith('['):
             lst_str = [i.strip() for i in v[1:-1].split(',')]
             if lst_str[0][1:3] == '0x':
@@ -548,16 +469,13 @@ if __name__ == "__main__":
     RUN_TIME_START = get_time_now()
     print(f'\n\nRUN_TIME_START: {RUN_TIME_START}\n'+READ_ME)
     lst_argv_OG, argv_cnt = read_cli_args()
-    
+
     ## exe ##
     try:
-        symb = 'BST'
-
         # read requests: _set_gas=False
         ans = input("Start 'write' or 'read' request?\n 0 = write\n 1 = read\n > ")
-        IS_WRITE = ans=='0'
-        BST_FUNC_MAP = _abi.BST_FUNC_MAP_WRITE if IS_WRITE else _abi.BST_FUNC_MAP_READ
-        print(f' ans: "{ans}"; IS_WRITE={IS_WRITE}, set BST_FUNC_MAP')
+        is_write = ans=='0'
+        print(f' ans: "{ans}"; is_write={is_write}')
 
         # check to show or generate new wallets
         ans = input("\nGenerate / show random wallets? [y(1)/n]\n > ")
@@ -581,94 +499,68 @@ if __name__ == "__main__":
         ans = input("\nSelect contract func list to use ...\n 0 = 'BST'\n 1 = 'TBF (or standard ERC20)'\n 2 = 'UswapV2Router'\n 3 = 'FLR (FlashLoanRecipient)'\n 4 = 'UswapV2Pair'\n 5 = 'LPCleaner'\n 6 = 'UniswapFlashQuery'\n > ")
         opt_sel_str = 'nil_sel_str'
         symb = 'nil_symb_init'
-        USE_TBF = ans == '1'
-        USE_ROUTER = ans == '2'
-        USE_FLR = ans == '3'
+        use_bst = ans == '0' or True # True = default to BST
+        use_tbf = ans == '1' # TBFckr contract
+        use_router = ans == '2' # uniswap v2 router type contract
+        use_flr = ans == '3' # balancer Flash Loan Recipient contract
         use_pair = ans == '4'
         use_lpcleaner = ans == '5'
         use_flashquery = ans == '6'
-        
-        if USE_TBF:
+
+        if use_bst: # NOTE: first check required to act as default
+            symb = 'BST'
+            contr_func_map = _abi.BST_FUNC_MAP_WRITE if is_write else _abi.BST_FUNC_MAP_READ
+            opt_sel_str = f"use_bst={use_bst}"
+        if use_tbf:
             symb = 'TBF|ERC20'
-            BST_FUNC_MAP = _abi.TBF_FUNC_MAP_WRITE if IS_WRITE else _abi.TBF_FUNC_MAP_READ
-            opt_sel_str = f"USE_TBF={USE_TBF}"
-            # print(f' ans: "{ans}"; USE_TBF={USE_TBF}, reset BST_FUNC_MAP')
-        if USE_ROUTER:
+            contr_func_map = _abi.TBF_FUNC_MAP_WRITE if is_write else _abi.TBF_FUNC_MAP_READ
+            opt_sel_str = f"use_tbf={use_tbf}"
+        if use_router:
             symb = 'ROUTER|USWAPv2'
-            BST_FUNC_MAP = _abi.ROUTERv2_FUNC_MAP_WRITE if IS_WRITE else _abi.USWAPv2_ROUTER_FUNC_MAP_READ
-            opt_sel_str = f"USE_ROUTER={USE_ROUTER}"
-            # print(f' ans: "{ans}"; USE_ROUTER={USE_ROUTER}, reseting BST_FUNC_MAP')
-        if USE_FLR:
+            contr_func_map = _abi.ROUTERv2_FUNC_MAP_WRITE if is_write else _abi.USWAPv2_ROUTER_FUNC_MAP_READ
+            opt_sel_str = f"use_router={use_router}"
+        if use_flr:
             symb = 'FLR'
-            BST_FUNC_MAP = _abi.BALANCER_FLR_FUNC_MAP_WRITE if IS_WRITE else _abi.BALANCER_FLR_FUNC_MAP_READ
-            opt_sel_str = f"USE_FLR={USE_FLR}"
+            contr_func_map = _abi.BALANCER_FLR_FUNC_MAP_WRITE if is_write else _abi.BALANCER_FLR_FUNC_MAP_READ
+            opt_sel_str = f"use_flr={use_flr}"
         if use_pair:
             symb = 'PAIR|USWAPv2'
-            BST_FUNC_MAP = _abi.USWAPv2_PAIR_FUNC_MAP_WRITE if IS_WRITE else _abi.USWAPv2_PAIR_FUNC_MAP_READ
+            contr_func_map = _abi.USWAPv2_PAIR_FUNC_MAP_WRITE if is_write else _abi.USWAPv2_PAIR_FUNC_MAP_READ
             opt_sel_str = f"use_pair={use_pair}"
         if use_lpcleaner:
             symb = 'LPCleaner'
-            BST_FUNC_MAP = _abi.LPCleaner_FUNC_MAP_WRITE if IS_WRITE else _abi.LPCleaner_FUNC_MAP_READ
+            contr_func_map = _abi.LPCleaner_FUNC_MAP_WRITE if is_write else _abi.LPCleaner_FUNC_MAP_READ
             opt_sel_str = f"use_lpcleaner={use_lpcleaner}"
         if use_flashquery:
             symb = 'UniswapFlashQuery'
-            BST_FUNC_MAP = _abi.UniswapFlashQuery_FUNC_MAP_WRITE if IS_WRITE else _abi.UniswapFlashQuery_FUNC_MAP_READ
+            contr_func_map = _abi.UniswapFlashQuery_FUNC_MAP_WRITE if is_write else _abi.UniswapFlashQuery_FUNC_MAP_READ
             opt_sel_str = f"use_flashquery={use_flashquery}"
         
-        print(f' ans: "{ans}"; {opt_sel_str}, reseting BST_FUNC_MAP')
+        print(f' ans: "{ans}"; {opt_sel_str}, reseting contr_func_map')
         
-        go_user_inputs(_set_gas=IS_WRITE)
+        go_user_inputs(_set_gas=is_write)
         go_enter_bst_addr(symb)
         
-        ans = input(f'\n Run Mode...(for IS_WRITE={IS_WRITE})\n  0 = traverse all functions\n  1 = function select loop\n  > ')
-        func_sel = ans == '1'
-        if func_sel:
-            # continue function selection progression until killed
-            while func_sel:
-                print('', cStrDivider_1, f"here we go! _ IS_WRITE={IS_WRITE}", sep='\n')
-                func_select = go_select_func()
-                lst_func_params, value_in_wei = go_enter_func_params(func_select)
-                lst_params = list(BST_FUNC_MAP[func_select])
-                lst_params.insert(2, lst_func_params)
-                tup_params = (BST_ADDRESS,lst_params[0],lst_params[1],lst_params[2],lst_params[3])
-                try:
-                    if not IS_WRITE:
-                        if lst_params[0] == _abi.BST_GET_ACCT_PAYOUTS_FUNC_HASH:
-                            read_with_abi(BST_ADDRESS, lst_params[0], lst_params[2])
-                        else:
-                            read_with_hash(*tup_params)
+        print('\n Begin function select loop ...')
+        while True: # continue function selection progression until killed
+            print('', cStrDivider_1, f"here we go! _ is_write={is_write} _ (to exit use: ctl+c) _ {get_time_now()}", sep='\n')
+            func_select = go_select_func(contr_func_map)
+            lst_func_params, value_in_wei = go_enter_func_params(func_select)
+            lst_params = list(contr_func_map[func_select])
+            lst_params.insert(2, lst_func_params)
+            tup_params = (BST_ADDRESS,lst_params[0],lst_params[1],lst_params[2],lst_params[3])
+            try:
+                if not is_write:
+                    if lst_params[0] == _abi.BST_GET_ACCT_PAYOUTS_FUNC_HASH:
+                        read_with_abi(BST_ADDRESS, lst_params[0], lst_params[2])
                     else:
-                        tup_params = tup_params + (value_in_wei,)
-                        write_with_hash(*tup_params)
-                except Exception as e:
-                    print_except(e, debugLvl=DEBUG_LEVEL)
-                print(f'\n{symb}_ADDRESS: {BST_ADDRESS}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}\n func_select: {func_select}')
-                # assert input('\n (^) proceed? [y/n]\n  > ') == 'y', f"aborted... _ {get_time_now()}\n\n"
-        else:
-            # loop through all functions in BST_FUNC_MAP
-            dict_returns = {}
-            for key in list(BST_FUNC_MAP.keys()):
-                print('', cStrDivider_1, f"time for {key}", sep='\n')
-                func_select = key
-                lst_func_params, value_in_wei = go_enter_func_params(func_select)
-                lst_params = list(BST_FUNC_MAP[func_select])
-                lst_params.insert(2, lst_func_params)
-                tup_params = (BST_ADDRESS,lst_params[0],lst_params[1],lst_params[2],lst_params[3])
-                try:
-                    if not IS_WRITE:
-                        if lst_params[0] == _abi.BST_GET_ACCT_PAYOUTS_FUNC_HASH:
-                            decoded_string = read_with_abi(BST_ADDRESS, lst_params[0], lst_params[2])
-                        else:
-                            decoded_string = read_with_hash(*tup_params)
-                        dict_returns[func_select] = decoded_string
-                    else:
-                        write_with_hash(*tup_params)
-                except Exception as e:
-                    print_except(e, debugLvl=DEBUG_LEVEL)
-                print(f'\n{symb}_ADDRESS: {BST_ADDRESS}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}\n func_select: {func_select}')
-            return_print = pprint.PrettyPrinter().pformat(dict_returns)
-            print(f'all returns... cnt={len(dict_returns.keys())}')
-            print(return_print)
+                        read_with_hash(*tup_params)
+                else:
+                    tup_params = tup_params + (value_in_wei,)
+                    write_with_hash(*tup_params)
+            except Exception as e:
+                print_except(e, debugLvl=DEBUG_LEVEL)
+            print(f'\n{symb}_ADDRESS: {BST_ADDRESS}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}\n func_select: {func_select}')
 
     except Exception as e:
         print_except(e, debugLvl=DEBUG_LEVEL)
@@ -677,64 +569,3 @@ if __name__ == "__main__":
     print(f'\n\nRUN_TIME_START: {RUN_TIME_START}\nRUN_TIME_END:   {get_time_now()}\n')
 
 print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
-
-# tBST34.6: 0x9c35A862420501c7e71f71da369f532716540594
-# tBST34.5: 0x2624790f5C7aA70596eF07F26c6e3D047a6F4fD8
-# tBST34: 0xe6f2c0679BdA5088A1bB32058086cA4AC146745c
-# tBST33: 0x98A70cB2dE88303875c081241E3eA50b22493Ce2
-# tBST32.1: 0x74b6e139eD3a11a079d161fbF7F5F2BC55f86df4
-# tBST32: 0x67f311C04a38F6565FC8e34276668d0EA516a1f4
-# tBST31: 0x0576128e47d9D8D63239cDf7dCaE74F442b8FbB8
-# tBST30: 0xB1BaA6f4591F9fe97d5E28c5f83Be243401b315c
-# tBST29: 0xaa521b643b9316Bb23dB26B06aE186EFD99f46Ef
-# tBST28.1: 0x8F200CD15154828a401Dd17E8148f78938c25157
-# tBST27.1: 0x2f46aa29fd9EA1a49C0dAFa2377aca9865EEfF03
-# tBST26.5: 0x0dba88670fE5413Fbe3f04BA805B31338E0B86D9
-# tBST26.2: 0xB0d4f33D79Bf008a32206207E8B2678b38404C5F
-# tBST26: 0x11A9C32346E1aB8E146D26b59317eF678488E723
-# tBST25: 0x62F52fe89BB1585A7E95B9f03f06cCda6a95f752
-# tBST23: 0xD0a24799Bd77EC409129198F2bb22d7F22D0F14A
-# tBST22: 0xb5F6d211f54955bA256Bb88B57c5851204dd8042
-# tBST21: 0xa8801d7DEF923134636487f8C4393e54A7C8ed88
-# tBST20: 0xf55da66fC56D67f054e723eb69Ba6F6f86B17c1c
-# tBST17: 0x7331568eCdad48d31D377F2cE944608B823823A0
-# tBST12: 0x32f29f7aad0AAf64FeAC8A34E6aeF56a7026D6A2
-# tBST11: 0x0fb8Be83614539fb292157F4F05613cF16E732Ac
-# tBST10: 0x94580232e744f044A5719C4204d4de0ee5B07f16
-# tBST9: 0x528F9F50Ea0179aF66D0AC99cdc4E45E55120D92
-# tBST1: 0xc679C6FeDc13Aae0CEC1754a9688768Ade3f0443
-
-# weUSDT: 0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f
-# pDAI: 0x6B175474E89094C44Da98b954EedeAC495271d0F
-# bear: 0xd6c31bA0754C4383A41c0e9DF042C62b5e918f6d
-
-# SWAPD4: 0x8cEEbE726e610B888fdC2d42263c819580F07a11
-# tBST34.6: 0x9c35A862420501c7e71f71da369f532716540594
-# tBST34.7: 0x4A65F25739EDf015E0CBE838113592750746e037
-# tBST34.8: 0xa1dceD3D249e1745CA5322B783F8cB76E9d89823 -> wiped
-# tBST35: 0x294EF12222066a4569d5e377Bb924c6ADA446F25 -> wiped
-# tBST35.1: 0x3bf59b1d3e99e53d4b52c54bf2f524969fc92679 -> wiped 
-# tBST36: 0x791eDb652325bA375F8405D3B48ce73f1f0888A0 -> wiped
-# tBST36.1: 0x2E3B5FC17E9792Eb7179e0209b85630adBa2Fcae -> wiped
-# tBST37: 0x85BB584a97A4996fB835ca9af3A85D3D8B1408fB -> wiped
-# tBST37.1: 0xA0833E6f0Cc2C1571b1d5b8095F0a23B3640B59b -> wiped
-# tBST37.2: 0x85fA45794abE9CFF542bE6Cbb6ff043Ac7484517 -> not used
-# tBST37.3: 0xD8c88f3E934192e26710D8E82D9fD64B9457E8f0 -> wiped 
-# tBST37.4: 0x5FD6165a21dB9AfCFc61FbC64fa4c1f25854D9e4 ->  wiped (LP cleared)
-# tBST37.4: 0xf1f6fFd56818535c20490429490041E1F1F1624E -> n/a (mis-fire)
-
-# BST: 0x7A580b7Cd9B48Ba729b48B8deb9F4D2cb216aEBC -> (is swap delegate user)
-
-# tTBF0: 0x588bDc5F0b1aE0AB2AB45995EFD368D8f1A09D04 -> LP wiped
-# tTBF1: 0x499591fC1ab546A35876f247af40499958daB3f5 -> LP wiped
-# tTBF2: 0x411e3129360cF9fAC3DcB1146358FdFed2CA3ede -> LP wiped
-# tTBF2.1: 0xb945c455b1Ed7Ebd4a92c8C9A41BBD9f64bA0890 -> LP wiped
-# tTBF3.0: 0x8fd10330363C85F6a2bE61EbDeCB66894f545Be7 -> LP wiped
-# TBF4.0: 0xFfaD853F74D71925196dc772c991f4f23803B560 -> LP wiped
-# TBF4.2: 0x3c3aFF046d75000ceA3a8776C6cf430fFFD25EE5 -> LP wiped $100 (50:50 USD)
-# TBF4.3: 0x5f9fa75803a5695437d77066E6678fE56ab124F1 -> LP wiped $200 (100:100 USD)
-# TBF4.4: 0x5302F41B377862983aaEbab9050184eC95839363 -> LP wiped $500 (250:250 USD)
-# TBF5.0: 0x613E8509aA671FE00164321A91390241722cCF87 -> LP wiped $200 (100:100 USD)
-# TBF6.0: 0x76d0b9953dd7587578562CaCC75ac4A793852F7A -> LP wiped $200 (100:100 USD)
-# TBF7.0: 0x20c18Fb341C04F83FF9BF0CDF0170e57F35991bc -> LP added $200 (100:100 USD)
-# TBF7.1: 0x5Cbc25C03d241d12ab227f4dE791dAE2d0325eef -> LP added $200 (100:100 USD)
