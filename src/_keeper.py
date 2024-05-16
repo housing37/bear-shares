@@ -289,33 +289,19 @@ def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_
     # print(f'return_val: {return_val}')
     # print(f'return_val.hex(): {return_val.hex()}')
 
-    # > 45885100000 [0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599,0x1f737F7994811fE994Fe72957C374e5cD5D5418A]
-    # > 1 [0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599,0x1f737F7994811fE994Fe72957C374e5cD5D5418A]
-    # > 1000000000000000000 [0x1f737F7994811fE994Fe72957C374e5cD5D5418A,0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599]
-    # > 23748314274 [0x1f737F7994811fE994Fe72957C374e5cD5D5418A,0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599]
-    # > 15369042180 [0x1f737F7994811fE994Fe72957C374e5cD5D5418A,0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599]
-
-    # # Decode the return values from the raw output
-    # decoded_return_val = W3_.W3.to_hex(return_val)
-
-    # # Convert the hexadecimal output to a list of integers
-    # uint_values = [int(decoded_return_val[i:i+64], 16) for i in range(0, len(decoded_return_val), 64)]
-
-    # # Pretty print the uint values
-    # for i, val in enumerate(uint_values):
-    #     print(f"uint[{i}]: {val}")
-
     decoded_value_return = decode_abi(_lst_ret_types, return_val)
-    # print(f'decoded_value_return', *decoded_value_return, sep='\n ')
+    # print(json.dumps(decoded_value_return, indent=4))
+
     hex_bytes = decoded_value_return[0]
     decoded_string = hex_bytes
+    # print(f'decoded_string: {decoded_string}')
+
     if isinstance(hex_bytes, bytes):
         print('found bytes')
         bytes_value = bytes(hex_bytes) # Convert hex bytes to bytes
         decoded_string = bytes_value.decode('utf-8') # Decode bytes to string
-    # print(f'decoded_string: {decoded_string}')
+    
     print(f'pretty print... cnt: {len(decoded_value_return)}')
-    # pprint.pprint(decoded_value_return)
     for i in range(len(decoded_value_return)):
         # if isinstance(decoded_value_return[i], str):
         if isinstance(decoded_value_return[i], int):
