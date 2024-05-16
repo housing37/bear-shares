@@ -26,7 +26,6 @@ ABI_FILE = None
 BIN_FILE = None
 CONTRACT = None
 CONTRACT_ABI = None
-BST_ADDRESS = None
 
 # note: params checked/set in priority order; 'def|max_params' uses 'mpf_ratio'
 #   if all params == False, falls back to 'min_params=True' (ie. just use 'gas_limit')
@@ -332,13 +331,13 @@ def go_user_inputs(_set_gas=True):
     # CONTRACT_ABI = _abi.BST_ABI
     # print(' using CONTRACT_ABI = _abi.BST_ABI')
 
-def go_enter_bst_addr(_symb='nil_symb'):
-    global BST_ADDRESS
-    while BST_ADDRESS == None or BST_ADDRESS == '':
-        BST_ADDRESS = input(f'\n Enter {_symb} contract address:\n  > ')
+def go_enter_contr_addr(_symb='nil_symb', _contr_addr=None):
+    while _contr_addr == None or _contr_addr == '':
+        _contr_addr = input(f'\n Enter {_symb} contract address:\n  > ')
 
-    BST_ADDRESS = W3_.W3.to_checksum_address(BST_ADDRESS)
-    print(f'  using {_symb}_ADDRESS: {BST_ADDRESS}')
+    _contr_addr = W3_.W3.to_checksum_address(_contr_addr)
+    print(f'  using {_symb}_ADDRESS: {_contr_addr}')
+    return _contr_addr
 
 def go_select_func(_bst_func_map=None):
     print(f'\n Select function to invoke ...')
@@ -414,12 +413,85 @@ def gen_random_wallets(_wallet_cnt, _gen_new=True):
         str_rand_wallet_cli_input = '[' + ','.join(map(str, lst_wallet_addr)) + ']'
         return lst_rand_wallets, str_rand_wallet_cli_input
 
+def go_select_contract():
+    # check for using TBF or uniswap v2 ROUTER contract
+    ans = input("\nSelect contract func list to use ...\n 0 = 'BST'\n 1 = 'TBF (or standard ERC20)'\n 2 = 'UswapV2Router'\n 3 = 'FLR (FlashLoanRecipient)'\n 4 = 'UswapV2Pair'\n 5 = 'LPCleaner'\n 6 = 'UniswapFlashQuery'\n > ")
+    opt_sel_str = 'nil_sel_str'
+    symb = 'nil_symb_init'
+    use_bst = ans == '0' or True # True = default to BST
+    use_tbf = ans == '1' # TBFckr contract
+    use_router = ans == '2' # uniswap v2 router type contract
+    use_flr = ans == '3' # balancer Flash Loan Recipient contract
+    use_pair = ans == '4'
+    use_lpcleaner = ans == '5'
+    use_flashquery = ans == '6'
+
+    if use_bst: # NOTE: first check required to act as default
+        symb = 'BST'
+        contr_func_map = _abi.BST_FUNC_MAP_WRITE if is_write else _abi.BST_FUNC_MAP_READ
+        opt_sel_str = f"use_bst={use_bst}"
+    if use_tbf:
+        symb = 'TBF|ERC20'
+        contr_func_map = _abi.TBF_FUNC_MAP_WRITE if is_write else _abi.TBF_FUNC_MAP_READ
+        opt_sel_str = f"use_tbf={use_tbf}"
+    if use_router:
+        symb = 'ROUTER|USWAPv2'
+        contr_func_map = _abi.ROUTERv2_FUNC_MAP_WRITE if is_write else _abi.USWAPv2_ROUTER_FUNC_MAP_READ
+        opt_sel_str = f"use_router={use_router}"
+    if use_flr:
+        symb = 'FLR'
+        contr_func_map = _abi.BALANCER_FLR_FUNC_MAP_WRITE if is_write else _abi.BALANCER_FLR_FUNC_MAP_READ
+        opt_sel_str = f"use_flr={use_flr}"
+    if use_pair:
+        symb = 'PAIR|USWAPv2'
+        contr_func_map = _abi.USWAPv2_PAIR_FUNC_MAP_WRITE if is_write else _abi.USWAPv2_PAIR_FUNC_MAP_READ
+        opt_sel_str = f"use_pair={use_pair}"
+    if use_lpcleaner:
+        symb = 'LPCleaner'
+        contr_func_map = _abi.LPCleaner_FUNC_MAP_WRITE if is_write else _abi.LPCleaner_FUNC_MAP_READ
+        opt_sel_str = f"use_lpcleaner={use_lpcleaner}"
+    if use_flashquery:
+        symb = 'UniswapFlashQuery'
+        contr_func_map = _abi.UniswapFlashQuery_FUNC_MAP_WRITE if is_write else _abi.UniswapFlashQuery_FUNC_MAP_READ
+        opt_sel_str = f"use_flashquery={use_flashquery}"
+    print(f' ans: "{ans}"; {opt_sel_str}, reset contr_func_map')
+    return symb, contr_func_map, opt_sel_str
+
+# _gen_new=False = use _abi.RAND_WALLETS & _abi.RAND_WALLET_CLI_INPUT
+def go_gen_addies(_enable=False, _gen_new=False): 
+    if not _enable: return
+
+    # check to show or generate new wallets
+    s = 'Generate new' if _gen_new else 'Show old'
+    ans = input(f"\n{s} random wallets? [y/n]\n > ")
+    if ans.lower()=='y' or ans == '1':
+        # NOTE: gen/fetch/print CLI input string needed to 
+        #   manually feed into 'KEEPER_mixAmntRand' & 'distrAmntRand'
+        wallet_cnt = 10
+        
+        print(f' fetching {wallet_cnt} random wallets (_gen_new={_gen_new}) ...')
+        lst_rand_wallets, str_rand_wallet_cli_input = gen_random_wallets(wallet_cnt, _gen_new)
+        print(f' fetching {len(lst_rand_wallets)} random wallets (_gen_new={_gen_new}) ... DONE')
+        print(f' ... fetched wallets CLI input ...\n {str_rand_wallet_cli_input}')  # This will print the formatted string    
+
+        ## end ##
+        if _gen_new:
+            print(f'\n\nRUN_TIME_START: {RUN_TIME_START}\nRUN_TIME_END:   {get_time_now()}\n')
+            exit()
+
+def go_select_read_write():
+    # read requests: _set_gas=False
+    ans = input("Start 'write' or 'read' request?\n 0 = write\n 1 = read\n > ")
+    is_write = ans=='0'
+    print(f' ans: "{ans}"; is_write={is_write}')
+    return is_write
+
 #------------------------------------------------------------#
 #   DEFAULT SUPPORT                                          #
 #------------------------------------------------------------#
 READ_ME = f'''
     *DESCRIPTION*
-        invoke BST contract functions
+        invoke any contract functions
          utilizes function hashes instead of contract ABI
 
     *NOTE* INPUT PARAMS...
@@ -472,74 +544,11 @@ if __name__ == "__main__":
 
     ## exe ##
     try:
-        # read requests: _set_gas=False
-        ans = input("Start 'write' or 'read' request?\n 0 = write\n 1 = read\n > ")
-        is_write = ans=='0'
-        print(f' ans: "{ans}"; is_write={is_write}')
-
-        # check to show or generate new wallets
-        ans = input("\nGenerate / show random wallets? [y(1)/n]\n > ")
-        gen_addies = ans.lower()=='y' or ans == '1'
-        if gen_addies:
-            # NOTE: gen/fetch/print CLI input string needed to 
-            #   manually feed into 'KEEPER_mixAmntRand' & 'distrAmntRand'
-            wallet_cnt = 10
-            gen_new = False # False = use _abi.RAND_WALLETS & _abi.RAND_WALLET_CLI_INPUT
-            print(f' fetching {wallet_cnt} random wallets (gen_new={gen_new}) ...')
-            lst_rand_wallets, str_rand_wallet_cli_input = gen_random_wallets(wallet_cnt, gen_new)
-            print(f' fetching {len(lst_rand_wallets)} random wallets (gen_new={gen_new}) ... DONE')
-            print(f' ... fetched wallets CLI input ...\n {str_rand_wallet_cli_input}')  # This will print the formatted string    
-
-            ## end ##
-            if gen_new:
-                print(f'\n\nRUN_TIME_START: {RUN_TIME_START}\nRUN_TIME_END:   {get_time_now()}\n')
-                exit()
-
-        # check for using TBF or uniswap v2 ROUTER contract
-        ans = input("\nSelect contract func list to use ...\n 0 = 'BST'\n 1 = 'TBF (or standard ERC20)'\n 2 = 'UswapV2Router'\n 3 = 'FLR (FlashLoanRecipient)'\n 4 = 'UswapV2Pair'\n 5 = 'LPCleaner'\n 6 = 'UniswapFlashQuery'\n > ")
-        opt_sel_str = 'nil_sel_str'
-        symb = 'nil_symb_init'
-        use_bst = ans == '0' or True # True = default to BST
-        use_tbf = ans == '1' # TBFckr contract
-        use_router = ans == '2' # uniswap v2 router type contract
-        use_flr = ans == '3' # balancer Flash Loan Recipient contract
-        use_pair = ans == '4'
-        use_lpcleaner = ans == '5'
-        use_flashquery = ans == '6'
-
-        if use_bst: # NOTE: first check required to act as default
-            symb = 'BST'
-            contr_func_map = _abi.BST_FUNC_MAP_WRITE if is_write else _abi.BST_FUNC_MAP_READ
-            opt_sel_str = f"use_bst={use_bst}"
-        if use_tbf:
-            symb = 'TBF|ERC20'
-            contr_func_map = _abi.TBF_FUNC_MAP_WRITE if is_write else _abi.TBF_FUNC_MAP_READ
-            opt_sel_str = f"use_tbf={use_tbf}"
-        if use_router:
-            symb = 'ROUTER|USWAPv2'
-            contr_func_map = _abi.ROUTERv2_FUNC_MAP_WRITE if is_write else _abi.USWAPv2_ROUTER_FUNC_MAP_READ
-            opt_sel_str = f"use_router={use_router}"
-        if use_flr:
-            symb = 'FLR'
-            contr_func_map = _abi.BALANCER_FLR_FUNC_MAP_WRITE if is_write else _abi.BALANCER_FLR_FUNC_MAP_READ
-            opt_sel_str = f"use_flr={use_flr}"
-        if use_pair:
-            symb = 'PAIR|USWAPv2'
-            contr_func_map = _abi.USWAPv2_PAIR_FUNC_MAP_WRITE if is_write else _abi.USWAPv2_PAIR_FUNC_MAP_READ
-            opt_sel_str = f"use_pair={use_pair}"
-        if use_lpcleaner:
-            symb = 'LPCleaner'
-            contr_func_map = _abi.LPCleaner_FUNC_MAP_WRITE if is_write else _abi.LPCleaner_FUNC_MAP_READ
-            opt_sel_str = f"use_lpcleaner={use_lpcleaner}"
-        if use_flashquery:
-            symb = 'UniswapFlashQuery'
-            contr_func_map = _abi.UniswapFlashQuery_FUNC_MAP_WRITE if is_write else _abi.UniswapFlashQuery_FUNC_MAP_READ
-            opt_sel_str = f"use_flashquery={use_flashquery}"
-        
-        print(f' ans: "{ans}"; {opt_sel_str}, reseting contr_func_map')
-        
-        go_user_inputs(_set_gas=is_write)
-        go_enter_bst_addr(symb)
+        is_write = go_select_read_write() # read requests -> _set_gas=False
+        go_gen_addies(_enable=False, _gen_new=False)
+        symb, contr_func_map, opt_sel_str = go_select_contract()
+        go_user_inputs(_set_gas=is_write) # select chain, sender, gas (init web3)
+        contr_address = go_enter_contr_addr(symb)
         
         print('\n Begin function select loop ...')
         while True: # continue function selection progression until killed
@@ -548,11 +557,11 @@ if __name__ == "__main__":
             lst_func_params, value_in_wei = go_enter_func_params(func_select)
             lst_params = list(contr_func_map[func_select])
             lst_params.insert(2, lst_func_params)
-            tup_params = (BST_ADDRESS,lst_params[0],lst_params[1],lst_params[2],lst_params[3])
+            tup_params = (contr_address,lst_params[0],lst_params[1],lst_params[2],lst_params[3])
             try:
                 if not is_write:
                     if lst_params[0] == _abi.BST_GET_ACCT_PAYOUTS_FUNC_HASH:
-                        read_with_abi(BST_ADDRESS, lst_params[0], lst_params[2])
+                        read_with_abi(contr_address, lst_params[0], lst_params[2])
                     else:
                         read_with_hash(*tup_params)
                 else:
@@ -560,7 +569,7 @@ if __name__ == "__main__":
                     write_with_hash(*tup_params)
             except Exception as e:
                 print_except(e, debugLvl=DEBUG_LEVEL)
-            print(f'\n{symb}_ADDRESS: {BST_ADDRESS}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}\n func_select: {func_select}')
+            print(f'\n{symb}_ADDRESS: {contr_address}\nSENDER_ADDRESS: {W3_.SENDER_ADDRESS}\n func_select: {func_select}')
 
     except Exception as e:
         print_except(e, debugLvl=DEBUG_LEVEL)
