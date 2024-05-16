@@ -13,8 +13,8 @@ UniswapFlashQuery_FUNC_MAP_READ = {
 	# legacy
  	"#-----------------------#": ["xxxxxxxx", [], []], 
  	"KEEPER()": ["862a179e", [], ['address']],    
-    "TOK_WPLS()": ["fa4a9870", [], ['address']],
-    "BURN_ADDR()": ["783028a9", [], ['address']],
+    # "TOK_WPLS()": ["fa4a9870", [], ['address']],
+    # "BURN_ADDR()": ["783028a9", [], ['address']],
     "tVERSION()": ["9a60f330", [], ['string']],
 }
 UniswapFlashQuery_FUNC_MAP_WRITE = {
