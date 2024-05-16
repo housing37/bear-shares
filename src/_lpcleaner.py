@@ -331,7 +331,7 @@ def go_user_inputs(_set_gas=True):
     # CONTRACT_ABI = _abi.BST_ABI
     # print(' using CONTRACT_ABI = _abi.BST_ABI')
 
-def go_enter_contr_addr(_symb='nil_symb', _contr_addr=None):
+def go_input_contr_addr(_symb='nil_symb', _contr_addr=None):
     while _contr_addr == None or _contr_addr == '':
         _contr_addr = input(f'\n Enter {_symb} contract address:\n  > ')
 
@@ -341,12 +341,12 @@ def go_enter_contr_addr(_symb='nil_symb', _contr_addr=None):
 
 def go_select_func(_bst_func_map=None):
     print(f'\n Select function to invoke ...')
-    lst_keys = list(_bst_func_map).keys()
+    lst_keys = list(_bst_func_map.keys())
     for i,k in enumerate(lst_keys):
         print(f'  {i} = {k}')
     ans_idx = input('  > ')
     assert ans_idx.isdigit() and int(ans_idx) >= 0 and int(ans_idx) < len(lst_keys), f'failed ... invalid input {ans_idx}'
-    func_select = list(_bst_func_map).keys()[int(ans_idx)]
+    func_select = list(_bst_func_map.keys())[int(ans_idx)]
     ans = input(f'\n  Confirm func [y/n]: {func_select}\n  > ')
     lst_ans_go = ['y','yes','']
     if str(ans).lower() not in lst_ans_go: func_select = go_select_func()
@@ -544,11 +544,11 @@ if __name__ == "__main__":
 
     ## exe ##
     try:
-        is_write = go_select_read_write() # read requests -> _set_gas=False
         go_gen_addies(_enable=False, _gen_new=False)
-        symb, contr_func_map, opt_sel_str = go_select_contract()
+        is_write = go_select_read_write() # read requests -> _set_gas=False
         go_user_inputs(_set_gas=is_write) # select chain, sender, gas (init web3)
-        contr_address = go_enter_contr_addr(symb)
+        symb, contr_func_map, opt_sel_str = go_select_contract()
+        contr_address = go_input_contr_addr(symb)
         
         print('\n Begin function select loop ...')
         while True: # continue function selection progression until killed
