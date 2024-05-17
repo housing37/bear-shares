@@ -16,8 +16,9 @@ import _web3 # from web3 import Account, Web3, HTTPProvider
 import _abi, _gen_pls_key
 from ethereum.abi import encode_abi, decode_abi # pip install ethereum
 from _constants import FACTORY_pulsex_router_02_v2 as PULSEX_V2_FACTORY
+from _constants import ROUTER_pulsex_router02_v2 as PULSEX_V2_ROUTER
 
-DEBUG_LEVEL = 0
+DEBUG_LEVEL = 1
 LST_CONTR_ABI_BIN = [
     "../bin/contracts/BearSharesTrinity",
 ]
@@ -563,32 +564,33 @@ if __name__ == "__main__":
                         # get tuple ready for 'read|write_with_hash'
                         #   need pair from this candidate token combo)
                         #    (use 'getPair' from factory)
-                        symb_1 = 'pulsexv2factory' # 'UniswapV2Factory'
-                        contr_addr_1 = go_input_contr_addr(symb_1, _contr_addr=PULSEX_V2_FACTORY) # 'UniswapV2Factory'
-                        func_sign_1 = "getPair(address,address)" # 'UniswapV2Factory'
-                        inp_params_1 = f"{lst_cand_pair[0]} {lst_cand_pair[1]}"
+                        symb_1 = symb # 'UniswapFlashQuery'
+                        contr_addr_1 = go_input_contr_addr(symb_1, _contr_addr=contr_addr) # 'UniswapFlashQuery'
+                        func_sign_1 = "getPair(address,address,address)" # 'UniswapFlashQuery'
+                        inp_params_1 = f"{PULSEX_V2_FACTORY} {lst_cand_pair[0]} {lst_cand_pair[1]}"
                         tup_params_1 = go_enter_func_params(contr_addr_1, func_sign_1, list(contr_func_map[func_sign_1]), inp_params_1)
                         try:
                             lst_return = read_with_hash(*tup_params_1)
-                            lp_cand_addr = lst_return[0]
-                            if DEBUG_LEVEL > 0: print(f'\n found candidate pair LP address: {lp_cand_addr}\n')
-                            if len(lst_return) > 1: print(f'\n\n **WARNING**\n  func returned more than 1 cand pair address: {lst_return}\n\n')
+                            lst_cand_pair = lst_return
+                            
+                            if DEBUG_LEVEL > 0: print(f'\n found candidate pair LP address: {lst_cand_pair[2]}\n')
+                            print(json.dumps(lst_cand_pair, indent=2))
 
                             # at this point ... we found an LP trio to work with 
                             #   (ie. we foud 3 tokens, all paired with each other)
-                            lp_trio = [[tokx_0, tokx_1, tokx_p], [toky_0, toky_1, toky_p], [lst_cand_pair[0], lst_cand_pair[1], lp_cand_addr]]
+                            lp_trio = [[tokx_0, tokx_1, tokx_p], [toky_0, toky_1, toky_p], [lst_cand_pair[0], lst_cand_pair[1], lst_cand_pair[2]]]
 
                             # now we need to get reserves for this LP trio
                             symb_2 = symb # 'UniswapFlashQuery'
                             contr_addr_2 = go_input_contr_addr(symb_2, _contr_addr=contr_addr) # 'UniswapFlashQuery'
-                            func_sign_2 = "getReservesByPairs(address[])" # 'UniswapFlashQuery'
-                            inp_params_2 = f"[{lp_trio[0][2]},{lp_trio[1][2]},{lp_trio[2][2]}]"
+                            func_sign_2 = "getReservesByPairs(address[],address)" # 'UniswapFlashQuery'
+                            inp_params_2 = f"[{lp_trio[0][2]},{lp_trio[1][2]},{lp_trio[2][2]}] {PULSEX_V2_ROUTER}"
                             tup_params_2 = go_enter_func_params(contr_addr_2, func_sign_2, list(contr_func_map[func_sign_2]), inp_params_2)
                             try:
                                 lst_return = read_with_hash(*tup_params_2)
                                 lst_reserves = lst_return[0]
-                                if DEBUG_LEVEL > 0: print(f'\n found current reserves ...')
-                                if DEBUG_LEVEL > 0: print(json.dumps(lst_reserves, indent=2))
+                                if DEBUG_LEVEL > 0 or True: print(f'\n found current reserves ...')
+                                if DEBUG_LEVEL > 0 or True: print(json.dumps(lst_reserves, indent=2))
                                 for i in range(0,len(lp_trio)): lp_trio[i].extend(lst_reserves[i])
                             except Exception as e:
                                 print_except(e, debugLvl=DEBUG_LEVEL)
@@ -603,6 +605,17 @@ if __name__ == "__main__":
                             #                 12187118246744722302468490448, # token1 reserves
                             #                 1715891735 # reserves timestamp
                             #             ]
+                            #   ex: lp_trio (extended)
+                            # [
+                            #     "0x95b303987a60c71504d99aa1b13b4da07b0790ab",
+                            #     "0xa1077a294dde1b09bb078844df40758a5d0f9a27",
+                            #     "0x149b2c629e652f2e89e11cd57e5d4d77ee166f9f",
+                            #     28442872739724142093103645418,
+                            #     12248394529773971791605409570,
+                            #     349392765897396855034759058866716755950535592701675062524,
+                            #     349392765897396855034759058882958334738972229249161007613,
+                            #     1715965115
+                            #     ],
                             lst_lp_trio_algo_1.append(lp_trio)
                             lst_lp_trio_algo_2.append(lp_trio)
 

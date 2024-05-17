@@ -235,7 +235,10 @@ def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_
     # print(f'return_val.hex(): {return_val.hex()}')
 
     decoded_value_return = decode_abi(_lst_ret_types, return_val)
-    # print(json.dumps(decoded_value_return, indent=4))
+    try:
+        print(json.dumps(decoded_value_return, indent=2))
+    except Exception as e:
+        print_except(e, debugLvl=DEBUG_LEVEL)
 
     hex_bytes = decoded_value_return[0]
     decoded_string = hex_bytes
@@ -250,8 +253,10 @@ def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_
     for i in range(len(decoded_value_return)):
         # if isinstance(decoded_value_return[i], str):
         if isinstance(decoded_value_return[i], int):
-            # f_val = float(decoded_value_return[i]) / 10 ** 6
-            f_val = float(decoded_value_return[i]) / 10 ** 18
+            # check for BST prod contract address
+            dec = 6 if _contr_addr=='0x7A580b7Cd9B48Ba729b48B8deb9F4D2cb216aEBC' else 18
+            f_val = float(decoded_value_return[i]) / 10 ** dec
+            # f_val = float(decoded_value_return[i]) / 10 ** 18
             print(f' {f_val:,.3f}')
         elif isinstance(decoded_value_return[i], list):
             print(json.dumps(list(decoded_value_return[i]), indent=4))

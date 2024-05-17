@@ -8,8 +8,9 @@ UniswapFlashQuery_FUNC_MAP_READ = {
     # read functions     
 	"getPairsByIndexRange(address,address,uint256,uint256)": ["6149de9c", ['address','address','uint256','uint256'], ['address[3][]','uint256[5][]']],
 	"getPairsByIndexRange_OG(address,uint256,uint256)": ["a09bdbdc", ['address','uint256','uint256'], ['address[3][]']],   
-    "getReservesByPairs(address[])": ["4dbf0f39", ['address[]'], ['uint256[3][]']],
-    "getPair(address,address)": ["e6a43905", ['address','address'], ['address']],
+    "getReservesByPairs(address[],address)": ["66cc1fbb", ['address[]','address'], ['uint256[5][]']],
+    "getReservesByPairs_OG(address[])": ["99c31ae6", ['address[]'], ['uint256[3][]']],
+    "getPair(address,address,address)": ["61e0b77f", ['address','address','address'], ['address','address','address']],
     
 	# legacy
  	"#-----------------------#": ["xxxxxxxx", [], []], 
