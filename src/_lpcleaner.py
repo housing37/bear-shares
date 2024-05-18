@@ -210,6 +210,29 @@ def parse_logs_for_func_hash(_tx_receipt, _func_hash, _w3:_web3.myWEB3=None):
         
             [print(f'   {key}: {val}') for key,val in d_ret_log.items()]
             print()
+
+    if _func_hash == _abi.UniswapFlashQuery_FUNC_MAP_WRITE[_abi.UniswapFlashQuery_FUNC_MAP_getRervesByPairs][0]:
+        # Define & filter logs based on the event signature
+        # PairCreated(address indexed token0, address indexed token1, address pair, uint256)
+        event_signature = _w3.W3.keccak(text="ReservesData(address,address,address,uint256,uint256,uint256,uint256,uint256)").hex()
+        pay_out_logs = [log for log in logs if log['topics'][0].hex() == event_signature]
+        
+        # Parse the event logs
+        for log in pay_out_logs:
+            lst_evt_params = ['address','address','address','uint256','uint256','uint256','uint256','uint256']
+            evt_data = log['data']
+            decoded_data = decode_abi(lst_evt_params, evt_data)
+            d_ret_log = {'_token0':decoded_data[0],
+                         '_token1':decoded_data[1],
+                         '_pair':decoded_data[2],
+                         '_reserve0':decoded_data[3],
+                         '_reserve1':decoded_data[4],
+                         '_token0_in':decoded_data[5],
+                         '_token1_in':decoded_data[6],
+                         '_blocktimestamp':decoded_data[7]}
+        
+            [print(f'   {key}: {val}') for key,val in d_ret_log.items()]
+            print()
             
     return d_ret_log
             
@@ -587,7 +610,9 @@ if __name__ == "__main__":
                             inp_params_2 = f"[{lp_trio[0][2]},{lp_trio[1][2]},{lp_trio[2][2]}] {PULSEX_V2_ROUTER}"
                             tup_params_2 = go_enter_func_params(contr_addr_2, func_sign_2, list(contr_func_map[func_sign_2]), inp_params_2)
                             try:
-                                lst_return = read_with_hash(*tup_params_2)
+                                # lst_return = read_with_hash(*tup_params_2)
+                                W3_.set_gas_params(W3_.W3, _gas_limit=5_000_000)
+                                lst_return = write_with_hash(*tup_params_2)
                                 lst_reserves = lst_return[0]
                                 if DEBUG_LEVEL > 0 or True: print(f'\n found current reserves ...')
                                 if DEBUG_LEVEL > 0 or True: print(json.dumps(lst_reserves, indent=2))

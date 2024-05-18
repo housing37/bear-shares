@@ -19,9 +19,12 @@ UniswapFlashQuery_FUNC_MAP_READ = {
     # "BURN_ADDR()": ["783028a9", [], ['address']],
     "tVERSION()": ["9a60f330", [], ['string']],
 }
+UniswapFlashQuery_FUNC_MAP_getRervesByPairs = "getReservesByPairs(address[],address)"
 UniswapFlashQuery_FUNC_MAP_WRITE = {
     # "getPairsByIndexRange(address,address,uint256,uint256)": ["6149de9c", ['address','address','uint256','uint256'], ['address[][]','uint256[][]']],
 	# "getPairsByIndexRange_OG(address,uint256,uint256)": ["a09bdbdc", ['address','uint256','uint256'], ['address[][]']],
+    "getPair(address,address,address)": ["61e0b77f", ['address','address','address'], ['address','address','address']],
+    UniswapFlashQuery_FUNC_MAP_getRervesByPairs: ["66cc1fbb", ['address[]','address'], ['uint256[5][]']],
 	"#-----------------------#": ["xxxxxxxx", [], []], 
 }
     

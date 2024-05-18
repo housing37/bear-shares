@@ -6,6 +6,8 @@ pragma solidity ^0.8.24;
 
 // remix compile _ 
 // import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol"; // deploy
+// import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
+// import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
 // import "@openzeppelin/contracts/token/ERC20/IERC20.sol"; // deploy
 
 // local compile _
@@ -23,13 +25,16 @@ abstract contract UniswapV2Factory  {
 // In order to quickly load up data from Uniswap-like market, this contract allows easy iteration with a single eth_call
 contract UniswapFlashQuery {
     // string public constant tVERSION = '2.8';
-    string public constant tVERSION = '4.0';
+    string public constant tVERSION = '4.2';
     address public KEEPER;
+
+    // NOTE: testing emit: comparing token0|1_in with client side printouts
+    // event ReservesData(address _token0, address _token1, address _pair, uint256 _reserve0, uint256 _reserve1, uint256 _token0_in,uint256 _token1_in, uint256 _blocktimestamp);
+
     constructor() {
         KEEPER = msg.sender;
     }
 
-    // function getReservesByPairs(IUniswapV2Pair[] calldata _pairs, address _uniswapRouter) external view returns (uint256[5][] memory) {
     function getReservesByPairs(address[] calldata _pairs, address _uniswapRouter) external view returns (uint256[5][] memory) {
         uint256[5][] memory result = new uint256[5][](_pairs.length);
         for (uint i = 0; i < _pairs.length; i++) {
@@ -78,6 +83,10 @@ contract UniswapFlashQuery {
             result[i][2] = token0_in;
             result[i][3] = token1_in;
             result[i][4] = blockTimestampLast;
+
+            // NOTE: testing emit: comparing token0|1_in with client side printouts
+            //  cannot emit events w/o using 'view' function modifier 
+            // emit ReservesData(token0, token1, address(pair), reserve0, reserve1, token0_in, token1_in, blockTimestampLast);
         }
         return result;
     }

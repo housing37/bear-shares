@@ -208,6 +208,29 @@ def parse_logs_for_func_hash(_tx_receipt, _func_hash, _w3:_web3.myWEB3=None):
         
             [print(f'   {key}: {val}') for key,val in d_ret_log.items()]
             print()
+
+    if _func_hash == _abi.UniswapFlashQuery_FUNC_MAP_WRITE[_abi.UniswapFlashQuery_FUNC_MAP_getRervesByPairs][0]:
+        # Define & filter logs based on the event signature
+        # PairCreated(address indexed token0, address indexed token1, address pair, uint256)
+        event_signature = _w3.W3.keccak(text="ReservesData(address,address,address,uint256,uint256,uint256,uint256,uint256)").hex()
+        pay_out_logs = [log for log in logs if log['topics'][0].hex() == event_signature]
+        
+        # Parse the event logs
+        for log in pay_out_logs:
+            lst_evt_params = ['address','address','address','uint256','uint256','uint256','uint256','uint256']
+            evt_data = log['data']
+            decoded_data = decode_abi(lst_evt_params, evt_data)
+            d_ret_log = {'_token0':decoded_data[0],
+                         '_token1':decoded_data[1],
+                         '_pair':decoded_data[2],
+                         '_reserve0':decoded_data[3],
+                         '_reserve1':decoded_data[4],
+                         '_token0_in':decoded_data[5],
+                         '_token1_in':decoded_data[6],
+                         '_blocktimestamp':decoded_data[7]}
+        
+            [print(f'   {key}: {val}') for key,val in d_ret_log.items()]
+            print()
             
     return d_ret_log
             
@@ -259,7 +282,7 @@ def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_
             # f_val = float(decoded_value_return[i]) / 10 ** 18
             print(f' {f_val:,.3f}')
         elif isinstance(decoded_value_return[i], list):
-            print(json.dumps(list(decoded_value_return[i]), indent=4))
+            print(json.dumps(decoded_value_return[i], indent=2))
         else:
             print(decoded_value_return[i])
     
