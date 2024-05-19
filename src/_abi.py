@@ -13,7 +13,7 @@ UniswapFlashQuery_FUNC_MAP_READ = {
     "getPair(address,address,address)": ["61e0b77f", ['address','address','address'], ['address','address','address']],
     
 	# legacy
- 	"#-----------------------#": ["xxxxxxxx", [], []], 
+ 	"#------------------------#": ["xxxxxxxx", [], []],  
  	"KEEPER()": ["862a179e", [], ['address']],    
     # "TOK_WPLS()": ["fa4a9870", [], ['address']],
     # "BURN_ADDR()": ["783028a9", [], ['address']],
@@ -25,13 +25,13 @@ UniswapFlashQuery_FUNC_MAP_WRITE = {
 	# "getPairsByIndexRange_OG(address,uint256,uint256)": ["a09bdbdc", ['address','uint256','uint256'], ['address[][]']],
     "getPair(address,address,address)": ["61e0b77f", ['address','address','address'], ['address','address','address']],
     UniswapFlashQuery_FUNC_MAP_getRervesByPairs: ["66cc1fbb", ['address[]','address'], ['uint256[5][]']],
-	"#-----------------------#": ["xxxxxxxx", [], []], 
+	"#------------------------#": ["xxxxxxxx", [], []],  
 }
     
 LPCleaner_FUNC_MAP_READ = {
     # read functions        
 	# legacy
- 	"#-----------------------#": ["xxxxxxxx", [], []], 
+ 	"#------------------------#": ["xxxxxxxx", [], []],  
  	"KEEPER()": ["862a179e", [], ['address']],    
     "TOK_WPLS()": ["fa4a9870", [], ['address']],
     "BURN_ADDR()": ["783028a9", [], ['address']],
@@ -43,7 +43,7 @@ LPCleaner_FUNC_MAP_WRITE = {
     "uniswapV2Call(address,uint256,uint256,bytes)": ["10d1e85c", ["address",'uint256','uint256','bytes'], []], 
 
 	# legacy
- 	"#-----------------------#": ["xxxxxxxx", [], []], 
+ 	"#------------------------#": ["xxxxxxxx", [], []],  
  	"KEEPER_setKeeper(address)": ["11851737", ["address"], []], 
     "KEEPER_maintenance(uint256,address)": ["4dd534c0", ["uint256","address"], []], # gas used: 62,434 
     "KEEPER_withdraw(uint256)": ["cbf0d0d4", ["uint256"], []], 
@@ -152,18 +152,23 @@ TBF_FUNC_MAP_READ = {
     "WHITELIST_ADDR_MAP(address)": ["0a3e9c60", ["address"], ['bool']],
     "WHITELIST_LP_MAP(address)": ["08428223", ["address"], ['bool']],
     "LAST_TRANSFER_AMNT()": ["09479f1a", [], ['uint256']],
-        
+
 	# legacy
- 	"#-----------------------#": ["xxxxxxxx", [], []], 
+ 	"#------------LUSD------------#": ["xxxxxxxx", [], []], 
+     "lastGoodPrice()": ["0490be83", [], ['uint256']],    
+
+ 	"#------------BST------------#": ["xxxxxxxx", [], []],  
+    "tVERSION()": ["9a60f330", [], ['string']],
  	"KEEPER()": ["862a179e", [], ['address']],    
     "TOK_WPLS()": ["fa4a9870", [], ['address']],
     "BURN_ADDR()": ["783028a9", [], ['address']],
+    
+ 	"#------------IERC20------------#": ["xxxxxxxx", [], []], 
     "balanceOf(address)": ["70a08231", ["address"], ['uint256']],
     "decimals()": ["313ce567", [], ['uint8']],
 	"owner()": ["8da5cb5b", [], ['address']],
     "name()": ["06fdde03", [], ['string']],
     "symbol()": ["95d89b41", [], ['string']],
-    "tVERSION()": ["9a60f330", [], ['string']],
     "totalSupply()": ["18160ddd", [], ['uint256']],
 }
 TBF_FUNC_MAP_WRITE = {
@@ -180,10 +185,12 @@ TBF_FUNC_MAP_WRITE = {
     "distrAmntRand(uint64,address[])": ["d3692a0a", ['uint64','address[]'], []], # fee: 69.956423 pls
     
 	# legacy
- 	"#-----------------------#": ["xxxxxxxx", [], []], 
+ 	"#------------BST------------#": ["xxxxxxxx", [], []],  
  	"KEEPER_setKeeper(address)": ["11851737", ["address"], []], 
 	"KEEPER_setTokNameSymb(string,string)": ["65c021bc", ["string","string"], []],
     "burn(uint64)": ["9dbead42", ["uint64"], []], 
+    
+ 	"#------------IERC20------------#": ["xxxxxxxx", [], []], 
     "allowance(address,address)": ["dd62ed3e", ["address","address"], []],
     "approve(address,uint256)": ["095ea7b3", ["address","uint256"], []],
     "transfer(address,uint256)": ["a9059cbb", ["address","uint256"], []],
