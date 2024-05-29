@@ -154,8 +154,30 @@ TBF_FUNC_MAP_READ = {
     "LAST_TRANSFER_AMNT()": ["09479f1a", [], ['uint256']],
 
 	# legacy
- 	"#------------LUSD------------#": ["xxxxxxxx", [], []], 
-     "lastGoodPrice()": ["0490be83", [], ['uint256']],    
+    # 0x3A4bA74B3a75D9adD2faF9EaE89A8197b6C828B1
+    "#------------ROB-staking------------#": ["xxxxxxxx", [], []], 
+    "poolLength()": ["081e3eda", [], ['uint256']], 
+
+    # 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84
+ 	"#------------stETH------------#": ["xxxxxxxx", [], []], 
+    "getOracle()": ["833b1fce", [], ['address']], 
+    "isStakingPaused()": ["1ea7ca89", [], ['bool']], 
+	
+	"#------------LUSD_TROVE-MANAGER------------#": ["xxxxxxxx", [], []],
+    "DECIMAL_PRECISION()": ["a20baee6", [], ['uint256']],
+    "REDEMPTION_FEE_FLOOR()": ["28d28b5b", [], ['uint256']],
+    
+	# # 0x4c517D4e2C851CA76d7eC94B805269Df0f2201De
+    "#------------LUSD_TELLOR_PRICEFEED------------#": ["xxxxxxxx", [], []],
+	"fetchPrice()": ["0x0fdb11cf", [], ['uint256']], # both read & write
+    
+ 	"#------------LUSD------------#": ["xxxxxxxx", [], []],
+     "lastGoodPrice()": ["0490be83", [], ['uint256']],
+	 "getOwners()": ["a0e67e2b", [], ['address[]']],
+     "latestAnswer()": ["50d25bcd", [], ['uint256']],
+     "maxAnswer()": ["70da2f67", [], ['uint256']],
+     "minAnswer()": ["22adbc78", [], ['uint256']],
+     "troveManagerAddress()": ["5a4d28bb", [], ['address']],
 
  	"#------------BST------------#": ["xxxxxxxx", [], []],  
     "tVERSION()": ["9a60f330", [], ['string']],
@@ -185,6 +207,17 @@ TBF_FUNC_MAP_WRITE = {
     "distrAmntRand(uint64,address[])": ["d3692a0a", ['uint64','address[]'], []], # fee: 69.956423 pls
     
 	# legacy
+ 	"#------------stETH------------#": ["xxxxxxxx", [], []], 
+     "pauseStaking()": ["f999c506", [], []],
+     "submit(address)": ["a1903eab", ['address'], ['uint256']],
+     
+	"#------------LUSD_TROVE-MANAGER------------#": ["xxxxxxxx", [], []],
+    "redeemCollateral(uint256,address,address,address,uint256,uint256,uint256)": ["bcd37526", [], []],
+    
+	# 0x4c517D4e2C851CA76d7eC94B805269Df0f2201De
+    "#------------LUSD_TELLOR_PRICEFEED------------#": ["xxxxxxxx", [], []],
+	"fetchPrice()": ["0x0fdb11cf", [], ['uint256']], # both read & write
+    
  	"#------------BST------------#": ["xxxxxxxx", [], []],  
  	"KEEPER_setKeeper(address)": ["11851737", ["address"], []], 
 	"KEEPER_setTokNameSymb(string,string)": ["65c021bc", ["string","string"], []],

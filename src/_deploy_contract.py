@@ -28,6 +28,7 @@ LST_CONTR_ABI_BIN = [
     "../bin/contracts/BalancerFLR_test",
     "../bin/contracts/LPCleaner",
     "../bin/contracts/UniswapFlashQuery",
+    "../bin/contracts/StakingContract",
 ]
 
 W3_ = None
