@@ -36,7 +36,7 @@ contract LUSDShareToken is ERC20, Ownable {
     //  SWAPD also needed for delegate burning in '_exeTokBuyBurn', if '!_selAuxPay'
     //    (to leave opp available for native pLUSDT contract burning w/ totalSupply())
     ISwapDelegate private SWAPD;
-    address private constant SWAP_DELEGATE_INIT = address(0x8cEEbE726e610B888fdC2d42263c819580F07a11);
+    address private constant SWAP_DELEGATE_INIT = address(0xA8d96d0c328dEc068Db7A7Ba6BFCdd30DCe7C254); // v5 (052924)
     address private SWAP_DELEGATE = SWAP_DELEGATE_INIT;
 
     /* -------------------------------------------------------- */
@@ -267,10 +267,10 @@ contract LUSDShareToken is ERC20, Ownable {
         
         emit DexExecutionsUpdated(false, prev_1, false, false, ENABLE_MARKET_BUY, false);
     }
-    function KEEPER_setRatios(uint32 _payoutRatio, uint32 _tradeinRatio) external onlyKeeper {
-        RATIO_BST_PAYOUT = _payoutRatio; // default 10000 _ ie. 100.00% (bstPayout:usdPayout -> 1:1 USD)
-        RATIO_USD_PAYOUT = _tradeinRatio; // default 10000 _ ie. 100.00% (usdBuyBackVal:_bstAmnt -> 1:1 BST)
-    }
+    // function KEEPER_setRatios(uint32 _payoutRatio, uint32 _tradeinRatio) external onlyKeeper {
+    //     RATIO_BST_PAYOUT = _payoutRatio; // default 10000 _ ie. 100.00% (bstPayout:usdPayout -> 1:1 USD)
+    //     RATIO_USD_PAYOUT = _tradeinRatio; // default 10000 _ ie. 100.00% (usdBuyBackVal:_bstAmnt -> 1:1 BST)
+    // }
     function KEEPER_editWhitelistStables(address _usdStable, uint8 _decimals, bool _add) external onlyKeeper {
         require(_usdStable != address(0), 'err: 0 address');
         _editWhitelistStables(_usdStable, _decimals, _add);
@@ -297,10 +297,10 @@ contract LUSDShareToken is ERC20, Ownable {
             return _collectiveStableBalances(USD_STABLES_HISTORY);
         return _collectiveStableBalances(WHITELIST_USD_STABLES);
     }
-    function KEEPER_getRatios(uint256 _keeperCheck) external view onlyKeeper returns (uint32, uint32) { 
-        require(_keeperCheck == KEEPER_CHECK, ' KEEPER_CHECK failed :( ');
-        return (RATIO_BST_PAYOUT, RATIO_USD_PAYOUT);
-    }
+    // function KEEPER_getRatios(uint256 _keeperCheck) external view onlyKeeper returns (uint32, uint32) { 
+    //     require(_keeperCheck == KEEPER_CHECK, ' KEEPER_CHECK failed :( ');
+    //     return (RATIO_BST_PAYOUT, RATIO_USD_PAYOUT);
+    // }
 
     /* -------------------------------------------------------- */
     /* PUBLIC - ACCESSORS
