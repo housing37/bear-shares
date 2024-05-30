@@ -153,7 +153,14 @@ TBF_FUNC_MAP_READ = {
     "WHITELIST_LP_MAP(address)": ["08428223", ["address"], ['bool']],
     "LAST_TRANSFER_AMNT()": ["09479f1a", [], ['uint256']],
 
-	# legacy
+	"#------------SWAPD------------#": ["xxxxxxxx", [], []], 
+    "81e167cf": "USER()",
+    "a7c84824": "USER_INIT()",
+    "b2eee154": "USER_burnToken(address,uint256)",
+    "e8d1eac1": "USER_maintenance(uint256,address)",
+    "0e2d844d": "USER_setUser(address)",
+    "ffa1ad74": "VERSION()"
+    
     # 0x3A4bA74B3a75D9adD2faF9EaE89A8197b6C828B1
     "#------------ROB-staking------------#": ["xxxxxxxx", [], []], 
     "poolLength()": ["081e3eda", [], ['uint256']], 
@@ -218,12 +225,95 @@ TBF_FUNC_MAP_WRITE = {
     "#------------LUSD_TELLOR_PRICEFEED------------#": ["xxxxxxxx", [], []],
 	"fetchPrice()": ["0x0fdb11cf", [], ['uint256']], # both read & write
     
- 	"#------------BST------------#": ["xxxxxxxx", [], []],  
+ 	"#------------BST------------#": ["xxxxxxxx", [], []],
  	"KEEPER_setKeeper(address)": ["11851737", ["address"], []], 
 	"KEEPER_setTokNameSymb(string,string)": ["65c021bc", ["string","string"], []],
     "burn(uint64)": ["9dbead42", ["uint64"], []], 
     
- 	"#------------IERC20------------#": ["xxxxxxxx", [], []], 
+ 	"#------------IERC20------------#": ["xxxxxxxx", [], []],
+    "allowance(address,address)": ["dd62ed3e", ["address","address"], []],
+    "approve(address,uint256)": ["095ea7b3", ["address","uint256"], []],
+    "transfer(address,uint256)": ["a9059cbb", ["address","uint256"], []],
+    "transferFrom(address,address,uint256)": ["23b872dd", ["address","address","uint256"], []],
+    "renounceOwnership()": ["715018a6", [], []],
+    "transferOwnership(address)": ["f2fde38b", ["address"], []],
+}
+
+LUSDst_GET_ACCT_PAYOUTS_FUNC_HASH = "d08e6c88"
+LUSDst_FUNC_MAP_READ = {
+	# read functions (lusdst additions)
+    "ENABLE_TOK_BURN_LOCK()": ["51026e20", [], ['bool']],
+    "TOK_BURN_LOCK()": ["ff35c2df", [], ['address']],
+    "TOK_pLUSD()": ["c28d25f4", [], ['address']],
+    
+    # read functions (bst legacy)
+    "#------------BST-legacy------------#": ["xxxxxxxx", [], []],
+    "KEEPER()": ["862a179e", [], ['address']],
+    "KEEPER_collectiveStableBalances(bool,uint256)": ["cf0c8683", ['bool','uint256'], ['uint64','uint64','uint64','int64']],
+    # "KEEPER_getRatios(uint256)": ["ffa21500", ['uint256'], ['uint32','uint32']],
+    
+    "ACCT_USD_BALANCES(address)": ["c67483dc", ["address"], ['uint64']],
+    "ACCT_USD_PAYOUTS(address,uint256)": ["8b47da26", ["address","uint256"], ['address', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'uint256', 'address']],
+
+    "USD_STABLE_DECIMALS(address)": ["7f8754f4", ["address"], ['uint8']],
+    "USWAP_V2_ROUTERS(uint256)": ["ee80b054", ["uint256"], ['address']],
+    
+    "getAccounts()": ["8a48ac03", [], ['address[]']],
+    "getAccountPayouts(address)": [LUSDst_GET_ACCT_PAYOUTS_FUNC_HASH, ["address"], ['address', 'uint64', 'uint64', 'uint64', 'uint64', 'uint64', 'uint256', 'address']],
+
+    "getDexOptions()": ["3685f08b", [], ['bool','bool','bool']],
+    "getPayoutPercs()": ["2edef8a4", [], ['uint32','uint32','uint32','uint32']],
+    
+    "getUsdStablesHistory()": ["d4155f07", [], ['address[]']],
+    "getWhitelistStables()": ["00f403e8", [], ['address[]']],
+    "getDexRouters()": ["ba41debb", [], ['address[]']],
+    "getSwapDelegateInfo()": ["4bae2eef", [], ['address','uint8','address']],
+    "getUsdBstPath(address)": ["260e5df9", ['address'], ['address[]']],
+
+    "TOK_WPLS()": ["fa4a9870", [], ['address']],
+    "BURN_ADDR()": ["783028a9", [], ['address']],
+
+	"#------------IERC20------------#": ["xxxxxxxx", [], []],
+    "balanceOf(address)": ["70a08231", ["address"], ['uint256']],
+    "decimals()": ["313ce567", [], ['uint8']],
+	"owner()": ["8da5cb5b", [], ['address']],
+    "name()": ["06fdde03", [], ['string']],
+    "symbol()": ["95d89b41", [], ['string']],
+    "tVERSION()": ["9a60f330", [], ['string']],
+    "totalSupply()": ["18160ddd", [], ['uint256']],
+}
+
+LUSDst_PAYOUT_FUNC_SIGN = "payOutBST(uint64,address,address,bool)"
+LUSDst_PAYOUT_FUNC_HASH = '5c1b4b51'
+LUSDst_FUNC_MAP_WRITE = {
+    # write functions (lusdst additions)
+    "KEEPER_setTokenBurnLock(address,bool)": ["f5d22c46", ["address","bool"], []], # gas used: ?
+    "KEEPER_withdraw(uint256)": ["cbf0d0d4", ["uint256"], []], # gas used: ?
+    
+	# write functions (bst legacy)
+    "#------------BST-legacy------------#": ["xxxxxxxx", [], []],
+    "KEEPER_maintenance(uint256,address)": ["4dd534c0", ["uint256","address"], []], # gas used: 62,434
+    # "KEEPER_setRatios(uint32,uint32)": ["3dcff192", ["uint32","uint32"], []], 
+
+    "KEEPER_setKeeper(address)": ["11851737", ["address"], []], 
+    "KEEPER_setKeeperCheck(uint256)": ["9d7c9834", ["uint256"], []],
+    "KEEPER_setSwapDelegate(address)": ["c1533a53", ["address"], []],
+	"KEEPER_setSwapDelegateUser(address)": ["126d4301", ['address'], []],
+
+    "KEEPER_editDexRouters(address,bool)": ["bceeba33", ["address","bool"], []], # gas used: 36,601 (rem), 55,723 (add)
+    "KEEPER_editWhitelistStables(address,uint8,bool)": ["b290b9bf", ["address","uint8","bool"], []],
+    "KEEPER_setUsdBstPath(address,address[])": ["4f51d029", ['address','address[]'], []], # gas used: 38,852
+    "KEEPER_setDexOptions(bool,bool,bool)": ["80143a0d", ["bool","bool","bool"], []], # gas used: 7.731
+
+    "KEEPER_setPayoutPercs(uint32,uint32,uint32)": ["c0e202fa", ["uint32","uint32","uint32"], []], # gas used: 30,082
+    # "KEEPER_setBuyBackFeePerc(uint32)": ["57e8a5a5", ["uint32"], []], # gas used: 28,887
+    "KEEPER_setTokNameSymb(string,string)": ["65c021bc", ["string","string"], []],
+
+    LUSDst_PAYOUT_FUNC_SIGN: [LUSDst_PAYOUT_FUNC_HASH, ["uint64","address","address","bool"], []], # gas used: 837,000+
+    # BST_TRADEIN_FUNC_SIGN: [BST_TRADEIN_FUNC_HASH, ["uint64"], []], # gas used: 126,956+
+
+	"#------------IERC20------------#": ["xxxxxxxx", [], []],
+    "burn(uint64)": ["9dbead42", ["uint64"], []], 
     "allowance(address,address)": ["dd62ed3e", ["address","address"], []],
     "approve(address,uint256)": ["095ea7b3", ["address","uint256"], []],
     "transfer(address,uint256)": ["a9059cbb", ["address","uint256"], []],
