@@ -50,7 +50,7 @@ contract LUSDShareToken is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '0.2';
+    string public tVERSION = '0.3';
     string private TOK_SYMB = string(abi.encodePacked("tLUSDst", tVERSION));
     string private TOK_NAME = string(abi.encodePacked("tLUSDst_", tVERSION));
 
@@ -293,7 +293,8 @@ contract LUSDShareToken is ERC20, Ownable {
     /* -------------------------------------------------------- */
     /* PUBLIC - KEEPER - ACCESSORS
     /* -------------------------------------------------------- */
-    function KEEPER_collectiveStableBalances(bool _history, uint256 _keeperCheck) external view onlyKeeper() returns (uint64, uint64, uint64, int64) {
+    // function KEEPER_collectiveStableBalances(bool _history, uint256 _keeperCheck) external view onlyKeeper() returns (uint64, uint64, uint64, int64) {
+    function KEEPER_collectiveStableBalances(bool _history, uint256 _keeperCheck) external view onlyKeeper() returns (uint64, uint64, uint256, int64) {
         require(_keeperCheck == KEEPER_CHECK, ' KEEPER_CHECK failed :( ');
         if (_history)
             return _collectiveStableBalances(USD_STABLES_HISTORY);
@@ -502,11 +503,13 @@ contract LUSDShareToken is ERC20, Ownable {
         }
         return owed_bal;
     }
-    function _collectiveStableBalances(address[] memory _stables) private view returns (uint64, uint64, uint64, int64) {
+    // function _collectiveStableBalances(address[] memory _stables) private view returns (uint64, uint64, uint64, int64) {
+    function _collectiveStableBalances(address[] memory _stables) private view returns (uint64, uint64, uint256, int64) {
         uint64 gross_bal = _grossStableBalance(_stables);
         uint64 owed_bal = _owedStableBalance();
         uint64 tot_sup = _uint64_from_uint256(totalSupply());
-        int64 net_bal = int64(gross_bal) - int64(owed_bal) - int64(tot_sup);
+        // int64 net_bal = int64(gross_bal) - int64(owed_bal) - int64(tot_sup); // BST legacy w/ tot_sup, bc it could be traded in
+        int64 net_bal = int64(gross_bal) - int64(owed_bal);
         return (gross_bal, owed_bal, tot_sup, net_bal);
     }
     function _editWhitelistStables(address _usdStable, uint8 _decimals, bool _add) private { // allows duplicates
