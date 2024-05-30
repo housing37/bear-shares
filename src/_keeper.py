@@ -616,3 +616,4 @@ print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
 # latest deployments...
 # SwapDelegate_5: 0xA8d96d0c328dEc068Db7A7Ba6BFCdd30DCe7C254
 # tLUSDst_0.1: 0xcBbbf66f27E128943436be8CF677bcd06a0C59dD
+# tLUSDst_0.2: 0xB2165De24a2E8C19f3081Fe15bBf09f815942B75

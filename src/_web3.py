@@ -135,7 +135,7 @@ class myWEB3:
         print(f'  selected {self.SENDER_ADDRESS}')
         return self.SENDER_ADDRESS, self.SENDER_SECRET
     
-    def set_gas_params(self, w3, _gas_limit=5_000_000, _fee_perc_markup=0.55):
+    def set_gas_params(self, w3, _gas_limit=6_000_000, _fee_perc_markup=0.55):
         print(f' setting default gas params ... (w/ fee % markup: {_fee_perc_markup})')
         if int(self.CHAIN_SEL) == 0:
             self.GAS_LIMIT = 3_000_000

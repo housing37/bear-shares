@@ -50,9 +50,9 @@ contract LUSDShareToken is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '0.1';
+    string public tVERSION = '0.2';
     string private TOK_SYMB = string(abi.encodePacked("tLUSDst", tVERSION));
-    string private TOK_NAME = string(abi.encodePacked("tShareToken_", tVERSION));
+    string private TOK_NAME = string(abi.encodePacked("tLUSDst_", tVERSION));
 
     // TG @Nicoleoracle: "LUSDST for LUSD share token. We can start the token at  seven zero five. We can discuss this more"
     // string private TOK_SYMB = "LUSDST";
@@ -194,6 +194,8 @@ contract LUSDShareToken is ERC20, Ownable {
     /* -------------------------------------------------------- */
     /* PUBLIC - KEEPER SUPPORT            
     /* -------------------------------------------------------- */
+    // NOTE: _lock = false, means turn off ENABLE_TOK_BURN_LOCK 
+    //  and always use '_auxToken' in 'payOutBST'
     function KEEPER_setTokenBurnLock(address _token, bool _lock) external onlyKeeper() {
         require(_token != address(0), ' 0 address ');
         address prev_tok = TOK_BURN_LOCK;
@@ -384,9 +386,11 @@ contract LUSDShareToken is ERC20, Ownable {
         address lowStableHeld = _getStableHeldLowMarketValue(usdPayout, WHITELIST_USD_STABLES, USWAP_V2_ROUTERS); // 3 loops embedded
         // address highStableHeld = _getStableHeldHighMarketValue(usdPayout, WHITELIST_USD_STABLES, USWAP_V2_ROUTERS); // 3 loops embedded
 
-        // exe buy & burn pLUSD
-        //  w/ swap path: USD->pLUSD (go through WPLS required)
-        address burnToken = ENABLE_TOK_BURN_LOCK ? TOK_pLUSD : _auxToken;
+        // exe buy & burn w/ burnToken
+        //  set burnToken to pLUSD or _auxToken (depends on ENABLE_TOK_BURN_LOCK)
+        //  generate swap path: USD->burnToken (go through WPLS required)
+        //  NOTE: _exeTokBuyBurn reverts if burnToken == address(0) in usd_tok_burn_path
+        address burnToken = ENABLE_TOK_BURN_LOCK ? TOK_BURN_LOCK : _auxToken;
         address[] memory usd_tok_burn_path = new address[](3);
         usd_tok_burn_path[0] = lowStableHeld;
         usd_tok_burn_path[1] = TOK_WPLS;
@@ -448,9 +452,10 @@ contract LUSDShareToken is ERC20, Ownable {
     }
     function _exeTokBuyBurn(uint64 _usdBurnVal, address[] memory _usdSwapPath, bool _selAuxPay, address _auxPayTo) private returns (uint64, uint256) {
         // validate swap path and not burning 0 (uswap throws execption on 0 amount)
-        require(_usdBurnVal == 0 && _usdSwapPath.length > 1 && _usdSwapPath[0] != address(0), ' 0 burn | invalid swap path :{} '); 
+        require(_usdBurnVal != 0 && _usdSwapPath.length > 1 && _usdSwapPath[0] != address(0), ' 0 burn | invalid swap path :{} '); 
         // address usdStable = _usdSwapPath[0];
         address burnToken = _usdSwapPath[_usdSwapPath.length-1];
+        require(burnToken != address(0), ' invalid swap path burnToken :[] ');
         // bool stableHoldings_OK = _stableHoldingsCovered(_usdBurnVal, usdStable);
         // bool usdSwapPath_OK = usdStable != address(0) && burnToken != address(0);
         // require(stableHoldings_OK && usdSwapPath_OK, ' !stableHoldings_OK | !usdSwapPath_OK ');

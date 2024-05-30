@@ -245,7 +245,11 @@ LUSDst_FUNC_MAP_READ = {
 	# read functions (lusdst additions)
     "ENABLE_TOK_BURN_LOCK()": ["51026e20", [], ['bool']],
     "TOK_BURN_LOCK()": ["ff35c2df", [], ['address']],
+    
+	"#------------COMMON_ADDRESSES------------#": ["xxxxxxxx", [], []],
     "TOK_pLUSD()": ["c28d25f4", [], ['address']],
+    "TOK_WPLS()": ["fa4a9870", [], ['address']],
+    "BURN_ADDR()": ["783028a9", [], ['address']],
     
     # read functions (bst legacy)
     "#------------BST-legacy------------#": ["xxxxxxxx", [], []],
@@ -271,9 +275,6 @@ LUSDst_FUNC_MAP_READ = {
     "getSwapDelegateInfo()": ["4bae2eef", [], ['address','uint8','address']],
     "getUsdBstPath(address)": ["260e5df9", ['address'], ['address[]']],
 
-    "TOK_WPLS()": ["fa4a9870", [], ['address']],
-    "BURN_ADDR()": ["783028a9", [], ['address']],
-
 	"#------------IERC20------------#": ["xxxxxxxx", [], []],
     "balanceOf(address)": ["70a08231", ["address"], ['uint256']],
     "decimals()": ["313ce567", [], ['uint8']],
@@ -293,7 +294,7 @@ LUSDst_FUNC_MAP_WRITE = {
     
 	# write functions (bst legacy)
     "#------------BST-legacy------------#": ["xxxxxxxx", [], []],
-    "KEEPER_maintenance(uint256,address)": ["4dd534c0", ["uint256","address"], []], # gas used: 62,434
+    "KEEPER_maintenance(address,uint256)": ["72dc3b3f", ["address","uint256"], []], # gas used: ?
     # "KEEPER_setRatios(uint32,uint32)": ["3dcff192", ["uint32","uint32"], []], 
 
     "KEEPER_setKeeper(address)": ["11851737", ["address"], []], 
