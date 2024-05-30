@@ -9,10 +9,13 @@ pragma solidity ^0.8.24;
 import "./node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol"; // local
 
 contract SwapDelegate {
-    uint8 public VERSION = 4;
+    uint8 public VERSION = 5;
     bool public USER_INIT;
     address public USER;
+    address public constant TOK_WPLS = address(0xA1077a294dDE1B09bB078844df40758a5D0f9a27);
+    address public constant BURN_ADDR = address(0x0000000000000000000000000000000000000369);
     event UserTransfer(address _prev, address _new);
+    event TokenBurned(address _token, uint256 _tokAmnt, address _burnAddr);
     constructor() {
         USER = msg.sender;
         USER_INIT = true;
@@ -32,6 +35,11 @@ contract SwapDelegate {
         address prev = address(USER);
         USER = _newUser;
         emit UserTransfer(prev, USER);
+    }
+    function USER_burnToken(address _token, uint256 _tokAmnt) external onlyUser() {
+        require(IERC20(_token).balanceOf(address(this)) >= _tokAmnt, ' low balance for _token ');
+        IERC20(_token).transfer(BURN_ADDR, _tokAmnt);
+        emit TokenBurned(_token, _tokAmnt, BURN_ADDR);
     }
 }
 

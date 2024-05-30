@@ -13,7 +13,8 @@ pragma solidity ^0.8.24;
 // import "@openzeppelin/contracts/token/ERC20/IERC20.sol"; // deploy
 
 
-// local compile _ $ git clone https://github.com/balancer/balancer-v2-monorepo.git
+// local _ $ npm install @openzeppelin/contracts
+// local _ $ git clone https://github.com/balancer/balancer-v2-monorepo.git
 // import "./pkg-balancer/interfaces/contracts/vault/IVault.sol";
 // import "./pkg-balancer/interfaces/contracts/vault/IFlashLoanRecipient.sol";
 import "./node_modules/@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
