@@ -254,7 +254,7 @@ LUSDst_FUNC_MAP_READ = {
     # read functions (bst legacy)
     "#------------BST-legacy------------#": ["xxxxxxxx", [], []],
     "KEEPER()": ["862a179e", [], ['address']],
-    "KEEPER_collectiveStableBalances(bool,uint256)": ["cf0c8683", ['bool','uint256'], ['uint64','uint64','uint256','int64']],
+    "KEEPER_collectiveStableBalances(bool,uint256)": ["cf0c8683", ['bool','uint256'], ['uint64','uint64','int64','uint256']],
     # "KEEPER_getRatios(uint256)": ["ffa21500", ['uint256'], ['uint32','uint32']],
     
     "ACCT_USD_BALANCES(address)": ["c67483dc", ["address"], ['uint64']],
