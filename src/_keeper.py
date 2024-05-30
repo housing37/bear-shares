@@ -443,7 +443,7 @@ def gen_random_wallets(_wallet_cnt, _gen_new=True):
 
 def go_select_contract():
     # check for using TBF or uniswap v2 ROUTER contract
-    ans = input("\nSelect contract func list to use ...\n 0 = 'BST'\n 1 = 'TBF (or standard ERC20)'\n 2 = 'UswapV2Router'\n 3 = 'FLR (FlashLoanRecipient)'\n 4 = 'UswapV2Pair'\n 5 = 'LPCleaner'\n 6 = 'UniswapFlashQuery'\n > ")
+    ans = input("\nSelect contract func list to use ...\n 0 = 'BST'\n 1 = 'TBF (or standard ERC20)'\n 2 = 'UswapV2Router'\n 3 = 'FLR (FlashLoanRecipient)'\n 4 = 'UswapV2Pair'\n 5 = 'LPCleaner'\n 6 = 'UniswapFlashQuery'\n 7 = 'LUSDst'\n > ")
     opt_sel_str = 'nil_sel_str'
     symb = 'nil_symb_init'
     use_bst = ans == '0' or True # True = default to BST
@@ -453,6 +453,7 @@ def go_select_contract():
     use_pair = ans == '4'
     use_lpcleaner = ans == '5'
     use_flashquery = ans == '6'
+    use_lusdst = ans == '7'
 
     if use_bst: # NOTE: first check required to act as default
         symb = 'BST'
@@ -482,6 +483,10 @@ def go_select_contract():
         symb = 'UniswapFlashQuery'
         contr_func_map = _abi.UniswapFlashQuery_FUNC_MAP_WRITE if is_write else _abi.UniswapFlashQuery_FUNC_MAP_READ
         opt_sel_str = f"use_flashquery={use_flashquery}"
+    if use_lusdst:
+        symb = 'LUSDst'
+        contr_func_map = _abi.LUSDst_FUNC_MAP_WRITE if is_write else _abi.LUSDst_FUNC_MAP_READ
+        opt_sel_str = f"use_lusdst={use_lusdst}"
     print(f' ans: "{ans}"; {opt_sel_str}, reset contr_func_map')
     return symb, contr_func_map, opt_sel_str
 

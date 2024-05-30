@@ -153,17 +153,14 @@ TBF_FUNC_MAP_READ = {
     "WHITELIST_LP_MAP(address)": ["08428223", ["address"], ['bool']],
     "LAST_TRANSFER_AMNT()": ["09479f1a", [], ['uint256']],
 
-	"#------------SWAPD------------#": ["xxxxxxxx", [], []], 
-    "81e167cf": "USER()",
-    "a7c84824": "USER_INIT()",
-    "b2eee154": "USER_burnToken(address,uint256)",
-    "e8d1eac1": "USER_maintenance(uint256,address)",
-    "0e2d844d": "USER_setUser(address)",
-    "ffa1ad74": "VERSION()"
+	"#------------SWAPD------------#": ["xxxxxxxx", [], []],
+    "USER()": ["81e167cf", [], ['address']],
+    "USER_INIT()": ["a7c84824", [], ['bool']],
+    "VERSION()": ["ffa1ad74", [], ['uint8']],
     
     # 0x3A4bA74B3a75D9adD2faF9EaE89A8197b6C828B1
     "#------------ROB-staking------------#": ["xxxxxxxx", [], []], 
-    "poolLength()": ["081e3eda", [], ['uint256']], 
+    "poolLength()": ["081e3eda", [], ['uint256']],
 
     # 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84
  	"#------------stETH------------#": ["xxxxxxxx", [], []], 
@@ -213,13 +210,17 @@ TBF_FUNC_MAP_WRITE = {
     "KEEPER_distrAmntRandFrom(address,uint64,address[])": ["08d7b8df", ['address','uint64','address[]'], []],
     "distrAmntRand(uint64,address[])": ["d3692a0a", ['uint64','address[]'], []], # fee: 69.956423 pls
     
-	# legacy
+	"#------------SWAPD------------#": ["xxxxxxxx", [], []], 
+    "USER_burnToken(address,uint256)": ["b2eee154", ['address','uint256'], []],
+    "USER_maintenance(uint256,address)": ["e8d1eac1", ['uint256','address'], []],
+    "USER_setUser(address)": ["0e2d844d", ['address'], []],
+    
  	"#------------stETH------------#": ["xxxxxxxx", [], []], 
      "pauseStaking()": ["f999c506", [], []],
      "submit(address)": ["a1903eab", ['address'], ['uint256']],
      
 	"#------------LUSD_TROVE-MANAGER------------#": ["xxxxxxxx", [], []],
-    "redeemCollateral(uint256,address,address,address,uint256,uint256,uint256)": ["bcd37526", [], []],
+    "redeemCollateral(uint256,address,address,address,uint256,uint256,uint256)": ["bcd37526", ['uint256','address','address','address','uint256','uint256','uint256'], []],
     
 	# 0x4c517D4e2C851CA76d7eC94B805269Df0f2201De
     "#------------LUSD_TELLOR_PRICEFEED------------#": ["xxxxxxxx", [], []],
