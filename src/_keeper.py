@@ -293,7 +293,10 @@ def read_with_hash(_contr_addr, _func_hash, _lst_param_types, _lst_params, _lst_
     return decoded_string
 
 def read_with_abi(_contr_addr, _func_hash, _lst_params):
-    if _func_hash == _abi.BST_GET_ACCT_PAYOUTS_FUNC_HASH:
+    if _func_hash == _abi.BST_GET_ACCT_PAYOUTS_FUNC_HASH or _func_hash == _abi.LUSDst_GET_ACCT_PAYOUTS_FUNC_HASH:
+        is_lusdst = _func_hash == _abi.LUSDst_GET_ACCT_PAYOUTS_FUNC_HASH
+        bstPayout_type = "uint64"
+        if is_lusdst: bstPayout_type = "uint256"
         print(f'building contract_abi for func_hash: "{_func_hash}" ...')
         # struct ACCT_PAYOUT {
         #     address receiver;
@@ -316,7 +319,8 @@ def read_with_abi(_contr_addr, _func_hash, _lst_params):
                     {"internalType": "address", "name": "receiver", "type": "address"},
                     {"internalType": "uint64", "name": "usdAmntDebit", "type": "uint64"},
                     {"internalType": "uint64", "name": "usdPayout", "type": "uint64"},
-                    {"internalType": "uint64", "name": "bstPayout", "type": "uint64"},
+                    # {"internalType": "uint64", "name": "bstPayout", "type": "uint64"},
+                    {"internalType": "uint64", "name": "bstPayout", "type": bstPayout_type},
                     {"internalType": "uint64", "name": "usdFeeVal", "type": "uint64"},
                     {"internalType": "uint64", "name": "usdBurnValTot", "type": "uint64"},
                     {"internalType": "uint64", "name": "usdBurnVal", "type": "uint64"},
@@ -341,7 +345,7 @@ def read_with_abi(_contr_addr, _func_hash, _lst_params):
             print(" receiver:", payout[0])
             print(" usdAmntDebit:", float(payout[1]) / 10 ** 6)
             print(" usdPayout:", float(payout[2]) / 10 ** 6)
-            print(" bstPayout:", float(payout[3]) / 10 ** 6)
+            print(" bstPayout:", float(payout[3]) / 10 ** (18 if is_lusdst else 6))
             print(" usdFeeVal:", float(payout[4]) / 10 ** 6)
             print(" usdBurnValTot:", float(payout[5]) / 10 ** 6)
             print(" usdBurnVal:", float(payout[6]) / 10 ** 6)
