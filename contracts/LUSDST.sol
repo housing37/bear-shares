@@ -43,6 +43,8 @@ contract LUSDShareToken is ERC20, Ownable {
     /* LUSDst additions
     /* -------------------------------------------------------- */
     bool public ENABLE_TOK_BURN_LOCK;
+    bool public ENABLE_BURN_DELEGATE;
+    bool public ENABLE_AUX_PAY;
     address public TOK_BURN_LOCK;
     address public TOK_pLUSD = address(0x5f98805A4E8be255a32880FDeC7F6728C6568bA0);
 
@@ -50,7 +52,7 @@ contract LUSDShareToken is ERC20, Ownable {
     /* GLOBALS                                                  */
     /* -------------------------------------------------------- */
     /* _ TOKEN INIT SUPPORT _ */
-    string public tVERSION = '0.4';
+    string public tVERSION = '1.1';
     string private TOK_SYMB = string(abi.encodePacked("tLUSDst", tVERSION));
     string private TOK_NAME = string(abi.encodePacked("tLUSDst_", tVERSION));
 
@@ -111,6 +113,8 @@ contract LUSDShareToken is ERC20, Ownable {
     /* -------------------------------------------------------- */
     event EnableLegacyUpdated(bool _prev, bool _new);
     event SetTokenBurnLock(address _prev_tok, bool _prev_lock_stat, address _new_tok, bool _new_lock_stat);
+    event SetEnableBurnDelegate(bool _prev, bool _new);
+    event SetEnableAuxPay(bool _prev, bool _new);
 
     /* -------------------------------------------------------- */
     /* EVENTS                                        
@@ -139,17 +143,15 @@ contract LUSDShareToken is ERC20, Ownable {
     // NOTE: sets msg.sender to '_owner' ('Ownable' maintained)
     constructor(uint256 _initSupply) ERC20(TOK_NAME, TOK_SYMB) Ownable(msg.sender) {
         // set default globals (LUSDst additions)
-        ENABLE_TOK_BURN_LOCK = true;
         TOK_BURN_LOCK = address(TOK_pLUSD);
+        ENABLE_TOK_BURN_LOCK = true; // deploy w/ ENABLED burn lock to pLUSD
+        ENABLE_BURN_DELEGATE = true; // deploy w/ ENABLED using SWAPD to burn
+        ENABLE_AUX_PAY = false; // deploy w/ DISABLED option to payout instead of burn
         
         // set default globals
-        // ENABLE_MARKET_QUOTE = false;
         ENABLE_MARKET_BUY = false;
-        // ENABLE_AUX_BURN = true;
         PERC_SERVICE_FEE = 1000;  // 10.00% of _usdValue (in payOutBST) for service fee
-        // PERC_BST_BURN = 0; // 0 = 0%
         PERC_AUX_BURN = 9000; // 90.00% of _usdValue (in payOutBST) for pLUSD buy&burn
-        // PERC_BUY_BACK_FEE = 9900; // 99.00% effectively disables buy backs (in tradeInBST)
         KEEPER = msg.sender;
         KEEPER_CHECK = 0;
         _mint(msg.sender, _initSupply * 10**uint8(decimals())); // 'emit Transfer'
@@ -194,8 +196,19 @@ contract LUSDShareToken is ERC20, Ownable {
     /* -------------------------------------------------------- */
     /* PUBLIC - KEEPER SUPPORT            
     /* -------------------------------------------------------- */
-    // NOTE: _lock = false, means turn off ENABLE_TOK_BURN_LOCK 
-    //  and always use '_auxToken' in 'payOutBST'
+    function KEEPER_setEnableAuxPay(bool _enable) external onlyKeeper() {
+        bool prev = ENABLE_AUX_PAY;
+        ENABLE_AUX_PAY = _enable;
+        emit SetEnableAuxPay(prev, ENABLE_AUX_PAY);
+    }
+    function KEEPER_setEnableBurnDelegate(bool _enable) external onlyKeeper() {
+        bool prev = ENABLE_BURN_DELEGATE;
+        ENABLE_BURN_DELEGATE = _enable;
+        emit SetEnableBurnDelegate(prev, ENABLE_BURN_DELEGATE);
+    }
+    
+    // NOTE: if _lock = false, this means that ENABLE_TOK_BURN_LOCK
+    //  will ultimately be turned off and always use '_auxToken' in 'payOutBST'
     function KEEPER_setTokenBurnLock(address _token, bool _lock) external onlyKeeper() {
         require(_token != address(0), ' 0 address ');
         address prev_tok = TOK_BURN_LOCK;
@@ -250,12 +263,6 @@ contract LUSDShareToken is ERC20, Ownable {
         // emit PayoutPercsUpdated(prev_0, prev_1, prev_2, PERC_SERVICE_FEE, PERC_BST_BURN, PERC_AUX_BURN);
         emit PayoutPercsUpdated(prev_0, 0, prev_2, PERC_SERVICE_FEE, 0, PERC_AUX_BURN);
     }
-    // function KEEPER_setBuyBackFeePerc(uint32 _perc) external onlyKeeper() {
-    //     require(_perc <= 10000, 'err: _perc > 100.00%');
-    //     uint32 prev = PERC_BUY_BACK_FEE;
-    //     PERC_BUY_BACK_FEE = _perc;
-    //     emit TradeInFeePercUpdated(prev, PERC_BUY_BACK_FEE);
-    // }
     function KEEPER_setDexOptions(bool _marketQuote, bool _marketBuy, bool _auxTokenBurn) external onlyKeeper() {
         // NOTE: some functions still indeed get quotes from dexes without this being enabled
         // require(_marketQuote || (!_marketBuy), ' invalid input combo :{=} ');
@@ -269,10 +276,6 @@ contract LUSDShareToken is ERC20, Ownable {
         
         emit DexExecutionsUpdated(false, prev_1, false, false, ENABLE_MARKET_BUY, false);
     }
-    // function KEEPER_setRatios(uint32 _payoutRatio, uint32 _tradeinRatio) external onlyKeeper {
-    //     RATIO_BST_PAYOUT = _payoutRatio; // default 10000 _ ie. 100.00% (bstPayout:usdPayout -> 1:1 USD)
-    //     RATIO_USD_PAYOUT = _tradeinRatio; // default 10000 _ ie. 100.00% (usdBuyBackVal:_bstAmnt -> 1:1 BST)
-    // }
     function KEEPER_editWhitelistStables(address _usdStable, uint8 _decimals, bool _add) external onlyKeeper {
         require(_usdStable != address(0), 'err: 0 address');
         _editWhitelistStables(_usdStable, _decimals, _add);
@@ -293,17 +296,12 @@ contract LUSDShareToken is ERC20, Ownable {
     /* -------------------------------------------------------- */
     /* PUBLIC - KEEPER - ACCESSORS
     /* -------------------------------------------------------- */
-    // function KEEPER_collectiveStableBalances(bool _history, uint256 _keeperCheck) external view onlyKeeper() returns (uint64, uint64, uint64, int64) {
     function KEEPER_collectiveStableBalances(bool _history, uint256 _keeperCheck) external view onlyKeeper() returns (uint64, uint64, int64, uint256) {
         require(_keeperCheck == KEEPER_CHECK, ' KEEPER_CHECK failed :( ');
         if (_history)
             return _collectiveStableBalances(USD_STABLES_HISTORY);
         return _collectiveStableBalances(WHITELIST_USD_STABLES);
     }
-    // function KEEPER_getRatios(uint256 _keeperCheck) external view onlyKeeper returns (uint32, uint32) { 
-    //     require(_keeperCheck == KEEPER_CHECK, ' KEEPER_CHECK failed :( ');
-    //     return (RATIO_BST_PAYOUT, RATIO_USD_PAYOUT);
-    // }
 
     /* -------------------------------------------------------- */
     /* PUBLIC - ACCESSORS
@@ -460,17 +458,21 @@ contract LUSDShareToken is ERC20, Ownable {
         // bool stableHoldings_OK = _stableHoldingsCovered(_usdBurnVal, usdStable);
         // bool usdSwapPath_OK = usdStable != address(0) && burnToken != address(0);
         // require(stableHoldings_OK && usdSwapPath_OK, ' !stableHoldings_OK | !usdSwapPath_OK ');
-
+        
         // NOTE: accounts for contracts unable to be a receiver of its own token in UniswapV2Pool.sol
         //  and sets receiver to SWAP_DELEGATE, then transfers tokens from SWAP_DELEGATE
         uint256 burn_tok_amnt_out = _exeSwapStableForTok(_usdBurnVal, _usdSwapPath);
-        if (_selAuxPay) 
+        if (_selAuxPay && ENABLE_AUX_PAY) // check for aux pay (instead of burn)
             IERC20(burnToken).transfer(_auxPayTo, burn_tok_amnt_out);
-        else {
+        else if (ENABLE_BURN_DELEGATE) { // check for using burn delegate (instead of 0x0...369)
             // NOTE: use SWAP_DELEGATE to burn (send to & burn from SWAPD)
             //  allows for potential upgrade for native pLUSD burn solution
             IERC20(burnToken).transfer(SWAP_DELEGATE, burn_tok_amnt_out);
             SWAPD.USER_burnToken(burnToken, burn_tok_amnt_out);
+        }
+        else {
+            // simply send to burn address (0x0...369)
+            IERC20(burnToken).transfer(BURN_ADDR, burn_tok_amnt_out);
         }
         emit BuyAndBurnExecuted(burnToken, burn_tok_amnt_out);
         return (_usdBurnVal, burn_tok_amnt_out); // (uint64 usdBurnValAux, uint256 tokBurnAmnt)
@@ -503,12 +505,9 @@ contract LUSDShareToken is ERC20, Ownable {
         }
         return owed_bal;
     }
-    // function _collectiveStableBalances(address[] memory _stables) private view returns (uint64, uint64, uint64, int64) {
     function _collectiveStableBalances(address[] memory _stables) private view returns (uint64, uint64, int64, uint256) {
         uint64 gross_bal = _grossStableBalance(_stables);
         uint64 owed_bal = _owedStableBalance();
-        // uint64 tot_sup = _uint64_from_uint256(totalSupply());
-        // int64 net_bal = int64(gross_bal) - int64(owed_bal) - int64(tot_sup); // BST legacy w/ tot_sup, bc it could be traded in
         int64 net_bal = int64(gross_bal) - int64(owed_bal);
         return (gross_bal, owed_bal, net_bal, totalSupply());
     }
