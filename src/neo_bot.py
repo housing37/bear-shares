@@ -34,7 +34,8 @@ BLACKLIST_SCAM_TEXT = [
     'BlastPulsechain', # 7017221881, @AlexSandros6, Alex sandros
     '$BLAST', # 7017221881, @AlexSandros6, Alex sandros
     '$Wen', # ['5486688786', '@Genstlell', 'Teller']
-    '$BRETT'
+    '$BRETT',
+    'Turbo'
 ]
 BLACKLIST_SCAM_COMBO_TEXT = [
     ['$','t.me'], # trying to catch '$whatever' w/ 't.me/whatever'
