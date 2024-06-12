@@ -30,6 +30,7 @@ LST_CONTR_ABI_BIN = [
     "../bin/contracts/StakingContract",
     "../bin/contracts/SwapDelegate",
     "../bin/contracts/LUSDShareToken",
+    "../../defi-arb/bin/contracts/AtropaMV",
 ]
 
 W3_ = None

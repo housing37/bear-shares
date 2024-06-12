@@ -447,7 +447,7 @@ def gen_random_wallets(_wallet_cnt, _gen_new=True):
 
 def go_select_contract():
     # check for using TBF or uniswap v2 ROUTER contract
-    ans = input("\nSelect contract func list to use ...\n 0 = 'BST'\n 1 = 'TBF (or standard ERC20)'\n 2 = 'UswapV2Router'\n 3 = 'FLR (FlashLoanRecipient)'\n 4 = 'UswapV2Pair'\n 5 = 'LPCleaner'\n 6 = 'UniswapFlashQuery'\n 7 = 'LUSDst'\n > ")
+    ans = input("\nSelect contract func list to use ...\n 0 = 'BST'\n 1 = 'TBF (or standard ERC20)'\n 2 = 'UswapV2Router'\n 3 = 'FLR (FlashLoanRecipient)'\n 4 = 'UswapV2Pair'\n 5 = 'LPCleaner'\n 6 = 'UniswapFlashQuery'\n 7 = 'LUSDst'\n 8 = 'AtropaMV'\n > ")
     opt_sel_str = 'nil_sel_str'
     symb = 'nil_symb_init'
     use_bst = ans == '0' or True # True = default to BST
@@ -458,6 +458,7 @@ def go_select_contract():
     use_lpcleaner = ans == '5'
     use_flashquery = ans == '6'
     use_lusdst = ans == '7'
+    use_atropamv = ans == '8'
 
     if use_bst: # NOTE: first check required to act as default
         symb = 'BST'
@@ -491,6 +492,10 @@ def go_select_contract():
         symb = 'LUSDst'
         contr_func_map = _abi.LUSDst_FUNC_MAP_WRITE if is_write else _abi.LUSDst_FUNC_MAP_READ
         opt_sel_str = f"use_lusdst={use_lusdst}"
+    if use_atropamv:
+        symb = 'AtropaMV'
+        contr_func_map = _abi.AtropaMV_FUNC_MAP_WRITE if is_write else _abi.AtropaMV_FUNC_MAP_READ
+        opt_sel_str = f"use_atropamv={use_atropamv}"
     print(f' ans: "{ans}"; {opt_sel_str}, reset contr_func_map')
     return symb, contr_func_map, opt_sel_str
 
@@ -624,4 +629,5 @@ print('', cStrDivider, f'# END _ {__filename}', cStrDivider, sep='\n')
 # tLUSDst_0.3: 0x6C7F2CDB8a499D637f62022448258014e6dEC499
 # tLUSDst_0.4: 0x014D7caE54F7fDd22eBac48C049F64271b84c8b4
 # tLUSDst_1.1: 0x9e68d69bddf821a0ecb4f993c6430c3ecbae69fb
+# AtropaMV_0.2: 0xb5d27e5f72A2c865674d54068176DA42140ED85A
 

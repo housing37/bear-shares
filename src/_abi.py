@@ -4,6 +4,27 @@ cStrDivider = '#================================================================
 print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globals', cStrDivider, sep='\n')
 cStrDivider_1 = '#----------------------------------------------------------------#'
 
+AtropaMV_FUNC_MAP_READ = {
+	# READ
+    "HASH_MV_MINT()": ["0e20d3ff", [], ['bytes4']],
+    "TOK_MV()": ["1b6cef7e", [], ['address']],
+    "KEEPER_tokenBalance(address)": ["cbbc7a01", ['address'], ['uint256']],
+    
+ 	"#------------LEGACY------------#": ["xxxxxxxx", [], []], 
+ 	"KEEPER()": ["862a179e", [], ['address']],
+    "TOK_WPLS()": ["fa4a9870", [], ['address']],
+    "BURN_ADDR()": ["783028a9", [], ['address']],
+    "tVERSION()": ["9a60f330", [], ['string']],
+}
+AtropaMV_FUNC_MAP_WRITE = {
+	# WRITE
+    "KEEPER_invokeMintMV(uint32)": ["51cacf4f", ['uint32'], []], 
+    
+	"#------------LEGACY------------#": ["xxxxxxxx", [], []], 
+    "KEEPER_maintenance(address,uint256)": ["72dc3b3f", ["address","uint256"], []], # gas used: ?
+    "KEEPER_withdraw(uint256)": ["cbf0d0d4", ["uint256"], []], 
+    "KEEPER_setKeeper(address)": ["11851737", ["address"], []], 
+}
 UniswapFlashQuery_FUNC_MAP_READ = {
     # read functions     
 	"getPairsByIndexRange(address,address,uint256,uint256)": ["6149de9c", ['address','address','uint256','uint256'], ['address[3][]','uint256[5][]']],
