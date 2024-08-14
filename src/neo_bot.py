@@ -45,27 +45,37 @@ TOKEN = env.TOKEN_neo # neo_bs_bot (neo)
 OPENAI_API_KEY = env.OPENAI_KEY
 # GROUP_ID = '-1002049491115', # $BearShares - testing
 
+# NEO_BS_WELCOME = '''
+# WELCOME to BearShares!
+
+# We're kickstarting our debut offering!
+# $BST - BearSharesTrinity Token
+
+# For deeper insight, execute: "/trinity"
+# Or cruise to: bearshares.vercel.app/trinity.html
+
+# What's BearShares?
+#     Cash in on Tweets!
+#     Snag memes as NFTs!
+#     PulseChain ERC404 fusion!
+
+# Experiment with our fresh AI avatars ...
+#     /trinity - cash for tweets
+#     /morpheus - learn about claiming memes
+#     /neo - converse with 'the one'
+
+# Twitter: @BearSharesX
+# Web: bearshares.vercel.app
+# '''
+
 NEO_BS_WELCOME = '''
-WELCOME to BearShares!
+Welcome to CALL-IT, the first fully decentralized, 100% on-chain prediction market, with no off-chain centralized oracle liability… 
 
-We're kickstarting our debut offering!
-$BST - BearSharesTrinity Token
+exclusively on PulseChain!
 
-For deeper insight, execute: "/trinity"
-Or cruise to: bearshares.vercel.app/trinity.html
+Make your picks by simply Buying and Selling CALL Ticket Tokens on your favorite DEX!
 
-What's BearShares?
-    Cash in on Tweets!
-    Snag memes as NFTs!
-    PulseChain ERC404 fusion!
-
-Experiment with our fresh AI avatars ...
-    /trinity - cash for tweets
-    /morpheus - learn about claiming memes
-    /neo - converse with 'the one'
-
-Twitter: @BearSharesX
-Web: bearshares.vercel.app
+CALL-IT is a fun and unique platform that favors the bold! Test your awareness on sports and current events by placing value on the right CALL! 
 '''
 
 print('TOKEN: '+TOKEN)
