@@ -3,6 +3,20 @@ __filename = __fname + '.py'
 cStrDivider = '#================================================================#'
 cStrDivider_1 = '#----------------------------------------------------------------#'
 print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globals', cStrDivider, sep='\n')
+'''
+    REQUIREMENTS... (python3.11)
+        $ sudo add-apt-repository ppa:deadsnakes/ppa -y
+        $ sudo apt update
+        $ sudo apt install python3.11
+        $ python3.11 --version
+        $ python3.11 -m pip install python-telegram-bot BingImageCreator
+        $ python3.11 -m pip install cffi
+        $ python3.11 -m pip install --ignore-installed openai
+        $ python3.11 -m pip install tweepy selenium lxml read_env
+    REQUIREMENTS... (python3.12 -> required '--break-system-packages')
+        $ python3 -m pip install python-telegram-bot BingImageCreator --break-system-packages
+        $ python3 -m pip install tweepy selenium lxml read_env --break-system-packages
+'''
 
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
