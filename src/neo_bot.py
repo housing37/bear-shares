@@ -35,8 +35,10 @@ BLACKLIST_SCAM_TEXT = [
     '$BLAST', # 7017221881, @AlexSandros6, Alex sandros
     '$Wen', # ['5486688786', '@Genstlell', 'Teller']
     '$BRETT',
-    'Turbo'
+    'Turbo',
+    'smart vault', 'smart-vault', 'smart_vault', # @JstKidn
 ]
+
 BLACKLIST_SCAM_COMBO_TEXT = [
     ['$','t.me'], # trying to catch '$whatever' w/ 't.me/whatever'
 ]
@@ -76,6 +78,15 @@ exclusively on PulseChain!
 Make your picks by simply Buying and Selling CALL Ticket Tokens on your favorite DEX!
 
 CALL-IT is a fun and unique platform that favors the bold! Test your awareness on sports and current events by placing value on the right CALL! 
+
+With Call-it …
+1) ANYONE can create a market on Call-it, and earn $CALL for doing so
+
+2) EVERYONE decides the outcome of each market, via a decentralized voting algorithm, and earns $CALL for doing so
+
+3) market creators are vetted via feedback from market participants. This a security aspect which creates a following/feedback/review system similar to eBay
+
+NOTE: this means that early participants will become the whales (there is no air-drop)
 '''
 
 print('TOKEN: '+TOKEN)
