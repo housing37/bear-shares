@@ -131,7 +131,8 @@ WHITELIST_TG_CHAT_IDS = [
     '-1002041092613', # $BearShares
     '-1002049491115', # $BearShares - testing
     '-4139183080', # TeddyShares - testing
-    '581475171', # @housing37
+    '581475171', # @
+    '-1002030864744', # Pulse Rekt Room (formally plusd scam room)
     ]
 BLACKLIST_TEXT = [
     'smart vault', 'smart-vault', 'smart_vault', # @JstKidn
