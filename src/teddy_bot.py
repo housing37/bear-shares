@@ -235,7 +235,7 @@ def validate_input(str_input):
 
 def validate_admin_user(str_uname):
     global LST_ADMINS
-    return '@'+str_uname in LST_ADMINS
+    return False if str_uname == None else '@'+str_uname in LST_ADMINS
 
 def get_img_from_url(img_url):
     funcname = 'get_img_from_url'
@@ -386,7 +386,7 @@ async def gen_ai_img_1(update: Update, context):
     # check if TG group is allowed to use the bot
     if str(_chat_id) not in WHITELIST_TG_CHAT_IDS:
         print("*** WARNING ***: non-whitelist TG group trying to use the bot; sending deny message...")
-        str_conf = f"@{str_uname} (aka. {str_handle}) -> NOPE!"
+        str_conf = f"@{str_uname} (aka. {str_handle}) -> NO! Fuck Off! Don't steal like a #Democrat :/ "
         print(str_conf)
         await context.bot.send_message(chat_id=update.message.chat_id, text=str_conf)    
         print('', f'EXIT - {funcname} _ {get_time_now()}', cStrDivider_1, sep='\n')
