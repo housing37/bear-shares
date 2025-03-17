@@ -48,7 +48,7 @@ $TeadyShares NFT w/ ERC404 fixes
     - function artistProposeNewImage(img_url, img_name, img_desr)
     - function curatorDeployNewImage(img_url, data_uri, priority_rating)
 
-## TODO - continue reviewing ERC404 v2.0
+## TODO - continue reviewing ERC404 v2.0 #
     - https://github.com/Pandora-Labs-Org/erc404
     - https://github.com/Pandora-Labs-Org/erc404/issues
 
@@ -69,3 +69,5 @@ $TeadyShares NFT w/ ERC404 fixes
 
         Longer version:
         Every time you transfer token (including buy\see on dex) it mints\burns NFTs (as a key mechanism of ERC404). It takes gas. Metamask along with some other tokens are not professional gas estimators (especially when we are talking about new technology which ERC\PRC404 is). I didn't dig deep into it, so don't know if it even sends it to blockchain, in that case you should get response from RPC or TX should be reverted. Anyways, just follow the "short version" to avoid issues. Wanna buy a lot? Better buy in few TXs than sit with a stuck one without a way to cancel it.
+
+        ####

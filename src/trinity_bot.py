@@ -22,7 +22,7 @@ last_online_time = time.time()  # Initialize with current time
 #------------------------------------------------------------#
 #   GLOBALS                                                  #
 #------------------------------------------------------------#
-# constants
+# constants ##
 DEBUG_LVL = 3
 LST_TG_CMDS = list(req_handler.DICT_CMD_EXE.keys())
 CHAT_ID_0 = '-1002041092613' # BearShares - trinity
@@ -37,7 +37,7 @@ BLACKLIST_TEXT = [
     'smart vault', 'smart-vault', 'smart_vault', # @JstKidn
     ]
 
-# input select
+# input select # input select # input select
 USE_PROD_TG = False
 TOKEN = 'nil_tg_token'
 USE_ALT_ACCT = False # True = alt user 'LAO Pirates'

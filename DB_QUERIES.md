@@ -5,7 +5,7 @@ select * from log_tw_conf_urls;
 select * from shills;
 select * from log_tg_user_at_changes;
 
--- ************************************** --
+-- ************************************** --__
 -- MANUALLY SET PAYOUT TX SUCCESS - /admin_pay_shill_rewards <tg_user_at>
 -- p_tg_admin_id = 581475171 == tg_user_at = housing37, 
 -- CALL SET_USER_PAY_TX_STATUS(
@@ -19,7 +19,7 @@ select * from log_tg_user_at_changes;
 -- 			'0x7A580b7Cd9B48Ba729b48B8deb9F4D2cb216aEBC', -- p_pay_tok_addr
 -- 			'BST', -- p_pay_tok_symb
 -- 			'0x6B175474E89094C44Da98b954EedeAC495271d0F') -- p_aux_tok_burn
--- ************************************** --
+-- ************************************** --__
 -- GET WITHDRAW REQUEST AND AMOUNTS
 select ue.*, u.tg_user_at, u.wallet_address from user_earns ue
 	inner join users u
@@ -78,3 +78,6 @@ SELECT SUM(usd_owed) AS tot_owed,
 
 -- select * from shills where post_id = '1777408984414064833';
 -- select fk_user_id, id, dt_created, dt_updated_approve, is_approved from shills where fk_user_id = 14 order by dt_created desc;
+
+
+____________
