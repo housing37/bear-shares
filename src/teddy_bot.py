@@ -128,15 +128,24 @@ RESP_RECEIVED = False
 USE_SHORT_URL = True
 
 WHITELIST_TG_CHAT_IDS = [
+    '-1001941928043', # bear shares - testing - priv
     '-1002041092613', # $BearShares
     '-1002049491115', # $BearShares - testing
     '-4139183080', # TeddyShares - testing
-    '581475171', # @
+    '581475171', # @housing37
     '-1002030864744', # Pulse Rekt Room (formally plusd scam room)
     ]
 BLACKLIST_TEXT = [
     'smart vault', 'smart-vault', 'smart_vault', # @JstKidn
     ]
+
+admin_uid = '581475171' # @housing37
+BLACKLIST_MUTE_DELETE = [
+    '1343247050', # @Cryptoking2022 - 'DAVE | OMNIPRESENT' - pDAI scammer
+        # 2025-03-24 14:48:58.01] _ action: ['1343247050', '@Cryptoking2022', 'DAVE | OMNIPRESENT'], [-1002030864744, 'supergroup
+    # admin_uid, # testing
+]
+
 SELENIUM_HEADLESS = True
 MIN_DESCR_CHAR_CNT = 25
 MIN_DESCR_WORD_CNT = int(MIN_DESCR_CHAR_CNT / 5)
@@ -384,7 +393,7 @@ async def gen_ai_img_1(update: Update, context):
     
 
     # check if TG group is allowed to use the bot
-    if str(_chat_id) not in WHITELIST_TG_CHAT_IDS:
+    if str(_chat_id) not in WHITELIST_TG_CHAT_IDS or str(uid) in BLACKLIST_MUTE_DELETE:
         print("*** WARNING ***: non-whitelist TG group trying to use the bot; sending deny message...")
         str_conf = f"@{str_uname} (aka. {str_handle}) -> NO! Fuck Off! Don't steal like a #Democrat :/ "
         print(str_conf)
@@ -661,6 +670,46 @@ async def log_activity(update: Update, context):
     lst_user_data = [uid, usr_at_name, usr_handle]
     lst_chat_data = [chat_id, chat_type]
     print(f'{get_time_now()} _ action: {lst_user_data}, {lst_chat_data}')
+    if uid in BLACKLIST_MUTE_DELETE:
+        await delete_msg(update, context)
+
+    # 2025-03-24 14:48:58.01] _ action: ['1343247050', '@Cryptoking2022', 'DAVE | OMNIPRESENT'], [-1002030864744, 'supergroup
+
+async def delete_msg(update: Update, context: CallbackContext):
+    try:
+        chat_id = update.message.chat_id
+        user = update.message.from_user
+        uid = str(user.id)
+        usr_at_name = f'@{user.username}'
+        usr_handle = user.first_name
+        inp = update.message.text
+        message = update.message
+
+        del_conf = (f'Message from user {uid} deleted in chat: {chat_id}.\n  usr: {usr_at_name} ({usr_handle})\n  msg: {inp}')
+        await message.delete()
+        print(del_conf)
+
+        # send public chat conf
+        # await message.chat.send_message(del_conf)
+
+        # send DM conf to admin 
+        await context.bot.send_message(
+            chat_id=admin_uid,
+            text=del_conf
+        )
+    except Exception as e:
+        # Send DM to yourself when deletion fails
+        error_msg = (f"Failed to delete message from {TARGET_USER_ID} "
+                    f"in chat {message.chat_id}\nError: {str(e)}")
+        try:
+            await context.bot.send_message(
+                chat_id=admin_uid,
+                text=error_msg
+            )
+        except Exception as dm_error:
+            print(f"Failed to send DM: {str(dm_error)}")
+        # Optional: send error to chat too
+        # await message.chat.send_message(f'Error deleting message: {str(e)}')
 
 def main():
     # global TOKEN
