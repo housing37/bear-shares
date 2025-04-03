@@ -139,11 +139,11 @@ BLACKLIST_TEXT = [
     'smart vault', 'smart-vault', 'smart_vault', # @JstKidn
     ]
 
-admin_uid = '581475171' # @housing37
+ADMIN_UID = '581475171' # @housing37
 BLACKLIST_MUTE_DELETE = [
     '1343247050', # @Cryptoking2022 - 'DAVE | OMNIPRESENT' - pDAI scammer
         # 2025-03-24 14:48:58.01] _ action: ['1343247050', '@Cryptoking2022', 'DAVE | OMNIPRESENT'], [-1002030864744, 'supergroup
-    # admin_uid, # testing
+    # ADMIN_UID, # testing
 ]
 
 SELENIUM_HEADLESS = True
@@ -694,18 +694,20 @@ async def delete_msg(update: Update, context: CallbackContext):
 
         # send DM conf to admin 
         await context.bot.send_message(
-            chat_id=admin_uid,
+            chat_id=ADMIN_UID,
             text=del_conf
         )
     except Exception as e:
+        chat_id = update.message.chat_id
         user = update.message.from_user
         uid = str(user.id)
+
         # Send DM to yourself when deletion fails
         error_msg = (f"Failed to delete message from {uid} "
-                    f"in chat {message.chat_id}\nError: {str(e)}")
+                    f"in chat {chat_id}\nError: {str(e)}")
         try:
             await context.bot.send_message(
-                chat_id=admin_uid,
+                chat_id=ADMIN_UID,
                 text=error_msg
             )
         except Exception as dm_error:
