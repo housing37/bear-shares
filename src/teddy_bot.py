@@ -698,8 +698,10 @@ async def delete_msg(update: Update, context: CallbackContext):
             text=del_conf
         )
     except Exception as e:
+        user = update.message.from_user
+        uid = str(user.id)
         # Send DM to yourself when deletion fails
-        error_msg = (f"Failed to delete message from {TARGET_USER_ID} "
+        error_msg = (f"Failed to delete message from {uid} "
                     f"in chat {message.chat_id}\nError: {str(e)}")
         try:
             await context.bot.send_message(
