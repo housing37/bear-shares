@@ -48,6 +48,9 @@ _expenses/
 ## ignore folders ##
 #_*/
 
+## ignore telegram ##
+session_name.session
+
 #######################################
 #######################################
 # Byte-compiled / optimized / DLL files
