@@ -77,6 +77,10 @@ TOKEN_trin_pay = os.environ['TG_TOKEN_TRIN_PAY'] # (trinityPay) @bs_trinity_pay_
 TOKEN_morph = os.environ['TG_TOKEN_MORPH'] # @bs_morpheus_bot
 TOKEN_oracle = os.environ['TG_TOKEN_ORACLE'] # @bs_oracle_bot
 
+API_ID = os.environ['API_ID']  # Replace with your api_id (ref: my.telegram.org)
+API_HASH = os.environ['API_HASH']  # Replace with your api_hash (ref: my.telegram.org)
+API_USR_PHONE = os.environ['API_USR_PHONE']  # Your phone number (ref: login to my.telegram.org)
+
 # LST_TG_TOKENS = [{'@TeddySharesBot':TOKEN_dev},
 #                  {'@BearSharesBot':TOKEN_prod},
 #                  {'@neo_bs_bot':TOKEN_neo},
