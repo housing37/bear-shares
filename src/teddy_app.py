@@ -16,17 +16,27 @@ print('', cStrDivider, f'GO _ {__filename} -> starting IMPORTs & declaring globa
 # ref: my.telegram.org
 # Use the api_id and api_hash from my.telegram.org (set in env.py -> .env)
 from telethon import TelegramClient, events
+from datetime import datetime
 from _env import env
 client = TelegramClient('session_name', env.API_ID, env.API_HASH)
 ROSE_ID = '609517172'
 CHAT_ID = -1002030864744 # Pulse Rekt Room (formally plusd scam room)
 # TOOL_ID = '1343247050', # @Cryptoking2022 - 'DAVE | OMNIPRESENT' - pDAI scammer
+def get_time_now(dt=True):
+    if dt: return '['+datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[0:-4]+']'
+    return '['+datetime.now().strftime("%H:%M:%S.%f")[0:-4]+']'
+
 @client.on(events.NewMessage)
 async def handle_message(event):
+    # only hande -> Pulse Rekt Room
+    if str(event.message.chat_id) != str(CHAT_ID):
+        return
+    
     sender = await event.get_sender()
+    usr_handle = sender.first_name
     message_id = event.message.id
     if sender:
-        print(f"uid: {sender.id}, user_at: @{sender.username}, msg_id: {message_id}, chat_id: {event.message.chat_id}, msg: {event.text}")
+        print(f"{get_time_now()} _ uid: {sender.id}, user_at|handle: @{sender.username} | {usr_handle}, msg_id: {message_id}, chat_id: {event.message.chat_id}, txt: {event.text}")
         if str(sender.id) == ROSE_ID and str(event.message.chat_id) == str(CHAT_ID) and 'hous' in event.text:
             await client.delete_messages(entity=CHAT_ID, message_ids=[message_id])
             print(f"  Deleted msg_id {message_id} from chat {CHAT_ID}\n   msg: {event.text}")
