@@ -21,7 +21,9 @@ from _env import env
 client = TelegramClient('session_name', env.API_ID, env.API_HASH)
 ROSE_ID = '609517172'
 CHAT_ID = -1002030864744 # Pulse Rekt Room (formally plusd scam room)
-# TOOL_ID = '1343247050', # @Cryptoking2022 - 'DAVE | OMNIPRESENT' - pDAI scammer
+TOOL_ID = '1343247050', # @Cryptoking2022 - 'DAVE | OMNIPRESENT' - pDAI scammer
+TEST_ID = '1427560544' # JSSgram
+AUTO_DELETE_MSG = [TOOL_ID, ]
 def get_time_now(dt=True):
     if dt: return '['+datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[0:-4]+']'
     return '['+datetime.now().strftime("%H:%M:%S.%f")[0:-4]+']'
@@ -37,7 +39,10 @@ async def handle_message(event):
     message_id = event.message.id
     if sender:
         print(f"{get_time_now()} _ uid: {sender.id}, user_at|handle: @{sender.username} | {usr_handle}, msg_id: {message_id}, chat_id: {event.message.chat_id}, txt: {event.text}")
-        if str(sender.id) == ROSE_ID and str(event.message.chat_id) == str(CHAT_ID) and 'hous' in event.text:
+        # if str(sender.id) == ROSE_ID and str(event.message.chat_id) == str(CHAT_ID) and 'hous' in event.text:
+        #     await client.delete_messages(entity=CHAT_ID, message_ids=[message_id])
+        #     print(f"  Deleted msg_id {message_id} from chat {CHAT_ID}\n   msg: {event.text}")
+        if str(sender.id) in AUTO_DELETE_MSG and str(event.message.chat_id) == str(CHAT_ID):
             await client.delete_messages(entity=CHAT_ID, message_ids=[message_id])
             print(f"  Deleted msg_id {message_id} from chat {CHAT_ID}\n   msg: {event.text}")
     else:

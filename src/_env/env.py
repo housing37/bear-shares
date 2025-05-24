@@ -40,42 +40,42 @@ except:
     print(" ERROR: no .env files found ")
     print("#==========================#")
 
-# db support
-dbHost = os.environ['DB_HOST']
-dbName = os.environ['DB_DATABASE']
-dbUser = os.environ['DB_USERNAME']
-dbPw = os.environ['DB_PASSWORD']
+# # db support
+# dbHost = os.environ['DB_HOST']
+# dbName = os.environ['DB_DATABASE']
+# dbUser = os.environ['DB_USERNAME']
+# dbPw = os.environ['DB_PASSWORD']
 
-# req_handler support
-LST_KEYS_PLACEHOLDER = []
+# # req_handler support
+# LST_KEYS_PLACEHOLDER = []
 
-# s3 support (use for remote server)
-ACCESS_KEY = os.environ['ACCESS_KEY']
-SECRET_KEY = os.environ['SECRET_KEY']
+# # s3 support (use for remote server)
+# ACCESS_KEY = os.environ['ACCESS_KEY']
+# SECRET_KEY = os.environ['SECRET_KEY']
 
-# twitter support @SolAudits
-CONSUMER_KEY_0 = os.environ['CONSUMER_KEY_0']
-CONSUMER_SECRET_0 = os.environ['CONSUMER_SECRET_0']
-ACCESS_TOKEN_0 = os.environ['ACCESS_TOKEN_0']
-ACCESS_TOKEN_SECRET_0 = os.environ['ACCESS_TOKEN_SECRET_0']
+# # twitter support @SolAudits
+# CONSUMER_KEY_0 = os.environ['CONSUMER_KEY_0']
+# CONSUMER_SECRET_0 = os.environ['CONSUMER_SECRET_0']
+# ACCESS_TOKEN_0 = os.environ['ACCESS_TOKEN_0']
+# ACCESS_TOKEN_SECRET_0 = os.environ['ACCESS_TOKEN_SECRET_0']
 
-# twitter support @BearSharesX
-CONSUMER_KEY_1 = os.environ['CONSUMER_KEY_1']
-CONSUMER_SECRET_1 = os.environ['CONSUMER_SECRET_1']
-ACCESS_TOKEN_1 = os.environ['ACCESS_TOKEN_1']
-ACCESS_TOKEN_SECRET_1 = os.environ['ACCESS_TOKEN_SECRET_1']
+# # twitter support @BearSharesX
+# CONSUMER_KEY_1 = os.environ['CONSUMER_KEY_1']
+# CONSUMER_SECRET_1 = os.environ['CONSUMER_SECRET_1']
+# ACCESS_TOKEN_1 = os.environ['ACCESS_TOKEN_1']
+# ACCESS_TOKEN_SECRET_1 = os.environ['ACCESS_TOKEN_SECRET_1']
 
-# openAI
-OPENAI_KEY = os.environ['OPENAI_KEY']
+# # openAI
+# OPENAI_KEY = os.environ['OPENAI_KEY']
 
-# telegram
-TOKEN_dev = os.environ['TG_TOKEN_DEV'] # (dev)
-TOKEN_prod = os.environ['TG_TOKEN_PROD'] # (prod)
-TOKEN_neo = os.environ['TG_TOKEN_NEO'] # (neo) @bs_neo_bot
-TOKEN_trin = os.environ['TG_TOKEN_TRIN'] # (trinity) @bs_trinity_bot
-TOKEN_trin_pay = os.environ['TG_TOKEN_TRIN_PAY'] # (trinityPay) @bs_trinity_pay_bot
-TOKEN_morph = os.environ['TG_TOKEN_MORPH'] # @bs_morpheus_bot
-TOKEN_oracle = os.environ['TG_TOKEN_ORACLE'] # @bs_oracle_bot
+# # telegram
+# TOKEN_dev = os.environ['TG_TOKEN_DEV'] # (dev)
+# TOKEN_prod = os.environ['TG_TOKEN_PROD'] # (prod)
+# TOKEN_neo = os.environ['TG_TOKEN_NEO'] # (neo) @bs_neo_bot
+# TOKEN_trin = os.environ['TG_TOKEN_TRIN'] # (trinity) @bs_trinity_bot
+# TOKEN_trin_pay = os.environ['TG_TOKEN_TRIN_PAY'] # (trinityPay) @bs_trinity_pay_bot
+# TOKEN_morph = os.environ['TG_TOKEN_MORPH'] # @bs_morpheus_bot
+# TOKEN_oracle = os.environ['TG_TOKEN_ORACLE'] # @bs_oracle_bot
 
 API_ID = os.environ['API_ID']  # Replace with your api_id (ref: my.telegram.org)
 API_HASH = os.environ['API_HASH']  # Replace with your api_hash (ref: my.telegram.org)
@@ -89,34 +89,34 @@ API_USR_PHONE = os.environ['API_USR_PHONE']  # Your phone number (ref: login to 
 
 #============================================================================#
 
-# infura support
-#ETH_MAIN_RPC_KEY = os.environ['ETH_MAIN_INFURA_KEY_0']
-ETH_MAIN_RPC_KEY = os.environ['ETH_MAIN_INFURA_KEY_1']
+# # infura support
+# #ETH_MAIN_RPC_KEY = os.environ['ETH_MAIN_INFURA_KEY_0']
+# ETH_MAIN_RPC_KEY = os.environ['ETH_MAIN_INFURA_KEY_1']
 
-# wallet support
-sender_address_0 = os.environ['PUBLIC_KEY_3']
-sender_secret_0 = os.environ['PRIVATE_KEY_3']
-sender_address_1 = os.environ['PUBLIC_KEY_4']
-sender_secret_1 = os.environ['PRIVATE_KEY_4']
-sender_address_2 = os.environ['PUBLIC_KEY_5']
-sender_secret_2 = os.environ['PRIVATE_KEY_5']
-sender_address_3 = os.environ['PUBLIC_KEY_6']
-sender_secret_3 = os.environ['PRIVATE_KEY_6']
+# # wallet support
+# sender_address_0 = os.environ['PUBLIC_KEY_3']
+# sender_secret_0 = os.environ['PRIVATE_KEY_3']
+# sender_address_1 = os.environ['PUBLIC_KEY_4']
+# sender_secret_1 = os.environ['PRIVATE_KEY_4']
+# sender_address_2 = os.environ['PUBLIC_KEY_5']
+# sender_secret_2 = os.environ['PRIVATE_KEY_5']
+# sender_address_3 = os.environ['PUBLIC_KEY_6']
+# sender_secret_3 = os.environ['PRIVATE_KEY_6']
 
-sender_addr_trinity = sender_address_1
-sender_secr_trinity = sender_secret_1
+# sender_addr_trinity = sender_address_1
+# sender_secr_trinity = sender_secret_1
 
 #============================================================================#
 ## web3 constants
 #============================================================================#
-local_test = 'http://localhost:8545'
-eth_main = f'https://mainnet.infura.io/v3/{ETH_MAIN_RPC_KEY}'
-eth_test = f'https://goerli.infura.io/v3/'
-pc_main = f'https://rpc.pulsechain.com'
-eth_main_cid=1
-pc_main_cid=369
-bst_contr_addr = os.environ['BST_CONTR_ADDR']
-bst_contr_symb = os.environ['BST_CONTR_SYMB']
+# local_test = 'http://localhost:8545'
+# eth_main = f'https://mainnet.infura.io/v3/{ETH_MAIN_RPC_KEY}'
+# eth_test = f'https://goerli.infura.io/v3/'
+# pc_main = f'https://rpc.pulsechain.com'
+# eth_main_cid=1
+# pc_main_cid=369
+# # bst_contr_addr = os.environ['BST_CONTR_ADDR']
+# # bst_contr_symb = os.environ['BST_CONTR_SYMB']
 
 
 
